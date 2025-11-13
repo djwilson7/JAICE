@@ -1,6 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
-
+from typing import Dict
 
 class TaskType(Enum):
     INITIAL_SYNC = ("gmail.initial_sync", "gmail_initial_sync_queue")
@@ -11,10 +11,6 @@ class TaskType(Enum):
         "classification_model_queue",
     )
     NER_MODEL = ("ner_model.ner_task", "ner_model_queue")
-    TRANSFER_FROM_STAGING = (
-        "staging_to_job_apps",
-        "staging_to_job_apps_queue",
-    )
 
     def __init__(self, task_name: str, queue_name: str):
         self.task_name = task_name
@@ -38,7 +34,7 @@ class EmailStage(Enum):
 
 @dataclass
 class RelevanceModelResult:
-    relevant: list
+    relevant: Dict[str, float] # email id and confidence score
     retry: list
     purge: list
 

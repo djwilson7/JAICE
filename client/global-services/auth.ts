@@ -11,8 +11,6 @@ import
   reauthenticateWithPopup,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  //GoogleAuthProvider,
-
 } from "firebase/auth";
 
 import type { User } from "firebase/auth";
@@ -51,36 +49,6 @@ export async function googleSignIn() {
     const userCredential = await signInWithPopup(auth, googleProvider);
     return userCredential.user;
 }
-
-// Sign in with Google popup
-// export async function googleSignIn() 
-// {
-//   try 
-//   {
-//       const userCredential = await signInWithPopup(auth, googleProvider);
-
-//       // get the Google OAuth access token
-//       const credential = GoogleAuthProvider.credentialFromResult(userCredential);
-//       const accessToken = credential?.accessToken;
-
-//       if (accessToken) 
-//       {
-//           // store token for gmail API calls
-//           localStorage.setItem('google_access_token', accessToken);
-
-//           // mark user has granted gmail consent
-//           localStorage.setItem('gmail_consent_granted', 'true');
-//           console.log('Google access token stored in localStorage.');
-//       } else {
-//           console.warn('No access token found in Google sign-in result.');
-//       }
-
-//       return userCredential.user;
-//   } catch (error) {
-//       console.error('Error during Google sign-in:', error);
-//       throw error;
-//   }
-// }
 
 // ------- TODO: Add Outlook sign-in method ----------
 
@@ -126,17 +94,17 @@ export function hasGmailAccess(): boolean
     }
 }
 
-// check if user has previously granted gmail consent
-export function hasGmailConsentGranted(): boolean
-{
-    return localStorage.getItem('gmail_consent_granted') === 'true';
-}
+// // check if user has previously granted gmail consent
+// export function hasGmailConsentGranted(): boolean
+// {
+//     return localStorage.getItem('gmail_consent_granted') === 'true';
+// }
 
 // mark the user has granted gmail consent
-export function setGmailConsentGranted(): void
-{
-    localStorage.setItem('gmail_consent_granted', 'true');
-}
+// export function setGmailConsentGranted(): void
+// {
+//     localStorage.setItem('gmail_consent_granted', 'true');
+// }
 
 // get user info including gmail access status
 export function getCurrentUserInfo()

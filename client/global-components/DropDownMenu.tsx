@@ -81,7 +81,7 @@ export function DropDownMenu({
 
   return (
     <motion.div
-      className="flex justify-start items-center bg-transparent border p-2 rounded cursor-pointer overflow-hidden"
+      className="flex justify-start items-center bg-transparent p-2 rounded cursor-pointer overflow-hidden"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={
         selectedOption === "default"

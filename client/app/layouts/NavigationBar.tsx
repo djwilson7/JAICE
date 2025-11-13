@@ -63,7 +63,7 @@ const HeaderEmail = auth.currentUser?.email?.toString();
   return (
     <div className="ml-[5rem] h-screen overflow-x-hidden"> 
       <nav className="absolute left-0 h-screen">
-        <div className="fixed z-100 group left-0 w-[5rem] hover:w-[15rem] h-full bg-[var(--color-blue-1)] flex flex-col items-center p-2 gap-2 shadow-md">
+        <div className="fixed z-200 group left-0 w-[5rem] hover:w-[15rem] h-full bg-[var(--color-blue-1)] flex flex-col items-center p-2 gap-2 shadow-md">
           {/* Title */}
           <header>
             <h1
@@ -254,7 +254,7 @@ const HeaderEmail = auth.currentUser?.email?.toString();
       </nav>
       
       {/* Header */}
-      <header className="p-7 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-10">
+      <header className="p-7 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-100">
         <div className="flex items-start justify-between">
 
           {/* account picture and name */}

@@ -193,3 +193,64 @@ button img
 {
   filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 }
+
+
+
+
+
+/* Light theme overrides */
+html[data-theme="light"] {
+  /* Backgrounds */
+  --color-bg: #F5F7FA;                 /* page background (soft gray-white) */
+  --color-bg-rgb: 245, 247, 250;
+  --color-bg-alt: linear-gradient(160deg, #FFFFFF, #EAF0F7, #FFFFFF);
+
+  /* Blues — tuned for clarity and text contrast */
+  --color-blue-1: #D6E3F3;             /* side panels / card bg */
+  --color-blue-2: #AFCBEF;             /* hover / selected accent */
+  --color-blue-3: #1D4E89;             /* primary accent blue */
+  --color-blue-4: #0E2F56;             /* headings & button text (dark navy) */
+  --color-blue-5: #0B172A;             /* main body text (very dark slate) */
+
+  --color-blue-1-rgb: 214, 227, 243;
+  --color-blue-2-rgb: 175, 203, 239;
+  --color-blue-3-rgb: 29, 78, 137;
+  --color-blue-4-rgb: 14, 47, 86;
+  --color-blue-5-rgb: 11, 23, 42;
+
+  /* Section / semantic accents */
+  --color-light-purple: #EAE2F8;  /* applied section */
+  --color-teal: #D4F3EF;          /* interview section */
+  --color-dark-purple: #E6E2F3;   /* offers */
+  --color-blue-gray: #E3E9F2;     /* accepted */
+  --color-bright-red: #C62828;    /* errors / alerts */
+
+  /* Typography */
+  --text-color-primary: var(--color-blue-5);
+}
+
+/* Ensure text is readable */
+html[data-theme="light"] body {
+  background: var(--color-bg);
+  color: var(--text-color-primary);
+}
+
+/* Button overrides for readability */
+html[data-theme="light"] button {
+  background-color: var(--color-blue-1);
+  color: var(--color-blue-4);
+  border-color: rgba(var(--color-blue-4-rgb), 0.2);
+}
+html[data-theme="light"] button:hover {
+  border-color: rgba(var(--color-blue-4-rgb), 0.4);
+}
+html[data-theme="light"] button.selected {
+  background-color: var(--color-blue-2);
+  color: var(--color-blue-4);
+}
+
+/* Icon filters (slightly darker for visibility) */
+html[data-theme="light"] button img {
+  filter: brightness(0) saturate(100%) invert(12%) sepia(8%)
+          saturate(1250%) hue-rotate(170deg) brightness(90%) contrast(95%);
+}

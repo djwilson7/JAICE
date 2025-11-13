@@ -3,63 +3,25 @@
 import {
   emailSignIn,
   emailSignUp,
-  getCurrentUserInfo,
-  getIdToken,
   googleSignIn,
-  hasGmailAccess,
-  setGmailConsentGranted,
 } from "@/global-services/auth";
 import type { NavigateFunction } from "react-router";
 import { api } from "@/global-services/api";
-
 // Return shape used components: [ok, message?]
 type ApiResponse = [boolean, string?];
 
-async function connectGmailEmailAPIIfNeeded() {
-  // we could use this swait status to display if users need to link email
-  const response = await api("/api/auth/gmail-consent-status");
-  if (response.isConnected) {
-    console.log("Gmail consent status: Established");
-  } else {
-    console.log("Gmail consent status: Not established");
-    const token = await getIdToken();
-    window.location.href = `http://localhost:8000/api/auth/consent?token=${token}`;
-  }
-}
-
-// This will get housed in the connect to gmail function later
-// Checks if the gmail parser is connected, if not redirects to consent screen
-// gains consent and updates the db accordingly
-async function connectGmailAPI() {
+async function checkOrCreateUserInDB(): Promise<ApiResponse> {
   try {
-    // check first if google user already has access if so skip consent flow
-    const userInfo = getCurrentUserInfo();
-
-    if (userInfo?.isGoogleUser) {
-      console.log("User is Google user and already has Gmail access.");
-      return;
+    console.log("Checking or Creating user database record");
+    const response = await api("/api/auth/setup-user-db", { method: "POST" });
+    console.log("User database record check/create response:", response);
+    if (response.status === 200) {
+      return [true, "User database record verified/created"];
+    } else {
+      return [false, "Failed to verify/create user database record"];
     }
-
-    // check first if user already has gmail access
-    if (hasGmailAccess()) {
-      console.log("User already has Gmail access.");
-      return;
-    }
-
-    const response = await api("/api/auth/gmail-consent-status");
-
-    if (response.isConnected) {
-      console.log("Gmail consent status: Established");
-
-      setGmailConsentGranted();
-      return;
-    }
-
-    console.log("Gmail consent status: Not established");
-    const token = await getIdToken();
-    window.location.href = `http://localhost:8000/api/auth/consent?token=${token}`;
-  } catch (error) {
-    console.error("Error checking Gmail consent status:", error);
+  } catch (error: any) {
+    return [false, error?.message ?? "Failed to verify/create user database record"];
   }
 }
 
@@ -77,11 +39,10 @@ export async function CreateNewAccount({
   // takes the email and password, and creates a new account.
   try {
     await emailSignUp(email, password);
-    await api("/api/auth/setup-rls-session", { method: "POST" });
-    connectGmailAPI();
+    await checkOrCreateUserInDB();
     return [true, "Account created successfully"];
   } catch (error: any) {
-    return [false, error?.message ?? "Account creation failed"];
+    return [false, error?.message ?? "Account creation failed"]; 
   }
 }
 
@@ -96,8 +57,7 @@ export async function LogUserIn({
 }): Promise<ApiResponse> {
   try {
     await emailSignIn(email, password);
-    await api("/api/auth/setup-rls-session", { method: "POST" });
-    connectGmailAPI();
+    await checkOrCreateUserInDB();
     navigate("/home");
     return [true, "Login successful"];
   } catch (error: any) {
@@ -113,9 +73,7 @@ export async function thirdPartyLogIn(
   try {
     if (provider === "Google") {
       await googleSignIn();
-      await api("/api/auth/setup-rls-session", { method: "POST" });
-      connectGmailEmailAPIIfNeeded();
-
+      await checkOrCreateUserInDB();
       console.log(
         "Google sign-in completed - Gmail access already granted through popup"
       );

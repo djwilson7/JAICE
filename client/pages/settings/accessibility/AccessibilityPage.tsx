@@ -1,17 +1,47 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+type Theme = "light" | "dark";
+const THEME_KEY = "theme";
 
 export function AccessibilityPage() {
-  // Local UI state only (no external functionality)
-  const [textSize, setTextSize] = React.useState<"sm" | "md" | "lg">("md");
-  const [theme, setTheme] = React.useState<"light" | "dark">("light");
-  const [reduceMotion, setReduceMotion] = React.useState<boolean>(true);
-  const [contrast, setContrast] = React.useState<number>(1); // 0..3
+  // --- Text size, reduce motion, contrast left as local UI state only
+  const [textSize, setTextSize] = useState<"sm" | "md" | "lg">("md");
+
+  // --- THEME: initialize from localStorage or system preference
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = (localStorage.getItem(THEME_KEY) as Theme | null) ?? null;
+    if (saved === "light" || saved === "dark") return saved;
+    const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+    return prefersLight ? "light" : "dark";
+  });
+
+  const [reduceMotion, setReduceMotion] = useState<boolean>(true);
+  const [contrast, setContrast] = useState<number>(1); // 0..3
+
+  // --- Apply theme to <html data-theme="..."> and persist
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
+  // --- Keep in sync if the OS theme changes (only if user hasn't chosen explicitly)
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const handler = (e: MediaQueryListEvent) => {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (!saved) setTheme(e.matches ? "light" : "dark");
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
 
   return (
-    <div className="w-full h-full bg-slate-950 text-slate-100"
-    style={{background: "var(--color-bg)"}}>
+    <div
+      className="w-full h-full bg-slate-950 text-slate-100"
+      style={{ background: "var(--color-bg)", color: "var(--text-color-primary)" }}
+    >
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Left heading */}
@@ -62,7 +92,7 @@ export function AccessibilityPage() {
                     { key: "dark", label: "🌙", aria: "Dark theme" },
                   ]}
                   value={theme}
-                  onChange={(k) => setTheme(k as "light" | "dark")}
+                  onChange={(k) => setTheme(k as Theme)}
                   renderItem={(_, active) => (
                     <span
                       className={[
@@ -231,10 +261,7 @@ function ContrastLabel({
     <button
       type="button"
       onClick={onClick}
-      className={[
-        "text-left",
-        active ? "text-slate-100" : "text-slate-400",
-      ].join(" ")}
+      className={["text-left", active ? "text-slate-100" : "text-slate-400"].join(" ")}
       title={label}
     >
       <div>{label}</div>

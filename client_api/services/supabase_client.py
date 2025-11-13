@@ -5,6 +5,7 @@ from asyncpg.exceptions import InvalidPasswordError, CannotConnectNowError
 import os
 from dotenv import load_dotenv
 from common.logger import get_logger
+from contextlib import asynccontextmanager
 
 logging = get_logger()
 # Set up logging for granular debug information
@@ -62,6 +63,23 @@ async def connect_to_db(max_retries: int = 5, retry_delay: int = 5):
     logging.error("FATAL: Max retries exceeded for database connection.")
     db_pool = None
     return None
+
+@asynccontextmanager
+async def get_connection():
+    global db_pool
+    if db_pool is None:
+        logging.error("Database pool not initialized.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database pool not initialized.",
+        )
+    conn = await db_pool.acquire()
+    try:
+        logging.info("Acquired a database connection from the pool.")
+        yield conn
+    finally:
+        logging.info("Releasing the database connection back to the pool.")
+        await db_pool.release(conn)
 
 
 async def close_db_connection():
