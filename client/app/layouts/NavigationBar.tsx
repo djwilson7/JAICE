@@ -256,7 +256,7 @@ export function NavigationBar() {
 
       {/* Header */}
       <motion.header
-        className="px-8 py-8 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-100"
+        className="flex flex-row px-8 py-8 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-100"
         variants={{
           rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
@@ -265,9 +265,9 @@ export function NavigationBar() {
         animate={navIsHovered ? "hover" : "rest"}
         transition={{ duration: animationDuration }}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex w-full h-full items-center justify-between gap-4">
           {/* account picture and name */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-1/2 h-full">
             {/* picture placeholder or first char of first name */}
             <div className="w-20 h-20 rounded-full bg-gray-600">
               {profilePic ? (
@@ -287,25 +287,25 @@ export function NavigationBar() {
 
             {/* name placeholder */}
             <div className="flex flex-col text-white">
-              <h2 className="text-2xl text-left font-bold">
+              <h2 className="text-2xl text-left font-bold line-clamp-1">
                 {firstName} {lastName}
               </h2>
-              <small className="text-gray-300 text-left monospace ">
+              <small className="text-gray-300 text-left line-clamp-1">
                 {headerEmail}
               </small>
-              <caption className="text-gray-300 text-left monospace">
+              <caption className="text-gray-300 text-left line-clamp-1">
                 Fresh Starter
               </caption>
             </div>
           </div>
 
           {/*search bar */}
-          <div className="flex items-start mr-6">
-            <div className="relative">
+          <div className="flex w-1/2 h-full justify-end">
+            <div className="relative w-full lg:w-1/2">
               <input
                 type="text"
                 placeholder="Search..."
-                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-96"
+                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
               />
 
               {/* search icon inside the input field */}
