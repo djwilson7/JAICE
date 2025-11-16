@@ -25,18 +25,19 @@ const MenuExpandButton = ({
   setHoverEnabled: (value: boolean) => void;
 }) => {
   return (
-    <button onClick={() => setHoverEnabled(!hoverEnabled)}
-       className="flex absolute top-0 left-0 m-2 z-201"
-       style={{
-         position: "absolute",
-         top: 0,
-         left: 0,
-         margin: "0.5rem",
-         zIndex: 201,
-         height: "2rem",
-         width: "2rem",
-         padding: "0.5rem",
-       }}
+    <button
+      onClick={() => setHoverEnabled(!hoverEnabled)}
+      className="flex absolute top-0 left-0 m-2 z-201"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        margin: "0.5rem",
+        zIndex: 201,
+        height: "2rem",
+        width: "2rem",
+        padding: "0.5rem",
+      }}
     >
       <img
         src={hoverEnabled ? compressIcon : expandIcon}
@@ -115,10 +116,6 @@ export function NavigationBar() {
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
   const animationDuration = 0.2;
   const [hoverEnabled, setHoverEnabled] = useState<boolean>(false);
-
-  const handleHoverToggle = () => {
-    setHoverEnabled(!hoverEnabled);
-  };
 
   useEffect(() => {
     // Update selected button based on current path
