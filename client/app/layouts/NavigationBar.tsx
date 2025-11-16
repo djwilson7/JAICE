@@ -12,18 +12,53 @@ import accessibilityIcon from "@/assets/icons/hand-paper.svg";
 import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
 import searchIcon from "@/assets/icons/search.svg";
-import { motion } from "framer-motion";
+import compressIcon from "@/assets/icons/compress.svg";
+import expandIcon from "@/assets/icons/expand.svg";
+
+import { hover, motion } from "framer-motion";
+
+const MenuExpandButton = ({
+  hoverEnabled,
+  setHoverEnabled,
+}: {
+  hoverEnabled: boolean;
+  setHoverEnabled: (value: boolean) => void;
+}) => {
+  return (
+    <button onClick={() => setHoverEnabled(!hoverEnabled)}
+       className="flex absolute top-0 left-0 m-2 z-201"
+       style={{
+         position: "absolute",
+         top: 0,
+         left: 0,
+         margin: "0.5rem",
+         zIndex: 201,
+         height: "2rem",
+         width: "2rem",
+         padding: "0.5rem",
+       }}
+    >
+      <img
+        src={hoverEnabled ? compressIcon : expandIcon}
+        alt={hoverEnabled ? "Compress" : "Expand"}
+        className="object-fit aspect-square w-full h-full"
+      />
+    </button>
+  );
+};
 
 const NavButton = ({
   icon,
   label,
   onClick,
   isSelected,
+  hoverEnabled,
 }: {
   icon: string;
   label: string;
   onClick: () => void;
   isSelected: boolean;
+  hoverEnabled: boolean;
 }) => {
   return (
     <div className="flex flex-row items-center gap-2">
@@ -40,7 +75,7 @@ const NavButton = ({
           alignItems: "center",
         }}
         variants={{
-          rest: { opacity: 0 },
+          rest: { opacity: hoverEnabled ? 0 : 1 },
           hover: { opacity: 1 },
         }}
         transition={{ duration: 0.15 }}
@@ -79,6 +114,11 @@ export function NavigationBar() {
   const [selectedButton, setSelectedButton] = useState<string>("");
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
   const animationDuration = 0.2;
+  const [hoverEnabled, setHoverEnabled] = useState<boolean>(false);
+
+  const handleHoverToggle = () => {
+    setHoverEnabled(!hoverEnabled);
+  };
 
   useEffect(() => {
     // Update selected button based on current path
@@ -109,18 +149,24 @@ export function NavigationBar() {
   const firstName = user?.displayName?.split(" ")[0] || null;
   const lastName = user?.displayName?.split(" ").slice(1).join(" ") || null;
   const headerEmail = user?.email?.toString() || null;
+  const restWidth = hoverEnabled ? "5rem" : "15rem";
 
   return (
     <div className="h-screen overflow-x-hidden">
+      <MenuExpandButton
+        hoverEnabled={hoverEnabled}
+        setHoverEnabled={setHoverEnabled}
+      />
+      {/* Navigation Bar */}
       <nav className="absolute left-0 h-screen">
         <motion.div
-          className="fixed z-200 left-0 h-full bg-[var(--color-blue-1)] flex flex-col items-left justify-center p-1 gap-3 shadow-md overflow-hidden"
+          className="fixed z-200 left-0 h-full bg-[var(--color-blue-1)] flex flex-col items-left justify-center p-1 gap-3 pt-10 shadow-md overflow-hidden"
           variants={{
-            rest: { width: "5rem" },
+            rest: { width: restWidth },
             hover: { width: "15rem" },
           }}
           initial="rest"
-          animate={navIsHovered ? "hover" : "rest"} 
+          animate={navIsHovered ? "hover" : "rest"}
           onMouseEnter={() => setNavIsHovered(true)}
           onMouseLeave={() => setNavIsHovered(false)}
           transition={{ duration: animationDuration }}
@@ -152,7 +198,7 @@ export function NavigationBar() {
               className="text-2xl line-clamp-1 text-white text-left"
               style={{ fontFamily: "var(--font-title)" }}
               variants={{
-                rest: { opacity: 0 },
+                rest: { opacity: hoverEnabled ? 0 : 1 },
                 hover: { opacity: 1 },
               }}
               transition={{ duration: animationDuration }}
@@ -165,6 +211,7 @@ export function NavigationBar() {
 
           <div className="flex flex-col items-left  h-full w-full justify-between group-hover:items-start">
             {/* Primary Page Buttons*/}
+
             <section aria-label="Navigation Buttons">
               <ul
                 className="flex flex-col items-start gap-2"
@@ -177,6 +224,7 @@ export function NavigationBar() {
                       label={option.label}
                       onClick={() => handleButtonClick(option.route, key)}
                       isSelected={selectedButton === key}
+                      hoverEnabled={hoverEnabled}
                     />
                   </li>
                 ))}
@@ -196,6 +244,7 @@ export function NavigationBar() {
                       label={option.label}
                       onClick={() => handleButtonClick(option.route, key)}
                       isSelected={selectedButton === key}
+                      hoverEnabled={hoverEnabled}
                     />
                   </li>
                 ))}
@@ -207,9 +256,9 @@ export function NavigationBar() {
 
       {/* Header */}
       <motion.header
-        className="px-8 py-4 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-100"
+        className="px-8 py-8 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-100"
         variants={{
-          rest: { marginLeft: "5rem" },
+          rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
         }}
         initial="rest"
@@ -241,8 +290,12 @@ export function NavigationBar() {
               <h2 className="text-2xl text-left font-bold">
                 {firstName} {lastName}
               </h2>
-              <small className="text-gray-300 text-left monospace ">{headerEmail}</small>
-              <caption className="text-gray-300 text-left monospace">Fresh Starter</caption>
+              <small className="text-gray-300 text-left monospace ">
+                {headerEmail}
+              </small>
+              <caption className="text-gray-300 text-left monospace">
+                Fresh Starter
+              </caption>
             </div>
           </div>
 
@@ -273,7 +326,7 @@ export function NavigationBar() {
       <motion.div
         className="overflow-x-auto"
         variants={{
-          rest: { marginLeft: "5rem" },
+          rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
         }}
         animate={navIsHovered ? "hover" : "rest"}
