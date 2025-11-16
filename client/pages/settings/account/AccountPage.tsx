@@ -274,7 +274,7 @@ export function AccountPage() {
                 </div>
                 <div className="text-sm font-light">
                   <small className="text-sm text-gray-400 font-light">
-                    We support PNGs, JPGs, and GIFs under 2MB.
+                    Update your profile picture URL.
                   </small>
                 </div>
               </div>
