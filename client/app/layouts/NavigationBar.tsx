@@ -115,7 +115,7 @@ export function NavigationBar() {
   const [selectedButton, setSelectedButton] = useState<string>("");
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
   const animationDuration = 0.2;
-  const [hoverEnabled, setHoverEnabled] = useState<boolean>(false);
+  const [hoverEnabled, setHoverEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     // Update selected button based on current path
@@ -157,7 +157,7 @@ export function NavigationBar() {
       {/* Navigation Bar */}
       <nav className="absolute left-0 h-screen">
         <motion.div
-          className="fixed z-200 left-0 h-full bg-[var(--color-blue-1)] flex flex-col items-left justify-center p-1 gap-3 pt-10 shadow-md overflow-hidden"
+          className="fixed z-200 left-0 h-full bg-[var(--color-blue-1)] flex flex-col items-left justify-center p-1 gap-3 pt-10 overflow-hidden"
           variants={{
             rest: { width: restWidth },
             hover: { width: "15rem" },
@@ -253,7 +253,7 @@ export function NavigationBar() {
 
       {/* Header */}
       <motion.header
-        className="flex flex-row px-8 py-8 bg-[var(--color-blue-1)] shadow-md sticky top-0 z-100"
+        className="flex flex-row px-8 py-8 bg-[var(--color-blue-1)] sticky top-0 z-100"
         variants={{
           rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
@@ -321,7 +321,7 @@ export function NavigationBar() {
         </div>
       </motion.header>
       <motion.div
-        className="overflow-x-auto"
+        className="overflow-x-auto shadow-inner"
         variants={{
           rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
