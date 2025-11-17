@@ -5,23 +5,82 @@ import { Card, ChartHost } from "./Card";
 import { Modal } from "./Modal";
 import { makeDarkOptions, c, ca } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
+import { api } from "@/global-services/api";
 
-export function AppsByCategoryCard({ className = "", height }: { className?: string; height?: number | string }) {
+type CategoryDatum = {
+    category: string;
+    count: number;
+};
+
+export function AppsByCategoryCard({
+    className = "",
+    height,
+}: {
+    className?: string;
+    height?: number | string;
+}) {
     const [open, setOpen] = useState(false);
-    useEffect(() => applyChartDefaults(), []);
 
-    const labels = ["Engineering", "Design", "Data", "Operations", "Other"];
-    const values = [14, 9, 7, 5, 3];
+    // Dynamic chart values
+    const [labels, setLabels] = useState<string[]>([]);
+    const [values, setValues] = useState<number[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Chart.js defaults
+    useEffect(() => {
+        applyChartDefaults();
+    }, []);
+
+    // Fetch category data
+    useEffect(() => {
+        let alive = true;
+
+        async function load() {
+            try {
+                setLoading(true);
+                setError(null);
+
+                // ✅ USE THE JAICE API CLIENT (handles base URL + RLS + auth)
+                const res = await api("/api/dashboard/apps-by-category", {
+                    method: "GET",
+                });
+
+                if (!alive) return;
+
+                const data = (res?.data ?? []) as CategoryDatum[];
+
+                setLabels(data.map((d) => d.category));
+                setValues(data.map((d) => d.count));
+            } catch (err) {
+                if (!alive) return;
+
+                let message = "Failed to load category data";
+                if (err instanceof Error) message = err.message;
+
+                setError(message);
+            } finally {
+                if (alive) setLoading(false);
+            }
+        }
+
+        load();
+        return () => {
+            alive = false;
+        };
+    }, []);
 
     const colors = {
         barFill: ca("--color-teal-rgb", 0.55),
         barLine: c("--color-teal-rgb"),
         grid: "rgba(148,163,184,0.18)",
         ticks: "#E5E7EB",
-        legend: "F3F4F6",
+        legend: "#F3F4F6",
         axis: "rgba(203,213,225,0.35)",
         tooltipBg: "rgba(17,24,39,0.95)",
     };
+
+    const maxValue = values.length ? Math.max(...values) : 0;
 
     const data: ChartData<"bar"> = {
         labels,
@@ -45,7 +104,9 @@ export function AppsByCategoryCard({ className = "", height }: { className?: str
     const options: ChartOptions<"bar"> = makeDarkOptions<"bar">({
         indexAxis: "y",
         plugins: {
-            legend: { labels: { color: colors.legend, usePointStyle: true, boxWidth: 10 } },
+            legend: {
+                labels: { color: colors.legend, usePointStyle: true, boxWidth: 10 },
+            },
             tooltip: {
                 backgroundColor: colors.tooltipBg,
                 titleColor: "#fff",
@@ -57,7 +118,7 @@ export function AppsByCategoryCard({ className = "", height }: { className?: str
         scales: {
             x: {
                 beginAtZero: true,
-                suggestedMax: Math.max(...values) + 2,
+                suggestedMax: maxValue + 2,
                 ticks: { color: colors.ticks, font: { size: 12, weight: 500 } },
                 grid: { color: colors.grid },
                 border: { color: colors.axis },
@@ -72,6 +133,34 @@ export function AppsByCategoryCard({ className = "", height }: { className?: str
         maintainAspectRatio: false,
     });
 
+    const content = () => {
+        if (loading) {
+            return (
+                <div className="flex h-full items-center justify-center text-sm text-slate-300">
+                    Loading category data...
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="flex h-full items-center justify-center text-sm text-red-400">
+                    {error}
+                </div>
+            );
+        }
+
+        if (!values.length) {
+            return (
+                <div className="flex h-full items-center justify-center text-sm text-slate-300">
+                    No applications categorized yet.
+                </div>
+            );
+        }
+
+        return <Bar data={data} options={options} />;
+    };
+
     return (
         <>
             <Card
@@ -82,11 +171,11 @@ export function AppsByCategoryCard({ className = "", height }: { className?: str
                 expandable
                 onExpand={() => setOpen(true)}
             >
-                <ChartHost><Bar data={data} options={options} /></ChartHost>
+                <ChartHost>{content()}</ChartHost>
             </Card>
 
             <Modal open={open} onClose={() => setOpen(false)} title="Apps by Category">
-                <ChartHost><Bar data={data} options={options} /></ChartHost>
+                <ChartHost>{content()}</ChartHost>
             </Modal>
         </>
     );
