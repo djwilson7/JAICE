@@ -17,12 +17,12 @@ EMAILS_PER_BATCH = 10
 MAX_RETRIES = 5
 RETRY_DELAY = 15
 POST_BATCH_SLEEP_SEC = 0.5
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID_LOCAL") or os.getenv("GOOGLE_CLIENT_ID_PROD")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET_LOCAL") or os.getenv("GOOGLE_CLIENT_SECRET_PROD")
+GOOGLE_TOKEN_URL = os.getenv("GOOGLE_TOKEN_URL", "https://oauth2.googleapis.com/token")
 
 
-REDIS_URL = os.getenv("CELERY_BROKER_URL")
+REDIS_URL = os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD")
 if not REDIS_URL:
     raise ValueError("CELERY_BROKER_URL environment variable is not set.")
 

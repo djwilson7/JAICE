@@ -4,7 +4,7 @@ from kombu import Queue
 from shared_worker_library.utils.task_definitions import TaskType
 
 celery_app = Celery("Workers")
-celery_app.conf.broker_url = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0") # type: ignore[attr-defined]
+celery_app.conf.broker_url = os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD") # type: ignore[attr-defined]
 
 # auto-register queues
 celery_app.conf.task_queues = [

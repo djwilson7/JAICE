@@ -6,6 +6,7 @@ import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import type { JobCardType } from "@/types/jobCardType";
+import { auth } from "@/global-services/firebase";
 
 export function JobCard({
   job,
@@ -51,7 +52,18 @@ export function JobCard({
 
   // open email in new window
   const openMessage = (messageId: string): void => {
-    const url = `https://mail.google.com/mail/u/0/#inbox/${messageId}`;
+    // get the current user's email from Firebase Authentication
+    const userEmail = auth.currentUser?.email;
+
+    // if the user is not authenticated, we cannot open the email, so we log an error and return early
+    if (!userEmail) 
+    {
+      console.error("User is not authenticated. Cannot open email.");
+      return;
+    }
+
+    // open the email in a new window
+    const url = `https://mail.google.com/mail/u/${userEmail}/#inbox/${messageId}`;
     window.open(url, "_blank");
   };
 

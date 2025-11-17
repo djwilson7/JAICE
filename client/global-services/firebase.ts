@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, browserLocalPersistence, setPersistence, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, browserLocalPersistence, setPersistence, GoogleAuthProvider, updateProfile } from "firebase/auth";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -19,6 +19,7 @@ const app = getApps.length ? getApps()[0] : initializeApp(firebaseConfig);
 // Initialize Firebase Authentication and set persistence
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export { updateProfile };
 
 // // gmail API scopes to request during sign-in
 // googleProvider.addScope('https://www.googleapis.com/auth/gmail.readonly');

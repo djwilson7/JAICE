@@ -1,3 +1,5 @@
+import json
+import re
 import uuid
 import os, jwt, httpx
 from datetime import datetime, timedelta, timezone
@@ -14,29 +16,47 @@ from pydantic import BaseModel
 
 logging = get_logger()
 
-
-celery_client = Celery("core_api_client")
-celery_client.conf.broker_url = os.getenv("CELERY_BROKER_URL")
 # Create a new router object
 router = APIRouter()
 
-FRONTEND_DASHBOARD_URL = os.getenv("FRONTEND_DASHBOARD_URL")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
-BACKGROUND_DURATION_DAYS = int(os.getenv("BACKGROUND_DURATION_DAYS"))
-SCOPES = os.getenv("PERMISSIONS_SCOPES").strip("[]").replace('"', "").split(",")
-REDIRECT_URI = os.getenv("REDIRECT_URI")
-CLIENT_SECRETS_FILE = Path(__file__).resolve().parent.parent / os.getenv(
-    "CLIENT_FILE_NAME"
+celery_client = Celery("core_api_client")
+
+# LOCAL VS PROD ENV IMPORT VARIABLES (TRY PROD FALLBACK TO LOCAL)
+celery_client.conf.update(
+    broker_url=str(os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD"))
 )
-GOOGLE_REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke"
+
+BASE_URL = os.getenv("VITE_API_BASE_URL_LOCAL") or os.getenv("VITE_API_BASE_URL_PROD")
+FRONTEND_DASHBOARD_URL = os.getenv("FRONTEND_DASHBOARD_URL_LOCAL") or os.getenv("FRONTEND_DASHBOARD_URL_PROD")
+CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_LOCAL") or os.getenv("CLIENT_SECRETS_PROD")
+
+# STANDARD ENV VARS (Doesn't care about local vs prod)
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+BACKGROUND_DURATION_DAYS = int(os.getenv("BACKGROUND_DURATION_DAYS", "365"))
+SCOPES = os.getenv("PERMISSIONS_SCOPES", "[]").strip("[]").replace('"', "").split(",")
+REDIRECT_URI = os.getenv("REDIRECT_URI", "/api/auth/google/callback")
+GOOGLE_REVOKE_ENDPOINT = os.getenv("GOOGLE_REVOKE_ENDPOINT", "https://oauth2.googleapis.com/revoke")
+
 
 @router.get("/consent", summary="Generates the Google OAuth2 consent screen URL.")
 def get_oauth_consent_url(user: dict = Depends(get_user_from_token_query)):
     uid = user.get("uid")
     logging.info(f"Generating OAuth2 consent URL.")
 
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
+    if not CLIENT_SECRETS_FILE:
+        logging.error("FATAL: CLIENT_SECRETS environment variable is not set.")
+        raise ValueError("CLIENT_SECRETS environment variable is not set.")
+    CLIENT_CONFIG = json.loads(CLIENT_SECRETS_FILE)
+    logging.info(f"Base URL: {BASE_URL}, Redirect URI: {REDIRECT_URI}")
+    
+    if not BASE_URL or not REDIRECT_URI:
+        logging.error("FATAL: BASE_URL or REDIRECT_URI environment variable is not set.")
+        raise ValueError("BASE_URL or REDIRECT_URI environment variable is not set.")
+    
+    redirect = BASE_URL + REDIRECT_URI
+    logging.info(f"Redirect URI: {redirect}")
+    flow = Flow.from_client_config(
+        CLIENT_CONFIG, scopes=SCOPES, redirect_uri=redirect
     )
 
     auth_url, state = flow.authorization_url(access_type="offline", state=uid)
@@ -52,7 +72,7 @@ async def oauth_callback(request: Request, code: str, state: str):
     """
     uid = state
     logging.info(f"Received OAuth callback for user.")
-    
+
     redis = request.app.state.redis
     raw_value = await redis.get(f"gmail_sync_window:{uid}")
     await redis.delete(f"gmail_sync_window:{uid}")
@@ -70,11 +90,27 @@ async def oauth_callback(request: Request, code: str, state: str):
             days_to_sync = 14
 
     start_date = datetime.utcnow() - timedelta(days=days_to_sync)
-    logging.info(f"Using {days_to_sync}-day sync window for user {uid} (start date: {start_date.isoformat()})")
-
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
+    logging.info(
+        f"Using {days_to_sync}-day sync window for user {uid} (start date: {start_date.isoformat()})"
     )
+    if not CLIENT_SECRETS_FILE:
+        logging.error("FATAL: CLIENT_SECRETS environment variable is not set.")
+        raise ValueError("CLIENT_SECRETS environment variable is not set.")
+    
+    CLIENT_CONFIG = json.loads(CLIENT_SECRETS_FILE)
+    
+    if not BASE_URL or not REDIRECT_URI:
+        logging.error("FATAL: BASE_URL or REDIRECT_URI environment variable is not set.")
+        raise ValueError("BASE_URL or REDIRECT_URI environment variable is not set.")
+    
+    redirect = BASE_URL + REDIRECT_URI
+
+    flow = Flow.from_client_config(
+        CLIENT_CONFIG,
+        scopes=SCOPES,
+        redirect_uri=redirect
+    )
+
 
     try:
         flow.fetch_token(code=code)
@@ -137,8 +173,11 @@ async def oauth_callback(request: Request, code: str, state: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to enqueue initial Gmail sync task.",
         )
-
+    if not FRONTEND_DASHBOARD_URL:
+        logging.error("FATAL: FRONTEND_DASHBOARD_URL environment variable is not set.")
+        raise ValueError("FRONTEND_DASHBOARD_URL environment variable is not set.")
     return RedirectResponse(FRONTEND_DASHBOARD_URL)
+
 
 def mint_jwt(uid: str, exp: int | None = None) -> str:
     logging.info(f"Minting RLS JWT for user.")
@@ -152,7 +191,7 @@ def mint_jwt(uid: str, exp: int | None = None) -> str:
 
     iat = datetime.now(timezone.utc)
     adj_iat = iat - timedelta(minutes=2)
-    
+
     if exp is not None:
         expiration_time = iat + timedelta(minutes=exp)
         logging.debug(f"Frontend JWT created: {expiration_time.isoformat()}")
@@ -224,23 +263,25 @@ async def phase_2_store_and_respond(
 async def revoke_gmail_consent(
     request: Request, user: dict = Depends(get_current_user)
 ):
-    uid = user.get('uid')
+    uid = user.get("uid")
     logging.info(f"Initiating Gmail consent revocation for user: {uid}")
     pool = request.app.state.pool
-    
+
     encrypted_refresh_token = None
     try:
         async with pool.acquire() as conn:
             record = await conn.fetchrow(
                 "SELECT google_refresh_token FROM user_account WHERE user_id = $1", uid
             )
-        
+
         if record is None or not record["google_refresh_token"]:
-            logging.warning(f"No refresh token found for user {uid}. Proceeding with database cleanup.")
-            refresh_token_to_revoke = None 
+            logging.warning(
+                f"No refresh token found for user {uid}. Proceeding with database cleanup."
+            )
+            refresh_token_to_revoke = None
         else:
             encrypted_refresh_token = record["google_refresh_token"]
-            refresh_token_to_revoke = decrypt_token(encrypted_refresh_token) 
+            refresh_token_to_revoke = decrypt_token(encrypted_refresh_token)
 
     except Exception as e:
         logging.error(f"DB READ ERROR during revocation for user {uid}: {e}")
@@ -255,23 +296,27 @@ async def revoke_gmail_consent(
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     GOOGLE_REVOKE_ENDPOINT,
-                    data={"token": refresh_token_to_revoke}, 
+                    data={"token": refresh_token_to_revoke},
                 )
-            
+
             if response.status_code == status.HTTP_200_OK:
-                logging.info(f"Successfully revoked token on Google's side for user: {uid}")
+                logging.info(
+                    f"Successfully revoked token on Google's side for user: {uid}"
+                )
             else:
                 logging.error(
                     f"Google Revocation failed (Status: {response.status_code}) for user {uid}. "
                     f"Response: {response.text}"
                 )
-                pass 
+                pass
 
         except httpx.RequestError as e:
             logging.error(f"HTTPX error during Google revocation for user {uid}: {e}")
-            pass 
+            pass
         except Exception as e:
-            logging.error(f"An unexpected error occurred during Google revocation for user {uid}: {e}")
+            logging.error(
+                f"An unexpected error occurred during Google revocation for user {uid}: {e}"
+            )
             pass
 
     logging.info(f"Clearing local refresh token and resetting flags for user: {uid}")
@@ -295,13 +340,14 @@ async def revoke_gmail_consent(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while cleaning up connection status.",
         )
-    
+
     # Optional: Dispatch a task to stop any ongoing sync operations
-    
+
     return JSONResponse(
         {"status": "success", "message": "Gmail consent successfully revoked."},
-        status_code=status.HTTP_200_OK
+        status_code=status.HTTP_200_OK,
     )
+
 
 @router.post(
     "/setup-user-db",
@@ -309,11 +355,13 @@ async def revoke_gmail_consent(
     summary="Checks if the user already has a database record.",
 )
 async def setup_user_db(request: Request, user: dict = Depends(get_current_user)):
-    uid = user.get("uid")
-    email = user.get("email")
+    uid = user.get("uid", "")
+    email = user.get("email", "")
+    
     pool = request.app.state.pool
     logging.info(f"Checking database record for user: {uid}")
-    
+    # So in here we would also write in the users name as well .
+
     try:
         async with pool.acquire() as conn:
             record = await conn.fetchrow(
@@ -323,7 +371,7 @@ async def setup_user_db(request: Request, user: dict = Depends(get_current_user)
         if record:
             logging.info(f"User {uid} already exists in DB.")
             return {"status": "exists", "user_id": uid}
-        
+
         DUMMY_REFRESH_TOKEN = "NO_GMAIL_TOKEN_GRANTED"
 
         jwt_token = mint_jwt(uid)
@@ -340,7 +388,7 @@ async def setup_user_db(request: Request, user: dict = Depends(get_current_user)
             )
             logging.info(f"Created new record for user {uid}")
             return {"status": "created", "user_id": uid}
-        
+
     except Exception as e:
         logging.error(f"DB error during user setup: {e}")
         raise HTTPException(
@@ -348,8 +396,10 @@ async def setup_user_db(request: Request, user: dict = Depends(get_current_user)
             detail="Database error while setting up user record.",
         )
 
+
 class SetupRLSBody(BaseModel):
     daysToSync: int | None = 14
+
 
 @router.post(
     "/setup-rls-session",
@@ -361,7 +411,7 @@ async def setup_rls_session(
     user_data: dict = Depends(get_current_user),
     body: SetupRLSBody = Body(...),
 ):
-    uid = user_data.get("uid")
+    uid = user_data.get("uid", "")
     pool = request.app.state.pool
     days_to_sync = body.daysToSync or 3
     logging.info(f"Setting up RLS session for user: {uid}, days_to_sync={days_to_sync}")
@@ -397,7 +447,7 @@ async def setup_rls_session(
         logging.info(f"Stored Gmail sync window ({days_to_sync} days) for user {uid}")
 
         DUMMY_REFRESH_TOKEN = "NO_GMAIL_TOKEN_GRANTED"
-        
+
         return await phase_2_store_and_respond(
             request,
             user_data,
@@ -412,9 +462,13 @@ async def setup_rls_session(
             detail="Critical system error during RLS setup",
         )
 
-@router.post("/setup-frontend-rls-session", summary="Sets up a short-lived RLS JWT for frontend use.")
+
+@router.post(
+    "/setup-frontend-rls-session",
+    summary="Sets up a short-lived RLS JWT for frontend use.",
+)
 async def setup_frontend_rls_session(user: dict = Depends(get_current_user)):
-    uid = user.get("uid")
+    uid = user.get("uid", "")
     try:
         rls_jwt = mint_jwt(uid, exp=30)  # 30-minute token for active session
         return {"status": "success", "rls_jwt": rls_jwt}
@@ -430,7 +484,7 @@ async def setup_frontend_rls_session(user: dict = Depends(get_current_user)):
 async def is_gmail_consent_provided(
     request: Request, user: dict = Depends(get_current_user)
 ):
-    uid = user.get("uid")
+    uid = user.get("uid", "")
     pool = request.app.state.pool
 
     logging.info(f"Fetching gmail status for user: {uid}")

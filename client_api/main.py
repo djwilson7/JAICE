@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
         raise
 
     try:
-        broker_url = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+        broker_url = os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD")
         app.state.redis = redis.from_url(broker_url, decode_responses=True)
         logging.info(f"Redis client connected at {broker_url}")
     except Exception as e:
@@ -62,9 +62,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Allow the frontend to access the backend
+origins_raw = os.getenv("MIDDLEWARE_ORIGINS", "")
+allow_origins = [o.strip() for o in origins_raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*", "Authorization", "Content-Type"],
