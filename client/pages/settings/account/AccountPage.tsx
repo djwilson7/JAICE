@@ -1,6 +1,5 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { auth } from "@/global-services/firebase";
 import Button from "@/global-components/button";
 import { deleteCurrentUser, getIdToken } from "@/global-services/auth";
 import { useEffect, useState } from "react";
@@ -8,21 +7,35 @@ import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { DaysToSync } from "./account-components/DaysToSync";
-
+import { useAuth } from "@/global-components/AuthProvider";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
 
-const GMAIL_CONSENT_URL = import.meta.env.VITE_GMAIL_CONSENT_URL ?? "/api/auth/consent";
+const GMAIL_CONSENT_URL =
+  import.meta.env.VITE_GMAIL_CONSENT_URL ?? "/api/auth/consent";
 
 export function AccountPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [twoFAError, setTwoFAError] = useState<string | null>(null);
+  const [saveProfileError, setSaveProfileError] = useState<string | null>(null);
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
     null
   );
+
+  const [showChangePhotoModal, setShowChangePhotoModal] = useState(false);
+
+  const handleShowChangePhotoModal = () => {
+    setShowChangePhotoModal(true);
+
+  };
 
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailBusy, setGmailBusy] = useState(false);
@@ -31,6 +44,69 @@ export function AccountPage() {
 
   const daysToSyncOptions = [3, 7, 14, 45];
 
+  const { user, loading, applyProfileUpdate } = useAuth();
+  const firstName: string = user?.displayName?.split(" ")[0] || "User";
+  const lastName: string = user?.displayName?.split(" ").slice(1).join(" ") || "";
+  const phoneNumber: string = user?.phoneNumber || "";
+  const profilePicURL: string = user?.photoURL || "";
+
+  const [firstNameField, setFirstNameField] = useState<string>(
+    firstName
+  );
+  const [lastNameField, setLastNameField] = useState<string>(
+    lastName
+  );
+  const [phoneNumberField, setPhoneNumberField] = useState<string>(
+    phoneNumber
+  );
+
+  const handleFirstNameInput = (value: string) => {
+    setFirstNameField(value);
+    console.log("First name input:", firstNameField);
+  };
+
+  const handleLastNameInput = (value: string) => {
+    setLastNameField(value);
+    console.log("Last name input:", lastNameField);
+  };
+
+  const handlePhoneNumberInput = (value: string) => {
+    setPhoneNumberField(value);
+    console.log("Phone number input:", phoneNumberField);
+  };
+
+  const handleSaveProfile = async () => {
+    setSaveProfileError(null);
+    setBusy(true);
+
+    if (!user) {
+      setSaveProfileError("No user is currently signed in.");
+      setBusy(false);
+      return;
+    }
+    const fName = firstNameField.toLowerCase().trim();
+    const lName = lastNameField.toLowerCase().trim();
+
+    const fNameC = fName.charAt(0).toUpperCase() + fName.slice(1);
+    const lNameC = lName.charAt(0).toUpperCase() + lName.slice(1);
+    
+    setFirstNameField(fNameC);
+    setLastNameField(lNameC);
+
+    try {
+      await applyProfileUpdate(
+        `${fNameC} ${lNameC}`.trim(),
+        profilePicURL || ""
+      );
+      console.log("Profile updated successfully.");
+      navigate(location.pathname);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      setSaveProfileError("Failed to update profile. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
     checkGmailStatus();
@@ -49,6 +125,7 @@ export function AccountPage() {
       setGmailError("Error checking gmail status.");
     }
   }
+
   async function handleShowModal() {
     if (gmailConnected) {
       await handleGmailLinking();
@@ -139,7 +216,7 @@ export function AccountPage() {
     ) {
       setDeleteAccountError("Please re-authenticate and try again.");
       // If you support email/password, collect the current password and retry:
-      const email = auth.currentUser?.email?.toString();
+      const email = useAuth().user?.email?.toString();
       const password =
         prompt("Confirm your current password to continue:") || "";
       if (password) {
@@ -181,27 +258,23 @@ export function AccountPage() {
             <hr className="w-full border-t-1 border-gray-400" />
 
             {/*Profile image*/}
-            <div className="flex flex-col items-center justify-evenly mt-6 mb-2">
+            <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
               <div className="w-24 h-24 rounded-full bg-white mb-4 aspect-square">
                 <img
-                  src={userIcon}
+                  src={profilePicURL || userIcon}
                   alt="Profile Picture"
                   className="w-full h-full rounded-full object-cover p-0.5"
                 />
               </div>
               <div className="flex flex-col gap-2 text-center items-center jusitfy-evenly">
                 <div className="flex gap-4">
-                  <Button onClick={() => console.log("Change Photo clicked")}>
+                  <Button onClick={() => handleShowChangePhotoModal()}>
                     Change
-                  </Button>
-
-                  <Button onClick={() => console.log("Remove Photo clicked")}>
-                    Remove
                   </Button>
                 </div>
                 <div className="text-sm font-light">
                   <small className="text-sm text-gray-400 font-light">
-                    We support PNGs, JPGs, and GIFs under 2MB.
+                    Update your profile picture URL.
                   </small>
                 </div>
               </div>
@@ -212,24 +285,43 @@ export function AccountPage() {
               <FloatingInputField
                 label="First Name"
                 type="text"
-                value=""
-                action={() => console.log("First Name changed")}
+                value={firstNameField}
+                action={handleFirstNameInput}
                 isValid={true}
               />
               <FloatingInputField
                 label="Last Name"
                 type="text"
-                value=""
-                action={() => console.log("Last Name changed")}
+                value={lastNameField}
+                action={handleLastNameInput}
                 isValid={true}
               />
               <FloatingInputField
                 label="Phone Number"
                 type="text"
-                value=""
-                action={() => console.log("Phone Number changed")}
+                value={phoneNumberField}
+                action={handlePhoneNumberInput}
                 isValid={true}
               />
+              <div className="flex w-full justify-between items-center gap-4">
+                <Button
+                  onClick={() => handleSaveProfile()}
+                  style={{ minWidth: "50%" }}
+                >
+                  Save Profile
+                </Button>
+                <small
+                  className="flex w-full text-sm text-red-400 text-left"
+                  role="alert"
+                >
+                  {saveProfileError}
+                </small>
+              </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert">
+                  {/* Profile save error messages go here */}
+                </small>
+              </div>
             </div>
           </section>
 
@@ -366,12 +458,16 @@ export function AccountPage() {
           </section>
         </div>
       </main>
-      {/*Controls the Modal that allows users to specify the initial number of days to sync from gmail*/}
+      {/*Modals Overlays*/}
       <DaysToSync
         show={showDaysToSync}
         options={daysToSyncOptions}
         onSelection={handleDaysSelection}
         onCancel={() => setShowDaysToSync(false)}
+      />
+      <ChangePhotoModal
+        showModal={showChangePhotoModal}
+        setShowModal={setShowChangePhotoModal}
       />
     </div>
   );

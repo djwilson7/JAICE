@@ -289,7 +289,7 @@ export function HomePage() {
     if (itemDragged && isOver && itemDragged.column !== isOver) {
       console.log(`Dropped item ${itemDragged.id} into column ${isOver}`);
 
-      const updatedCard = { ...itemDragged, column: isOver };
+      const updatedCard = { ...itemDragged, column: isOver};
 
       setJobs((prev) =>
         prev.map((job) =>
@@ -406,16 +406,8 @@ export function HomePage() {
   const jobsByColumn = useMemo(() => {
     return columnConfig.reduce<Record<string, JSX.Element[]>>((acc, column) => {
 
-      const jobsInColumn = 
-      column.id === "rejected"
-        ? sortedJobs.filter(
-            (job) =>
-              (job.column?.toLowerCase?.() === "rejected") ||
-              job.applicationStage === "Rejected"
-          )
-        : sortedJobs.filter(
-            (job) => job.column?.toLowerCase?.() === column.id
-          );
+      const jobsInColumn = sortedJobs.filter((job) =>
+        job.column?.toLowerCase?.() === column.id);
 
       const orderedJobs = [...jobsInColumn].sort((a, b) => {
         const aMatched = matchOrderMap.has(a.id);

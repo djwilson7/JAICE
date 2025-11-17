@@ -357,8 +357,10 @@ async def revoke_gmail_consent(
 async def setup_user_db(request: Request, user: dict = Depends(get_current_user)):
     uid = user.get("uid", "")
     email = user.get("email", "")
+    
     pool = request.app.state.pool
     logging.info(f"Checking database record for user: {uid}")
+    # So in here we would also write in the users name as well .
 
     try:
         async with pool.acquire() as conn:
