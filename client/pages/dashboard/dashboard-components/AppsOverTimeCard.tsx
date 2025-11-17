@@ -1,34 +1,99 @@
 import { useEffect, useState } from "react";
 import { Card, ChartHost } from "./Card";
 import { Line } from "react-chartjs-2";
-import { applyChartDefaults, cssVar, rgba } from "./chartSetup";
+import { applyChartDefaults } from "./chartSetup";
 import { Modal } from "./Modal";
+import { api } from "@/global-services/api";
 
 export function AppsOverTimeCard({ className = "", height }: { className?: string; height?: number | string }) {
     const [open, setOpen] = useState(false);
-    useEffect(() => applyChartDefaults(), []);
 
-    const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const [applied, setApplied] = useState<number[]>([]);
+    const [interview, setInterview] = useState<number[]>([]);
+    const [offer, setOffer] = useState<number[]>([]);
+    const [accepted, setAccepted] = useState<number[]>([]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const labels = ["Jan","Feb","Mar","Apr","May","Jun",
+                    "Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    useEffect(() => {
+        applyChartDefaults();
+        let alive = true;
+
+        async function load() {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const res = await api("/api/dashboard/apps-over-time", {
+                    method: "GET",
+                });
+
+                if (!alive) return;
+
+                const monthly = res.data?.data ?? {};
+
+                setApplied(labels.map(m => monthly[m]?.Applied ?? 0));
+                setInterview(labels.map(m => monthly[m]?.Interview ?? 0));
+                setOffer(labels.map(m => monthly[m]?.Offer ?? 0));
+                setAccepted(labels.map(m => monthly[m]?.Accepted ?? 0));
+
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to load data");
+            } finally {
+                if (alive) setLoading(false);
+            }
+        }
+
+        load();
+        return () => { alive = false };
+    }, []);
 
     const colors = {
-        applied: "#F59E0B", 
-        interview: "#22D3EE", 
-        offer: "#A78BFA", 
-        accepted: "#34D399", 
-        grid: "rgba(148,163,184,0.18", 
-        ticks: "#CBD5E1", 
-        legend: "#E5E7EB", 
-        tooltipBg: "#rgba(17,24,39,0.95)", 
+        applied: "#F59E0B",
+        interview: "#22D3EE",
+        offer: "#A78BFA",
+        accepted: "#34D399",
     };
 
     const data = {
         labels,
         datasets: [
-            { label: "Applied", data: [20, 18, 15, 14, 12, 11, 9, 8, 7, 6, 4, 3], borderColor: colors.applied, backgroundColor: rgba(cssVar("--color-blue-5-rgb"), 0.15), fill: false, tension: 0.35, pointRadius: 2 },
-            { label: "Interview", data: [19, 17, 14, 12, 11, 10, 9, 8, 6, 5, 3, 2], borderColor: colors.interview, backgroundColor: rgba(cssVar("--color-blue-5-rgb"), 0.15), fill: false, tension: 0.35, pointRadius: 2 },
-            { label: "Offer", data: [10, 9, 8, 7, 6, 6, 5, 4, 4, 3, 2, 1], borderColor: colors.offer, fill: false, tension: 0.35, pointRadius: 2 },
-            { label: "Accepted", data: [6, 5, 5, 4, 4, 3, 3, 2, 2, 2, 1, 1], borderColor: colors.accepted, fill: false, tension: 0.35, pointRadius: 2 },
+            {
+                label: "Applied",
+                data: applied,
+                borderColor: colors.applied,
+                tension: 0.35,
+                fill: false,
+                pointRadius: 2,
+            },
+            {
+                label: "Interview",
+                data: interview,
+                borderColor: colors.interview,
+                tension: 0.35,
+                fill: false,
+                pointRadius: 2,
+            },
+            {
+                label: "Offer",
+                data: offer,
+                borderColor: colors.offer,
+                tension: 0.35,
+                fill: false,
+                pointRadius: 2,
+            },
+            {
+                label: "Accepted",
+                data: accepted,
+                borderColor: colors.accepted,
+                tension: 0.35,
+                fill: false,
+                pointRadius: 2,
+            },
         ],
     };
 
@@ -44,18 +109,21 @@ export function AppsOverTimeCard({ className = "", height }: { className?: strin
 
     return (
         <>
-            <Card 
-                title="Stages Over Time" 
-                subtitle="90-day trend" 
+            <Card
+                title="Stages Over Time"
+                subtitle="90-day trend"
                 className={`${className} cursor-pointer`}
                 height={height ?? "18rem"}
                 expandable
                 onExpand={() => setOpen(true)}
-                >
-                <ChartHost><Line data={data} options={options} /></ChartHost>
+            >
+                <ChartHost>
+                    {loading && <div className="text-slate-300">Loading...</div>}
+                    {error && <div className="text-red-400">{error}</div>}
+                    {!loading && !error && <Line data={data} options={options} />}
+                </ChartHost>
             </Card>
 
-            {/* Overlay for expanded chart */}
             <Modal open={open} onClose={() => setOpen(false)} title="Stages Over Time">
                 <Line data={data} options={options} />
             </Modal>

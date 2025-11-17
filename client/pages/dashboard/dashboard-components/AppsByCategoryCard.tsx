@@ -164,7 +164,7 @@ export function AppsByCategoryCard({
     return (
         <>
             <Card
-                title="Apps by Category"
+                title="Applications by Category"
                 subtitle="Top categories this year"
                 className={`${className} cursor-pointer`}
                 height={height ?? "18rem"}
