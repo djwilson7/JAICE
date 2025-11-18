@@ -38,12 +38,31 @@ export function rgba(color: string, alpha = 1): string {
 
 /* Theme defaults from the CSS variables */
 export function applyChartDefaults() {
-    const axis = rgba(cssVar("--color-blue-5-rgb"), 0.9);
-    const grid = rgba(cssVar("--color-blue-5-rgb"), 0.12);
-    ChartJS.defaults.color = axis;
-    ChartJS.defaults.font.family = "Poppins, sans-serif";
-    ChartJS.defaults.borderColor = grid;
-    ChartJS.defaults.plugins.legend.labels.color = axis;
-    ChartJS.defaults.plugins.tooltip.titleColor = cssVar("--color-blue-5");
-    ChartJS.defaults.plugins.tooltip.bodyColor = cssVar("--color-blue-5");
+  const axis = rgba(cssVar("--color-blue-5-rgb"), 0.9);
+  const grid = rgba(cssVar("--color-blue-5-rgb"), 0.12);
+
+  ChartJS.defaults.color = axis;
+  ChartJS.defaults.font.family = "Poppins, sans-serif";
+  ChartJS.defaults.borderColor = grid;
+  ChartJS.defaults.plugins.legend.labels.color = axis;
+  ChartJS.defaults.plugins.tooltip.titleColor = cssVar("--color-blue-5");
+  ChartJS.defaults.plugins.tooltip.bodyColor = cssVar("--color-blue-5");
+
+  const tt = ChartJS.defaults.plugins.tooltip;
+
+  tt.titleFont = {
+    ...(tt.titleFont || {}),
+    family: "Poppins, sans-serif",
+    size: 20,      // <- title size
+    weight: "normal",
+  };
+
+  tt.bodyFont = {
+    ...(tt.bodyFont || {}),
+    family: "Poppins, sans-serif",
+    size: 16,      // <- body size
+  };
+
+  tt.padding = 10;    // inner padding inside the tooltip
+  tt.boxPadding = 6;  // padding between color box and text
 }

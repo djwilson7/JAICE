@@ -59,9 +59,8 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
     };
   }, []);
 
-  // Match palette to labels order
   const palette = labels.map(
-    (label) => STAGE_COLORS[label] ?? "#64748B", // fallback slate
+    (label) => STAGE_COLORS[label] ?? "#64748B", // fallback
   );
 
   const chartData: ChartData<"doughnut"> = {
@@ -77,14 +76,11 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
     ],
   };
 
-  // Legend off – we’ll render it manually for more space
   const options: ChartOptions<"doughnut"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false,
-      },
+      legend: { display: false },
       tooltip: {
         backgroundColor: "rgba(15,20,30,.95)",
         titleColor: "#fff",
@@ -93,10 +89,12 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
         borderWidth: 1,
       },
     },
-    cutout: "60%", // nice donut look
+    cutout: "60%",
   };
 
-  const renderContent = () => {
+  const renderContent = (variant: "card" | "modal" = "card") => {
+    const isModal = variant === "modal";
+
     if (loading) {
       return (
         <div className="flex h-full items-center justify-center text-sm text-slate-300">
@@ -122,14 +120,28 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
     }
 
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 pt-12">
-        {/* Bigger donut */}
-        <div className="relative h-40 w-40 md:h-52 md:w-52">
+      <div
+        className={`flex h-full flex-col items-center justify-center gap-6 ${
+          isModal ? "pt-2 gap-10" : "pt-6 gap-6"
+        }`}
+      >
+        {/* BIGGER donut in modal */}
+        <div
+          className={
+            isModal
+              ? "relative h-96 w-96 md:h-128 md:w-128"
+              : "relative h-32 w-32 md:h-40 md:w-40"
+          }
+        >
           <Doughnut data={chartData} options={options} />
         </div>
 
-        {/* Custom legend matching palette */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-100">
+        {/* Custom legend */}
+        <div
+          className={`flex flex-wrap items-center justify-center gap-6 ${
+            isModal ? "text-sm" : "text-xs"
+          } text-slate-100`}
+        >
           {labels.map((label, i) => (
             <div key={label} className="flex items-center gap-2">
               <span
@@ -155,11 +167,15 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
         expandable
         onExpand={() => setOpen(true)}
       >
-        <ChartHost>{renderContent()}</ChartHost>
+        <ChartHost>{renderContent("card")}</ChartHost>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Applications by Stage">
-        <ChartHost>{renderContent()}</ChartHost>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Applications by Stage"
+      >
+        <ChartHost>{renderContent("modal")}</ChartHost>
       </Modal>
     </>
   );

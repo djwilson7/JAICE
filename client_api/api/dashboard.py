@@ -362,3 +362,76 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error calculating weekly application averages.",
         )
+
+# ------------------------------------------------------------
+# Grit Card
+# ------------------------------------------------------------
+@router.get(
+    "/grit-score",
+    summary="Get Grit Score + supporting metrics",
+)
+async def grit_score(user: dict = Depends(get_current_user)):
+    uid = user.get("uid")
+    logging.info(f"Fetching grit-score for user {uid}")
+    
+    try:
+        async with get_connection() as conn:
+            # 1. Weekly Application Count (last 7 days)
+            weekly_query = """
+            SELECT COUNT(*)::int AS apps
+            FROM public.job_applications
+            WHERE user_uid = $1
+                AND is_deleted = FALSE
+                AND is_archived = FALSE
+                AND received_at ~ '[0-9]+$'
+                AND to_timestamp(received_at::bigint / 1000)
+                    >= now() - INTERVAL '7 days';
+            """
+            weekly_row = await conn.fetchrow(weekly_query, uid)
+            weekly_apps = weekly_row["apps"] if weekly_row else 0
+            
+            # 2. Follow-ups (last 30 days)
+            follow_query = """
+            SELECT COUNT(*)::int as cnt
+            FROM public.job_applications
+            WHERE user_uid = $1
+                AND is_deleted = FALSE
+                AND is_archived = FALSE
+                AND updated_at >= now() - INTERVAL '30 days';
+            """
+            follow_row = await conn.fetchrow(follow_query, uid)
+            followups = follow_row["cnt"] if follow_row else 0
+            
+            # 3. Consistency (days user applied at least once)
+            consistency_query = """
+            SELECT COUNT(*)::int AS active_days
+            FROM (
+                SELECT DATE(TO_TIMESTAMP(received_at::bigint / 1000)) AS day
+                FROM public.job_applications
+                WHERE user_uid = $1
+                    AND is_deleted = FALSE
+                    AND is_archived = FALSE
+                    AND received_at IS NOT NULL
+                GROUP BY day
+            ) sub;
+            """
+            cons_row = await conn.fetchrow(consistency_query, uid)
+            active_days = cons_row["active_days"] if cons_row else 0
+            
+            # Convert raw metrics into a score
+            score = min(
+                100,
+                (weekly_apps * 6) + (followups * 4) + (active_days * 0.5)
+            )
+        return {
+            "score": round(score),
+            "weekly_apps": weekly_apps,
+            "followups": followups,
+            "consistency": active_days,
+        }
+    except Exception as e:
+        logging.error(f"Error fetching grit-score for user {uid}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error calculating Grit Score.",
+        )
