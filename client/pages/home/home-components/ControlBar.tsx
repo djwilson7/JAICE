@@ -10,6 +10,7 @@ import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import { AlertBox } from "@/pages/home/home-components/AlertBox";
 import { InfoModal } from "@/global-components/InfoModal";
 import { motion, AnimatePresence } from "framer-motion";
+import { HomeInfoContent } from "@/pages/home/home-components/HomePageInfo";
 
 interface ControlBarProps {
   isMultiSelecting: boolean;
@@ -147,7 +148,7 @@ export function ControlBar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <InfoModal setIsOpen={setInfoModalOpen}></InfoModal>
+            <InfoModal title={"Home Page Info"} setIsOpen={setInfoModalOpen} content={<HomeInfoContent />}></InfoModal>
           </motion.div>
         )}
       </AnimatePresence>

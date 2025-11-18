@@ -1,36 +1,37 @@
-// import { localfiles } from "@/directory/path/to/localimport";
+import {
+  GritCard,
+  AppsByCategoryCard,
+  AppsOverTimeCard,
+  AppsByStageCard,
+  SplitByStageCard,
+  AvgTimeInStageCard,
+  AvgAppsPerWeekCard,
+} from "./dashboard-components";
 
 export function DashboardPage() {
-
   return (
-    <div className="w-full h-full flex items-center justify-center flex-col gap-4 bg-orange-300"
-    style={{background: "var(--color-bg)"}}>
-      <main className="mx-auto max-w-6xl px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ApplicationsByStageCard />
-            <SplitByStageCard />
+    <div className="w-full h-screen overflow-hidden">
+      {/* Content Grid */}
+      <main className="pl-[11rem] px-6 py-6 w-full h-full">
+        {/* Top: Grit score */}
+        <section className="mb-6 grid grid-cols-1 xl:grid-cols-3">
+          <div className="xl:col-span-3">
+            <GritCard height="18rem"/>
           </div>
-        </main>
+        </section>
+
+        {/* 2 x 3 card grid */}
+        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 grid-rows-2 gap-6">
+          <AppsOverTimeCard className="h-full" />          
+          <AppsByCategoryCard className="h-full" />          
+          <SplitByStageCard className="h-full" />          
+          <AvgTimeInStageCard className="h-full" />          
+          <AppsByStageCard className="h-full" />          
+          <AvgAppsPerWeekCard className="h-full" />          
+        </section>
+      </main>
     </div>
-  );
+  )
 }
 
-
-
-
-
-// export default function DashboardPage() {
-//   // If your board lives elsewhere, ensure JobStatsProvider wraps BOTH pages.
-//   return (
-//     <JobStatsProvider>
-//       <div className="w-full h-full bg-slate-950 text-slate-100">
-//         <main className="mx-auto max-w-6xl px-6 py-8">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//             <ApplicationsByStageCard />
-//             <SplitByStageCard />
-//           </div>
-//         </main>
-//       </div>
-//     </JobStatsProvider>
-//   );
-// }
+export default DashboardPage;

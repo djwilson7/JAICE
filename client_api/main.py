@@ -5,9 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from client_api.services.firebase_admin import initialize_firebase_sdk, check_firebase_auth_health
 from client_api.api.auth_api import router as auth_router
+from client_api.api.jobs import router as job_router
 from client_api.services.supabase_client import check_db_pool_status, connect_to_db, close_db_connection
 import httpx
-
+import redis.asyncio as redis
+import os
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
 from common.logger import get_logger
 logging = get_logger()
 
@@ -35,6 +39,14 @@ async def lifespan(app: FastAPI):
         logging.error(f"Fatal: Database connection failed: {e}")
         raise
 
+    try:
+        broker_url = os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD")
+        app.state.redis = redis.from_url(broker_url, decode_responses=True)
+        logging.info(f"Redis client connected at {broker_url}")
+    except Exception as e:
+        logging.error(f"FATAL: Redis connection failed: {e}")
+        raise
+    
     # The application starts serving requests here
     yield 
 
@@ -49,17 +61,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Allow the frontend to access the backend
+origins_raw = os.getenv("MIDDLEWARE_ORIGINS", "")
+allow_origins = [o.strip() for o in origins_raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "Authorization", "Content-Type"],
 )
 
 # Use the imported router instance
 # All routes will get listed here for the backend services
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(job_router, prefix="/api/jobs", tags=['Jobs'])
 
 # gmail API endpoints
 @app.get("/gmail/messages", tags=["Gmail"], summary="Get Gmail Messages")

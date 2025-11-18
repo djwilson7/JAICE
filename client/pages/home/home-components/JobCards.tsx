@@ -1,17 +1,13 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
-
-export type JobCardType = {
-  id: string;
-  title: string;
-  column: string;
-  date?: string;
-};
+import type { JobCardType } from "@/types/jobCardType";
+import { auth } from "@/global-services/firebase";
+import { api } from "@/global-services/api";
 
 export function JobCard({
   job,
@@ -19,15 +15,18 @@ export function JobCard({
   onDragEnd,
   isMultiSelecting,
   handleMultiSelectClick,
+  dimmed,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
   onDragEnd: () => void;
   isMultiSelecting: boolean;
   handleMultiSelectClick: (job: JobCardType) => void;
+  dimmed: boolean;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
+  const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(!!job.reviewNeeded);
 
   // If multi-select mode is turned off, clear selection state
   if (!isMultiSelecting && isSelected) {
@@ -46,7 +45,6 @@ export function JobCard({
     onDragEnd();
   }, [onDragEnd]);
 
-
   // Needs elevated to global css
   const iconStyle = {
     filter:
@@ -54,37 +52,109 @@ export function JobCard({
     ...(isOpen ? { transform: "rotate(180deg)" } : {}),
   };
 
+  const [isHovered, setIsHovered] = useState(false);
+
   // open email in new window
   const openMessage = (messageId: string): void => {
-    const url = `https://mail.google.com/mail/u/0/#inbox/${messageId}`;
+    // get the current user's email from Firebase Authentication
+    const userEmail = auth.currentUser?.email;
+
+    // if the user is not authenticated, we cannot open the email, so we log an error and return early
+    if (!userEmail) 
+    {
+      console.error("User is not authenticated. Cannot open email.");
+      return;
+    }
+
+    // open the email in a new window
+    const url = `https://mail.google.com/mail/u/${userEmail}/#inbox/${messageId}`;
     window.open(url, "_blank");
   };
 
-  // These are added here to ensure there is no conflict with commits
-  //    --color-card-bg: #1D1B20;
-  //    --color-card-bg-rgb: 29, 27, 32;
+  const cardBorderColor = useMemo (() => {
+    // if email is marked as accepted make the card border green
+     if (job.applicationStage === "Accepted") 
+    {
+      return "border-green-500";
+    } 
+    // if email is marked as rejected make the card border red
+    else if (job.applicationStage === "Rejected") 
+    {
+      return "border-red-500";
+    } 
+    else 
+    {
+      return "border-transparent";
+    }
 
+  }, [job.applicationStage]);
 
-  // onDragStart and onDragEnd are used to manage the drag state in the parent component
-  // whileHover and whileTap provide visual feedback during interaction
-  // dragSnapToOrigin ensures the card returns to its original position if not dropped in a valid area
-  // layout enables smooth animations when cards are added or removed
+  const reviewBorderColor = useMemo (() => {
+    // if email is marked as review needed make the card border orange
+    return localReviewNeeded 
+    ? {boxShadow: "0 0 0 2px rgba(249,115,22,1)"} : undefined;
+    
+  }, [localReviewNeeded]);
+
+  const variants = {
+    active: { opacity: 1, scale: 1, filter: "none" },
+    dimmed: {
+      opacity: 0.35,
+      scale: 0.98,
+      filter: "grayscale(40%) brightness(80%)",
+    },
+  };
+
+  const hoverMessageForReview = localReviewNeeded
+    ? "This job requires your review. Mark it as reviewed when done." 
+    : "";
+
+  const markAsReviewed = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    setLocalReviewNeeded(false);
+    setIsOpen(true); // keep the card open to show the change
+
+    // mark job as reviewed
+    try {
+      await api("/api/jobs/set-review-needed", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: [job.id],
+          needs_review: false,
+      }),
+      });
+    } catch (error) {
+      console.error("Failed to mark job as reviewed:", error);
+      setLocalReviewNeeded(true); // keep the review needed state if API call fails
+    }
+  };
+
   return (
     <motion.div
       id={job.id}
-      className="border w-full p-4 rounded shadow-sm bg-[#1D1B20] flex items-center flex flex-col"
+      title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
+      className={`relative border w-full p-4 rounded shadow-sm bg-[#1D1B20] flex items-center flex flex-col ${cardBorderColor}`}
+      style={reviewBorderColor}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      variants={variants}
+      animate={dimmed ? "dimmed" : "active"}
       whileHover={{
         scale: 1.02,
         boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
       }}
+
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      
+
       // onTap cycles between expanding the card and selecting it based on isMultiSelecting
       onTap={() => {
         handleMultiSelectClick(job);
-        if(isMultiSelecting) {
+        if (isMultiSelecting) {
           setIsSelected(!isSelected);
           return;
         } else {
@@ -97,19 +167,34 @@ export function JobCard({
         scale: 1.05,
         boxShadow: "0px 5px 15px rgba(0,0,0,0.3)",
         pointerEvents: "none",
+        zIndex: 1000,
       }}
       dragSnapToOrigin
       layout
     >
-      {/* Main Card Container Above (wraps all content) */}
-
-      <div className="flex justify-between w-full items-center text-left">
+    {/* Tooltip for Review Needed */}
+    <AnimatePresence>
+      {localReviewNeeded && isHovered && (
         <motion.div
-          className="flex items-center gap-2 "
-          layout
+          key="review-tooltip"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.12 }}
+          role="tooltip"
+          aria-hidden={!isHovered}
+          className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded px-2 py-1"
         >
-          {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
+          {hoverMessageForReview}
+        </motion.div>
+      )}
+    </AnimatePresence>
 
+      {/* Main Card Container Above (wraps all content) */}
+      
+      <div className="flex justify-between w-full items-center text-left">
+        <motion.div className="flex items-center gap-2 " layout>
+          {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
           <AnimatePresence>
             {/* This animates in the checkbox when we are in multi-select mode */}
@@ -122,7 +207,7 @@ export function JobCard({
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
-                layout 
+                layout
               />
             ) : null}
           </AnimatePresence>
@@ -134,7 +219,6 @@ export function JobCard({
               <small className="text-gray-400 opacity-75">{job.date}</small>
             )}
           </div>
-
         </motion.div>
 
         {/* Chevron to expand/collapse job card details rotates via it's style argument */}
@@ -147,35 +231,49 @@ export function JobCard({
       </div>
 
       {/* Expanded Job Related Content */}
-      {isOpen ? (
-        <>
-          <div className="w-99/100 border-b my-2" />
-          <div className="flex flex-col text-left w-full gap-1">
-            <small>Small Startup</small>
-            <small>Recruiter</small>
-            <a 
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                openMessage(job.id);
-              }}
-                className="hover:underline text-sm cursor-pointer"
-                style={{
-                  color: 'var(--color-blue-5)',
-                  transition: 'color 0.25s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--color-blue-4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--color-blue-5)';
-                }}
-              >
-              View Email
-            </a>
-          </div>
-        </>
-      ) : null}
+      <motion.div
+        className="overflow-hidden w-full"
+        animate={{
+          height: isOpen ? "auto" : 0,
+          opacity: isOpen ? 1 : 0,
+        }}
+        initial={false}
+        transition={{ type: "spring", stiffness: 200, damping: 24 }}
+      >
+        <div className="w-99/100 border-b my-2" />
+        <div className="flex flex-col text-left w-full gap-1 pb-2">
+          <small>Small Startup</small>
+          <small>Recruiter</small>
+          
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              openMessage(job.id);
+            }}
+            className="hover:underline text-sm cursor-pointer"
+            style={{
+              color: "var(--color-blue-5)",
+              transition: "color 0.25s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-blue-4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-blue-5)";
+            }}
+          >
+            View Email
+          </a>
+          <button
+            type="button"
+            className={localReviewNeeded ? "reviewed" : "hidden"}
+            onClick={markAsReviewed}
+          >
+            Mark as Reviewed
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

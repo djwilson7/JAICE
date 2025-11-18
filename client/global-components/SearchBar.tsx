@@ -73,7 +73,7 @@ export function SearchBar({
 
   return (
     <motion.div
-      className="flex group items-center justify-start border overflow-hidden gap-2 rounded cursor-pointer"
+      className="flex group items-center justify-start overflow-hidden gap-2 rounded cursor-pointer"
       onMouseEnter={() => setIsSearching(true)}
       onMouseLeave={() => {
         if (searchQuery === "" && !isFocused) {

@@ -1,138 +1,200 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-
-import { auth} from "@/global-services/firebase";
 import Button from "@/global-components/button";
-import { deleteCurrentUser } from "@/global-services/auth";
+import { deleteCurrentUser, getIdToken } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
-import { setGmailConsentGranted } from "@/global-services/auth";
-import { googleSignIn } from "@/global-services/auth";
-// gains consent and updates the db accordingly
-async function connectGmailAPI() 
-{
-  try
-  {
-    console.log("Starting Gmail connection check...");
-    
-    // first check if already connected
-    console.log("Checking server-side Gmail consent status...");
-    const response = await api("/api/auth/gmail-consent-status");
-    console.log("Server response:", response);
+import userIcon from "@/assets/icons/user.svg";
+import { FloatingInputField } from "@/global-components/FloatingInputField";
+import { DaysToSync } from "./account-components/DaysToSync";
+import { useAuth } from "@/global-components/AuthProvider";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
+// If Local (using docker, use the local url) else use prod url
+// const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
 
-    if (response.isConnected) 
-    {
-      setGmailConsentGranted();
+const GMAIL_CONSENT_URL =
+  import.meta.env.VITE_GMAIL_CONSENT_URL ?? "/api/auth/consent";
 
-      try 
-      {
-        const testResponse = await api("/gmail/messages?maxResults=1");
-        console.log("Gmail API test successful:", testResponse);
-
-        return { success: true, message: "Gmail already connected and working" };
-
-      } catch (testError) {
-        console.error("Gmail consent granted but API call failed:", testError);
-        return { success: false, message: "Gmail consent granted but unable to read emails" };
-      }
-    } 
-    else 
-    {
-      // use pop up flow
-      console.log("Gmail not connected, starting popup OAuth flow...");
-      
-      try {
-        await googleSignIn();
-        await api("/api/auth/setup-rls-session", { method: 'POST' });
-        
-        console.log("Popup OAuth completed, Gmail should now be connected");
-        return { success: true, message: "Gmail connected successfully via popup" };
-        
-      } catch (oauthError) {
-        console.error("Popup OAuth failed:", oauthError);
-        return { success: false, message: `OAuth popup failed: ${oauthError}` };
-      }
-    }
-
-  } catch (error) {
-    console.error("Error in connectGmailAPI:", error);
-    return { success: false, message: `Error connecting to Gmail: ${error}` };
-  }
-}
-
-export function AccountPage() 
-{
+export function AccountPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [gmailError, setGmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [twoFAError, setTwoFAError] = useState<string | null>(null);
+  const [saveProfileError, setSaveProfileError] = useState<string | null>(null);
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
+    null
+  );
+
+  const [showChangePhotoModal, setShowChangePhotoModal] = useState(false);
+
+  const handleShowChangePhotoModal = () => {
+    setShowChangePhotoModal(true);
+
+  };
+
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailBusy, setGmailBusy] = useState(false);
+  const [showDaysToSync, setShowDaysToSync] = useState(false);
+  const [daysToSync, setDaysToSync] = useState<number | null>(null);
 
-  // check if gmail is already connected
+  const daysToSyncOptions = [3, 7, 14, 45];
+
+  const { user, loading, applyProfileUpdate } = useAuth();
+  const firstName: string = user?.displayName?.split(" ")[0] || "User";
+  const lastName: string = user?.displayName?.split(" ").slice(1).join(" ") || "";
+  const phoneNumber: string = user?.phoneNumber || "";
+  const profilePicURL: string = user?.photoURL || "";
+
+  const [firstNameField, setFirstNameField] = useState<string>(
+    firstName
+  );
+  const [lastNameField, setLastNameField] = useState<string>(
+    lastName
+  );
+  const [phoneNumberField, setPhoneNumberField] = useState<string>(
+    phoneNumber
+  );
+
+  const handleFirstNameInput = (value: string) => {
+    setFirstNameField(value);
+    console.log("First name input:", firstNameField);
+  };
+
+  const handleLastNameInput = (value: string) => {
+    setLastNameField(value);
+    console.log("Last name input:", lastNameField);
+  };
+
+  const handlePhoneNumberInput = (value: string) => {
+    setPhoneNumberField(value);
+    console.log("Phone number input:", phoneNumberField);
+  };
+
+  const handleSaveProfile = async () => {
+    setSaveProfileError(null);
+    setBusy(true);
+
+    if (!user) {
+      setSaveProfileError("No user is currently signed in.");
+      setBusy(false);
+      return;
+    }
+    const fName = firstNameField.toLowerCase().trim();
+    const lName = lastNameField.toLowerCase().trim();
+
+    const fNameC = fName.charAt(0).toUpperCase() + fName.slice(1);
+    const lNameC = lName.charAt(0).toUpperCase() + lName.slice(1);
+    
+    setFirstNameField(fNameC);
+    setLastNameField(lNameC);
+
+    try {
+      await applyProfileUpdate(
+        `${fNameC} ${lNameC}`.trim(),
+        profilePicURL || ""
+      );
+      console.log("Profile updated successfully.");
+      navigate(location.pathname);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      setSaveProfileError("Failed to update profile. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
     checkGmailStatus();
   }, []);
 
-
-  async function checkGmailStatus() 
-  {
-    try 
-    {
-      const testResult = await api("/gmail/messages?maxResults=1");
-        
-      // If we can fetch emails, Gmail is connected
-      if (testResult && testResult.messages) 
-      {
-        setGmailConnected(true);
-        setError(null);
-        console.log("Gmail is properly connected - can fetch emails");
-      } else {
-        setGmailConnected(false);
-        setError(null);
-        console.log("Gmail API response invalid");
-      }
-
-    } catch (testError) {
-      console.error("Gmail API test failed:", testError);
+  async function checkGmailStatus() {
+    try {
+      const response = await api("/api/auth/gmail-consent-status");
+      console.log("Gmail consent status response:", response);
+      setGmailConnected(response.isConnected);
+      setGmailError(null);
+      return;
+    } catch (err) {
+      console.error("Error checking Gmail consent status:", err);
       setGmailConnected(false);
-        
-      // check if its an auth error vs other error
-      if (testError && testError.toString().includes('401')) 
-      {
-        setError("Gmail not connected - authentication required");
-      } else {
-        setError("Gmail connection test failed");
-      }
+      setGmailError("Error checking gmail status.");
     }
   }
 
-  async function handleGmailConnection() 
-  {
+  async function handleShowModal() {
+    if (gmailConnected) {
+      await handleGmailLinking();
+      return;
+    }
+    setShowDaysToSync(true);
+  }
+
+  // Handle the user's selection of days to sync from Gmail
+  async function handleDaysSelection(days: number) {
+    setDaysToSync(days);
+    await handleGmailLinking(days);
+  }
+
+  // Handle linking or unlinking Gmail
+  async function handleGmailLinking(days?: number) {
+    if (gmailBusy) return;
     setGmailBusy(true);
-    setError(null);
 
-    const result = await connectGmailAPI();
-    console.log("Gmail connection result:", result);
-
-    if (result.success) 
-    {
-      console.log("Gmail connection successful:", result.message);
-      setError(null);
-      
-      // refresh status to double check
-      setTimeout(() => {
-        checkGmailStatus();
-      }, 1000);
-      
-    } else {
-      console.error("Gmail connection failed:", result.message);
-      setError(result.message);
-      setGmailConnected(false);
+    try {
+      if (gmailConnected) {
+        console.log("Unlinking Gmail...");
+        const res = await unlinkGmail();
+        if (res.status === "success") {
+          setGmailConnected(false);
+        }
+      } else {
+        console.log("Linking Gmail...");
+        const res = await linkGmail(days);
+        if (res.status === "success") {
+          setGmailConnected(true);
+        }
+      }
+      setGmailError(null);
+    } catch (error) {
+      console.error("Gmail link/unlink error:", error);
+      setGmailError("Error processing Gmail link.");
+    } finally {
+      setShowDaysToSync(false);
+      setGmailBusy(false);
     }
-    setGmailBusy(false);
   }
+
+  async function linkGmail(days: number = 14) {
+    const res = await api("/api/auth/setup-rls-session", {
+      method: "POST",
+      body: JSON.stringify({ daysToSync: days }),
+    });
+    console.log("Setup RLS session response:", res);
+    const token = await getIdToken();
+    console.log(BASE_URL);
+    console.log(GMAIL_CONSENT_URL);
+    window.location.href = `${BASE_URL}${GMAIL_CONSENT_URL}?token=${token}&days=${days}`;
+    return res;
+  }
+
+  async function unlinkGmail() {
+    return await api("/api/auth/revoke-gmail-consent", { method: "POST" });
+  }
+
+  // Determine the Gmail button text based on connection status and busy state
+  const gmailButtonText = gmailBusy
+    ? "Processing..."
+    : gmailConnected
+    ? "Unlink Gmail"
+    : "Link Gmail";
 
   async function handleDelete() {
-    setError(null);
+    setDeleteAccountError(null);
     const sure = window.confirm(
       "This will permanently delete your account. This cannot be undone. Continue?"
     );
@@ -148,209 +210,265 @@ export function AccountPage()
       return;
     }
 
-    if (res.code === "reauth-needed" || res.code === "auth/requires-recent-login") {
-      setError("Please re-authenticate and try again.");
+    if (
+      res.code === "reauth-needed" ||
+      res.code === "auth/requires-recent-login"
+    ) {
+      setDeleteAccountError("Please re-authenticate and try again.");
       // If you support email/password, collect the current password and retry:
-       const email = auth.currentUser?.email?.toString();
-       const password = prompt("Confirm your current password to continue:") || "";
-       if (password) {
-         setBusy(true);
-         const retry = await deleteCurrentUser({ email, password });
-         setBusy(false);
-         if (retry.ok) { window.location.assign("/"); return; }
-         setError(`Failed to delete account: ${retry.code}`);
-       }
+      const email = useAuth().user?.email?.toString();
+      const password =
+        prompt("Confirm your current password to continue:") || "";
+      if (password) {
+        setBusy(true);
+        const retry = await deleteCurrentUser({ email, password });
+        setBusy(false);
+        if (retry.ok) {
+          window.location.assign("/");
+          return;
+        }
+        setDeleteAccountError(`Failed to delete account: ${retry.code}`);
+      }
       return;
     }
 
-    setError(`Failed to delete account: ${res.code}`);
+    setDeleteAccountError(`Failed to delete account: ${res.code}`);
   }
 
+  // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
-    <div className="w-full h-full bg-slate-950 text-slate-100"
-      style={{background: "var(--color-bg)"}}>
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-
-          {/* Left heading */}
-          <div className="md:col-span-3">
-            <h1 className="text-2xl md:text-3xl font-semibold leading-snug">
-              Account
-              <br className="hidden md:block" /> Settings
-            </h1>
-          </div>
-
+    <div
+      className="w-full h-full bg-slate-950 text-slate-100"
+      style={{ background: "var(--color-bg)" }}
+    >
+      <main className="flex flex-col md:flex-row w-full justify-center">
+        {/* Left/Top Heading*/}
+        {/* <div className="w-full md:w-1/2">
+          <h1 className="text-2xl md:text-3xl font-semibold leading-snug">
+            Account Settings
+          </h1>
+        </div> */}
+        {/* Right/Bottom Content */}
+        <div className="flex flex-col md:flex-row w-full h-full items-top justify-around gap-4 md:m-4 p-4">
           {/* Right panel */}
-          <div className="md:col-span-9 -mr-6 pl-4"
-            style={{
-              width: "calc(100vw - 70rem)",
-              marginLeft: "auto"
-            }}>
-            <h1 className="text-2xl md:text-3xl font-semibold leading-snug text-left">
+          <section className="flex flex-col w-full md:w-1/2  pl-1 pr-1 md:pl-4 md:pr-4 pt-2 pb-2">
+            <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
               Profile Info
             </h1>
-            <hr className="w-full border-t-2 border-gray-400 my-2" />
-            
-            {/* profile picture */}
-            <div className="flex items-center gap-6 my-6">
+            <hr className="w-full border-t-1 border-gray-400" />
 
-              {/* picture placeholder */}
-              <div  className="w-24 h-24 rounded-full bg-gray-600"></div>
-
-              {/* upload/remove button */}
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-3">
-                  <Button onClick={() => console.log("Change Photo clicked")}>
-                    Change Photo 
-                  </Button>
-
-                  <Button onClick={() => console.log("Remove Photo clicked")}>
-                    Remove Photo
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-400">
-                  We support PNGs, JPGs, and GIFs under 2MB.
-                </p>
-                </div>
-              </div>
-
-            {/* name */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-left">
-                  First Name
-                </label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter first name"
+            {/*Profile image*/}
+            <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
+              <div className="w-24 h-24 rounded-full bg-white mb-4 aspect-square">
+                <img
+                  src={profilePicURL || userIcon}
+                  alt="Profile Picture"
+                  className="w-full h-full rounded-full object-cover p-0.5"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-left">
-                  Last Name
-                </label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter last name"
-                />
+              <div className="flex flex-col gap-2 text-center items-center jusitfy-evenly">
+                <div className="flex gap-4">
+                  <Button onClick={() => handleShowChangePhotoModal()}>
+                    Change
+                  </Button>
+                </div>
+                <div className="text-sm font-light">
+                  <small className="text-sm text-gray-400 font-light">
+                    Update your profile picture URL.
+                  </small>
+                </div>
               </div>
             </div>
 
-            {/*  phone number */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-left">
-                  Phone Number
-                </label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter phone number xxx-xxx-xxxx"
-                />
+            {/*Name and Number*/}
+            <div className="flex flex-col w-full my-4 gap-4">
+              <FloatingInputField
+                label="First Name"
+                type="text"
+                value={firstNameField}
+                action={handleFirstNameInput}
+                isValid={true}
+              />
+              <FloatingInputField
+                label="Last Name"
+                type="text"
+                value={lastNameField}
+                action={handleLastNameInput}
+                isValid={true}
+              />
+              <FloatingInputField
+                label="Phone Number"
+                type="text"
+                value={phoneNumberField}
+                action={handlePhoneNumberInput}
+                isValid={true}
+              />
+              <div className="flex w-full justify-between items-center gap-4">
+                <Button
+                  onClick={() => handleSaveProfile()}
+                  style={{ minWidth: "50%" }}
+                >
+                  Save Profile
+                </Button>
+                <small
+                  className="flex w-full text-sm text-red-400 text-left"
+                  role="alert"
+                >
+                  {saveProfileError}
+                </small>
+              </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert">
+                  {/* Profile save error messages go here */}
+                </small>
+              </div>
+            </div>
+          </section>
+
+          <section className="flex flex-col w-full md:w-1/2 pl-1 pr-1 md:pl-4 md:pr-4 pt-2 pb-2">
+            <div className="flex w-full flex-col">
+              <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
+                Account Security
+              </h1>
+              <hr className="w-full border-t-1 border-gray-400" />
+            </div>
+
+            {/*Gmail Integration*/}
+            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
+              <div className="flex w-full gap-4">
+                <div className="flex flex-col w-1/2">
+                  <h3 className="text-lg text-left font-medium text-gray-300">
+                    Gmail Integration
+                  </h3>
+                  <small className="text-sm text-left text-gray-400 ">
+                    Connect your Gmail account to allow email parsing and
+                    analysis.
+                  </small>
+                </div>
+                <div className="flex items-center justify-center w-1/2">
+                  <Button
+                    onClick={handleShowModal}
+                    style={{ minWidth: "100%" }}
+                  >
+                    {gmailButtonText}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert">
+                  {gmailError}
+                </small>
               </div>
             </div>
 
-             <h1 className="text-2xl md:text-3xl font-semibold leading-snug text-left">
-              Account Security
-            </h1>
-            <hr className="w-full border-t-2 border-gray-400 my-2" />
-
-            {/* email */}
-             <div className="my-6 text-left">
-              <h3 className="text-lg font-medium text-gray-300 mb-2">
-                Gmail Integration
-              </h3>
-              <p className="text-sm text-gray-400 mb-4">
-                Connect your Gmail account to allow email parsing and analysis.
-              </p>
-              <Button 
-                onClick={gmailBusy || gmailConnected ? undefined : handleGmailConnection}
-              >
-                {gmailBusy ? "Connecting..." : gmailConnected ? "Connected" : "Connect Gmail"}
-              </Button>
-              {error && (
-                <p className="mt-2 text-sm text-red-400" role="alert">
-                  {error}
-                </p>
-              )}
-            </div> 
-         
-
-            {/* password */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-left">
-                  Password
-                </label>
-                <div className="flex gap-6 items-end">
-                  <input 
-                    type="password" 
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter new password"
+            {/* Password Reset */}
+            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
+              <div className="flex w-full gap-4 py-2">
+                <div className="flex w-1/2 items-center">
+                  <FloatingInputField
+                    label="Reset Password"
+                    type="password"
+                    value=""
+                    action={() => console.log("User is entering new password.")}
+                    isValid={true}
+                    style={{ minWidth: "100%" }}
                   />
-                  <Button onClick={() => console.log("Change Password clicked")}>
-                    Change Password
+                </div>
+                <div className="flex items-center justify-center w-1/2">
+                  <Button
+                    onClick={() => console.log("Change Password clicked")}
+                    style={{ minWidth: "100%" }}
+                  >
+                    Change
                   </Button>
                 </div>
               </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert">
+                  {passwordError}
+                </small>
+              </div>
             </div>
 
-            {/* two-factor authentication */}
-            <div className="my-6 text-left">
-              <div className="flex justify-start gap-10 items-end">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 text-left">
-                    Two-Factor Authentication
-                  </label>
-                  <p className="text-sm text-gray-400">
-                    Add an additional layer of security to your account during login.
-                  </p>
+            {/* 2FA */}
+            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
+              <div className="flex w-full gap-4">
+                <div className="flex flex-col w-3/4">
+                  <h3 className="text-lg text-left font-medium text-gray-300 mt-4">
+                    Two-Factor Authentication (2FA)
+                  </h3>
+                  <small className="text-sm text-left text-gray-400 mb-4">
+                    Enable 2FA to add an extra layer of security to your
+                    account.
+                  </small>
                 </div>
-                <div className="flex items-center">
-                  <label className ="relative inline-flex items-center cursor-pointer">
-                    <input 
+                <div className="flex items-center justify-center w-1/4">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
                       type="checkbox"
                       className="sr-only peer"
                       onChange={() => console.log("2FA toggled")}
                     />
-                    <div className="w-11 h-6 bg-gray-600 
+                    <div
+                      className="w-11 h-6 bg-gray-600 
                     rounded-full peer peer-focus:ring-blue-300 peer-checked:bg-blue-600 
                     after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 
-                    after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
-                    </div>
+                    after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                    ></div>
                   </label>
                 </div>
               </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert">
+                  {twoFAError}
+                </small>
+              </div>
             </div>
 
-                 {/* delete account */}
-            <div className="my-6 text-left">
-              <button
-                onClick={handleDelete}
-                disabled={busy}
-                aria-busy={busy}
-                className="red"
-              >
-                {busy ? "Deleting..." : "Delete Account"}
-                {busy ? "Deleting..." : "Delete Account"}
-              </button>
-              {error && (
-                <p className="mt-2 text-sm text-red-400" role="alert">
-                  {error}
-                </p>
-              )}
-              {error && (
-                <p className="mt-2 text-sm text-red-400" role="alert">
-                  {error}
-                </p>
-              )}
+            {/* Delete Account */}
+            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
+              <div className="flex w-full gap-4">
+                <div className="flex flex-col w-1/2">
+                  <h3 className="text-lg text-left font-medium text-gray-300">
+                    Delete your JAICE account?
+                  </h3>
+                  <small className="text-sm text-left text-gray-400">
+                    This will permanently delete your account and all associated
+                    data.
+                  </small>
+                </div>
+                <div className="flex items-center justify-center w-1/2">
+                  <Button
+                    onClick={handleDelete}
+                    // disabled={busy}
+                    aria-busy={busy}
+                    // className="red"
+                    style={{ minWidth: "100%" }}
+                  >
+                    {busy ? "Deleting..." : "Delete Account"}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert">
+                  {deleteAccountError}
+                </small>
+              </div>
             </div>
-
-          </div>
+          </section>
         </div>
       </main>
+      {/*Modals Overlays*/}
+      <DaysToSync
+        show={showDaysToSync}
+        options={daysToSyncOptions}
+        onSelection={handleDaysSelection}
+        onCancel={() => setShowDaysToSync(false)}
+      />
+      <ChangePhotoModal
+        showModal={showChangePhotoModal}
+        setShowModal={setShowChangePhotoModal}
+      />
     </div>
   );
 }

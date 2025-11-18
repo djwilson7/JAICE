@@ -59,7 +59,7 @@ export function CheckBoxToggle({
 
   return (
     <motion.div
-      className="flex relative items-center justify-start border p-2 gap-4 rounded cursor-pointer overflow-hidden"
+      className="flex relative items-center justify-start p-2 gap-4 rounded cursor-pointer overflow-hidden"
       animate={{ width: targetWidth }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >

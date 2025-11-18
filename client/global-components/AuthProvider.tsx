@@ -3,12 +3,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { observeUser } from "../global-services/auth";
 import type { User } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 
 // Define the shape of the authentication context
-type AuthCtx = { user: User | null; loading: boolean };
+type AuthCtx = { user: User | null; loading: boolean; applyProfileUpdate: (displayName?: string, photoUrl?: string) => Promise<void>; };
 
 // Create a global context for authentication
-const Ctx = createContext<AuthCtx>({ user: null, loading: true });
+const Ctx = createContext<AuthCtx>({ user: null, loading: true, applyProfileUpdate: async () => {} });
 
 // Custom hook to access the authentication context
 export const useAuth = () => useContext(Ctx);
@@ -29,7 +30,25 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         });
     }, []);
 
+    const applyProfileUpdate = async (displayName?: string, photoUrl?: string) => {
+        const userToUpdate = user;
+        if (!userToUpdate) {
+            throw new Error("No user is currently logged in.");
+        }
+
+        try {
+            await updateProfile(userToUpdate, {
+                displayName: displayName,
+                photoURL: photoUrl
+            });
+
+            await userToUpdate.reload();            
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            throw error;
+        }
+    }
     // Provide the user and loading state to child components
-    return <Ctx.Provider value={{ user, loading }}>{children}</Ctx.Provider>;
+    return <Ctx.Provider value={{ user, loading, applyProfileUpdate }}>{children}</Ctx.Provider>;
 }
 

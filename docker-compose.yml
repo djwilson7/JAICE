@@ -35,9 +35,9 @@ services:
     container_name: gmail_request_intake
     build:
       context: .
-      dockerfile: ./shared_worker_library/Dockerfile.worker
+      dockerfile: ./gmail/Dockerfile.gmail
     command: >
-      celery -A shared_worker_library.worker.gmail_worker worker -Q gmail_initial_sync_queue -l info -E -n request_intake -c 15
+      celery -A gmail.gmail_worker worker -Q gmail_initial_sync_queue -l info -E -n request_intake -c 15
     env_file:
       - .env
     depends_on:
@@ -47,9 +47,9 @@ services:
     container_name: gmail_fetch_content
     build:
       context: .
-      dockerfile: ./shared_worker_library/Dockerfile.worker
+      dockerfile: ./gmail/Dockerfile.gmail
     command: >
-      celery -A shared_worker_library.worker.gmail_worker worker -Q gmail_fetch_content_queue -l info -E -n fetch_content -c 15
+      celery -A gmail.gmail_worker worker -Q gmail_fetch_content_queue -l info -E -n fetch_content -c 15
     env_file:
       - .env
     depends_on:
@@ -59,11 +59,14 @@ services:
     container_name: relevance_worker
     build:
       context: .
-      dockerfile: ./shared_worker_library/Dockerfile.worker
+      dockerfile: ./relevance/Dockerfile.relevance
     command: >
-      celery -A shared_worker_library.worker.relevance_worker worker -Q relevance_model_queue -l info -E -n relevance_model -c 15
+      celery -A relevance.relevance_worker worker -Q relevance_model_queue -l info -E -n relevance_model -c 3
     env_file:
       - .env
+    volumes:
+      - ./relevance:/app/relevance
+      - ./shared_worker_library:/app/shared_worker_library
     depends_on:
       - redis
 
@@ -71,9 +74,9 @@ services:
     container_name: classification_worker
     build:
       context: .
-      dockerfile: ./shared_worker_library/Dockerfile.worker
+      dockerfile: ./classification/Dockerfile.classification
     command: >
-      celery -A shared_worker_library.worker.classification_worker worker -Q classification_model_queue -l info -E -n classification_model -c 15
+      celery -A classification.class_worker worker -Q classification_model_queue -l info -E -n classification_model -c 1
     env_file:
       - .env
     depends_on:
@@ -83,9 +86,9 @@ services:
     container_name: ner_worker
     build:
       context: .
-      dockerfile: ./shared_worker_library/Dockerfile.worker
+      dockerfile: ./ner/Dockerfile.ner
     command: >
-      celery -A shared_worker_library.worker.ner_worker worker -Q ner_model_queue -l info -E -n ner_model -c 15
+      celery -A ner.ner_worker worker -Q ner_model_queue -l info -E -n ner_model -c 2
     env_file:
       - .env
     depends_on:

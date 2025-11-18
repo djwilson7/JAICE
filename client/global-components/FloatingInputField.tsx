@@ -10,6 +10,7 @@ export function FloatingInputField({
   action,
   errorTitle,
   errorMessage,
+  style,
 }: {
   label: string;
   type: string;
@@ -18,6 +19,7 @@ export function FloatingInputField({
   action: (value: string) => void;
   errorTitle?: string;
   errorMessage?: string;
+  style?: React.CSSProperties;
 }) {
   // State to track if the input is focused (to show tooltip)
   const [isFocused, setIsFocused] = useState(false);
@@ -85,7 +87,7 @@ export function FloatingInputField({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" style={style}>
       <input
         ref={inputRef}
         onFocus={setFocus}

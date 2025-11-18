@@ -1,3 +1,0 @@
-from shared_worker_library.celery_app import celery_app
-import shared_worker_library.tasks.relevance_tasks
-
