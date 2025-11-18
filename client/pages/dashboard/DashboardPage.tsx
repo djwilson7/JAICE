@@ -12,7 +12,7 @@ export function DashboardPage() {
   return (
     <div className="w-full min-h-screen">
       {/* Content Grid */}
-      <main className="pl-[11rem] px-6 py-6 w-full pb-24">
+      <main className="pl-[2rem] px-6 py-6 w-full pb-24">
         {/* Top: Grit score */}
         <section className="mb-6 grid grid-cols-1 xl:grid-cols-3">
           <div className="xl:col-span-3">
