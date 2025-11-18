@@ -13,6 +13,7 @@ import { AccountRoute } from "@/pages/settings/account/account.meta";
 import { AccessibilityRoute } from "@/pages/settings/accessibility/accessibility.meta";
 import { NotificationsRoute } from "@/pages/settings/notifications/notification.meta";
 import { AuthAboutRoute } from "@/pages/auth-about/authabout.meta";
+import { ResumeRoute } from "@/pages/Resume/resume.meta";
 
 // Wait until Firebasse Auth initializes and sets the current user
 function waitForAuth(timeoutMs = 5000): Promise<User | null> {
@@ -81,6 +82,11 @@ export const router = createBrowserRouter([
       {
         path: NotificationsRoute.path,
         element: NotificationsRoute.element,
+        loader: requireAuth,
+      },
+      {
+        path: ResumeRoute.path,
+        element: ResumeRoute.element,
         loader: requireAuth,
       },
     ],
