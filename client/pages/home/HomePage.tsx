@@ -19,7 +19,7 @@ import { applyJobChange } from "@/pages/home/utils/applyJobChange";
 import { getCurrentUserInfo } from "@/global-services/auth";
 import { MultiSelectBar } from "@/pages/home/home-components/MultiSelectBar";
 import Fuse from "fuse.js";
-import { fetchJobById } from "@/global-services/database";
+// import { fetchJobById } from "@/global-services/database";
 
 export function HomePage() {
   // State Variables
@@ -148,19 +148,6 @@ export function HomePage() {
     }
   }
 
-  async function refreshJobData(jobId: string) {
-    try {
-      const updatedJob = await fetchJobById(jobId);
-
-      if (!updatedJob) return;
-
-      setJobs((prev) =>prev.map((j) => (j.id === updatedJob.id ? { ...j, ...updatedJob } : j)));
-
-    } catch (error) {
-      console.error("Error refreshing job data:", error);
-    }
-  }
-
   // Mint rls jwt token for realtime subscription (30 min expiry)
   useEffect(() => {
     if (!userId) return;
@@ -220,17 +207,9 @@ export function HomePage() {
     };
   }, [userId]);
 
-  const handleRealtimeChange = useCallback(async (event: any) => {
-    if (event.record) 
-    {
-      setJobs((prev) => applyJobChange(prev, event));
-      return;
-    }
-    
-    // fallback fetch the latest row
-    if (event.id) await refreshJobData(event.id);
+  const handleRealtimeChange = useCallback((event: any) => {
+    setJobs((prev) => applyJobChange(prev, event));
   }, []);
-
   //subscribe to realtime changes using the rls token
   useJobRealtime(userId, rlsToken, handleRealtimeChange);
 
