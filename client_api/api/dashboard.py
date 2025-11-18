@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
+from datetime import datetime, timedelta, timezone
 
 from common.logger import get_logger
 from client_api.services.supabase_client import get_connection
@@ -285,4 +286,79 @@ async def avg_time_in_stage(user: dict = Depends(get_current_user)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error calculating average time in stage.",
+        )
+
+# ------------------------------------------------------------
+# Avg Applications Per Week
+# ------------------------------------------------------------
+@router.get(
+    "/avg-apps-per-week",
+    summary="Get 10-week trend of average applications per week",
+)
+async def avg_apps_per_week(user: dict = Depends(get_current_user)):
+    """
+    Returns the last 10 weeks of application counts (per week) for the user.
+    Weeks are based on the time the application was received (received_at),
+    falling back to updated_at when needed.
+    """
+    uid = user.get("uid")
+    logging.info(f"Fetching avg-apps-per-week for user {uid}")
+
+    # current time in UTC (used to build the week buckets)
+    now = datetime.now(timezone.utc)
+
+    query = """
+        WITH app_events AS (
+            SELECT
+                -- Prefer received_at (epoch ms text) when present/valid,
+                -- else fall back to updated_at.
+                CASE
+                    WHEN received_at IS NOT NULL
+                         AND received_at <> ''
+                         AND received_at ~ '^[0-9]+$'
+                    THEN to_timestamp(received_at::bigint / 1000.0)
+                    ELSE updated_at
+                END AS event_ts
+            FROM public.job_applications
+            WHERE user_uid = $1
+              AND is_deleted = FALSE
+              AND is_archived = FALSE
+        )
+        SELECT
+            date_trunc('week', event_ts) AS week_start,
+            COUNT(*)::int AS count
+        FROM app_events
+        WHERE event_ts IS NOT NULL
+          AND event_ts >= timezone('utc', now()) - INTERVAL '10 weeks'
+        GROUP BY week_start
+        ORDER BY week_start ASC;
+    """
+
+    try:
+        async with get_connection() as conn:
+            rows = await conn.fetch(query, uid)
+
+        # Map week_start -> count
+        counts_by_week = {r["week_start"].date(): r["count"] for r in rows}
+
+        # Build a contiguous 10-week window ending this week.
+        # Align to the same week start as date_trunc('week', ...) (Monday).
+        start_week = now - timedelta(weeks=9)
+        start_week = start_week - timedelta(days=start_week.weekday())  # Monday
+
+        week_starts = [start_week + timedelta(weeks=i) for i in range(10)]
+
+        labels = [f"W{i+1}" for i in range(10)]
+        values = [counts_by_week.get(ws.date(), 0) for ws in week_starts]
+
+        return {
+            "labels": labels,
+            "values": values,
+        }
+
+    except Exception as e:
+        logging.error(f"Error fetching avg-apps-per-week for user {uid}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error calculating weekly application averages.",
         )

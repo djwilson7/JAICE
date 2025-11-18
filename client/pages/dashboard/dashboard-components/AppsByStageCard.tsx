@@ -6,62 +6,85 @@ import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 
+const STAGE_COLORS: Record<string, string> = {
+  Applied: "#F59E0B",
+  Interview: "#22D3EE",
+  Offer: "#A78BFA",
+  Accepted: "#34D399",
+};
+
 export function AppsByStageCard({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     applyChartDefaults();
+    let alive = true;
 
-    const fetchData = async () => {
+    async function fetchData() {
       try {
-        const res = await api("/api/dashboard/apps-by-stage");
-        const data = res.data?.data;
+        setLoading(true);
+        setError(null);
 
-        if (data) {
-          setLabels(data.labels ?? []);
-          setValues(data.values ?? []);
-        }
+        const res = await api("/api/dashboard/apps-by-stage", {
+          method: "GET",
+        });
+
+        if (!alive) return;
+
+        const payload = (res?.data ?? {}) as {
+          labels?: string[];
+          values?: number[];
+        };
+
+        setLabels(payload.labels ?? []);
+        setValues(payload.values ?? []);
       } catch (err) {
+        if (!alive) return;
         console.error("Error fetching apps-by-stage", err);
-        // optional: fall back to zeros
-        setLabels(["Applied", "Interview", "Offer", "Accepted"]);
-        setValues([0, 0, 0, 0]);
+        setError(
+          err instanceof Error ? err.message : "Failed to load stage data.",
+        );
+      } finally {
+        if (alive) setLoading(false);
       }
-    };
+    }
 
     fetchData();
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const data: ChartData<"doughnut"> = {
+  // Match palette to labels order
+  const palette = labels.map(
+    (label) => STAGE_COLORS[label] ?? "#64748B", // fallback slate
+  );
+
+  const chartData: ChartData<"doughnut"> = {
     labels,
     datasets: [
       {
         data: values,
-        backgroundColor: [
-          "rgba(var(--color-light-purple-rgb), .60)",
-          "rgba(var(--color-teal-rgb), .60)",
-          "rgba(var(--color-dark-purple-rgb), .60)",
-          "rgba(var(--color-blue-gray-rgb), .60)",
-        ],
-        borderColor: [
-          "rgb(var(--color-light-purple-rgb))",
-          "rgb(var(--color-teal-rgb))",
-          "rgb(var(--color-dark-purple-rgb))",
-          "rgb(var(--color-blue-gray-rgb))",
-        ],
+        backgroundColor: palette,
+        borderColor: palette,
         borderWidth: 2,
-        hoverOffset: 6,
+        hoverOffset: 8,
       },
     ],
   };
 
+  // Legend off – we’ll render it manually for more space
   const options: ChartOptions<"doughnut"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "bottom", labels: { color: "rgba(255,255,255,.9)" } },
+      legend: {
+        display: false,
+      },
       tooltip: {
         backgroundColor: "rgba(15,20,30,.95)",
         titleColor: "#fff",
@@ -70,11 +93,57 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
         borderWidth: 1,
       },
     },
-    elements: {
-      arc: {
-        borderJoinStyle: "round",
-      },
-    },
+    cutout: "60%", // nice donut look
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex h-full items-center justify-center text-sm text-slate-300">
+          Loading stage distribution…
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex h-full items-center justify-center text-sm text-red-400">
+          {error}
+        </div>
+      );
+    }
+
+    if (!labels.length || !values.length) {
+      return (
+        <div className="flex h-full items-center justify-center text-sm text-slate-300">
+          No applications to display yet.
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 pt-12">
+        {/* Bigger donut */}
+        <div className="relative h-40 w-40 md:h-52 md:w-52">
+          <Doughnut data={chartData} options={options} />
+        </div>
+
+        {/* Custom legend matching palette */}
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-100">
+          {labels.map((label, i) => (
+            <div key={label} className="flex items-center gap-2">
+              <span
+                className="h-2 w-5 rounded-full"
+                style={{ backgroundColor: palette[i] }}
+              />
+              <span className="text-[11px] uppercase tracking-wide text-slate-200">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -86,15 +155,11 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
         expandable
         onExpand={() => setOpen(true)}
       >
-        <ChartHost>
-          <Doughnut data={data} options={options} />
-        </ChartHost>
+        <ChartHost>{renderContent()}</ChartHost>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Apps by Stage">
-        <ChartHost>
-          <Doughnut data={data} options={options} />
-        </ChartHost>
+      <Modal open={open} onClose={() => setOpen(false)} title="Applications by Stage">
+        <ChartHost>{renderContent()}</ChartHost>
       </Modal>
     </>
   );
