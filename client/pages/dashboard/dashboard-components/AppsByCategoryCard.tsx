@@ -3,7 +3,7 @@ import { Bar } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Card, ChartHost } from "./Card";
 import { Modal } from "./Modal";
-import { makeDarkOptions, c, ca } from "./chartTheme";
+import { makeDarkOptions } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 
@@ -70,15 +70,20 @@ export function AppsByCategoryCard({
         };
     }, []);
 
+    const stagePalette = ["#F59E0B", "#22D3EE", "#A78BFA", "#34D399"];
+
     const colors = {
-        barFill: ca("--color-teal-rgb", 0.55),
-        barLine: c("--color-teal-rgb"),
+        // Per-bar colors cycling through the stage palette
+        barFill: labels.map((_, i) => `${stagePalette[i % stagePalette.length]}88`), // 88 = slight transparency
+        barBorder: labels.map((_, i) => stagePalette[i % stagePalette.length]),
+
         grid: "rgba(148,163,184,0.18)",
         ticks: "#E5E7EB",
         legend: "#F3F4F6",
         axis: "rgba(203,213,225,0.35)",
         tooltipBg: "rgba(17,24,39,0.95)",
     };
+
 
     const maxValue = values.length ? Math.max(...values) : 0;
 
@@ -89,13 +94,13 @@ export function AppsByCategoryCard({
                 label: "Applications",
                 data: values,
                 backgroundColor: colors.barFill,
-                borderColor: colors.barLine,
+                borderColor: colors.barBorder,
                 borderWidth: 3,
                 borderRadius: 10,
                 borderSkipped: false,
                 barThickness: 22,
-                hoverBackgroundColor: ca("--color-teal-rgb", 0.7),
-                hoverBorderColor: colors.barLine,
+                hoverBackgroundColor: colors.barBorder,
+                hoverBorderColor: colors.barBorder,
                 hoverBorderWidth: 3,
             },
         ],
