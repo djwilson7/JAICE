@@ -72,29 +72,35 @@ export function JobCard({
   };
 
   const cardBorderColor = useMemo (() => {
-    // if email is marked as accepted make the card border green
-     if (job.applicationStage === "Accepted") 
-    {
-      return "border-green-500";
-    } 
-    // if email is marked as rejected make the card border red
-    else if (job.applicationStage === "Rejected") 
-    {
-      return "border-red-500";
-    } 
-    else 
-    {
-      return "border-transparent";
-    }
+    const color =
+      // if email is marked as accepted make the card border green
+     job.applicationStage === "Accepted" ? "#10B981" :
+
+     // if email is marked as rejected make the card border red
+      job.applicationStage === "Rejected" ? "#EF4444" :
+
+      "transparent";
+    
+    return {
+      border: color ===  "transparent" ? "1px solid transparent" : `1px solid ${color}`,
+      transition: "border 0.3s ease",
+    };
 
   }, [job.applicationStage]);
 
   const reviewBorderColor = useMemo (() => {
     // if email is marked as review needed make the card border orange
-    return localReviewNeeded 
-    ? {boxShadow: "0 0 0 2px rgba(249,115,22,1)"} : undefined;
+    return {
+      boxShadow: localReviewNeeded ? "0 0 0 2px rgba(249,115,22,1)" : "none",
+      transition: "box-shadow 0.3s ease",
+    };
     
   }, [localReviewNeeded]);
+
+  const combinedStyle = {
+    ...cardBorderColor,
+    ...reviewBorderColor,
+  };
 
   const variants = {
     active: { opacity: 1, scale: 1, filter: "none" },
@@ -132,10 +138,11 @@ export function JobCard({
 
   return (
     <motion.div
+      key={`${job.id}-${job.applicationStage}`}
       id={job.id}
       title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
-      className={`relative border w-full p-4 rounded shadow-sm bg-[#1D1B20] flex items-center flex flex-col ${cardBorderColor}`}
-      style={reviewBorderColor}
+      className={`relative border w-full p-4 rounded shadow-sm bg-[#1D1B20] flex items-center flex flex-col`}
+      style={combinedStyle}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -145,6 +152,7 @@ export function JobCard({
         scale: 1.02,
         boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
+        borderColor: localReviewNeeded ? "#F97316" : "#dfdfdfff",
       }}
 
       onHoverStart={() => setIsHovered(true)}
