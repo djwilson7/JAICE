@@ -11,7 +11,7 @@ export function AvgTimeInStageCard({ className = "", height }: { className?: str
   useEffect(() => applyChartDefaults(), []);
 
   const labels = ["Applied → Interview", "Interview → Offer", "Offer → Accepted"];
-  const days   = [11, 7, 4]; // example durations in days
+  const days = [11, 7, 4]; // example durations in days
 
   const data: ChartData<"bar"> = {
     labels,
@@ -47,7 +47,14 @@ export function AvgTimeInStageCard({ className = "", height }: { className?: str
 
   return (
     <>
-      <Card title="Avg Time in Stage" subtitle="Rolling 90-day avg" className={`${className} cursor-pointer`} height={height ?? "18rem"} expandable onExpand={() => setOpen(true)}>
+      <Card
+        title="Avg Time in Stage"
+        subtitle="Rolling 90-day avg"
+        className={`${className} cursor-pointer`}
+        height={height ?? "18rem"}
+        expandable
+        onExpand={() => setOpen(true)}
+      >
         <ChartHost><Bar data={data} options={options} /></ChartHost>
       </Card>
 

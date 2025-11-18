@@ -60,7 +60,7 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
   return (
     <>
       <Card
-        title="Avg Apps per Week"
+        title="Avg Applications per Week"
         subtitle="10-week trend"
         className={`${className} cursor-pointer`}
         expandable
