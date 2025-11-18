@@ -3,18 +3,31 @@ import { Bar } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Card, ChartHost } from "./Card";
 import { Modal } from "./Modal";
-import { makeDarkOptions, c, ca } from "./chartTheme";
+import { makeDarkOptions } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 
-type StageBuckets = {
-  Applied: number;
-  Interview: number;
-  Offer: number;
-  Accepted: number;
+type StageArrays = {
+  applied: number[];
+  interview: number[];
+  offer: number[];
+  accepted: number[];
 };
 
-const ALL_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const ALL_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export function SplitByStageCard({
   className = "",
@@ -43,29 +56,36 @@ export function SplitByStageCard({
         setLoading(true);
         setError(null);
 
-        const res = await api("/api/dashboard/apps-over-time", {
+        // ✅ mirror AppsOverTimeCard: same endpoint + shape
+        const res = await api("/api/dashboard/apps-over-time/", {
           method: "GET",
         });
 
         if (!alive) return;
 
-        const raw = (res.data?.data ?? {}) as Record<string, Partial<StageBuckets>>;
+        const raw = (res?.data ?? {}) as Partial<StageArrays>;
+
+        const appliedArr = raw.applied ?? new Array(ALL_MONTHS.length).fill(0);
+        const interviewArr =
+          raw.interview ?? new Array(ALL_MONTHS.length).fill(0);
+        const offerArr = raw.offer ?? new Array(ALL_MONTHS.length).fill(0);
+        const acceptedArr =
+          raw.accepted ?? new Array(ALL_MONTHS.length).fill(0);
 
         // Build an ordered list of months with their stage counts
-        const monthRows = ALL_MONTHS.map((m) => {
-          const bucket = raw[m] ?? {};
-          const applied = bucket.Applied ?? 0;
-          const interview = bucket.Interview ?? 0;
-          const offer = bucket.Offer ?? 0;
-          const accepted = bucket.Accepted ?? 0;
+        const monthRows = ALL_MONTHS.map((label, i) => {
+          const a = appliedArr[i] ?? 0;
+          const iv = interviewArr[i] ?? 0;
+          const o = offerArr[i] ?? 0;
+          const ac = acceptedArr[i] ?? 0;
 
           return {
-            label: m,
-            applied,
-            interview,
-            offer,
-            accepted,
-            total: applied + interview + offer + accepted,
+            label,
+            applied: a,
+            interview: iv,
+            offer: o,
+            accepted: ac,
+            total: a + iv + o + ac,
           };
         });
 
@@ -94,6 +114,14 @@ export function SplitByStageCard({
     };
   }, []);
 
+  // Same palette as AppsOverTime
+  const colors = {
+    applied: "#F59E0B",
+    interview: "#22D3EE",
+    offer: "#A78BFA",
+    accepted: "#34D399",
+  };
+
   const common = { borderWidth: 2, borderRadius: 6, barThickness: 16 };
 
   const data: ChartData<"bar"> = {
@@ -102,51 +130,63 @@ export function SplitByStageCard({
       {
         label: "Applied",
         data: applied,
-        backgroundColor: ca("--color-light-purple-rgb", 0.45),
-        borderColor: c("--color-light-purple-rgb"),
+        backgroundColor: `${colors.applied}66`, // light fill
+        borderColor: colors.applied,
         ...common,
       },
       {
         label: "Interview",
         data: interview,
-        backgroundColor: ca("--color-teal-rgb", 0.45),
-        borderColor: c("--color-teal-rgb"),
+        backgroundColor: `${colors.interview}66`,
+        borderColor: colors.interview,
         ...common,
       },
       {
         label: "Offer",
         data: offer,
-        backgroundColor: ca("--color-dark-purple-rgb", 0.45),
-        borderColor: c("--color-dark-purple-rgb"),
+        backgroundColor: `${colors.offer}66`,
+        borderColor: colors.offer,
         ...common,
       },
       {
         label: "Accepted",
         data: accepted,
-        backgroundColor: ca("--color-blue-gray-rgb", 0.45),
-        borderColor: c("--color-blue-gray-rgb"),
+        backgroundColor: `${colors.accepted}66`,
+        borderColor: colors.accepted,
         ...common,
       },
     ],
   };
 
   const options: ChartOptions<"bar"> = makeDarkOptions<"bar">({
+    plugins: {
+      legend: {
+        labels: {
+          color: "rgba(255,255,255,.9)",
+          usePointStyle: true,
+          boxWidth: 10,
+        },
+      },
+    },
     scales: {
       x: {
-        stacked: true,
+        stacked: false,
         ticks: { color: "rgba(255,255,255,.9)" },
         grid: { color: "rgba(255,255,255,.12)" },
         border: { color: "rgba(255,255,255,.25)" },
       },
       y: {
-        stacked: true,
+        stacked: false,
         beginAtZero: true,
         ticks: { color: "rgba(255,255,255,.9)" },
         grid: { color: "rgba(255,255,255,.12)" },
         border: { color: "rgba(255,255,255,.25)" },
       },
     },
+    responsive: true,
+    maintainAspectRatio: false,
   });
+
 
   const content = () => {
     if (loading) {

@@ -205,3 +205,84 @@ async def apps_over_time(user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error fetching monthly stage trends.",
         )
+
+# ------------------------------------------------------------
+# Avg Time in Stage (Rolling 90-day averages)
+# ------------------------------------------------------------
+@router.get(
+    "/avg-time-in-stage",
+    summary="Get rolling 90-day average time (in days) applications sit in each stage",
+)
+async def avg_time_in_stage(user: dict = Depends(get_current_user)):
+    uid = user.get("uid")
+    logging.info(f"Fetching avg-time-in-stage (sitting in stage) for user {uid}")
+    
+    query = """
+        SELECT
+            COALESCE(avg_applied, 0.0)   AS applied,
+            COALESCE(avg_interview, 0.0) AS interview,
+            COALESCE(avg_offer, 0.0)     AS offer,
+            COALESCE(avg_accepted, 0.0)  AS accepted
+        FROM (
+            SELECT
+                AVG(
+                    CASE WHEN app_stage = 'Applied'
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                    END
+                ) AS avg_applied,
+                AVG(
+                    CASE WHEN app_stage = 'Interview'
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                    END
+                ) AS avg_interview,
+                AVG(
+                    CASE WHEN app_stage = 'Offer'
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                    END
+                ) AS avg_offer,
+                AVG(
+                    CASE WHEN app_stage = 'Accepted'
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                    END
+                ) AS avg_accepted
+            FROM public.job_applications
+            WHERE user_uid = $1
+              AND is_deleted = FALSE
+              AND is_archived = FALSE
+              AND updated_at IS NOT NULL
+              AND updated_at >= now() AT TIME ZONE 'utc' - INTERVAL '90 days'
+              AND app_stage IN ('Applied','Interview','Offer','Accepted')
+        ) sub;
+    """
+    
+    try:
+        async with get_connection() as conn:
+            row = await conn.fetchrow(query, uid)
+
+        if not row:
+            averages = {
+                "applied": 0.0,
+                "interview": 0.0,
+                "offer": 0.0,
+                "accepted": 0.0,
+            }
+        else:
+            averages = {
+                "applied": float(row["applied"] or 0.0),
+                "interview": float(row["interview"] or 0.0),
+                "offer": float(row["offer"] or 0.0),
+                "accepted": float(row["accepted"] or 0.0),
+            }
+
+        # ✅ Match other endpoints: wrap in {status, data}
+        return {
+            "status": "success",
+            "data": averages,
+        }
+
+    except Exception as e:
+        logging.error(f"Error fetching avg-time-in-stage for user {uid}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error calculating average time in stage.",
+        )
