@@ -183,7 +183,16 @@ export function AccountPage() {
   }
 
   async function unlinkGmail() {
-    return await api("/api/auth/revoke-gmail-consent", { method: "POST" });
+    const sure = window.confirm(
+      "Unlinking your gmail account will require logging in again to re-establish your identity. Are you sure you want to proceed?"
+    );
+    if (!sure) return;
+    const res = await api("/api/auth/revoke-gmail-consent", { method: "POST" });
+    if (res.status === "success") {
+      setGmailConnected(false);
+    }
+    navigate("/");
+    return res;
   }
 
   // Determine the Gmail button text based on connection status and busy state

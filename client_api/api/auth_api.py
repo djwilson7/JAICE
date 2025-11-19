@@ -59,7 +59,7 @@ def get_oauth_consent_url(user: dict = Depends(get_user_from_token_query)):
         CLIENT_CONFIG, scopes=SCOPES, redirect_uri=redirect
     )
 
-    auth_url, state = flow.authorization_url(access_type="offline", state=uid)
+    auth_url, state = flow.authorization_url(access_type="offline", state=uid, prompt="consent")
     logging.debug(f"OAuth2 consent URL generated")
     return RedirectResponse(auth_url)
 
