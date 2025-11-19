@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import Button from "@/global-components/button";
-import { deleteCurrentUser, getIdToken } from "@/global-services/auth";
+import { deleteCurrentUser, getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
@@ -20,7 +20,7 @@ const GMAIL_CONSENT_URL =
 export function AccountPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -34,7 +34,6 @@ export function AccountPage() {
 
   const handleShowChangePhotoModal = () => {
     setShowChangePhotoModal(true);
-
   };
 
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -46,19 +45,14 @@ export function AccountPage() {
 
   const { user, loading, applyProfileUpdate } = useAuth();
   const firstName: string = user?.displayName?.split(" ")[0] || "User";
-  const lastName: string = user?.displayName?.split(" ").slice(1).join(" ") || "";
+  const lastName: string =
+    user?.displayName?.split(" ").slice(1).join(" ") || "";
   const phoneNumber: string = user?.phoneNumber || "";
   const profilePicURL: string = user?.photoURL || "";
 
-  const [firstNameField, setFirstNameField] = useState<string>(
-    firstName
-  );
-  const [lastNameField, setLastNameField] = useState<string>(
-    lastName
-  );
-  const [phoneNumberField, setPhoneNumberField] = useState<string>(
-    phoneNumber
-  );
+  const [firstNameField, setFirstNameField] = useState<string>(firstName);
+  const [lastNameField, setLastNameField] = useState<string>(lastName);
+  const [phoneNumberField, setPhoneNumberField] = useState<string>(phoneNumber);
 
   const handleFirstNameInput = (value: string) => {
     setFirstNameField(value);
@@ -89,7 +83,7 @@ export function AccountPage() {
 
     const fNameC = fName.charAt(0).toUpperCase() + fName.slice(1);
     const lNameC = lName.charAt(0).toUpperCase() + lName.slice(1);
-    
+
     setFirstNameField(fNameC);
     setLastNameField(lNameC);
 
@@ -183,16 +177,35 @@ export function AccountPage() {
   }
 
   async function unlinkGmail() {
-    const sure = window.confirm(
-      "Unlinking your gmail account will require logging in again to re-establish your identity. Are you sure you want to proceed?"
+    const proceed = window.confirm(
+      "Unlinking your Gmail account will require you to log in again. Continue?"
     );
-    if (!sure) return;
-    const res = await api("/api/auth/revoke-gmail-consent", { method: "POST" });
-    if (res.status === "success") {
+    if (!proceed) return { status: "cancelled" };
+
+    try {
+      const revoke = await api("/api/auth/revoke-gmail-consent", {
+        method: "POST",
+      });
+
+      if (revoke.status !== "success") {
+        console.error("Failed to revoke Gmail consent:", revoke);
+        setGmailError(
+          "Unable to unlink your Gmail right now. Try again shortly."
+        );
+        return { status: "error" };
+      }
+
+      await api("/api/auth/logout", { method: "POST" });
+      await logOut();
+
       setGmailConnected(false);
+      navigate("/");
+      return { status: "success" };
+    } catch (err) {
+      console.error("Unlink Gmail error:", err);
+      setGmailError("A network error occurred. Please try again.");
+      return { status: "error" };
     }
-    navigate("/");
-    return res;
   }
 
   // Determine the Gmail button text based on connection status and busy state
