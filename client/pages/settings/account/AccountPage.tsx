@@ -217,44 +217,43 @@ export function AccountPage() {
 
   async function handleDelete() {
     setDeleteAccountError(null);
+
     const sure = window.confirm(
       "This will permanently delete your account. This cannot be undone. Continue?"
     );
     if (!sure) return;
 
-    setBusy(true);
-    const res = await deleteCurrentUser(); // if you support email/password reauth, pass { email, password } here
-    setBusy(false);
+    try {
+      setBusy(true);
 
-    if (res.ok) {
-      // Account deleted; user will be signed out. Send them to your Landing page.
-      window.location.assign("/");
-      return;
-    }
+      const revoke = await api("/api/auth/revoke-gmail-consent", {
+        method: "POST",
+      });
 
-    if (
-      res.code === "reauth-needed" ||
-      res.code === "auth/requires-recent-login"
-    ) {
-      setDeleteAccountError("Please re-authenticate and try again.");
-      // If you support email/password, collect the current password and retry:
-      const email = useAuth().user?.email?.toString();
-      const password =
-        prompt("Confirm your current password to continue:") || "";
-      if (password) {
-        setBusy(true);
-        const retry = await deleteCurrentUser({ email, password });
+      if (revoke.status !== "success") {
         setBusy(false);
-        if (retry.ok) {
-          window.location.assign("/");
-          return;
-        }
-        setDeleteAccountError(`Failed to delete account: ${retry.code}`);
+        setDeleteAccountError("Failed to revoke Gmail access. Try again.");
+        return;
       }
-      return;
-    }
 
-    setDeleteAccountError(`Failed to delete account: ${res.code}`);
+      const deletion = await api("/api/auth/delete-account", {
+        method: "POST",
+      });
+
+      setBusy(false);
+
+      if (deletion.status !== "success") {
+        setDeleteAccountError(`Failed to delete account: ${deletion.message}`);
+        return;
+      }
+
+      await logOut();
+
+      navigate("/");
+    } catch (error) {
+      console.error("Delete account error:", error);
+      setDeleteAccountError("A network error occurred. Please try again.");
+    }
   }
 
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
