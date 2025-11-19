@@ -13,6 +13,7 @@ from celery import Celery
 from common.logger import get_logger
 from client_api.utils.task_definitions import TaskType
 from pydantic import BaseModel
+from client_api.services.firebase_admin import get_auth
 
 logging = get_logger()
 
@@ -516,6 +517,19 @@ async def is_gmail_consent_provided(
             detail="A database error occurred while fetching user status.",
         )
 
+
+@router.post("/logout", summary="Logs out the current user by invalidating their session.")
+async def logout(user: dict = Depends(get_current_user)):
+    uid = user.get("uid", "")
+    try:
+        # Invalidate the refresh token
+        auth = get_auth()
+        auth.revoke_refresh_tokens(uid)
+        logging.info(f"User {uid} logged out successfully.")
+        return {"status": "success", "message": "Logged out successfully"}
+    except Exception as e:
+        logging.error(f"Error during logout for user {uid}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to log out.")
 
 # Protected endpoint to get current user info
 # The path here is relative to the prefix in main.py

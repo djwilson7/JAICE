@@ -17,6 +17,9 @@ logging = get_logger()
 # Load environment variables from the backend .env file
 load_dotenv()
 
+def get_auth():
+    return auth
+
 def initialize_firebase_sdk():
     logging.info("Initializing Firebase Admin SDK...")
     sa_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")

@@ -57,7 +57,6 @@ export async function logOut()
 {
     // clear any existing google tokens
     localStorage.removeItem('google_access_token');
-
     await signOut(auth);
 }
 

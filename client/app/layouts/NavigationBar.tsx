@@ -3,6 +3,7 @@ import Button from "@/global-components/button";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/global-components/AuthProvider";
+import { logOut } from "@/global-services/auth";
 // Icons
 import homeIcon from "@/assets/icons/home.svg";
 import aboutIcon from "@/assets/icons/book-open-cover.svg";
@@ -16,6 +17,7 @@ import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
 
 import { motion } from "framer-motion";
+import { api } from "@/global-services/api";
 
 const MenuExpandButton = ({
   hoverEnabled,
@@ -136,8 +138,13 @@ export function NavigationBar() {
     } else setSelectedButton("");
   }, [location.pathname]);
 
-  const handleButtonClick = (route: string, buttonId: string) => {
+  const handleButtonClick = async (route: string, buttonId: string) => {
     setSelectedButton(buttonId);
+    if (route === "/") {
+      console.log("Logging out...");
+      await api("/api/auth/logout", { method: "POST" });
+      await logOut();
+    }
     navigate(route);
   };
 
