@@ -4,6 +4,7 @@ import searchIcon from "@/assets/icons/search.svg";
 import circleXIcon from "@/assets/icons/circle-xmark.svg";
 import { motion } from "framer-motion";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { getCSSVar } from "@/utils/getCSSVar";
 /**
  * Search Bar Props
  * @param isSearching - Boolean indicating if the search bar is active
@@ -81,7 +82,7 @@ export function SearchBar({
         }
       }}
       animate={{ width: targetWidth }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
     >
       {" "}
       {/* ^ Main Container adapts to width changes ^ */}

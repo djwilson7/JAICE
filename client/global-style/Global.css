@@ -77,6 +77,8 @@
   --fs-caption: calc(14px * var(--text-scale));
 
   --text-color-primary: var(--color-blue-5);
+
+  --animation-duration: 0.3s;
 }
 
 /* Typography */

@@ -1,4 +1,5 @@
 // import { localfiles } from "@/directory/path/to/localimport";
+import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
@@ -61,7 +62,7 @@ export function CheckBoxToggle({
     <motion.div
       className="flex relative items-center justify-start p-2 gap-4 rounded cursor-pointer overflow-hidden"
       animate={{ width: targetWidth }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
     >
       <div ref={contentRef} className="flex items-center gap-2">
         <img

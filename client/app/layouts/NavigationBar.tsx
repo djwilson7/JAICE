@@ -15,6 +15,7 @@ import quitIcon from "@/assets/icons/user-logout.svg";
 import searchIcon from "@/assets/icons/search.svg";
 import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
+import { getCSSVar } from "@/utils/getCSSVar";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
@@ -116,7 +117,7 @@ export function NavigationBar() {
 
   const [selectedButton, setSelectedButton] = useState<string>("");
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
-  const animationDuration = 0.2;
+  const animationDuration = parseFloat(getCSSVar("--animation-duration")) || 0.2;
   const [hoverEnabled, setHoverEnabled] = useState<boolean>(true);
 
   useEffect(() => {

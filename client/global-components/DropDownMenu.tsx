@@ -1,5 +1,6 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 import circleXIcon from "@/assets/icons/circle-xmark.svg";
+import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
@@ -89,7 +90,7 @@ export function DropDownMenu({
           : () => setIsOpen(true)
       }
       animate={{ width: targetWidth }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
     >
       <motion.div
         style={menuStyle}

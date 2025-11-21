@@ -11,7 +11,7 @@ import {
 
 type TextScale = "Small" | "Default" | "Large";
 type Theme = "Light" | "Dark";
-type MotionPreference = "Low" | "Default" | "High";
+type MotionPreference = "Slow" | "Default" | "Fast";
 type ContrastLevel = "Low" | "Default" | "High" | "NoColor";
 
 const TEXT_SCALE_KEY = "TEXT_SCALE";
@@ -40,8 +40,8 @@ export function AccessibilityPage() {
 
   // ---------- THEME SETTINGS ----------
   const themeOptions = {
-    Light: { key: "Light", width: "w-1/2", fontSize: "1rem" },
-    Dark: { key: "Dark", width: "w-1/2", fontSize: "1rem" },
+    light: { key: "Light", width: "w-1/2", fontSize: "1rem" },
+    dark: { key: "Dark", width: "w-1/2", fontSize: "1rem" },
   };
 
   // --- THEME: initialize from localStorage or system preference
@@ -72,19 +72,35 @@ export function AccessibilityPage() {
   }, []);
 
   // ---------- MOTION REDUCTION SETTINGS ----------
-  const [motionPreference, setMotionPreference] =
-    useState<MotionPreference>(() => {
+  const motionOptions = {
+    Slow: { key: "Slow", width: "w-1/3", fontSize: "1rem" },
+    Default: { key: "Default", width: "w-1/3", fontSize: "1rem" },
+    Fast: { key: "Fast", width: "w-1/3", fontSize: "1rem" },
+  };
+
+  const [motionPreference, setMotionPreference] = useState<MotionPreference>(
+    () => {
       return (
         (localStorage.getItem(MOTION_PREFERENCE_KEY) as MotionPreference) ||
         "Default"
       );
-    });
+    }
+  );
 
-  const motionOptions = {
-    Low: { key: "Low", width: "w-1/3", fontSize: "1rem" },
-    Default: { key: "Default", width: "w-1/3", fontSize: "1rem" },
-    High: { key: "High", width: "w-1/3", fontSize: "1rem" },
-  };
+  useEffect(() => {
+    let duration =
+      motionPreference === "Slow"
+        ? "0.4s"
+        : motionPreference === "Fast"
+        ? "0.1s"
+        : "0.2s";
+    document.documentElement.style.setProperty(
+      "--animation-duration",
+      duration
+    );
+    localStorage.setItem(MOTION_PREFERENCE_KEY, motionPreference);
+  }, [motionPreference]);
+  
 
   // ---------- CONTRAST LEVEL SETTINGS ----------
   const [contrast, setContrast] = useState<ContrastLevel>(() => {
