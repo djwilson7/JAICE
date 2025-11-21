@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useMemo, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
-import upChevron from "@/assets/icons/angle-small-up.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import type { JobCardType } from "@/types/jobCardType";
