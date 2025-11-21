@@ -2,7 +2,8 @@
 
 import React, { useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import RejectedIcon from '../../../assets/icons/refresh.svg';
+import RejectedIcon from '@/assets/icons/refresh.svg';
+import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
 
 interface ColumnProps {
   id: string;
@@ -35,6 +36,7 @@ export function Column({
   onToggleReject,
 }: ColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null); // Ref to the column div
+  const hasChildren = count > 0;
 
   useEffect(() => {
     const el = columnRef.current;
@@ -103,7 +105,16 @@ export function Column({
         <h3>{count}</h3>
       </div>
       <div className="flex border-b mx-4 mb-2" />
-      <div className="flex flex-col items-center p-2 gap-4">{children}</div>
+      <div className="flex flex-col items-center p-2 gap-4">
+        {hasChildren ? (children) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {<EmptyColumnPlaceholder title={title} />}
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 };
