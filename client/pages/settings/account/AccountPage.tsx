@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import Button from "@/global-components/button";
-import { deleteCurrentUser, getIdToken, logOut } from "@/global-services/auth";
+import { getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
@@ -10,6 +10,7 @@ import { DaysToSync } from "./account-components/DaysToSync";
 import { useAuth } from "@/global-components/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
+import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -43,7 +44,7 @@ export function AccountPage() {
 
   const daysToSyncOptions = [3, 7, 14, 45];
 
-  const { user, loading, applyProfileUpdate } = useAuth();
+  const { user, applyProfileUpdate } = useAuth();
   const firstName: string = user?.displayName?.split(" ")[0] || "User";
   const lastName: string =
     user?.displayName?.split(" ").slice(1).join(" ") || "";
@@ -103,22 +104,8 @@ export function AccountPage() {
   };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
-    checkGmailStatus();
+    checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
-
-  async function checkGmailStatus() {
-    try {
-      const response = await api("/api/auth/gmail-consent-status");
-      console.log("Gmail consent status response:", response);
-      setGmailConnected(response.isConnected);
-      setGmailError(null);
-      return;
-    } catch (err) {
-      console.error("Error checking Gmail consent status:", err);
-      setGmailConnected(false);
-      setGmailError("Error checking gmail status.");
-    }
-  }
 
   async function handleShowModal() {
     if (gmailConnected) {
