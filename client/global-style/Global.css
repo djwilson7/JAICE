@@ -69,11 +69,12 @@
   --font-caption: "Poppins", sans-serif;
 
   /* Font Sizes */
-  --fs-title: 40px;
-  --fs-headline: 28px;
-  --fs-subheading: 20px;
-  --fs-body: 16px;
-  --fs-caption: 14px;
+  --text-scale: 1;
+  --fs-title: calc(40px * var(--text-scale));
+  --fs-headline: calc(28px * var(--text-scale));
+  --fs-subheading: calc(20px * var(--text-scale));
+  --fs-body: calc(16px * var(--text-scale));
+  --fs-caption: calc(14px * var(--text-scale));
 
   --text-color-primary: var(--color-blue-5);
 }

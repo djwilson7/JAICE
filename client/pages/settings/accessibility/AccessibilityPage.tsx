@@ -9,47 +9,40 @@ import {
   SettingHeader,
 } from "@/pages/settings/accessibility/accessibility-components/Cards";
 
-type TextSize = "Small" | "Medium" | "Large";
+type TextScale = "Small" | "Default" | "Large";
 type Theme = "Light" | "Dark";
-type MotionPreference = "Low" | "Medium" | "High";
-type ContrastLevel = "Low" | "Medium" | "High" | "NoColor";
+type MotionPreference = "Low" | "Default" | "High";
+type ContrastLevel = "Low" | "Default" | "High" | "NoColor";
 
-const THEME_KEY = "theme";
+const TEXT_SCALE_KEY = "TEXT_SCALE";
+const THEME_KEY = "APP_THEME";
+const MOTION_PREFERENCE_KEY = "MOTION_PREFERENCE";
+const CONTRAST_LEVEL_KEY = "CONTRAST_LEVEL";
 
 export function AccessibilityPage() {
-  const textSizeOptions = {
-    small: { key: "Small", width: "w-1/3", fontSize: "0.85rem" },
-    medium: { key: "Default", width: "w-1/3", fontSize: "1rem" },
-    large: { key: "Large", width: "w-1/3", fontSize: "1.15rem" },
+  // ---------- TEXT SCALING SETTINGS ----------
+  const textScaleOptions = {
+    Small: { key: "Small", width: "w-1/3", fontSize: "0.85rem" },
+    Default: { key: "Default", width: "w-1/3", fontSize: "1rem" },
+    Large: { key: "Large", width: "w-1/3", fontSize: "1.15rem" },
   };
 
+  const [textScale, setTextScale] = useState<TextScale>(() => {
+    return (localStorage.getItem(TEXT_SCALE_KEY) as TextScale) || "Default";
+  });
+
+  useEffect(() => {
+    const scale =
+      textScale === "Small" ? 0.85 : textScale === "Large" ? 1.15 : 1;
+    document.documentElement.style.setProperty("--text-scale", String(scale));
+    localStorage.setItem(TEXT_SCALE_KEY, textScale);
+  }, [textScale]);
+
+  // ---------- THEME SETTINGS ----------
   const themeOptions = {
-    light: { key: "Light", width: "w-1/2", fontSize: "1rem" },
-    dark: { key: "Dark", width: "w-1/2", fontSize: "1rem" },
+    Light: { key: "Light", width: "w-1/2", fontSize: "1rem" },
+    Dark: { key: "Dark", width: "w-1/2", fontSize: "1rem" },
   };
-
-  const motionOptions = {
-    low: { key: "Low", width: "w-1/3", fontSize: "1rem" },
-    medium: { key: "Default", width: "w-1/3", fontSize: "1rem" },
-    high: { key: "High", width: "w-1/3", fontSize: "1rem" },
-  };
-
-  const contrastOptions = {
-    low: { key: "Low", width: "w-1/4", fontSize: "1rem" },
-    medium: { key: "Default", width: "w-1/4", fontSize: "1rem" },
-    high: { key: "High", width: "w-1/4", fontSize: "1rem" },
-    blackwhite: { key: "B/W", width: "w-1/4", fontSize: "1rem" },
-  };
-
-  //text size
-  //theme settings
-  //motion settings
-  //contrast level
-
-  const [textSize, setTextSize] = useState<TextSize>("Medium");
-  const [motionPreference, setMotionPreference] =
-    useState<MotionPreference>("Medium");
-  const [contrast, setContrast] = useState<ContrastLevel>("Medium");
 
   // --- THEME: initialize from localStorage or system preference
   const [theme, setTheme] = useState<Theme>(() => {
@@ -78,10 +71,40 @@ export function AccessibilityPage() {
     return () => mq.removeEventListener?.("change", handler);
   }, []);
 
+  // ---------- MOTION REDUCTION SETTINGS ----------
+  const [motionPreference, setMotionPreference] =
+    useState<MotionPreference>(() => {
+      return (
+        (localStorage.getItem(MOTION_PREFERENCE_KEY) as MotionPreference) ||
+        "Default"
+      );
+    });
+
+  const motionOptions = {
+    Low: { key: "Low", width: "w-1/3", fontSize: "1rem" },
+    Default: { key: "Default", width: "w-1/3", fontSize: "1rem" },
+    High: { key: "High", width: "w-1/3", fontSize: "1rem" },
+  };
+
+  // ---------- CONTRAST LEVEL SETTINGS ----------
+  const [contrast, setContrast] = useState<ContrastLevel>(() => {
+    return (
+      (localStorage.getItem(CONTRAST_LEVEL_KEY) as ContrastLevel) || "Default"
+    );
+  });
+
+  const contrastOptions = {
+    Low: { key: "Low", width: "w-1/4", fontSize: "1rem" },
+    Default: { key: "Default", width: "w-1/4", fontSize: "1rem" },
+    High: { key: "High", width: "w-1/4", fontSize: "1rem" },
+    BW: { key: "B/W", width: "w-1/4", fontSize: "1rem" },
+  };
+
+  // ---------- RENDER ----------
   return (
     <main className="flex flex-col w-full h-full md:flex-row p-2 md:p-5">
       {/* Text Size Section */}
-      
+
       <CardSection>
         <SettingCard>
           <SettingHeader
@@ -89,13 +112,13 @@ export function AccessibilityPage() {
             description="Adjust the text size used throughout the application."
           />
           <ButtonRow>
-            {Object.entries(textSizeOptions).map(([key, option]) => (
+            {Object.entries(textScaleOptions).map(([key, option]) => (
               <SettingButton
                 key={key}
                 label={option.key}
                 className={option.width}
                 style={{ fontSize: option.fontSize }}
-                onClick={() => setTextSize(key as TextSize)}
+                onClick={() => setTextScale(key as TextScale)}
               />
             ))}
           </ButtonRow>
