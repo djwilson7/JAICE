@@ -53,11 +53,6 @@ export function CheckBoxToggle({
     });
   }, [isChecked, label]);
 
-  const iconStyle = {
-    filter:
-      "brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%)",
-  };
-
   return (
     <motion.div
       className="flex relative items-center justify-start p-2 gap-4 rounded cursor-pointer overflow-hidden"
@@ -68,8 +63,7 @@ export function CheckBoxToggle({
         <img
           src={isChecked ? activeIcon : inactiveIcon}
           alt="Toggle Icon"
-          className="w-5 h-5 flex-shrink-0"
-          style={iconStyle}
+          className="w-5 h-5 flex-shrink-0 icon"
         />
         <input
           type="checkbox"

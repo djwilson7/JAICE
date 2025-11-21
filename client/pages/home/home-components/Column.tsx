@@ -60,6 +60,8 @@ export function Column({
     minWidth: "15rem",
     minHeight: `${Math.max(sharedHeight, viewportHeight)}px`,
     height: "auto",
+    boxShadow: "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
+
   };
 
   // useCallback is used to memoize the drag handlers to prevent unnecessary re-renders

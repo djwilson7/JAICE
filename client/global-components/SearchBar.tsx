@@ -67,11 +67,6 @@ export function SearchBar({
     setTargetWidth(searchQuery ? baseWidth + TYPING_BUFFER : baseWidth);
   }, [searchQuery, baseWidth, isSearching]);
 
-  const iconStyle = {
-    filter:
-      "brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%)",
-  };
-
   return (
     <motion.div
       className="flex group items-center justify-start overflow-hidden gap-2 rounded cursor-pointer"
@@ -91,8 +86,7 @@ export function SearchBar({
         <img
           src={searchIcon}
           alt="Search Icon"
-          className="w-5 h-5 shrink-0"
-          style={iconStyle}
+          className="w-5 h-5 shrink-0 icon"
         />
 
         {/* Input field appears when hovering, and expands when typing */}
@@ -121,9 +115,8 @@ export function SearchBar({
             <img
               src={circleXIcon}
               alt="Clear Search Icon"
-              className={`w-3 h-3 shrink-0`}
+              className={`w-3 h-3 shrink-0 icon`}
               style={{
-                ...iconStyle,
                 cursor: "pointer",
                 visibility: searchQuery !== "" ? "visible" : "hidden",
               }}

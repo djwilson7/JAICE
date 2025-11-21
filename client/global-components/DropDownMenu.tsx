@@ -60,29 +60,19 @@ export function DropDownMenu({
   
   // Styles
   const menuStyle: React.CSSProperties = {
-    color: "white",
-    borderRadius: "0.5rem",
     outline: "none",
     backgroundColor: "var(--color-gray-2)",
     cursor: "pointer",
   };
 
   const optionStyle: React.CSSProperties = {
-    color: "white",
-    borderRadius: "0.5rem",
-    padding: "0.25rem",
     backgroundColor: "var(--color-blue-1)",
     cursor: "pointer",
   };
 
-  const iconStyle = {
-    filter:
-      "brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%)",
-  };
-
   return (
     <motion.div
-      className="flex justify-start items-center bg-transparent p-2 rounded cursor-pointer overflow-hidden"
+      className="flex justify-start items-center p-2 rounded cursor-pointer overflow-hidden"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={
         selectedOption === "default"
@@ -100,8 +90,7 @@ export function DropDownMenu({
         <img
           src={leftIcon}
           alt="Filter Icon"
-          className={`w-5 h-5 shrink-0`}
-          style={iconStyle}
+          className={`w-5 h-5 shrink-0 icon`}
         />
         {isOpen ? (
           <motion.div
@@ -130,8 +119,7 @@ export function DropDownMenu({
               <img
                 src={circleXIcon}
                 alt="Clear Filter Icon"
-                className={`w-3 h-3 shrink-0`}
-                style={iconStyle}
+                className={`w-3 h-3 shrink-0 icon`}
                 onClick={() => setSelectedOption("default")}
               />
             ) : null}

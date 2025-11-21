@@ -72,7 +72,7 @@ const NavButton = ({
         </div>
       </Button>
       <motion.span
-        className="text-white text-left overflow-hidden"
+        className="text-left overflow-hidden"
         style={{
           height: "1.25rem",
           display: "flex",
@@ -200,7 +200,7 @@ export function NavigationBar() {
             />
 
             <motion.span
-              className="text-2xl line-clamp-1 text-white text-left"
+              className="text-2xl line-clamp-1 text-left"
               style={{ fontFamily: "var(--font-title)" }}
               variants={{
                 rest: { opacity: hoverEnabled ? 0 : 1 },
@@ -283,7 +283,7 @@ export function NavigationBar() {
                 />
               ) : (
                 <div className="w-full h-full bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xl font-bold">
+                  <span className="text-xl font-bold">
                     {firstName?.charAt(0)}
                   </span>
                 </div>
@@ -291,14 +291,14 @@ export function NavigationBar() {
             </div>
 
             {/* name placeholder */}
-            <div className="flex flex-col text-white">
+            <div className="flex flex-col">
               <h2 className="text-2xl text-left font-bold line-clamp-1">
                 {firstName} {lastName}
               </h2>
-              <small className="text-gray-300 text-left line-clamp-1">
+              <small className="text-left opacity-70 line-clamp-1">
                 {headerEmail}
               </small>
-              <caption className="text-gray-300 text-left line-clamp-1">
+              <caption className="text-left opacity-80 line-clamp-1">
                 Fresh Starter
               </caption>
             </div>
@@ -310,7 +310,7 @@ export function NavigationBar() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-transparent w-full"
               />
 
               {/* search icon inside the input field */}

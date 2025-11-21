@@ -3,11 +3,13 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useMemo, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
+import upChevron from "@/assets/icons/angle-small-up.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import type { JobCardType } from "@/types/jobCardType";
 import { auth } from "@/global-services/firebase";
 import { api } from "@/global-services/api";
+import { getCSSVar } from "@/utils/getCSSVar";
 
 export function JobCard({
   job,
@@ -26,7 +28,9 @@ export function JobCard({
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
-  const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(!!job.reviewNeeded);
+  const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(
+    !!job.reviewNeeded
+  );
 
   // If multi-select mode is turned off, clear selection state
   if (!isMultiSelecting && isSelected) {
@@ -60,8 +64,7 @@ export function JobCard({
     const userEmail = auth.currentUser?.email;
 
     // if the user is not authenticated, we cannot open the email, so we log an error and return early
-    if (!userEmail) 
-    {
+    if (!userEmail) {
       console.error("User is not authenticated. Cannot open email.");
       return;
     }
@@ -71,29 +74,24 @@ export function JobCard({
     window.open(url, "_blank");
   };
 
-  const cardBorderColor = useMemo (() => {
+  const cardBorderColor = useMemo(() => {
     // if email is marked as accepted make the card border green
-     if (job.applicationStage === "Accepted") 
-    {
+    if (job.applicationStage === "Accepted") {
       return "border-green-500";
-    } 
+    }
     // if email is marked as rejected make the card border red
-    else if (job.applicationStage === "Rejected") 
-    {
+    else if (job.applicationStage === "Rejected") {
       return "border-red-500";
-    } 
-    else 
-    {
+    } else {
       return "border-transparent";
     }
-
   }, [job.applicationStage]);
 
-  const reviewBorderColor = useMemo (() => {
+  const reviewBorderColor = useMemo(() => {
     // if email is marked as review needed make the card border orange
-    return localReviewNeeded 
-    ? {boxShadow: "0 0 0 2px rgba(249,115,22,1)"} : undefined;
-    
+    return localReviewNeeded
+      ? { boxShadow: "0 0 0 2px rgba(249,115,22,1)" }
+      : undefined;
   }, [localReviewNeeded]);
 
   const variants = {
@@ -106,7 +104,7 @@ export function JobCard({
   };
 
   const hoverMessageForReview = localReviewNeeded
-    ? "This job requires your review. Mark it as reviewed when done." 
+    ? "This job requires your review. Mark it as reviewed when done."
     : "";
 
   const markAsReviewed = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -122,7 +120,7 @@ export function JobCard({
         body: JSON.stringify({
           provider_message_ids: [job.id],
           needs_review: false,
-      }),
+        }),
       });
     } catch (error) {
       console.error("Failed to mark job as reviewed:", error);
@@ -134,8 +132,8 @@ export function JobCard({
     <motion.div
       id={job.id}
       title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
-      className={`relative border w-full p-4 rounded shadow-sm bg-[#1D1B20] flex items-center flex flex-col ${cardBorderColor}`}
-      style={reviewBorderColor}
+      className={`relative border w-full p-4 rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
+      style={{ ...reviewBorderColor, background: "var(--job-card-background)" }}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -146,11 +144,8 @@ export function JobCard({
         boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
       }}
-
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      
-
       // onTap cycles between expanding the card and selecting it based on isMultiSelecting
       onTap={() => {
         handleMultiSelectClick(job);
@@ -172,28 +167,28 @@ export function JobCard({
       dragSnapToOrigin
       layout
     >
-    {/* Tooltip for Review Needed */}
-    <AnimatePresence>
-      {localReviewNeeded && isHovered && (
-        <motion.div
-          key="review-tooltip"
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.12 }}
-          role="tooltip"
-          aria-hidden={!isHovered}
-          className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded px-2 py-1"
-        >
-          {hoverMessageForReview}
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Tooltip for Review Needed */}
+      <AnimatePresence>
+        {localReviewNeeded && isHovered && (
+          <motion.div
+            key="review-tooltip"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.12 }}
+            role="tooltip"
+            aria-hidden={!isHovered}
+            className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded px-2 py-1"
+          >
+            {hoverMessageForReview}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Card Container Above (wraps all content) */}
-      
+
       <div className="flex justify-between w-full items-center text-left">
-        <motion.div className="flex items-center gap-2 " layout>
+        <motion.div className="flex items-center gap-2 w-7/8 " layout>
           {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
           <AnimatePresence>
@@ -214,7 +209,7 @@ export function JobCard({
 
           {/* Job Title and date*/}
           <div className="flex flex-col flex-1 min-w-0">
-            <p className="truncate">{job.title}</p>
+            <p className="">{job.title}</p>
             {job.date && (
               <small className="text-gray-400 opacity-75">{job.date}</small>
             )}
@@ -222,12 +217,15 @@ export function JobCard({
         </motion.div>
 
         {/* Chevron to expand/collapse job card details rotates via it's style argument */}
-        <img
-          src={downChevron}
-          alt="Show Content Handle"
-          style={iconStyle}
-          className="w-5 h-5 opacity-50"
-        />
+        <div className="flex w-1/8 justify-end">
+          <motion.img
+            src={downChevron}
+            alt="Show Content Handle"
+            className="w-5 h-5 opacity-50 icon"
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20, duration: parseFloat(getCSSVar("--animation-duration")) }}
+          />
+        </div>
       </div>
 
       {/* Expanded Job Related Content */}
@@ -244,7 +242,7 @@ export function JobCard({
         <div className="flex flex-col text-left w-full gap-1 pb-2">
           <small>Small Startup</small>
           <small>Recruiter</small>
-          
+
           <a
             href="#"
             onClick={(e) => {

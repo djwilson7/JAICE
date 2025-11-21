@@ -246,7 +246,7 @@ export function AccountPage() {
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
     <div
-      className="w-full h-full bg-slate-950 text-slate-100"
+      className="w-full h-full"
       style={{ background: "var(--color-bg)" }}
     >
       <main className="flex flex-col md:flex-row w-full justify-center">
@@ -263,11 +263,11 @@ export function AccountPage() {
             <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
               Profile Info
             </h1>
-            <hr className="w-full border-t-1 border-gray-400" />
+            <hr className="w-full border-t-1 border-[var(--card-border)]" />
 
             {/*Profile image*/}
             <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
-              <div className="w-24 h-24 rounded-full bg-white mb-4 aspect-square">
+              <div className="w-24 h-24 rounded-full bg-[var(--card-border)] mb-4 aspect-square">
                 <img
                   src={profilePicURL || userIcon}
                   alt="Profile Picture"
@@ -281,7 +281,7 @@ export function AccountPage() {
                   </Button>
                 </div>
                 <div className="text-sm font-light">
-                  <small className="text-sm text-gray-400 font-light">
+                  <small className="text-sm opacity-80 font-light">
                     Update your profile picture URL.
                   </small>
                 </div>
@@ -338,17 +338,17 @@ export function AccountPage() {
               <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
                 Account Security
               </h1>
-              <hr className="w-full border-t-1 border-gray-400" />
+              <hr className="w-full border-t-1 border-[var(--card-border)]" />
             </div>
 
             {/*Gmail Integration*/}
             <div className="flex flex-col items-center justify-center my-4 items-center w-full">
               <div className="flex w-full gap-4">
                 <div className="flex flex-col w-1/2">
-                  <h3 className="text-lg text-left font-medium text-gray-300">
+                  <h3 className="text-lg text-left font-medium">
                     Gmail Integration
                   </h3>
-                  <small className="text-sm text-left text-gray-400 ">
+                  <small className="text-sm text-left opacity-60 ">
                     Connect your Gmail account to allow email parsing and
                     analysis.
                   </small>
@@ -402,10 +402,10 @@ export function AccountPage() {
             <div className="flex flex-col items-center justify-center my-4 items-center w-full">
               <div className="flex w-full gap-4">
                 <div className="flex flex-col w-3/4">
-                  <h3 className="text-lg text-left font-medium text-gray-300 mt-4">
+                  <h3 className="text-lg text-left font-medium mt-4">
                     Two-Factor Authentication (2FA)
                   </h3>
-                  <small className="text-sm text-left text-gray-400 mb-4">
+                  <small className="text-sm text-left opacity-60 mb-4">
                     Enable 2FA to add an extra layer of security to your
                     account.
                   </small>
@@ -437,10 +437,10 @@ export function AccountPage() {
             <div className="flex flex-col items-center justify-center my-4 items-center w-full">
               <div className="flex w-full gap-4">
                 <div className="flex flex-col w-1/2">
-                  <h3 className="text-lg text-left font-medium text-gray-300">
+                  <h3 className="text-lg text-left font-medium">
                     Delete your JAICE account?
                   </h3>
-                  <small className="text-sm text-left text-gray-400">
+                  <small className="text-sm text-left opacity-60 ">
                     This will permanently delete your account and all associated
                     data.
                   </small>
