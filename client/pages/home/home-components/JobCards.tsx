@@ -73,11 +73,11 @@ export function JobCard({
 
   const cardBorderColor = useMemo (() => {
     const color =
-      // if email is marked as accepted make the card border green
-     job.applicationStage === "Accepted" ? "#10B981" :
+    //   // if email is marked as accepted make the card border green
+    //  job.applicationStage === "Accepted" ? "#10B981" :
 
-     // if email is marked as rejected make the card border red
-      job.applicationStage === "Rejected" ? "#EF4444" :
+    //  // if email is marked as rejected make the card border red
+    //   job.applicationStage === "Rejected" ? "#EF4444" :
 
       "transparent";
     
@@ -91,8 +91,8 @@ export function JobCard({
   const reviewBorderColor = useMemo (() => {
     // if email is marked as review needed make the card border orange
     return {
-      boxShadow: localReviewNeeded ? "0 0 0 2px rgba(249,115,22,1)" : "none",
-      transition: "box-shadow 0.3s ease",
+      boxShadow: localReviewNeeded ? "0 0 0 1px rgba(249,115,22,1)" : "none",
+      transition: "box-shadow 0.0s ease",
     };
     
   }, [localReviewNeeded]);
@@ -152,7 +152,14 @@ export function JobCard({
         scale: 1.02,
         boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
-        borderColor: localReviewNeeded ? "#F97316" : "#dfdfdfff",
+        borderColor: localReviewNeeded ? "#F97316" : 
+        
+        // if email is marked as accepted make the card border green
+        job.applicationStage === "Accepted" ? "#10B981" :
+
+        // if email is marked as rejected make the card border red
+        job.applicationStage === "Rejected" ? "#EF4444" : 
+        "#dfdfdfff",
       }}
 
       onHoverStart={() => setIsHovered(true)}
@@ -250,9 +257,19 @@ export function JobCard({
       >
         <div className="w-99/100 border-b my-2" />
         <div className="flex flex-col text-left w-full gap-1 pb-2">
-          <small>Small Startup</small>
-          <small>Recruiter</small>
           
+          <small style={{ color: "var(--color-blue-4)" }}>
+            {job.companyName ?? "Unknown Company"}
+          </small>
+          
+          <h4  className="subheading"> 
+            Notes:
+          </h4>
+
+          <small className="text-sm text-white opacity-75">
+              {job.notes ?? "No additional notes."}
+          </small>
+
           <a
             href="#"
             onClick={(e) => {

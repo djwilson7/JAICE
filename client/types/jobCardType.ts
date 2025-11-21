@@ -4,10 +4,12 @@ export type JobCardType = {
   id: string;
   title: string;
   column: string;
+  companyName?: string;
   date?: string;
   receivedAtRaw?: string | null;
   isArchived?: boolean;
   isDeleted?: boolean;
+  notes?: string;
 
   reviewNeeded?: boolean;
   applicationStage?: string;

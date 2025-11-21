@@ -328,7 +328,7 @@ export function HomePage() {
         { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
         { id: "interview", title: "Interview", bg: "var(--color-teal)" },
         { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
-        { id: "rejected", title: "Rejected", bg: "var(--color-blue-gray)" },
+        { id: "rejected", title: "Rejected", bg: "var(--color-blue-purple)" },
       ];
       }
       else 

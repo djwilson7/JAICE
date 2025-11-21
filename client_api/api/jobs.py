@@ -9,8 +9,90 @@ from client_api.deps.auth import get_current_user
 logging = get_logger()
 router = APIRouter()
 
-@router.post("/set-review-needed")
 
+@router.post("/create")
+async def create_job_application(payload: dict = Body(...), user: dict = Depends(get_current_user)):
+    """
+    Create a new job application.
+
+    Expected payload:
+        - job_title / title (string)           required
+        - company_name (string)        required
+        - app_stage (string)           optional
+        - received_at (YYYY-MM-DD)     optional, defaults to today if not provided
+        - notes (string)               optional
+        
+    Returns: {"status": "success", "job_application": {row}}
+
+    """
+
+    import datetime
+
+    trace_id = str(uuid.uuid4())
+    uid = user.get("uid")
+
+    # client sends payload
+    job_title = payload.get("title") or payload.get("job_title")
+    company_name = payload.get("company_name") or payload.get("company")
+    app_stage = payload.get("app_stage")
+    received_at = payload.get("received_at") or payload.get("date")
+    notes = payload.get("note") or payload.get("notes") or None
+
+    if not job_title:
+        raise HTTPException(status_code=400, detail="Job title is required")
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Company name is required")
+    if not received_at:
+        # if not provided, default to today
+        received_at = datetime.date.today().isoformat()
+
+    # normalize state
+    stage = app_stage.capitalize()
+
+    provider_message_id = str(uuid.uuid4())
+    provider_source = payload.get("provider_source", "manual_entry")
+
+    query = """
+        INSERT INTO public.job_applications (
+            user_uid,
+            title,
+            company_name,
+            app_stage,
+            received_at,
+            note,
+            provider_message_id,
+            provider_source,
+            updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+        RETURNING *
+    """
+
+    try:
+        async with get_connection() as conn:
+            row = await conn.fetchrow(
+                query,
+                uid,
+                job_title,
+                company_name,
+                stage,
+                received_at,
+                notes,
+                provider_message_id,
+                provider_source,
+            )
+
+        if not row:
+            raise HTTPException(status_code=500, detail="Failed to create job application")
+        
+        logging.info(f"[{trace_id}] Created job application {provider_message_id} for user {uid}.")
+        return {"status": "success", "job_application": dict(row)}
+    
+    except Exception as e:
+        logging.error(f"[{trace_id}] Error creating job application: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/set-review-needed")
 async def set_review_needed(payload:dict = Body(...), user: dict = Depends(get_current_user)):
     """
     Payload:
