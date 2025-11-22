@@ -146,7 +146,7 @@ export function JobCard({
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
       title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
-      className={`relative border w-full p-4 rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
+      className={`relative border w-full rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
       style={{ ...combinedStyle, background: "var(--job-card-background)" }}
       drag
       onDragStart={handleDragStart}
@@ -170,15 +170,7 @@ export function JobCard({
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       // onTap cycles between expanding the card and selecting it based on isMultiSelecting
-      onTap={() => {
-        handleMultiSelectClick(job);
-        if (isMultiSelecting) {
-          setIsSelected(!isSelected);
-          return;
-        } else {
-          setIsOpen(!isOpen);
-        }
-      }}
+
       whileTap={{ cursor: "grabbing" }}
       whileDrag={{
         cursor: "grabbing",
@@ -201,7 +193,7 @@ export function JobCard({
             transition={{ duration: 0.12 }}
             role="tooltip"
             aria-hidden={!isHovered}
-            className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded px-2 py-1"
+            className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded py-1"
           >
             {hoverMessageForReview}
           </motion.div>
@@ -210,8 +202,19 @@ export function JobCard({
 
       {/* Main Card Container Above (wraps all content) */}
 
-      <div className="flex justify-between w-full items-center text-left">
-        <motion.div className="flex items-center gap-2 w-7/8 " layout>
+      <motion.div
+        className="flex justify-between w-full items-center text-left"
+        onTap={() => {
+          handleMultiSelectClick(job);
+          if (isMultiSelecting) {
+            setIsSelected(!isSelected);
+            return;
+          } else {
+            setIsOpen(!isOpen);
+          }
+        }}
+      >
+        <motion.div className="flex items-center gap-2 p-2 w-7/8" layout>
           {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
           <AnimatePresence>
@@ -221,7 +224,7 @@ export function JobCard({
                 src={isSelected ? checkIcon : uncheckIcon}
                 alt={isSelected ? "Check Icon" : "Uncheck Icon"}
                 style={iconStyle}
-                className="w-4 h-4 opacity-50"
+                className="w-4 h-4 mx-2 opacity-50"
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
@@ -231,16 +234,16 @@ export function JobCard({
           </AnimatePresence>
 
           {/* Job Title and date*/}
-          <div className="flex flex-col flex-1 min-w-0">
+          <motion.div className="flex flex-col flex-1 min-w-0">
             <p className="">{job.title}</p>
             {job.date && (
               <small className="text-gray-400 opacity-75">{job.date}</small>
             )}
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Chevron to expand/collapse job card details rotates via it's style argument */}
-        <div className="flex w-1/8 justify-end">
+        <div className="flex w-1/8 mr-2 justify-end">
           <motion.img
             src={downChevron}
             alt="Show Content Handle"
@@ -254,11 +257,11 @@ export function JobCard({
             }}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Expanded Job Related Content */}
       <motion.div
-        className="overflow-hidden w-full"
+        className="overflow-hidden w-full px-2"
         animate={{
           height: isOpen ? "auto" : 0,
           opacity: isOpen ? 1 : 0,
@@ -266,7 +269,7 @@ export function JobCard({
         initial={false}
         transition={{ type: "spring", stiffness: 200, damping: 24 }}
       >
-        <div className="w-99/100 border-b my-2" />
+        <hr className="flex w-full my-2"/>
         <div className="flex flex-col text-left w-full gap-1 pb-2">
           <small style={{ color: "var(--color-blue-4)" }}>
             {job.companyName ?? "Unknown Company"}
