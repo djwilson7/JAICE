@@ -146,6 +146,29 @@ button.selected
   border-color: var(--color-blue-4);
 }
 
+
+button.small
+{
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.25em 0.5em;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-subheading);
+  background-color: var(--color-blue-1);
+  cursor: pointer;
+  color: var(--color-blue-4);
+
+  /* Smooth transition for border color on hover */
+  transition: border-color 0.25s ease;
+}
+
+button.small:hover 
+{
+  border-color: var(--color-blue-4);
+}
+
+
 button.red
 {
   border-radius: 20px;
@@ -169,10 +192,6 @@ button.red:hover
 
 button.reviewed
 {
-  display: inline-flex;
-  align-items: center;
-  align-self: start;
-
   border-radius: 12px;
   background-color: var(--color-orange-600);
   border: 1px solid transparent;

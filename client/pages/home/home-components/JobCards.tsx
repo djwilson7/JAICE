@@ -16,6 +16,7 @@ export function JobCard({
   isMultiSelecting,
   handleMultiSelectClick,
   dimmed,
+  onEdit,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
@@ -23,6 +24,7 @@ export function JobCard({
   isMultiSelecting: boolean;
   handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
+  onEdit?: (job: JobCardType) => void;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
@@ -262,33 +264,45 @@ export function JobCard({
             {job.companyName ?? "Unknown Company"}
           </small>
 
-
           <small className="text-sm text-white opacity-75">
               {job.notes ?? "No additional notes."}
           </small>
 
-          {job.providerSource !== "manual_entry" && (
+          <div className="flex 2xl:flex-row flex-col gap-2 w-full" >
+
+            {/*TODO: make this open edit application modal that is almost the same as add application but different*/} 
             <button
               onClick={(e) => {
                 e.preventDefault();
-                openMessage(job.id);
+                onEdit?.(job);
               }}
-              className="hover:underline text-sm cursor-pointer"
-              style={{
-                color: "var(--color-blue-5)",
-                transition: "color 0.25s ease",
-              }}
+              type="button"
+              className="small w-full 2xl:w-1/3"
             >
-              View Email
+              Edit Application
             </button>
-          )}
-          <button
-            type="button"
-            className={localReviewNeeded ? "reviewed" : "hidden"}
-            onClick={markAsReviewed}
-          >
-            Mark as Reviewed
-          </button>
+
+            {job.providerSource !== "manual_entry" && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  openMessage(job.id);
+                }}
+                type="button"
+                className="small w-full 2xl:w-1/3"
+              >
+                View Email
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={`small w-full 2xl:w-1/3 ${localReviewNeeded ? "reviewed" : "hidden"}`}
+              onClick={markAsReviewed}
+            >
+              Mark as Reviewed
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>

@@ -9,6 +9,86 @@ from client_api.deps.auth import get_current_user
 logging = get_logger()
 router = APIRouter()
 
+@router.post("/update")
+async def update_job_application(payload: dict = Body(...), user: dict = Depends(get_current_user)):
+    """
+    Update an existing job application.
+    Expected payload:
+        - provider_message_id (string)
+        - job_title (string)
+        - company_name (string)
+        - app_stage (string)
+        - received_at (YYYY-MM-DD)
+        - notes (string)
+    """
+    trace_id = str(uuid.uuid4())
+    uid = user.get("uid")
+
+    provider_ids = payload.get("provider_message_ids") or payload.get("provider_message_id")
+
+    if not provider_ids:
+        raise HTTPException(status_code=400, detail="provider_message_id is required")
+    
+    # get fields
+    job_title = payload.get("title") or payload.get("job_title")
+    company_name = payload.get("company_name") or payload.get("company")
+    app_stage = payload.get("app_stage")
+    received_at = payload.get("received_at") or payload.get("date")
+    notes = payload.get("note") or payload.get("notes")
+
+    # build a update staement that sets provided columns
+    set_clauses = []
+    params = []
+    inex = 1    
+
+    if job_title is not None:
+        set_clauses.append(f"title = ${inex}")
+        params.append(job_title)
+        inex += 1
+    if company_name is not None:
+        set_clauses.append(f"company_name = ${inex}")
+        params.append(company_name)
+        inex += 1   
+    if app_stage is not None:
+        set_clauses.append(f"app_stage = ${inex}")
+        params.append(app_stage.capitalize())
+        inex += 1
+    if received_at is not None:
+        set_clauses.append(f"received_at = ${inex}")
+        params.append(received_at)
+        inex += 1
+    if notes is not None:
+        set_clauses.append(f"note = ${inex}")
+        params.append(notes)
+        inex += 1
+
+    if not set_clauses:
+        raise HTTPException(status_code=400, detail="No fields to update provided")
+    
+    sql_set = ", ".join(set_clauses)
+    query = f"""
+        UPDATE public.job_applications
+        SET {sql_set}, updated_at = now()
+        WHERE provider_message_id = ANY(${inex})
+        AND user_uid = ${inex + 1}
+        RETURNING *
+    """
+
+    try:
+        async with get_connection() as conn:
+            results = await conn.fetch(query, *params, provider_ids, uid)
+        
+        count = len(results)
+        if count == 0:
+            raise HTTPException(status_code=404, detail="No matching jobs found")
+        
+        logging.info(f"[{trace_id}] Updated {count} job(s) for user {uid}.")
+        return {"status": "success", "updated_jobs": [dict(r) for r in results]}
+    
+    except Exception as e:
+        logging.error(f"[{trace_id}] Error updating job application: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/create")
 async def create_job_application(payload: dict = Body(...), user: dict = Depends(get_current_user)):

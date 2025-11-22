@@ -3,7 +3,7 @@
 import React, { useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import RejectedIcon from '../../../assets/icons/refresh.svg';
-import NewApplication from "./NewApplication";
+import NewApplication from "./ApplicationModal";
 
 interface ColumnProps {
   id: string;
