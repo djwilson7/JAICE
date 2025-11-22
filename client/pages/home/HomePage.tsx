@@ -19,6 +19,9 @@ import { applyJobChange } from "@/pages/home/utils/applyJobChange";
 import { getCurrentUserInfo } from "@/global-services/auth";
 import { MultiSelectBar } from "@/pages/home/home-components/MultiSelectBar";
 import Fuse from "fuse.js";
+import loadingAnimation from "@/assets/loaders/CircleVenn.json";
+import Lottie from "lottie-react";
+import { AnimatePresence, motion } from "framer-motion";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
 // import { fetchJobById } from "@/global-services/database";
 
@@ -155,6 +158,7 @@ export function HomePage() {
     } catch (error) {
       console.error("Failed to load emails:", error);
     } finally {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsLoadingEmails(false);
     }
   }
@@ -279,7 +283,7 @@ export function HomePage() {
     if (itemDragged && isOver && itemDragged.column !== isOver) {
       console.log(`Dropped item ${itemDragged.id} into column ${isOver}`);
 
-      const updatedCard = { ...itemDragged, column: isOver};
+      const updatedCard = { ...itemDragged, column: isOver };
 
       setJobs((prev) =>
         prev.map((job) =>
@@ -318,9 +322,10 @@ export function HomePage() {
       return { ...prev, [columnId]: height };
     });
   }, []);
-  
+
   // track whether the Accepted column has been switched to Rejected
-  const [acceptedSwitchedToRejected, setAcceptedSwitchedToRejected] = useState(true);
+  const [acceptedSwitchedToRejected, setAcceptedSwitchedToRejected] =
+    useState(true);
 
   // Column configuration for the Kanban board
   // Each column has an id, title, and background color
@@ -333,19 +338,16 @@ export function HomePage() {
 
   const switchAcceptedToRejected = useCallback(() => {
     setBaseConfig((prevConfig) => {
-       if (prevConfig[3].id === "accepted") 
-      {
+      if (prevConfig[3].id === "accepted") {
         return [
-        { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
-        { id: "interview", title: "Interview", bg: "var(--color-teal)" },
-        { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
-        { id: "rejected", title: "Rejected", bg: "var(--color-blue-purple)" },
-      ];
-      }
-      else 
-      {
-      // Column configuration for the Kanban board
-      // Each column has an id, title, and background color
+          { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
+          { id: "interview", title: "Interview", bg: "var(--color-teal)" },
+          { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
+          { id: "rejected", title: "Rejected", bg: "var(--color-blue-purple)" },
+        ];
+      } else {
+        // Column configuration for the Kanban board
+        // Each column has an id, title, and background color
         return [
           { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
           { id: "interview", title: "Interview", bg: "var(--color-teal)" },
@@ -356,11 +358,10 @@ export function HomePage() {
     });
   }, []);
 
-
   useEffect(() => {
     switchAcceptedToRejected();
   }, [acceptedSwitchedToRejected]);
-  
+
   const toggleAcceptedToRejected = () => {
     setAcceptedSwitchedToRejected((prev) => !prev);
   };
@@ -388,16 +389,14 @@ export function HomePage() {
     return map;
   }, [filteredJobs]);
 
- 
-
   // Group jobs by their column for rendering
   // This creates a mapping of column ids to arrays of JobCard components
   // useMemo is used to memoize the result and only recalculate when jobs or columnConfig change
   const jobsByColumn = useMemo(() => {
     return columnConfig.reduce<Record<string, JSX.Element[]>>((acc, column) => {
-
-      const jobsInColumn = sortedJobs.filter((job) =>
-        job.column?.toLowerCase?.() === column.id);
+      const jobsInColumn = sortedJobs.filter(
+        (job) => job.column?.toLowerCase?.() === column.id
+      );
 
       const orderedJobs = [...jobsInColumn].sort((a, b) => {
         const aMatched = matchOrderMap.has(a.id);
@@ -437,84 +436,89 @@ export function HomePage() {
   ]);
 
   // show loading state while emails are being fetched
-  if (isLoadingEmails) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <p> Loading emails...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full h-full flex items-center justify-center flex-col ">
-      {/* ^ Page Container ^ */}
-      <div className="w-full h-full flex flex-col items-center gap-4 p-4 overflow-y-auto">
-        {/* ^ Content Container ^ */}
-        <ControlBar // see ControlBar.tsx
-          isMultiSelecting={isMultiSelecting}
-          setIsMultiSelecting={setIsMultiSelecting}
-          multiSelectLabel={isMultiSelecting ? "Multi Select" : ""}
-          options={sortByOptions}
-          isMenuOpen={isMenuOpen}
-          setMenuOpen={setMenuOpen}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-          isSearching={isSearching}
-          setIsSearching={setIsSearching}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          isAlertOpen={isAlertOpen}
-          setIsAlertOpen={setIsAlertOpen}
-          alertMessage={alertMessage}
-          infoModalLabel={isInfoModalOpen ? "Info" : ""}
-          isInfoModalOpen={isInfoModalOpen}
-          setInfoModalOpen={setInfoModalOpen}
-        />
-
-        {/* show message if no emails are loaded */}
-        {jobs.length === 0 && !isLoadingEmails && (
-          <div className="text-center">
-            <p>No emails found.</p>
+    <AnimatePresence mode="wait">
+      {isLoadingEmails ? (
+        <motion.div
+          key="loader"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="w-full h-full flex items-center justify-center"
+        >
+          <Lottie
+            animationData={loadingAnimation}
+            loop
+            className="flex w-150 h-150"
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="w-full h-full flex items-center justify-center flex-col "
+        >
+          {/* ^ Page Container ^ */}
+          <div className="w-full h-full flex flex-col items-center gap-4 p-4 overflow-y-auto">
+            {/* ^ Content Container ^ */}
+            <ControlBar // see ControlBar.tsx
+              isMultiSelecting={isMultiSelecting}
+              setIsMultiSelecting={setIsMultiSelecting}
+              multiSelectLabel={isMultiSelecting ? "Multi Select" : ""}
+              options={sortByOptions}
+              isMenuOpen={isMenuOpen}
+              setMenuOpen={setMenuOpen}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              isSearching={isSearching}
+              setIsSearching={setIsSearching}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              isAlertOpen={isAlertOpen}
+              setIsAlertOpen={setIsAlertOpen}
+              alertMessage={alertMessage}
+              infoModalLabel={isInfoModalOpen ? "Info" : ""}
+              isInfoModalOpen={isInfoModalOpen}
+              setInfoModalOpen={setInfoModalOpen}
+            />
+            {/* Kan Ban Columns */}
+            <div className="flex gap-4 w-full">
+              {columnConfig.map(
+                (
+                  column // iterate over each column in the config
+                ) => (
+                  <Column
+                    key={column.id} // unique key for React
+                    id={column.id} // column id
+                    title={column.title} // column title
+                    bg={column.bg} // column background color
+                    count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
+                    onDragEnter={handleDragEnterColumn} // pass down drag enter handler
+                    onDragLeave={handleDragLeaveColumn} // pass down drag leave handler
+                    sharedHeight={sharedHeight}
+                    reportHeight={handleReportHeight}
+                    viewportHeight={viewportHeight}
+                    showToggleRejectButton={
+                      column.id === "accepted" || column.id === "rejected"
+                    }
+                    onToggleReject={toggleAcceptedToRejected}
+                  >
+                    {jobsByColumn[column.id]}{" "}
+                    {/* render the JobCards associated with the columns id */}
+                  </Column>
+                )
+              )}
+            </div>
           </div>
-        )}
-
-        {/* Kan Ban Columns */}
-        <div className="flex gap-4 w-full">
-          {columnConfig.map(
-            (
-              column // iterate over each column in the config
-            ) => (
-              <Column
-                key={column.id} // unique key for React
-                id={column.id} // column id
-                title={column.title} // column title
-                bg={column.bg} // column background color
-                count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
-                onDragEnter={handleDragEnterColumn} // pass down drag enter handler
-                onDragLeave={handleDragLeaveColumn} // pass down drag leave handler
-                sharedHeight={sharedHeight}
-                reportHeight={handleReportHeight}
-                viewportHeight={viewportHeight}
-
-                showToggleRejectButton={column.id === "accepted" || column.id === "rejected"}
-                onToggleReject={toggleAcceptedToRejected}
-              >
-                {jobsByColumn[column.id]}{" "}
-                {/* render the JobCards associated with the columns id */}
-              </Column>
-            )
+          {isMultiSelecting && (
+            <MultiSelectBar
+              selectedJobs={selectedJobs}
+              setSelectedJobs={setSelectedJobs}
+              setIsMultiSelecting={setIsMultiSelecting}
+            />
           )}
-        </div>
-      </div>
-      {isMultiSelecting && (
-        <MultiSelectBar
-          selectedJobs={selectedJobs}
-          setSelectedJobs={setSelectedJobs}
-          setIsMultiSelecting={setIsMultiSelecting}
-        />
-      )}
 
       <NewApplication
         isOpen={!!editingJob}
@@ -533,6 +537,8 @@ export function HomePage() {
           setEditingJob(null);
         }}
       />
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

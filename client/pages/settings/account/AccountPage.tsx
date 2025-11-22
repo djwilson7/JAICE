@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import Button from "@/global-components/button";
-import { deleteCurrentUser, getIdToken } from "@/global-services/auth";
+import { getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
@@ -10,6 +10,7 @@ import { DaysToSync } from "./account-components/DaysToSync";
 import { useAuth } from "@/global-components/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
+import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -20,7 +21,7 @@ const GMAIL_CONSENT_URL =
 export function AccountPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -34,7 +35,6 @@ export function AccountPage() {
 
   const handleShowChangePhotoModal = () => {
     setShowChangePhotoModal(true);
-
   };
 
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -44,21 +44,16 @@ export function AccountPage() {
 
   const daysToSyncOptions = [3, 7, 14, 45];
 
-  const { user, loading, applyProfileUpdate } = useAuth();
+  const { user, applyProfileUpdate } = useAuth();
   const firstName: string = user?.displayName?.split(" ")[0] || "User";
-  const lastName: string = user?.displayName?.split(" ").slice(1).join(" ") || "";
+  const lastName: string =
+    user?.displayName?.split(" ").slice(1).join(" ") || "";
   const phoneNumber: string = user?.phoneNumber || "";
   const profilePicURL: string = user?.photoURL || "";
 
-  const [firstNameField, setFirstNameField] = useState<string>(
-    firstName
-  );
-  const [lastNameField, setLastNameField] = useState<string>(
-    lastName
-  );
-  const [phoneNumberField, setPhoneNumberField] = useState<string>(
-    phoneNumber
-  );
+  const [firstNameField, setFirstNameField] = useState<string>(firstName);
+  const [lastNameField, setLastNameField] = useState<string>(lastName);
+  const [phoneNumberField, setPhoneNumberField] = useState<string>(phoneNumber);
 
   const handleFirstNameInput = (value: string) => {
     setFirstNameField(value);
@@ -89,7 +84,7 @@ export function AccountPage() {
 
     const fNameC = fName.charAt(0).toUpperCase() + fName.slice(1);
     const lNameC = lName.charAt(0).toUpperCase() + lName.slice(1);
-    
+
     setFirstNameField(fNameC);
     setLastNameField(lNameC);
 
@@ -109,22 +104,8 @@ export function AccountPage() {
   };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
-    checkGmailStatus();
+    checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
-
-  async function checkGmailStatus() {
-    try {
-      const response = await api("/api/auth/gmail-consent-status");
-      console.log("Gmail consent status response:", response);
-      setGmailConnected(response.isConnected);
-      setGmailError(null);
-      return;
-    } catch (err) {
-      console.error("Error checking Gmail consent status:", err);
-      setGmailConnected(false);
-      setGmailError("Error checking gmail status.");
-    }
-  }
 
   async function handleShowModal() {
     if (gmailConnected) {
@@ -183,7 +164,35 @@ export function AccountPage() {
   }
 
   async function unlinkGmail() {
-    return await api("/api/auth/revoke-gmail-consent", { method: "POST" });
+    const proceed = window.confirm(
+      "Unlinking your Gmail account will require you to log in again. Continue?"
+    );
+    if (!proceed) return { status: "cancelled" };
+
+    try {
+      const revoke = await api("/api/auth/revoke-gmail-consent", {
+        method: "POST",
+      });
+
+      if (revoke.status !== "success") {
+        console.error("Failed to revoke Gmail consent:", revoke);
+        setGmailError(
+          "Unable to unlink your Gmail right now. Try again shortly."
+        );
+        return { status: "error" };
+      }
+
+      await api("/api/auth/logout", { method: "POST" });
+      await logOut();
+
+      setGmailConnected(false);
+      navigate("/");
+      return { status: "success" };
+    } catch (err) {
+      console.error("Unlink Gmail error:", err);
+      setGmailError("A network error occurred. Please try again.");
+      return { status: "error" };
+    }
   }
 
   // Determine the Gmail button text based on connection status and busy state
@@ -195,44 +204,43 @@ export function AccountPage() {
 
   async function handleDelete() {
     setDeleteAccountError(null);
+
     const sure = window.confirm(
       "This will permanently delete your account. This cannot be undone. Continue?"
     );
     if (!sure) return;
 
-    setBusy(true);
-    const res = await deleteCurrentUser(); // if you support email/password reauth, pass { email, password } here
-    setBusy(false);
+    try {
+      setBusy(true);
 
-    if (res.ok) {
-      // Account deleted; user will be signed out. Send them to your Landing page.
-      window.location.assign("/");
-      return;
-    }
+      const revoke = await api("/api/auth/revoke-gmail-consent", {
+        method: "POST",
+      });
 
-    if (
-      res.code === "reauth-needed" ||
-      res.code === "auth/requires-recent-login"
-    ) {
-      setDeleteAccountError("Please re-authenticate and try again.");
-      // If you support email/password, collect the current password and retry:
-      const email = useAuth().user?.email?.toString();
-      const password =
-        prompt("Confirm your current password to continue:") || "";
-      if (password) {
-        setBusy(true);
-        const retry = await deleteCurrentUser({ email, password });
+      if (revoke.status !== "success") {
         setBusy(false);
-        if (retry.ok) {
-          window.location.assign("/");
-          return;
-        }
-        setDeleteAccountError(`Failed to delete account: ${retry.code}`);
+        setDeleteAccountError("Failed to revoke Gmail access. Try again.");
+        return;
       }
-      return;
-    }
 
-    setDeleteAccountError(`Failed to delete account: ${res.code}`);
+      const deletion = await api("/api/auth/delete-account", {
+        method: "POST",
+      });
+
+      setBusy(false);
+
+      if (deletion.status !== "success") {
+        setDeleteAccountError(`Failed to delete account: ${deletion.message}`);
+        return;
+      }
+
+      await logOut();
+
+      navigate("/");
+    } catch (error) {
+      console.error("Delete account error:", error);
+      setDeleteAccountError("A network error occurred. Please try again.");
+    }
   }
 
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
