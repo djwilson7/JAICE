@@ -22,6 +22,7 @@ import Fuse from "fuse.js";
 import loadingAnimation from "@/assets/loaders/CircleVenn.json";
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
+import NewApplication from "@/pages/home/home-components/ApplicationModal";
 // import { fetchJobById } from "@/global-services/database";
 
 export function HomePage() {
@@ -46,6 +47,8 @@ export function HomePage() {
   const [viewportHeight, setViewportHeight] = useState(
     () => window.innerHeight
   );
+  const [editingJob, setEditingJob] = useState<JobCardType | null>(null);
+
 
   useEffect(() => {
     const handleResize = () => setViewportHeight(window.innerHeight);
@@ -53,6 +56,14 @@ export function HomePage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const openEditModal = (job: JobCardType) => {
+    setEditingJob(job);
+  };
+
+  const closeEditModal = () => {
+    setEditingJob(null);
+  };
+  
   const sortByOptions = [
     { value: "default", label: "Sort by" },
     { value: "new", label: "Newest First" },
@@ -332,7 +343,7 @@ export function HomePage() {
           { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
           { id: "interview", title: "Interview", bg: "var(--color-teal)" },
           { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
-          { id: "rejected", title: "Rejected", bg: "var(--color-blue-gray)" },
+          { id: "rejected", title: "Rejected", bg: "var(--color-blue-purple)" },
         ];
       } else {
         // Column configuration for the Kanban board
@@ -409,6 +420,7 @@ export function HomePage() {
           isMultiSelecting={isMultiSelecting}
           handleMultiSelectClick={handleJobCardClick}
           dimmed={!!searchQuery && !matchOrderMap.has(job.id)}
+          onEdit={openEditModal}
         />
       ));
 
@@ -507,6 +519,24 @@ export function HomePage() {
               setIsMultiSelecting={setIsMultiSelecting}
             />
           )}
+
+      <NewApplication
+        isOpen={!!editingJob}
+        onClose={closeEditModal}
+        initialStage={editingJob?.column ?? editingJob?.applicationStage ?? ""}
+        initialData={editingJob ?? undefined}
+        onSave={(updated: Partial<JobCardType> & { id?: string }) => {
+          // merge updated job into local state
+          if (updated?.id) 
+          {
+            setJobs((prev) => prev.map((j) => (j.id === updated.id ?( updated as JobCardType ) : j)));
+          } else {
+            // if backend returns no id try to update by some fallback
+            setJobs((prev) => [updated as JobCardType, ...prev]);
+          }
+          setEditingJob(null);
+        }}
+      />
         </motion.div>
       )}
     </AnimatePresence>

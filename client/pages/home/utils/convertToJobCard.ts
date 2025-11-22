@@ -17,11 +17,15 @@ export function convertToJobCard(rawJob: any): JobCardType {
     id: String(rawJob.provider_message_id),
     title: rawJob.title || "No Title",
     column: rawJob.app_stage || "applied",
+    companyName: rawJob.company_name ??  undefined,
     date: convertTime(rawDate),
     receivedAtRaw: rawDate ? String(rawDate) : null,
     isArchived: rawJob.is_archived || false,
     isDeleted: rawJob.is_deleted || false,
+    notes: rawJob.note ?? undefined,
 
+    providerSource: rawJob.provider_source ?? undefined,
+    
     reviewNeeded: !!(rawJob.needs_review ?? rawJob.review_needed ?? rawJob.needsReview ?? false),
     applicationStage: rawJob.application_stage ?? rawJob.app_stage ?? rawJob.applicationStage ?? undefined,
   };
@@ -39,10 +43,15 @@ export function convertBroadcastToJobCard(event: any): JobCardType | null {
     id: String(eventRecord.provider_message_id),
     title: eventRecord.title ?? "No Title",
     column: eventRecord.app_stage ?? "applied",
+    companyName: eventRecord.company_name ??  undefined,
     date: convertTime(rawDate),
     receivedAtRaw: rawDate ? String(rawDate) : null,
     isArchived: eventRecord.is_archived || false,
     isDeleted: eventRecord.is_deleted || false,
+    notes: eventRecord.note ?? undefined,
+
+    providerSource: eventRecord.provider_source ?? undefined,
+    
     reviewNeeded: !!(eventRecord.needs_review ?? eventRecord.review_needed ?? eventRecord.needsReview ?? false),
     applicationStage: eventRecord.application_stage ?? eventRecord.app_stage ?? eventRecord.applicationStage ?? undefined,
   };

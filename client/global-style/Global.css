@@ -59,8 +59,9 @@
   --color-teal: #043947; /* Used for Interview Section */
   --color-dark-purple: #272136; /* Used for Offer Section */
   --color-blue-gray: #1e2f4d; /* Used for Accepted Section */
-  --color-bright-red: #b3261e; /* alert/error */
+  --color-bright-red: #b3261e; /* alert error */
   --job-card-bg: #1d1b20;
+  --color-blue-purple: #232842; /* Used for Rejected Section */
 
   /* Fonts */
   --font-title: "Baskerville", serif;
@@ -167,6 +168,29 @@ button.selected {
   border-color: var(--color-blue-4);
 }
 
+
+button.small
+{
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.25em 0.5em;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-subheading);
+  background-color: var(--color-blue-1);
+  cursor: pointer;
+  color: var(--color-blue-4);
+
+  /* Smooth transition for border color on hover */
+  transition: border-color 0.25s ease;
+}
+
+button.small:hover 
+{
+  border-color: var(--color-blue-4);
+}
+
+
 button.red {
   border-radius: 20px;
   border: 1px solid transparent;
@@ -206,6 +230,28 @@ button.reviewed {
 
 button.reviewed:hover {
   border-color: var(--color-white);
+}
+
+button.addApplication
+{
+  background-color: transparent;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  padding: 0.0em 0.5em;
+  font-size: var(--fs-subheading);
+  font-weight: 500;
+  font-family: var(--font-subheading);
+  cursor: pointer;
+  color: var(--color-blue-5);
+
+  /* Smooth transition for border color on hover */
+  transition: border-color 0.25s ease;
+}
+
+button.addApplication:hover 
+{
+  transform: scale(2.0);
+  border-color: transparent;
 }
 
 /* light mode style */

@@ -17,6 +17,7 @@ export function JobCard({
   isMultiSelecting,
   handleMultiSelectClick,
   dimmed,
+  onEdit,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
@@ -24,6 +25,7 @@ export function JobCard({
   isMultiSelecting: boolean;
   handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
+  onEdit?: (job: JobCardType) => void;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
@@ -74,24 +76,36 @@ export function JobCard({
   };
 
   const cardBorderColor = useMemo(() => {
-    // if email is marked as accepted make the card border green
-    if (job.applicationStage === "Accepted") {
-      return "border-green-500";
-    }
-    // if email is marked as rejected make the card border red
-    else if (job.applicationStage === "Rejected") {
-      return "border-red-500";
-    } else {
-      return "border-transparent";
-    }
+    const color =
+      //   // if email is marked as accepted make the card border green
+      //  job.applicationStage === "Accepted" ? "#10B981" :
+
+      //  // if email is marked as rejected make the card border red
+      //   job.applicationStage === "Rejected" ? "#EF4444" :
+
+      "transparent";
+
+    return {
+      border:
+        color === "transparent"
+          ? "1px solid transparent"
+          : `1px solid ${color}`,
+      transition: "border 0.3s ease",
+    };
   }, [job.applicationStage]);
 
   const reviewBorderColor = useMemo(() => {
     // if email is marked as review needed make the card border orange
-    return localReviewNeeded
-      ? { boxShadow: "0 0 0 2px rgba(249,115,22,1)" }
-      : undefined;
+    return {
+      boxShadow: localReviewNeeded ? "0 0 0 1px rgba(249,115,22,1)" : "none",
+      transition: "box-shadow 0.0s ease",
+    };
   }, [localReviewNeeded]);
+
+  const combinedStyle = {
+    ...cardBorderColor,
+    ...reviewBorderColor,
+  };
 
   const variants = {
     active: { opacity: 1, scale: 1, filter: "none" },
@@ -129,10 +143,11 @@ export function JobCard({
 
   return (
     <motion.div
+      key={`${job.id}-${job.applicationStage}`}
       id={job.id}
       title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
       className={`relative border w-full p-4 rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
-      style={{ ...reviewBorderColor, background: "var(--job-card-background)" }}
+      style={{ ...combinedStyle, background: "var(--job-card-background)" }}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -142,6 +157,15 @@ export function JobCard({
         scale: 1.02,
         boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
+        borderColor: localReviewNeeded
+          ? "#F97316"
+          : // if email is marked as accepted make the card border green
+          job.applicationStage === "Accepted"
+          ? "#10B981"
+          : // if email is marked as rejected make the card border red
+          job.applicationStage === "Rejected"
+          ? "#EF4444"
+          : "#dfdfdfff",
       }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -222,7 +246,12 @@ export function JobCard({
             alt="Show Content Handle"
             className="w-5 h-5 opacity-50 icon"
             animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20, duration: parseFloat(getCSSVar("--animation-duration")) }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              duration: parseFloat(getCSSVar("--animation-duration")),
+            }}
           />
         </div>
       </div>
@@ -239,36 +268,50 @@ export function JobCard({
       >
         <div className="w-99/100 border-b my-2" />
         <div className="flex flex-col text-left w-full gap-1 pb-2">
-          <small>Small Startup</small>
-          <small>Recruiter</small>
+          <small style={{ color: "var(--color-blue-4)" }}>
+            {job.companyName ?? "Unknown Company"}
+          </small>
 
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              openMessage(job.id);
-            }}
-            className="hover:underline text-sm cursor-pointer"
-            style={{
-              color: "var(--color-blue-5)",
-              transition: "color 0.25s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-blue-4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-blue-5)";
-            }}
-          >
-            View Email
-          </a>
-          <button
-            type="button"
-            className={localReviewNeeded ? "reviewed" : "hidden"}
-            onClick={markAsReviewed}
-          >
-            Mark as Reviewed
-          </button>
+          <small className="text-sm text-white opacity-75">
+            {job.notes ?? "No additional notes."}
+          </small>
+
+          <div className="flex 2xl:flex-row flex-col gap-2 w-full">
+            {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onEdit?.(job);
+              }}
+              type="button"
+              className="small w-full 2xl:w-1/3"
+            >
+              Edit Application
+            </button>
+
+            {job.providerSource !== "manual_entry" && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  openMessage(job.id);
+                }}
+                type="button"
+                className="small w-full 2xl:w-1/3"
+              >
+                View Email
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={`small w-full 2xl:w-1/3 ${
+                localReviewNeeded ? "reviewed" : "hidden"
+              }`}
+              onClick={markAsReviewed}
+            >
+              Mark as Reviewed
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
