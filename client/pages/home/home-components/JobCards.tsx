@@ -261,35 +261,27 @@ export function JobCard({
           <small style={{ color: "var(--color-blue-4)" }}>
             {job.companyName ?? "Unknown Company"}
           </small>
-          
-          <h4  className="subheading"> 
-            Notes:
-          </h4>
+
 
           <small className="text-sm text-white opacity-75">
               {job.notes ?? "No additional notes."}
           </small>
 
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              openMessage(job.id);
-            }}
-            className="hover:underline text-sm cursor-pointer"
-            style={{
-              color: "var(--color-blue-5)",
-              transition: "color 0.25s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-blue-4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-blue-5)";
-            }}
-          >
-            View Email
-          </a>
+          {job.providerSource !== "manual_entry" && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                openMessage(job.id);
+              }}
+              className="hover:underline text-sm cursor-pointer"
+              style={{
+                color: "var(--color-blue-5)",
+                transition: "color 0.25s ease",
+              }}
+            >
+              View Email
+            </button>
+          )}
           <button
             type="button"
             className={localReviewNeeded ? "reviewed" : "hidden"}

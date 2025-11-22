@@ -29,7 +29,7 @@ export default function NewApplication({ isOpen, onClose, initialStage = "", onS
 {
     const [stage, setStage] = useState(initialStage);
     const [jobTitle, setJobTitle] = useState("");
-    const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const date = new Date(Date.now()); // YYYY-MM-DD FIX MAKE IT EDITABLE 
     const [companyName, setCompanyName] = useState("");
     const [notes, setNotes] = useState("");
 
@@ -169,16 +169,6 @@ export default function NewApplication({ isOpen, onClose, initialStage = "", onS
                         </select>
                     </label>
 
-                    {/* Date input field is automatically set to today's date 
-                    TODO make it editable */}
-                    <label className="block">
-                        <span className="text-sm font-medium">Date</span>
-                        <input
-                            className="mt-1 block w-full border rounded px-2 py-1 bg-transparent"
-                            value={date}
-                            
-                        />
-                    </label>
                     
                     {/* Job Title input field */}
                     <label className="block">

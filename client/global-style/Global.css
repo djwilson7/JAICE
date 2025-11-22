@@ -209,7 +209,7 @@ button.addApplication
 
 button.addApplication:hover 
 {
-  transform: scale(1.5);
+  transform: scale(2.0);
   border-color: transparent;
 }
 

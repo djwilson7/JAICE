@@ -11,6 +11,8 @@ export type JobCardType = {
   isDeleted?: boolean;
   notes?: string;
 
+  providerSource?: string;
+
   reviewNeeded?: boolean;
   applicationStage?: string;
 };
