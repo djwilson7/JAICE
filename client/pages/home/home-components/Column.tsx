@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import RejectedIcon from '@/assets/icons/refresh.svg';
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
 import NewApplication from "./ApplicationModal";
+import type { JobCardType } from "@/types/jobCardType";
 
 interface ColumnProps {
   id: string;
@@ -84,13 +85,7 @@ export function Column({
   }
 
   // placeholder to handle saving new application data
-  function handleSaveApplication(data: {
-    stage: string;
-    date: string;
-    jobTitle: string;
-    companyName: string;
-    notes?: string;
-  }) 
+  function handleSaveApplication(data: Partial<JobCardType> & { id?: string}) 
   {
 
     console.log("New Application Data:", data);
@@ -139,16 +134,16 @@ export function Column({
           <h3>{count}</h3>
         </div>
         <div className="flex border-b mx-4 mb-2" />
-        {/* <div className="flex flex-col items-center p-2 gap-4">
-        {hasChildren ? (children) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {<EmptyColumnPlaceholder title={title} />}
-          </motion.div>
-        )}
-      </div> */}
+         <div className="flex flex-col items-center p-2 gap-4">
+          {hasChildren ? (children) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {<EmptyColumnPlaceholder title={title} />}
+            </motion.div>
+          )}
+        </div> 
       </motion.div>
 
       <NewApplication
