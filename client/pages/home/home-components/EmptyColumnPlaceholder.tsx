@@ -26,13 +26,13 @@ export function EmptyColumnPlaceholder({ title }: EmptyColumnPlaceholderProps) {
   }
 
   return (
-    <div className="flex flex-col w-full rounded-md border border-gray-400 bg-black/40 p-4 gap-3">
-      <h4 className="flex w-full justify-center text-white">{cardTitle}</h4>
-      <hr className="w-full border-t border-gray-600" />
-      <small className="flex w-full text-left text-gray-300">
+    <div className="flex flex-col w-full rounded-md bg-[var(--job-card-background)] p-4 gap-3 opacity-90">
+      <h4 className="flex w-full justify-center">{cardTitle}</h4>
+      <hr className="w-full border-t border-[var(--card-border)]"/>
+      <small className="flex w-full text-left">
         {description}
       </small>
-      <small className="flex w-full text-left italic text-gray-500">
+      <small className="flex w-full text-left italic opacity-50">
         You can drag existing cards here, or create new ones.
       </small>
     </div>

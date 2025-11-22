@@ -10,7 +10,7 @@ import {
 } from "@/pages/settings/accessibility/accessibility-components/Cards";
 
 type TextScale = "Small" | "Default" | "Large";
-type Theme = "Light" | "Dark";
+type Theme = "light" | "dark";
 type MotionPreference = "Slow" | "Default" | "Fast";
 type ContrastLevel = "Low" | "Default" | "High" | "NoColor";
 
@@ -22,9 +22,9 @@ const CONTRAST_LEVEL_KEY = "CONTRAST_LEVEL";
 export function AccessibilityPage() {
   // ---------- TEXT SCALING SETTINGS ----------
   const textScaleOptions = {
-    Small: { key: "Small", width: "w-1/3", fontSize: "0.85rem" },
-    Default: { key: "Default", width: "w-1/3", fontSize: "1rem" },
-    Large: { key: "Large", width: "w-1/3", fontSize: "1.15rem" },
+    Small: { key: "Small", fontSize: "0.85rem" },
+    Default: { key: "Default", fontSize: "1rem" },
+    Large: { key: "Large", fontSize: "1.15rem" },
   };
 
   const [textScale, setTextScale] = useState<TextScale>(() => {
@@ -40,18 +40,18 @@ export function AccessibilityPage() {
 
   // ---------- THEME SETTINGS ----------
   const themeOptions = {
-    light: { key: "Light", width: "w-1/2", fontSize: "1rem" },
-    dark: { key: "Dark", width: "w-1/2", fontSize: "1rem" },
+    light: { key: "light", fontSize: "1rem" },
+    dark: { key: "dark", fontSize: "1rem" },
   };
 
   // --- THEME: initialize from localStorage or system preference
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = (localStorage.getItem(THEME_KEY) as Theme | null) ?? null;
-    if (saved === "Light" || saved === "Dark") return saved;
+    if (saved === "light" || saved === "dark") return saved;
     const prefersLight = window.matchMedia?.(
       "(prefers-color-scheme: light)"
     ).matches;
-    return prefersLight ? "Light" : "Dark";
+    return prefersLight ? "light" : "dark";
   });
 
   // --- Apply theme to <html data-theme="..."> and persist
@@ -65,7 +65,7 @@ export function AccessibilityPage() {
     const mq = window.matchMedia("(prefers-color-scheme: light)");
     const handler = (e: MediaQueryListEvent) => {
       const saved = localStorage.getItem(THEME_KEY);
-      if (!saved) setTheme(e.matches ? "Light" : "Dark");
+      if (!saved) setTheme(e.matches ? "light" : "dark");
     };
     mq.addEventListener?.("change", handler);
     return () => mq.removeEventListener?.("change", handler);
@@ -73,9 +73,9 @@ export function AccessibilityPage() {
 
   // ---------- MOTION REDUCTION SETTINGS ----------
   const motionOptions = {
-    Slow: { key: "Slow", width: "w-1/3", fontSize: "1rem" },
-    Default: { key: "Default", width: "w-1/3", fontSize: "1rem" },
-    Fast: { key: "Fast", width: "w-1/3", fontSize: "1rem" },
+    Slow: { key: "Slow", fontSize: "1rem" },
+    Default: { key: "Default", fontSize: "1rem" },
+    Fast: { key: "Fast", fontSize: "1rem" },
   };
 
   const [motionPreference, setMotionPreference] = useState<MotionPreference>(
@@ -110,10 +110,10 @@ export function AccessibilityPage() {
   });
 
   const contrastOptions = {
-    Low: { key: "Low", width: "w-1/4", fontSize: "1rem" },
-    Default: { key: "Default", width: "w-1/4", fontSize: "1rem" },
-    High: { key: "High", width: "w-1/4", fontSize: "1rem" },
-    BW: { key: "B/W", width: "w-1/4", fontSize: "1rem" },
+    Low: { key: "Low", fontSize: "1rem" },
+    Default: { key: "Default", fontSize: "1rem" },
+    High: { key: "High", fontSize: "1rem" },
+    BW: { key: "B/W", fontSize: "1rem" },
   };
 
   // ---------- RENDER ----------
@@ -132,9 +132,9 @@ export function AccessibilityPage() {
               <SettingButton
                 key={key}
                 label={option.key}
-                className={option.width}
                 style={{ fontSize: option.fontSize }}
                 onClick={() => setTextScale(key as TextScale)}
+                isSelected={textScale === key}
               />
             ))}
           </ButtonRow>
@@ -150,10 +150,10 @@ export function AccessibilityPage() {
             {Object.entries(themeOptions).map(([key, option]) => (
               <SettingButton
                 key={key}
-                label={option.key}
-                className={option.width}
+                label={option.key.charAt(0).toUpperCase() + option.key.slice(1)}
                 style={{ fontSize: option.fontSize }}
                 onClick={() => setTheme(key as Theme)}
+                isSelected={theme === key}
               />
             ))}
           </ButtonRow>
@@ -172,11 +172,11 @@ export function AccessibilityPage() {
               <SettingButton
                 key={key}
                 label={option.key}
-                className={option.width}
                 style={{ fontSize: option.fontSize }}
                 onClick={() => {
                   setMotionPreference(key as MotionPreference);
                 }}
+                isSelected={motionPreference === key}
               />
             ))}
           </ButtonRow>
@@ -192,9 +192,9 @@ export function AccessibilityPage() {
               <SettingButton
                 key={key}
                 label={option.key}
-                className={option.width}
                 style={{ fontSize: option.fontSize }}
                 onClick={() => setContrast(key as ContrastLevel)}
+                isSelected={contrast === key}
               />
             ))}
           </ButtonRow>
