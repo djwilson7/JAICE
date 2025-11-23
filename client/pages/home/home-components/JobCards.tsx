@@ -9,6 +9,9 @@ import type { JobCardType } from "@/types/jobCardType";
 import { auth } from "@/global-services/firebase";
 import { api } from "@/global-services/api";
 import { getCSSVar } from "@/utils/getCSSVar";
+import editIcon from "@/assets/icons/edit.svg";
+import viewIcon from "@/assets/icons/view.svg";
+import reviewIcon from "@/assets/icons/reviewed.svg";
 
 export function JobCard({
   job,
@@ -117,7 +120,7 @@ export function JobCard({
   };
 
   const hoverMessageForReview = localReviewNeeded
-    ? "This job requires your review. Mark it as reviewed when done."
+    ? "This job requires your review."
     : "";
 
   const markAsReviewed = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -183,22 +186,27 @@ export function JobCard({
       layout
     >
       {/* Tooltip for Review Needed */}
-      <AnimatePresence>
-        {localReviewNeeded && isHovered && (
-          <motion.div
-            key="review-tooltip"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.12 }}
-            role="tooltip"
-            aria-hidden={!isHovered}
-            className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded py-1"
-          >
-            {hoverMessageForReview}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.small
+        key="review-tooltip"
+        initial={{
+          opacity: 0,
+          height: 0,
+        }}
+        animate={{
+          opacity: localReviewNeeded && isHovered ? 1 : 0,
+          height: localReviewNeeded && isHovered ? "auto" : 0,
+        }}
+        exit={{
+          opacity: 0,
+          height: 0,
+        }}
+        transition={{ duration: 0.12 }}
+        role="tooltip"
+        aria-hidden={!isHovered}
+        className="w-full z-50 border-b border-orange-600 text-orange-600"
+      >
+        {hoverMessageForReview}
+      </motion.small>
 
       {/* Main Card Container Above (wraps all content) */}
 
@@ -217,21 +225,20 @@ export function JobCard({
         <motion.div className="flex items-center gap-2 p-2 w-7/8" layout>
           {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
-          <AnimatePresence>
-            {/* This animates in the checkbox when we are in multi-select mode */}
-            {isMultiSelecting ? (
-              <motion.img
-                src={isSelected ? checkIcon : uncheckIcon}
-                alt={isSelected ? "Check Icon" : "Uncheck Icon"}
-                style={iconStyle}
-                className="w-4 h-4 mx-2 opacity-50"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                layout
-              />
-            ) : null}
-          </AnimatePresence>
+          {/* This animates in the checkbox when we are in multi-select mode */}
+          <motion.img
+            src={isSelected ? checkIcon : uncheckIcon}
+            alt={isSelected ? "Check Icon" : "Uncheck Icon"}
+            style={iconStyle}
+            className="w-4 h-4 opacity-50"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{
+              opacity: isMultiSelecting ? 1 : 0,
+              width: isMultiSelecting ? "auto" : 0,
+            }}
+            exit={{ opacity: 0, width: 0 }}
+            layout
+          />
 
           {/* Job Title and date*/}
           <motion.div className="flex flex-col flex-1 min-w-0">
@@ -243,7 +250,7 @@ export function JobCard({
         </motion.div>
 
         {/* Chevron to expand/collapse job card details rotates via it's style argument */}
-        <div className="flex w-1/8 mr-2 justify-end">
+        <motion.div className="flex w-1/8 mr-2 justify-end">
           <motion.img
             src={downChevron}
             alt="Show Content Handle"
@@ -256,12 +263,12 @@ export function JobCard({
               duration: parseFloat(getCSSVar("--animation-duration")),
             }}
           />
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Expanded Job Related Content */}
       <motion.div
-        className="overflow-hidden w-full px-2"
+        className="overflow-hidden w-full px-4"
         animate={{
           height: isOpen ? "auto" : 0,
           opacity: isOpen ? 1 : 0,
@@ -269,7 +276,7 @@ export function JobCard({
         initial={false}
         transition={{ type: "spring", stiffness: 200, damping: 24 }}
       >
-        <hr className="flex w-full my-2"/>
+        <hr className="flex w-full my-2 opacity-20" />
         <div className="flex flex-col text-left w-full gap-1 pb-2">
           <small style={{ color: "var(--color-blue-4)" }}>
             {job.companyName ?? "Unknown Company"}
@@ -278,44 +285,80 @@ export function JobCard({
           <small className="text-sm text-white opacity-75">
             {job.notes ?? "No additional notes."}
           </small>
+        </div>
+      </motion.div>
 
-          <div className="flex 2xl:flex-row flex-col gap-2 w-full">
-            {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
-            <button
+      <motion.div
+        key="review-tooltip"
+        initial={{ opacity: 0, height: 0 }}
+        animate={{
+          height: isHovered ? "auto" : 0,
+          opacity: isHovered ? 1 : 0,
+        }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.12 }}
+        role="tooltip"
+        aria-hidden={!isHovered}
+        className="w-full z-50"
+      >
+        <hr className="flex w-full opacity-20" />
+        <motion.div className="flex flex-row gap-2 p-2 w-full"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{
+            height: isHovered ? "auto" : 0,
+            opacity: isHovered ? 1 : 0,
+          }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.12 }}
+        >
+
+          {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
+          <motion.button
+            onClick={(e) => {
+              e.preventDefault();
+              onEdit?.(job);
+            }}
+            type="button"
+            className="small w-full"
+          >
+            <img
+              src={editIcon}
+              alt="Edit Icon"
+              className="inline w-4 h-4 mr-1"
+            />
+          </motion.button>
+
+          {job.providerSource !== "manual_entry" && (
+            <motion.button
               onClick={(e) => {
                 e.preventDefault();
-                onEdit?.(job);
+                openMessage(job.id);
               }}
               type="button"
-              className="small w-full 2xl:w-1/3"
+              className="small w-full"
             >
-              Edit Application
-            </button>
+              <img
+                src={viewIcon}
+                alt="View Icon"
+                className="inline w-4 h-4 mr-1"
+              />
+            </motion.button>
+          )}
 
-            {job.providerSource !== "manual_entry" && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  openMessage(job.id);
-                }}
-                type="button"
-                className="small w-full 2xl:w-1/3"
-              >
-                View Email
-              </button>
-            )}
-
-            <button
-              type="button"
-              className={`small w-full 2xl:w-1/3 ${
-                localReviewNeeded ? "reviewed" : "hidden"
-              }`}
-              onClick={markAsReviewed}
-            >
-              Mark as Reviewed
-            </button>
-          </div>
-        </div>
+          <motion.button
+            type="button"
+            className={`small w-full ${
+              localReviewNeeded ? "reviewed" : "hidden"
+            }`}
+            onClick={markAsReviewed}
+          >
+            <img
+              src={reviewIcon}
+              alt="Review Icon"
+              className="inline w-4 h-4 mr-1"
+            />
+          </motion.button>
+        </motion.div>
       </motion.div>
     </motion.div>
   );

@@ -211,7 +211,6 @@ button.red:hover {
 }
 
 button.reviewed {
-  display: inline-flex;
   align-items: center;
   align-self: start;
 
