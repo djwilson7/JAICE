@@ -1,13 +1,14 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import type { JobCardType } from "@/types/jobCardType";
 import { auth } from "@/global-services/firebase";
 import { api } from "@/global-services/api";
+import { createPortal } from "react-dom";
 
 export function JobCard({
   job,
@@ -17,6 +18,7 @@ export function JobCard({
   handleMultiSelectClick,
   dimmed,
   onEdit,
+  onDelete,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
@@ -25,10 +27,13 @@ export function JobCard({
   handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
   onEdit?: (job: JobCardType) => void;
+  onDelete?: (id: string) => Promise<boolean>;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
   const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(!!job.reviewNeeded);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // If multi-select mode is turned off, clear selection state
   if (!isMultiSelecting && isSelected) {
@@ -137,6 +142,98 @@ export function JobCard({
       setLocalReviewNeeded(true); // keep the review needed state if API call fails
     }
   };
+
+  // close modal with escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "escape") setShowDeleteConfirm(false);
+    };
+
+    if (showDeleteConfirm) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showDeleteConfirm]);
+
+  // delete confirmation modal
+  const modalMarkup = (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`delete-dialog-title-${job.id}`}
+      onClick={() => setShowDeleteConfirm(false)}
+    >
+      {/* backdrop */}
+      <div className="absolute inset-0 bg-black/50" />
+
+      {/* dialog */}
+      <div
+        className="relative z-60 bg-[#111014] rounded p-6 w-11/12 max-w-md shadow-lg border"
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        <h3 id={`delete-dialog-title-${job.id}`} className="mb-2 text-lg font-semibold">
+          Do you want to delete this card?
+        </h3>
+
+        <p className="text-sm text-gray-300 mb-4 truncate">{job.title}</p>
+
+        <div className="flex gap-2 justify-end">
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowDeleteConfirm(false);
+            }}
+            type="button"
+            className="small"
+            aria-label="Cancel delete"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+
+              if (isDeleting || isMultiSelecting) return;
+
+              if (!onDelete) 
+              {
+                setShowDeleteConfirm(false);
+                return;
+              }
+
+              setIsDeleting(true);
+              try {
+                const success = await onDelete(job.id);
+                if (!success) 
+                {
+                  console.error("Failed to delete job with id:", job.id);
+                }
+
+              } catch (error) {
+                console.error("Error occurred while deleting job with id:", job.id, error);
+
+              } finally {
+                setIsDeleting(false);
+                setShowDeleteConfirm(false);
+              }
+            }}
+
+            type="button"
+            className="small bg-red-600 text-white"
+            aria-label="Confirm delete"
+          >
+            
+            {isDeleting ? "Deleting..." : "Yes, delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
 
   return (
     <motion.div
@@ -270,7 +367,6 @@ export function JobCard({
 
           <div className="flex 2xl:flex-row flex-col gap-2 w-full" >
 
-            {/*TODO: make this open edit application modal that is almost the same as add application but different*/} 
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -282,6 +378,25 @@ export function JobCard({
               Edit Application
             </button>
 
+            {/* Delete button with confirmation */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (isMultiSelecting || isDeleting) return;
+
+                setShowDeleteConfirm(true);
+              }}
+              
+              type="button"
+              className="small w-full 2xl:w-1/3"
+              aria-label="Delete Job"
+            >
+              Delete
+            </button>
+
+            {/* View Email button */}
             {job.providerSource !== "manual_entry" && (
               <button
                 onClick={(e) => {
@@ -295,16 +410,18 @@ export function JobCard({
               </button>
             )}
 
-            <button
-              type="button"
-              className={`small w-full 2xl:w-1/3 ${localReviewNeeded ? "reviewed" : "hidden"}`}
-              onClick={markAsReviewed}
-            >
-              Mark as Reviewed
-            </button>
+            
           </div>
+            <button
+                type="button"
+                className={`small w-full 2xl:w-1/3 ${localReviewNeeded ? "reviewed" : "hidden"}`}
+                onClick={markAsReviewed}
+              >
+                Mark as Reviewed
+              </button>
         </div>
       </motion.div>
+      {showDeleteConfirm && typeof window !== "undefined" && createPortal(modalMarkup, document.body)}
     </motion.div>
   );
 }

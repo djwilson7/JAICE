@@ -389,6 +389,34 @@ export function HomePage() {
     return map;
   }, [filteredJobs]);
 
+
+  const handleDelete = async (id: string): Promise<boolean> => {
+    try {
+      const res = await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: [id],
+        }),
+      });
+
+      if (!(res && res.status === "success" && res.count > 0)) 
+      {
+      console.error("Delete API responded but did not delete any rows:", res);
+      return false;
+      }
+      // remove job locally
+      setJobs((prev) => prev.filter((job) => job.id !== id));
+
+      setSelectedJobs((prev) => prev.filter((j) => j.id !== id));
+      setIsMultiSelecting(false);
+
+      return true;
+    } catch (error) {
+      console.error("Failed to delete job with id:", id, error);
+      return false;
+    }
+  };
+
   // Group jobs by their column for rendering
   // This creates a mapping of column ids to arrays of JobCard components
   // useMemo is used to memoize the result and only recalculate when jobs or columnConfig change
@@ -421,6 +449,7 @@ export function HomePage() {
           handleMultiSelectClick={handleJobCardClick}
           dimmed={!!searchQuery && !matchOrderMap.has(job.id)}
           onEdit={openEditModal}
+          onDelete={handleDelete}
         />
       ));
 
@@ -434,6 +463,8 @@ export function HomePage() {
     handleJobCardClick,
     searchQuery,
   ]);
+
+  
 
   // show loading state while emails are being fetched
   return (

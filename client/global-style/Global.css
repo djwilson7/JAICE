@@ -192,6 +192,7 @@ button.red:hover
 
 button.reviewed
 {
+  max-width: 32.6%;
   border-radius: 12px;
   background-color: var(--color-orange-600);
   border: 1px solid transparent;
