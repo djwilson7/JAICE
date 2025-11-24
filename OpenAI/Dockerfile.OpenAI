@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
+WORKDIR /app
+
+COPY ./shared_worker_library/shared_req.txt ./shared_worker_library/shared_req.txt
+COPY ./OpenAI/req.txt ./OpenAI/req.txt
+
+RUN pip install --no-cache-dir -r ./shared_worker_library/shared_req.txt
+RUN pip install --no-cache-dir -r ./OpenAI/req.txt
+
+COPY ./OpenAI ./OpenAI
+COPY ./shared_worker_library ./shared_worker_library
+COPY ./common ./common
+
+RUN pip install ./shared_worker_library
+RUN pip install ./common
+
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+CMD ["celery", "-A", "OpenAI.OpenAI_worker", "worker", "-Q", "openai_model_queue", "-l", "info", "-E", "-n", "openai_model", "-c", "3"]
+

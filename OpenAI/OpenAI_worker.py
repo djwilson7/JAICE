@@ -1,5 +1,5 @@
 from shared_worker_library.celery_app import celery_app
-import spacy
+
 from common.logger import get_logger
 logging = get_logger()
 
