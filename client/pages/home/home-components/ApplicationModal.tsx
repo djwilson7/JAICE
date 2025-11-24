@@ -55,6 +55,7 @@ export default function NewApplication({ isOpen, onClose, initialStage = "", ini
         if (isOpen) 
         {
         document.addEventListener("keydown", handleKey);
+        
         // prevent background scroll while modal open
         document.body.style.overflow = "hidden";
         }
