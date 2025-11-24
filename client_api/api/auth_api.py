@@ -13,6 +13,7 @@ from celery import Celery
 from common.logger import get_logger
 from client_api.utils.task_definitions import TaskType
 from pydantic import BaseModel
+from client_api.services.firebase_admin import get_auth
 
 logging = get_logger()
 
@@ -23,19 +24,27 @@ celery_client = Celery("core_api_client")
 
 # LOCAL VS PROD ENV IMPORT VARIABLES (TRY PROD FALLBACK TO LOCAL)
 celery_client.conf.update(
-    broker_url=str(os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD"))
+    broker_url=str(
+        os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD")
+    )
 )
 
 BASE_URL = os.getenv("VITE_API_BASE_URL_LOCAL") or os.getenv("VITE_API_BASE_URL_PROD")
-FRONTEND_DASHBOARD_URL = os.getenv("FRONTEND_DASHBOARD_URL_LOCAL") or os.getenv("FRONTEND_DASHBOARD_URL_PROD")
-CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_LOCAL") or os.getenv("CLIENT_SECRETS_PROD")
+FRONTEND_DASHBOARD_URL = os.getenv("FRONTEND_DASHBOARD_URL_LOCAL") or os.getenv(
+    "FRONTEND_DASHBOARD_URL_PROD"
+)
+CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_LOCAL") or os.getenv(
+    "CLIENT_SECRETS_PROD"
+)
 
 # STANDARD ENV VARS (Doesn't care about local vs prod)
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 BACKGROUND_DURATION_DAYS = int(os.getenv("BACKGROUND_DURATION_DAYS", "365"))
 SCOPES = os.getenv("PERMISSIONS_SCOPES", "[]").strip("[]").replace('"', "").split(",")
 REDIRECT_URI = os.getenv("REDIRECT_URI", "/api/auth/google/callback")
-GOOGLE_REVOKE_ENDPOINT = os.getenv("GOOGLE_REVOKE_ENDPOINT", "https://oauth2.googleapis.com/revoke")
+GOOGLE_REVOKE_ENDPOINT = os.getenv(
+    "GOOGLE_REVOKE_ENDPOINT", "https://oauth2.googleapis.com/revoke"
+)
 
 
 @router.get("/consent", summary="Generates the Google OAuth2 consent screen URL.")
@@ -48,18 +57,20 @@ def get_oauth_consent_url(user: dict = Depends(get_user_from_token_query)):
         raise ValueError("CLIENT_SECRETS environment variable is not set.")
     CLIENT_CONFIG = json.loads(CLIENT_SECRETS_FILE)
     logging.info(f"Base URL: {BASE_URL}, Redirect URI: {REDIRECT_URI}")
-    
+
     if not BASE_URL or not REDIRECT_URI:
-        logging.error("FATAL: BASE_URL or REDIRECT_URI environment variable is not set.")
+        logging.error(
+            "FATAL: BASE_URL or REDIRECT_URI environment variable is not set."
+        )
         raise ValueError("BASE_URL or REDIRECT_URI environment variable is not set.")
-    
+
     redirect = BASE_URL + REDIRECT_URI
     logging.info(f"Redirect URI: {redirect}")
-    flow = Flow.from_client_config(
-        CLIENT_CONFIG, scopes=SCOPES, redirect_uri=redirect
-    )
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, redirect_uri=redirect)
 
-    auth_url, state = flow.authorization_url(access_type="offline", state=uid)
+    auth_url, state = flow.authorization_url(
+        access_type="offline", state=uid, prompt="consent"
+    )
     logging.debug(f"OAuth2 consent URL generated")
     return RedirectResponse(auth_url)
 
@@ -96,21 +107,18 @@ async def oauth_callback(request: Request, code: str, state: str):
     if not CLIENT_SECRETS_FILE:
         logging.error("FATAL: CLIENT_SECRETS environment variable is not set.")
         raise ValueError("CLIENT_SECRETS environment variable is not set.")
-    
+
     CLIENT_CONFIG = json.loads(CLIENT_SECRETS_FILE)
-    
+
     if not BASE_URL or not REDIRECT_URI:
-        logging.error("FATAL: BASE_URL or REDIRECT_URI environment variable is not set.")
+        logging.error(
+            "FATAL: BASE_URL or REDIRECT_URI environment variable is not set."
+        )
         raise ValueError("BASE_URL or REDIRECT_URI environment variable is not set.")
-    
+
     redirect = BASE_URL + REDIRECT_URI
 
-    flow = Flow.from_client_config(
-        CLIENT_CONFIG,
-        scopes=SCOPES,
-        redirect_uri=redirect
-    )
-
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, redirect_uri=redirect)
 
     try:
         flow.fetch_token(code=code)
@@ -515,6 +523,47 @@ async def is_gmail_consent_provided(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="A database error occurred while fetching user status.",
         )
+
+
+@router.post(
+    "/logout", summary="Logs out the current user by invalidating their session."
+)
+async def logout(user: dict = Depends(get_current_user)):
+    uid = user.get("uid", "")
+    try:
+        # Invalidate the refresh token
+        auth = get_auth()
+        auth.revoke_refresh_tokens(uid)
+        logging.info(f"User {uid} logged out successfully.")
+        return {"status": "success", "message": "Logged out successfully"}
+    except Exception as e:
+        logging.error(f"Error during logout for user {uid}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to log out.")
+
+
+@router.post(
+    "/delete-account",
+    summary="Deletes the current user's account and all cascaded data.",
+)
+async def delete_account(request: Request, user: dict = Depends(get_current_user)):
+    uid = user.get("uid")
+    pool = request.app.state.pool
+    auth = get_auth()
+
+    try:
+        async with pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM user_account WHERE user_id = $1",
+                uid,
+            )
+
+        auth.delete_user(uid)
+        logging.info(f"User {uid} account deleted successfully.")
+        return {"status": "success", "message": "Account deleted successfully"}
+
+    except Exception as e:
+        logging.error(f"Error during account deletion for user {uid}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete account.")
 
 
 # Protected endpoint to get current user info

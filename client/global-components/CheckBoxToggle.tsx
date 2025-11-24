@@ -1,4 +1,5 @@
 // import { localfiles } from "@/directory/path/to/localimport";
+import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
@@ -52,23 +53,17 @@ export function CheckBoxToggle({
     });
   }, [isChecked, label]);
 
-  const iconStyle = {
-    filter:
-      "brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%)",
-  };
-
   return (
     <motion.div
       className="flex relative items-center justify-start p-2 gap-4 rounded cursor-pointer overflow-hidden"
       animate={{ width: targetWidth }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
     >
       <div ref={contentRef} className="flex items-center gap-2">
         <img
           src={isChecked ? activeIcon : inactiveIcon}
           alt="Toggle Icon"
-          className="w-5 h-5 flex-shrink-0"
-          style={iconStyle}
+          className="w-5 h-5 flex-shrink-0 icon"
         />
         <input
           type="checkbox"

@@ -56,7 +56,7 @@ export function Card({
     return (
         <section
             className={className}
-            style={style}
+            style={{ ...style, display: "flex", flexDirection: "column" }}
             onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
                 (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
@@ -96,7 +96,8 @@ export function Card({
             <div
                 className={`card-body ${expandable ? "cursor-pointer" : ""}`}
                 style={{
-                    height: bodyHeight,
+                    flex: 1,
+                    minHeight: bodyHeight,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -115,7 +116,7 @@ export function Card({
                         style={{
                             position: "absolute",
                             right: 8,
-                            top: -16,
+                            top: -24,
                             fontSize: 12,
                             opacity: 0.8,
                         }}

@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import Button from "@/global-components/button";
-import { deleteCurrentUser, getIdToken } from "@/global-services/auth";
+import { getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
@@ -10,6 +10,7 @@ import { DaysToSync } from "./account-components/DaysToSync";
 import { useAuth } from "@/global-components/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
+import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -20,7 +21,7 @@ const GMAIL_CONSENT_URL =
 export function AccountPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -34,7 +35,6 @@ export function AccountPage() {
 
   const handleShowChangePhotoModal = () => {
     setShowChangePhotoModal(true);
-
   };
 
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -44,21 +44,16 @@ export function AccountPage() {
 
   const daysToSyncOptions = [3, 7, 14, 45];
 
-  const { user, loading, applyProfileUpdate } = useAuth();
+  const { user, applyProfileUpdate } = useAuth();
   const firstName: string = user?.displayName?.split(" ")[0] || "User";
-  const lastName: string = user?.displayName?.split(" ").slice(1).join(" ") || "";
+  const lastName: string =
+    user?.displayName?.split(" ").slice(1).join(" ") || "";
   const phoneNumber: string = user?.phoneNumber || "";
   const profilePicURL: string = user?.photoURL || "";
 
-  const [firstNameField, setFirstNameField] = useState<string>(
-    firstName
-  );
-  const [lastNameField, setLastNameField] = useState<string>(
-    lastName
-  );
-  const [phoneNumberField, setPhoneNumberField] = useState<string>(
-    phoneNumber
-  );
+  const [firstNameField, setFirstNameField] = useState<string>(firstName);
+  const [lastNameField, setLastNameField] = useState<string>(lastName);
+  const [phoneNumberField, setPhoneNumberField] = useState<string>(phoneNumber);
 
   const handleFirstNameInput = (value: string) => {
     setFirstNameField(value);
@@ -89,7 +84,7 @@ export function AccountPage() {
 
     const fNameC = fName.charAt(0).toUpperCase() + fName.slice(1);
     const lNameC = lName.charAt(0).toUpperCase() + lName.slice(1);
-    
+
     setFirstNameField(fNameC);
     setLastNameField(lNameC);
 
@@ -109,22 +104,8 @@ export function AccountPage() {
   };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
-    checkGmailStatus();
+    checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
-
-  async function checkGmailStatus() {
-    try {
-      const response = await api("/api/auth/gmail-consent-status");
-      console.log("Gmail consent status response:", response);
-      setGmailConnected(response.isConnected);
-      setGmailError(null);
-      return;
-    } catch (err) {
-      console.error("Error checking Gmail consent status:", err);
-      setGmailConnected(false);
-      setGmailError("Error checking gmail status.");
-    }
-  }
 
   async function handleShowModal() {
     if (gmailConnected) {
@@ -183,7 +164,35 @@ export function AccountPage() {
   }
 
   async function unlinkGmail() {
-    return await api("/api/auth/revoke-gmail-consent", { method: "POST" });
+    const proceed = window.confirm(
+      "Unlinking your Gmail account will require you to log in again. Continue?"
+    );
+    if (!proceed) return { status: "cancelled" };
+
+    try {
+      const revoke = await api("/api/auth/revoke-gmail-consent", {
+        method: "POST",
+      });
+
+      if (revoke.status !== "success") {
+        console.error("Failed to revoke Gmail consent:", revoke);
+        setGmailError(
+          "Unable to unlink your Gmail right now. Try again shortly."
+        );
+        return { status: "error" };
+      }
+
+      await api("/api/auth/logout", { method: "POST" });
+      await logOut();
+
+      setGmailConnected(false);
+      navigate("/");
+      return { status: "success" };
+    } catch (err) {
+      console.error("Unlink Gmail error:", err);
+      setGmailError("A network error occurred. Please try again.");
+      return { status: "error" };
+    }
   }
 
   // Determine the Gmail button text based on connection status and busy state
@@ -195,50 +204,49 @@ export function AccountPage() {
 
   async function handleDelete() {
     setDeleteAccountError(null);
+
     const sure = window.confirm(
       "This will permanently delete your account. This cannot be undone. Continue?"
     );
     if (!sure) return;
 
-    setBusy(true);
-    const res = await deleteCurrentUser(); // if you support email/password reauth, pass { email, password } here
-    setBusy(false);
+    try {
+      setBusy(true);
 
-    if (res.ok) {
-      // Account deleted; user will be signed out. Send them to your Landing page.
-      window.location.assign("/");
-      return;
-    }
+      const revoke = await api("/api/auth/revoke-gmail-consent", {
+        method: "POST",
+      });
 
-    if (
-      res.code === "reauth-needed" ||
-      res.code === "auth/requires-recent-login"
-    ) {
-      setDeleteAccountError("Please re-authenticate and try again.");
-      // If you support email/password, collect the current password and retry:
-      const email = useAuth().user?.email?.toString();
-      const password =
-        prompt("Confirm your current password to continue:") || "";
-      if (password) {
-        setBusy(true);
-        const retry = await deleteCurrentUser({ email, password });
+      if (revoke.status !== "success") {
         setBusy(false);
-        if (retry.ok) {
-          window.location.assign("/");
-          return;
-        }
-        setDeleteAccountError(`Failed to delete account: ${retry.code}`);
+        setDeleteAccountError("Failed to revoke Gmail access. Try again.");
+        return;
       }
-      return;
-    }
 
-    setDeleteAccountError(`Failed to delete account: ${res.code}`);
+      const deletion = await api("/api/auth/delete-account", {
+        method: "POST",
+      });
+
+      setBusy(false);
+
+      if (deletion.status !== "success") {
+        setDeleteAccountError(`Failed to delete account: ${deletion.message}`);
+        return;
+      }
+
+      await logOut();
+
+      navigate("/");
+    } catch (error) {
+      console.error("Delete account error:", error);
+      setDeleteAccountError("A network error occurred. Please try again.");
+    }
   }
 
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
     <div
-      className="w-full h-full bg-slate-950 text-slate-100"
+      className="w-full h-full"
       style={{ background: "var(--color-bg)" }}
     >
       <main className="flex flex-col md:flex-row w-full justify-center">
@@ -255,11 +263,11 @@ export function AccountPage() {
             <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
               Profile Info
             </h1>
-            <hr className="w-full border-t-1 border-gray-400" />
+            <hr className="w-full border-t-1 border-[var(--card-border)]" />
 
             {/*Profile image*/}
             <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
-              <div className="w-24 h-24 rounded-full bg-white mb-4 aspect-square">
+              <div className="w-24 h-24 rounded-full bg-[var(--card-border)] mb-4 aspect-square">
                 <img
                   src={profilePicURL || userIcon}
                   alt="Profile Picture"
@@ -273,7 +281,7 @@ export function AccountPage() {
                   </Button>
                 </div>
                 <div className="text-sm font-light">
-                  <small className="text-sm text-gray-400 font-light">
+                  <small className="text-sm opacity-80 font-light">
                     Update your profile picture URL.
                   </small>
                 </div>
@@ -330,17 +338,17 @@ export function AccountPage() {
               <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
                 Account Security
               </h1>
-              <hr className="w-full border-t-1 border-gray-400" />
+              <hr className="w-full border-t-1 border-[var(--card-border)]" />
             </div>
 
             {/*Gmail Integration*/}
             <div className="flex flex-col items-center justify-center my-4 items-center w-full">
               <div className="flex w-full gap-4">
                 <div className="flex flex-col w-1/2">
-                  <h3 className="text-lg text-left font-medium text-gray-300">
+                  <h3 className="text-lg text-left font-medium">
                     Gmail Integration
                   </h3>
-                  <small className="text-sm text-left text-gray-400 ">
+                  <small className="text-sm text-left opacity-60 ">
                     Connect your Gmail account to allow email parsing and
                     analysis.
                   </small>
@@ -394,10 +402,10 @@ export function AccountPage() {
             <div className="flex flex-col items-center justify-center my-4 items-center w-full">
               <div className="flex w-full gap-4">
                 <div className="flex flex-col w-3/4">
-                  <h3 className="text-lg text-left font-medium text-gray-300 mt-4">
+                  <h3 className="text-lg text-left font-medium mt-4">
                     Two-Factor Authentication (2FA)
                   </h3>
-                  <small className="text-sm text-left text-gray-400 mb-4">
+                  <small className="text-sm text-left opacity-60 mb-4">
                     Enable 2FA to add an extra layer of security to your
                     account.
                   </small>
@@ -429,10 +437,10 @@ export function AccountPage() {
             <div className="flex flex-col items-center justify-center my-4 items-center w-full">
               <div className="flex w-full gap-4">
                 <div className="flex flex-col w-1/2">
-                  <h3 className="text-lg text-left font-medium text-gray-300">
+                  <h3 className="text-lg text-left font-medium">
                     Delete your JAICE account?
                   </h3>
-                  <small className="text-sm text-left text-gray-400">
+                  <small className="text-sm text-left opacity-60 ">
                     This will permanently delete your account and all associated
                     data.
                   </small>

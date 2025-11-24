@@ -17,6 +17,9 @@ logging = get_logger()
 # Load environment variables from the backend .env file
 load_dotenv()
 
+def get_auth():
+    return auth
+
 def initialize_firebase_sdk():
     logging.info("Initializing Firebase Admin SDK...")
     sa_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -55,7 +58,7 @@ def initialize_firebase_sdk():
 # Function to verify Firebase ID tokens    
 def verify_id_token(id_token: str):
     logging.info("Verifying Firebase ID token.")
-    return auth.verify_id_token(id_token)
+    return auth.verify_id_token(id_token, clock_skew_seconds=15)
 
 # Health check for Firebase Auth connectivity
 async def check_firebase_auth_health():
@@ -67,7 +70,7 @@ async def check_firebase_auth_health():
     try:
         # Try a simple operation to confirm connectivity to the Firebase API.
         await asyncio.to_thread(auth.get_user, uid='non-existent-user-check-id')
-    except firebase_admin.exceptions.NotFoundError:
+    except auth.UserNotFoundError:
         # This is the expected outcome, meaning we reached Firebase successfully.
         logging.info("Firebase Auth Health Check PASSED.")
         return True

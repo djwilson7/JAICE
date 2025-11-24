@@ -11,6 +11,10 @@ import { AlertBox } from "@/pages/home/home-components/AlertBox";
 import { InfoModal } from "@/global-components/InfoModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { HomeInfoContent } from "@/pages/home/home-components/HomePageInfo";
+import { useEffect, useState } from "react";
+import { checkGmailStatus } from "../utils/checkGmailStatus";
+import { useNavigate } from "react-router";
+import Button from "@/global-components/button";
 
 interface ControlBarProps {
   isMultiSelecting: boolean;
@@ -35,6 +39,7 @@ interface ControlBarProps {
   infoModalLabel?: string;
   isInfoModalOpen: boolean;
   setInfoModalOpen: (value: boolean) => void;
+
 }
 
 /**
@@ -61,7 +66,7 @@ interface ControlBarProps {
  * @param infoModalLabel      - Optional label for the info modal toggle
  * @param isInfoModalOpen     - Boolean indicating if the info modal is open
  * @param setIsInfoModalOpen  - Function to update the info modal open state
- * 
+ *
  * @returns A control bar containing interactive components for user alerts, searching, filtering, multi-select toggling, and information modal access.
  */
 export function ControlBar({
@@ -87,14 +92,23 @@ export function ControlBar({
   infoModalLabel,
   isInfoModalOpen,
   setInfoModalOpen,
+
 }: ControlBarProps) {
+  const navigate = useNavigate();
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailError, setGmailError] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkGmailStatus({ setGmailConnected, setGmailError });
+  }, []);
+
   return (
     <div className="w-full h-[50px] justify-start">
       {/* Control Bar Container */}
 
       <div className="w-full min-w-[63rem] h-[50px] flex items-center justify-between gap-4">
         {/* Inner Container for alignment and spacing */}
-        
+
         {/* Read Only Components */}
         <div className="">
           <AlertBox
@@ -103,7 +117,21 @@ export function ControlBar({
             alertMessage={alertMessage}
           />
         </div>
-
+        {!gmailConnected && (
+          <div className="flex flex-row items-center justify-center">
+            <div className="flex w-full p-2 items-center justify-evenly gap-4">
+              <div className="flex flex-col">
+                <h4 className="flex ">Your email isn't connected!</h4>
+                <small className="flex">To get the most out of JAICE, connect your email.</small>
+              </div>
+              <div className="flex">
+                <Button onClick={() => navigate("/settings/account")}>
+                  Settings
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Interactive Functionality Components */}
         <div className="flex gap-4 justify-center items-center">
           <SearchBar
@@ -148,7 +176,11 @@ export function ControlBar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <InfoModal title={"Home Page Info"} setIsOpen={setInfoModalOpen} content={<HomeInfoContent />}></InfoModal>
+            <InfoModal
+              title={"Home Page Info"}
+              setIsOpen={setInfoModalOpen}
+              content={<HomeInfoContent />}
+            ></InfoModal>
           </motion.div>
         )}
       </AnimatePresence>
