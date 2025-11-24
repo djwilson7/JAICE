@@ -16,6 +16,7 @@ import searchIcon from "@/assets/icons/search.svg";
 import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
+import resumeIcon from "@/assets/icons/resume.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
@@ -94,6 +95,7 @@ const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon },
   about: { route: "/auth-about", label: "About", icon: aboutIcon },
   dashboard: { route: "/dashboard", label: "Dashboard", icon: dashboardIcon },
+  resume: { route: "/resume", label: "Resume", icon: resumeIcon },
 };
 
 const settingsOptions = {
@@ -125,19 +127,21 @@ export function NavigationBar() {
     const path = location.pathname;
 
     if (path === "/home") {
-      setSelectedButton("home");
-    } else if (path === "/auth-about") {
-      setSelectedButton("about");
-    } else if (path === "/dashboard") {
-      setSelectedButton("dashboard");
-    } else if (path === "/settings/account") {
-      setSelectedButton("account");
-    } else if (path === "/settings/accessibility") {
-      setSelectedButton("accessibility");
-    } else if (path === "/settings/notification") {
-      setSelectedButton("notification");
-    } else setSelectedButton("");
-  }, [location.pathname]);
+    setSelectedButton("home");
+  } else if (path === "/auth-about") {
+    setSelectedButton("about");
+  } else if (path === "/dashboard") {
+    setSelectedButton("dashboard");
+  } else if (path === "/resume") {
+    setSelectedButton("resume");
+  } else if (path === "/settings/account") {
+    setSelectedButton("account");
+  } else if (path === "/settings/accessibility") {
+    setSelectedButton("accessibility");
+  } else if (path === "/settings/notification") {
+    setSelectedButton("notification");
+  } else setSelectedButton("");
+}, [location.pathname]);
 
   const handleButtonClick = async (route: string, buttonId: string) => {
     setSelectedButton(buttonId);
