@@ -28,7 +28,7 @@
   font-display: swap;
 }
 
-/* Base styles */
+/* Base styles for dark mode*/
 :root {
   /* Colors */
   --color-bg: #1e1c20;
@@ -89,6 +89,90 @@
   );
 
   --job-card-background: #2a2730;
+
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+
+  --gray-color: #c5c5c5;
+}
+
+/* Light theme overrides */
+html[data-theme="light"] {
+  /* Backgrounds */
+  --color-bg: #efefef; /* page background (soft gray-white) */
+  --color-bg-rgb: 245, 247, 250;
+  --color-bg-alt: linear-gradient(160deg, #ffffff, #eaf0f7, #ffffff);
+
+  /* Blues — tuned for clarity and text contrast */
+  --color-blue-1: #ffffff; /* side panels / card bg */
+  --color-blue-2: #97bcc7; /* hover / selected accent */
+  --color-blue-3: #1d4e89; /* primary accent blue */
+  --color-blue-4: #0e2f56; /* headings & button text (dark navy) */
+  --color-blue-5: #0b172a; /* main body text (very dark slate) */
+
+  --color-blue-1-rgb: 214, 227, 243;
+  --color-blue-2-rgb: 175, 203, 239;
+  --color-blue-3-rgb: 29, 78, 137;
+  --color-blue-4-rgb: 14, 47, 86;
+  --color-blue-5-rgb: 11, 23, 42;
+
+  /* Section / semantic accents */
+  --color-light-purple: #eae2f8; /* applied section */
+  --color-teal: #d4f3ef; /* interview section */
+  --color-dark-purple: #e6e2f3; /* offers */
+  --color-blue-gray: #e3e9f2; /* accepted */
+  --color-bright-red: #c62828; /* errors / alerts */
+
+  --job-card-background: #ffffff;
+
+  /* Typography */
+  --text-color-primary: black;
+  --gray-color: #7a7a7a;
+
+  --card-background: linear-gradient(
+    180deg,
+    rgba(var(--color-blue-1-rgb), 0.92) 0%,
+    rgba(var(--color-blue-2-rgb), 0.92) 100%
+  );
+
+  --icon-filter: brightness(0) saturate(100%) invert(12%) sepia(8%)
+    saturate(1250%) hue-rotate(170deg) brightness(90%) contrast(95%);
+}
+
+/* These styles should reference a variable above to dynamically adjust based on theme. */
+html,
+body {
+  background: var(--color-bg);
+  margin: 0;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  color: var(--text-color-primary);
+  overflow: auto;
+}
+
+/* Icon Filter and Color Overrides */
+.icon {
+  filter: var(--icon-filter);
+}
+
+.redIcon {
+  filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
+}
+
+.orangeIcon {
+  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
+    hue-rotate(359deg) brightness(99%) contrast(102%);
+}
+
+.greenIcon {
+  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
+    brightness(90%) contrast(85%);
+}
+
+.blueIcon {
+  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%)
+    hue-rotate(170deg) brightness(95%) contrast(90%);
 }
 
 /* Typography */
@@ -168,9 +252,7 @@ button.selected {
   border-color: var(--color-blue-4);
 }
 
-
-button.small
-{
+button.small {
   border-radius: 12px;
   border: 1px solid transparent;
   padding: 0.25em 0.5em;
@@ -185,11 +267,9 @@ button.small
   transition: border-color 0.25s ease;
 }
 
-button.small:hover 
-{
+button.small:hover {
   border-color: var(--color-blue-4);
 }
-
 
 button.red {
   border-radius: 20px;
@@ -215,7 +295,6 @@ button.reviewed {
   align-self: start;
 
   border-radius: 12px;
-  background-color: var(--color-orange-600);
   border: 1px solid transparent;
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
@@ -223,6 +302,7 @@ button.reviewed {
   font-family: var(--font-subheading);
   cursor: pointer;
   color: var(--color-white);
+  background-color: transparent;
 
   transition: border-color 0.25s ease;
 }
@@ -231,12 +311,11 @@ button.reviewed:hover {
   border-color: var(--color-white);
 }
 
-button.addApplication
-{
+button.addApplication {
   background-color: transparent;
   border-radius: 20px;
   border: 1px solid transparent;
-  padding: 0.0em 0.5em;
+  padding: 0em 0.5em;
   font-size: var(--fs-subheading);
   font-weight: 500;
   font-family: var(--font-subheading);
@@ -247,107 +326,7 @@ button.addApplication
   transition: border-color 0.25s ease;
 }
 
-button.addApplication:hover 
-{
-  transform: scale(2.0);
+button.addApplication:hover {
+  transform: scale(2);
   border-color: transparent;
-}
-
-/* light mode style */
-@media (prefers-color-scheme: light) {
-  :root {
-    --text-color-primary: var(--color-blue-5);
-  }
-}
-
-/* page layout */
-html,
-body {
-  background: var(--color-bg);
-  margin: 0;
-  display: flex;
-  width: 100%;
-  height: 100vh;
-  color: var(--text-color-primary);
-  overflow: auto;
-}
-
-/* Icons */
-
-/* makes icons light blue */
-button img {
-  filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%)
-    hue-rotate(170deg) brightness(95%) contrast(85%);
-}
-
-.icon {
-  filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%)
-    hue-rotate(170deg) brightness(95%) contrast(85%);
-}
-
-/* Light theme overrides */
-html[data-theme="light"] {
-  /* Backgrounds */
-  --color-bg: #b0b0b0; /* page background (soft gray-white) */
-  --color-bg-rgb: 245, 247, 250;
-  --color-bg-alt: linear-gradient(160deg, #ffffff, #eaf0f7, #ffffff);
-
-  /* Blues — tuned for clarity and text contrast */
-  --color-blue-1: #d6e3f3; /* side panels / card bg */
-  --color-blue-2: #afcbef; /* hover / selected accent */
-  --color-blue-3: #1d4e89; /* primary accent blue */
-  --color-blue-4: #0e2f56; /* headings & button text (dark navy) */
-  --color-blue-5: #0b172a; /* main body text (very dark slate) */
-
-  --color-blue-1-rgb: 214, 227, 243;
-  --color-blue-2-rgb: 175, 203, 239;
-  --color-blue-3-rgb: 29, 78, 137;
-  --color-blue-4-rgb: 14, 47, 86;
-  --color-blue-5-rgb: 11, 23, 42;
-
-  /* Section / semantic accents */
-  --color-light-purple: #eae2f8; /* applied section */
-  --color-teal: #d4f3ef; /* interview section */
-  --color-dark-purple: #e6e2f3; /* offers */
-  --color-blue-gray: #e3e9f2; /* accepted */
-  --color-bright-red: #c62828; /* errors / alerts */
-
-  --job-card-background: #ededed;
-
-  /* Typography */
-  --text-color-primary: var(--color-blue-5);
-}
-
-/* Ensure text is readable */
-html[data-theme="light"] body {
-  background: var(--color-bg);
-  color: var(--text-color-primary);
-}
-
-/* Button overrides for readability */
-html[data-theme="light"] button {
-  background-color: var(--color-blue-1);
-  color: var(--color-blue-4);
-  border-color: rgba(var(--color-blue-1-rgb), 0.2);
-}
-
-html[data-theme="light"] button:hover {
-  border-color: rgba(var(--color-blue-4-rgb), 0.4);
-}
-
-html[data-theme="light"] button.selected {
-  background-color: var(--color-blue-2);
-  color: var(--color-blue-5);
-  border-color: rgba(var(--color-blue-4-rgb), 0.2);
-}
-
-/* Icon filters (slightly darker for visibility) */
-html[data-theme="light"] button img {
-  filter: brightness(0) saturate(100%) invert(12%) sepia(8%) saturate(1250%)
-    hue-rotate(170deg) brightness(90%) contrast(95%);
-}
-
-html[data-theme="light"] .icon {
-  filter: brightness(0) saturate(100%) invert(12%) sepia(8%) saturate(1250%)
-    hue-rotate(170deg) brightness(90%) contrast(95%);
 }

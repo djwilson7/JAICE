@@ -41,6 +41,9 @@ export function JobCard({
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editHovered, setEditHovered] = useState(false);
+  const [viewHovered, setViewHovered] = useState(false);
+  const [deleteHovered, setDeleteHovered] = useState(false);
 
   // If multi-select mode is turned off, clear selection state
   if (!isMultiSelecting && isSelected) {
@@ -177,15 +180,16 @@ export function JobCard({
         className="relative z-60 bg-[#111014] rounded p-6 w-11/12 max-w-md shadow-lg border"
         onClick={(e) => e.stopPropagation()}
       >
-
-        <h3 id={`delete-dialog-title-${job.id}`} className="mb-2 text-lg font-semibold">
+        <h3
+          id={`delete-dialog-title-${job.id}`}
+          className="mb-2 text-lg font-semibold"
+        >
           Do you want to delete this card?
         </h3>
 
         <p className="text-sm text-gray-300 mb-4 truncate">{job.title}</p>
 
         <div className="flex gap-2 justify-end">
-
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -206,8 +210,7 @@ export function JobCard({
 
               if (isDeleting || isMultiSelecting) return;
 
-              if (!onDelete) 
-              {
+              if (!onDelete) {
                 setShowDeleteConfirm(false);
                 return;
               }
@@ -215,25 +218,24 @@ export function JobCard({
               setIsDeleting(true);
               try {
                 const success = await onDelete(job.id);
-                if (!success) 
-                {
+                if (!success) {
                   console.error("Failed to delete job with id:", job.id);
                 }
-
               } catch (error) {
-                console.error("Error occurred while deleting job with id:", job.id, error);
-
+                console.error(
+                  "Error occurred while deleting job with id:",
+                  job.id,
+                  error
+                );
               } finally {
                 setIsDeleting(false);
                 setShowDeleteConfirm(false);
               }
             }}
-
             type="button"
             className="small bg-red-600 text-white"
             aria-label="Confirm delete"
           >
-            
             {isDeleting ? "Deleting..." : "Yes, delete"}
           </button>
         </div>
@@ -241,14 +243,12 @@ export function JobCard({
     </div>
   );
 
-
   return (
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
-      className={`relative border w-full rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
-      style={{ ...combinedStyle, background: "var(--job-card-bg)" }}
+      className={`relative border w-full bg-[var(--job-card-background)] rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
+      style={{ ...combinedStyle }}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -320,9 +320,13 @@ export function JobCard({
           }
         }}
       >
-        <motion.div className="flex items-center gap-2 p-2 w-7/8" layout>
-          {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
+        {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
+        <motion.div
+          className="flex items-center gap-2 p-2 w-7/8"
+          layout
+          title="Click to open, close, or select this job card"
+        >
           {/* This animates in the checkbox when we are in multi-select mode */}
           <motion.img
             src={isSelected ? checkIcon : uncheckIcon}
@@ -342,7 +346,7 @@ export function JobCard({
           <motion.div className="flex flex-col flex-1 min-w-0">
             <p className="">{job.title}</p>
             {job.date && (
-              <small className="text-gray-400 opacity-75">{job.date}</small>
+              <small className="text-[var(--gray-color)]">{job.date}</small>
             )}
           </motion.div>
         </motion.div>
@@ -352,7 +356,7 @@ export function JobCard({
           <motion.img
             src={downChevron}
             alt="Show Content Handle"
-            className="w-5 h-5 opacity-50 icon"
+            className="w-5 h-5 icon"
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{
               type: "spring",
@@ -384,7 +388,7 @@ export function JobCard({
             {job.description ?? "No description provided for this job."}
           </small>
 
-          <small className="text-sm text-white opacity-75">
+          <small className="text-sm text-[var(--gray-color)]">
             {job.notes ?? "No additional notes."}
           </small>
         </div>
@@ -404,7 +408,8 @@ export function JobCard({
         className="w-full z-50"
       >
         <hr className="flex w-full opacity-20" />
-        <motion.div className="flex flex-row gap-2 p-2 w-full"
+        <motion.div
+          className="flex flex-row gap-2 p-2 w-full"
           initial={{ opacity: 0, height: 0 }}
           animate={{
             height: isHovered ? "auto" : 0,
@@ -413,7 +418,6 @@ export function JobCard({
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.12 }}
         >
-
           {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
           <motion.button
             onClick={(e) => {
@@ -422,35 +426,47 @@ export function JobCard({
             }}
             type="button"
             className="small w-full"
+            style={{ background: "transparent" }}
+            onMouseEnter={() => setEditHovered(true)}
+            onMouseLeave={() => setEditHovered(false)}
+            aria-label="Edit Job"
+            title="Edit job details and notes"
           >
-            <img
+            <motion.img
               src={editIcon}
               alt="Edit Icon"
-              className="inline w-4 h-4 mr-1"
+              className={`inline w-4 h-4 icon ${
+                editHovered ? "greenIcon" : ""
+              }`}
             />
           </motion.button>
 
-            {/* Delete button with confirmation */}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+          {/* Delete button with confirmation */}
+          <motion.button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
 
-                if (isMultiSelecting || isDeleting) return;
+              if (isMultiSelecting || isDeleting) return;
 
-                setShowDeleteConfirm(true);
-              }}
-              
-              type="button"
-              className="small w-full"
-              aria-label="Delete Job"
-            >
-              <img
+              setShowDeleteConfirm(true);
+            }}
+            type="button"
+            className="small w-full outline-none bg-transparent"
+            aria-label="Delete Job"
+            style={{ background: "transparent" }}
+            onMouseEnter={() => setDeleteHovered(true)}
+            onMouseLeave={() => setDeleteHovered(false)}
+            title="Delete this job card"
+          >
+            <motion.img
               src={trashIcon}
               alt="Trash Icon"
-              className="inline w-4 h-4 mr-1"
+              className={`inline w-4 h-4 icon ${
+                deleteHovered ? "redIcon" : ""
+              }`}
             />
-            </button>
+          </motion.button>
 
           {/* View Email button */}
           {job.providerSource !== "manual_entry" && (
@@ -461,11 +477,18 @@ export function JobCard({
               }}
               type="button"
               className="small w-full"
+              style={{ background: "transparent" }}
+              onMouseEnter={() => setViewHovered(true)}
+              onMouseLeave={() => setViewHovered(false)}
+              aria-label="View Email"
+              title="View this email in your inbox"
             >
-              <img
+              <motion.img
                 src={viewIcon}
                 alt="View Icon"
-                className="inline w-4 h-4 mr-1"
+                className={`inline w-4 h-4 icon ${
+                  viewHovered ? "blueIcon" : ""
+                }`}
               />
             </motion.button>
           )}
@@ -473,13 +496,18 @@ export function JobCard({
           {/* Mark as Reviewed button */}
           <motion.button
             type="button"
-            className={`small w-full ${localReviewNeeded ? "reviewed" : "hidden"}`}
+            className={`small w-full ${
+              localReviewNeeded ? "reviewed" : "hidden"
+            }`}
             onClick={markAsReviewed}
+            style={{ background: "transparent" }}
+            aria-label="Mark as Reviewed"
+            title="Mark this job as reviewed"
           >
-            <img
+            <motion.img
               src={reviewIcon}
               alt="Review Icon"
-              className="inline w-4 h-4 mr-1"
+              className={`inline w-4 h-4 orangeIcon`}
             />
           </motion.button>
         </motion.div>
@@ -487,7 +515,6 @@ export function JobCard({
 
       {/* Delete Confirmation Modal Portal */}
       {showDeleteConfirm && createPortal(modalMarkup, document.body)}
-
     </motion.div>
   );
 }

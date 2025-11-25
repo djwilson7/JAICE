@@ -3,10 +3,25 @@
 import { useNavigate } from "react-router";
 import { LandingForm } from "@/pages/landing/landing-components/LandingForm";
 import Button from "@/global-components/button";
+import brandDark from "@/assets/images/brand_dark.png";
+import brandLight from "@/assets/images/brand_light.png";
+import { useEffect, useState } from "react";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  
+  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
+  const [brandImg, setBrandImg] = useState<string>(initialTheme ? brandLight : brandDark);
 
+  useEffect(() => {
+    const updateBrand = () => {
+      const htmlTheme = document.documentElement.getAttribute("data-theme");
+      setBrandImg(htmlTheme === "light" ? brandLight : brandDark);
+    };
+    updateBrand();
+    window.addEventListener("themechange", updateBrand);
+    return () => window.removeEventListener("themechange", updateBrand);
+  }, []);
   return (
     <div
       className="flex flex-col gap-10 min-h-screen p-[2rem] md:flex-row overflow-auto"
@@ -17,7 +32,7 @@ export function LandingPage() {
         {/* Inner Container */}
         <div className="flex flex-col items-center gap-5 p-8 justify-center">
           <div className="w-120 h-120">
-            <img src="/JAICE_logo.png" className="fit-cover" />
+            <img src={brandImg} className="fit-cover" />
           </div>
           <div className="text-left">
             <h1>Job Application Intelligence</h1>

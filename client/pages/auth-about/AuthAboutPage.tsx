@@ -3,6 +3,9 @@
 import * as React from "react"
 import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
+import { useEffect, useState } from "react";
+import brandDark from "@/assets/images/brand_dark.png";
+import brandLight from "@/assets/images/brand_light.png";
 
 /* Reuseable section wrapper (title + opt. eyebrow + 2-column layout) */
 function Section({
@@ -143,6 +146,19 @@ function TeamGrid({
 export function AuthAboutPage() {
   const navigate = useNavigate();
 
+  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
+  const [brandImg, setBrandImg] = useState<string>(initialTheme ? brandLight : brandDark);
+
+  useEffect(() => {
+    const updateBrand = () => {
+      const htmlTheme = document.documentElement.getAttribute("data-theme");
+      setBrandImg(htmlTheme === "light" ? brandLight : brandDark);
+    };
+    updateBrand();
+    window.addEventListener("themechange", updateBrand);
+    return () => window.removeEventListener("themechange", updateBrand);
+  }, []);
+
   return (
     <div style={{ background: "var(--color-bg-alt)" }} className="min-h-screen">
       <main className="relative mx-auto max-w-7xl px-4 md:px-8 min-h-screen overflow-x-hidden">
@@ -161,7 +177,7 @@ export function AuthAboutPage() {
             </h1>
 
             <img
-              src="/JAICE_logo.png" // May need to swap with SVG if drop shadow effect is not correct. 
+              src={brandImg} // May need to swap with SVG if drop shadow effect is not correct. 
               alt="JAICE logo"
               className="h-[clamp(220px,22vw,520px)] sm:h-56 md:h-72 lg:h-96 xl:h-[30rem] w-auto select-none"
               draggable={false}

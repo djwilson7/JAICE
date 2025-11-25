@@ -58,6 +58,7 @@ export function AccessibilityPage() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem(THEME_KEY, theme);
+    window.dispatchEvent(new Event("themechange"));
   }, [theme]);
 
   // --- Keep in sync if the OS theme changes (only if user hasn't chosen explicitly)

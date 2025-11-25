@@ -17,6 +17,8 @@ import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
 import resumeIcon from "@/assets/icons/resume.svg";
+import brandLight from "@/assets/images/brand_light.png";
+import brandDark from "@/assets/images/brand_dark.png";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
@@ -46,7 +48,7 @@ const MenuExpandButton = ({
       <img
         src={hoverEnabled ? compressIcon : expandIcon}
         alt={hoverEnabled ? "Compress" : "Expand"}
-        className="object-fit aspect-square w-full h-full"
+        className="object-fit aspect-square w-full h-full icon"
       />
     </button>
   );
@@ -69,7 +71,7 @@ const NavButton = ({
     <div className="flex flex-row items-center gap-2">
       <Button onClick={onClick} isSelected={isSelected}>
         <div className="flex items-center">
-          <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0" />
+          <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
         </div>
       </Button>
       <motion.span
@@ -119,29 +121,43 @@ export function NavigationBar() {
 
   const [selectedButton, setSelectedButton] = useState<string>("");
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
-  const animationDuration = parseFloat(getCSSVar("--animation-duration")) || 0.2;
+  const animationDuration =
+    parseFloat(getCSSVar("--animation-duration")) || 0.2;
   const [hoverEnabled, setHoverEnabled] = useState<boolean>(true);
+
+  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
+  const [brandImg, setBrandImg] = useState<string>(initialTheme ? brandLight : brandDark);
+
+  useEffect(() => {
+    const updateBrand = () => {
+      const htmlTheme = document.documentElement.getAttribute("data-theme");
+      setBrandImg(htmlTheme === "light" ? brandLight : brandDark);
+    };
+    updateBrand();
+    window.addEventListener("themechange", updateBrand);
+    return () => window.removeEventListener("themechange", updateBrand);
+  }, []);
 
   useEffect(() => {
     // Update selected button based on current path
     const path = location.pathname;
 
     if (path === "/home") {
-    setSelectedButton("home");
-  } else if (path === "/auth-about") {
-    setSelectedButton("about");
-  } else if (path === "/dashboard") {
-    setSelectedButton("dashboard");
-  } else if (path === "/resume") {
-    setSelectedButton("resume");
-  } else if (path === "/settings/account") {
-    setSelectedButton("account");
-  } else if (path === "/settings/accessibility") {
-    setSelectedButton("accessibility");
-  } else if (path === "/settings/notification") {
-    setSelectedButton("notification");
-  } else setSelectedButton("");
-}, [location.pathname]);
+      setSelectedButton("home");
+    } else if (path === "/auth-about") {
+      setSelectedButton("about");
+    } else if (path === "/dashboard") {
+      setSelectedButton("dashboard");
+    } else if (path === "/resume") {
+      setSelectedButton("resume");
+    } else if (path === "/settings/account") {
+      setSelectedButton("account");
+    } else if (path === "/settings/accessibility") {
+      setSelectedButton("accessibility");
+    } else if (path === "/settings/notification") {
+      setSelectedButton("notification");
+    } else setSelectedButton("");
+  }, [location.pathname]);
 
   const handleButtonClick = async (route: string, buttonId: string) => {
     setSelectedButton(buttonId);
@@ -189,7 +205,7 @@ export function NavigationBar() {
             }}
           >
             <motion.img
-              src="/JAICE_logo.png"
+              src={brandImg}
               alt="JAICE"
               className="h-17 flex-shrink-0 transition-all"
               style={{ objectFit: "contain" }}
@@ -299,10 +315,10 @@ export function NavigationBar() {
               <h2 className="text-2xl text-left font-bold line-clamp-1">
                 {firstName} {lastName}
               </h2>
-              <small className="text-left opacity-70 line-clamp-1">
+              <small className="text-left text-[var(--gray-color)] line-clamp-1">
                 {headerEmail}
               </small>
-              <caption className="text-left opacity-80 line-clamp-1">
+              <caption className="text-left text-[var(--gray-color)] line-clamp-1">
                 Fresh Starter
               </caption>
             </div>
