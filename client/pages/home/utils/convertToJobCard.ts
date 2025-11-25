@@ -1,6 +1,5 @@
 import type { JobCardType } from "@/types/jobCardType";
 import { convertTime } from "@/pages/home/utils/convertTime";
-
 // These utility functions convert the raw job data from the database or broadcast events.
 // The format for the returned data from the database comes in two forms. One is standard fetch, the other is from the realtime broadcast payload.
 
@@ -16,6 +15,7 @@ export function convertToJobCard(rawJob: any): JobCardType {
   return {
     id: String(rawJob.provider_message_id),
     title: rawJob.title || "No Title",
+    description: rawJob.description ?? undefined,
     column: rawJob.app_stage || "applied",
     companyName: rawJob.company_name ??  undefined,
     date: convertTime(rawDate),
@@ -41,7 +41,8 @@ export function convertBroadcastToJobCard(event: any): JobCardType | null {
 
   return {
     id: String(eventRecord.provider_message_id),
-    title: eventRecord.title ?? "No Title",
+    title: eventRecord.title || "No Title",
+    description: eventRecord.description ?? undefined,
     column: eventRecord.app_stage ?? "applied",
     companyName: eventRecord.company_name ??  undefined,
     date: convertTime(rawDate),

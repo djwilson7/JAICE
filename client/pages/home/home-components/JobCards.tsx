@@ -375,9 +375,13 @@ export function JobCard({
         transition={{ type: "spring", stiffness: 200, damping: 24 }}
       >
         <hr className="flex w-full my-2 opacity-20" />
-        <div className="flex flex-col text-left w-full gap-1 pb-2">
+        <div className="flex flex-col text-left w-full gap-2 py-4">
           <small style={{ color: "var(--color-blue-4)" }}>
             {job.companyName ?? "Unknown Company"}
+          </small>
+
+          <small className="">
+            {job.description ?? "No description provided for this job."}
           </small>
 
           <small className="text-sm text-white opacity-75">

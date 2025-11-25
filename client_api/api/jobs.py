@@ -114,7 +114,7 @@ async def create_job_application(payload: dict = Body(...), user: dict = Depends
     # client sends payload
     job_title = payload.get("title") or payload.get("job_title")
     company_name = payload.get("company_name") or payload.get("company")
-    app_stage = payload.get("app_stage")
+    app_stage = payload.get("app_stage") or "Applied"
     received_at = payload.get("received_at") or payload.get("date")
     notes = payload.get("note") or payload.get("notes") or None
 
