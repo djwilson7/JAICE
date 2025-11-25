@@ -112,6 +112,7 @@ export function Column({
             type="button"
             className="addApplication"
             aria-label={`Add new application to ${title} stage`}
+            title={`Add new application to ${title} stage`}
             onClick={openNewApplicationModal}
 
           >
@@ -124,10 +125,15 @@ export function Column({
                 <button
                   onClick={onToggleReject}
                   className="group"
+                  style={{ background: "transparent", border: "none", padding: 5, cursor: "pointer" }}
+                  title="Switch to Accepted/Rejected"
                 >
                   <img src={RejectedIcon}   
                     alt="Switch toAccepted/Rejected"
-                    className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:rotate-180" />
+                    className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:rotate-180" 
+                    style={{ filter: "var(--icon-filter)" }}
+                    />
+                    
                 </button>
               )}
             </div>

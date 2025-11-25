@@ -247,7 +247,7 @@ export function JobCard({
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`relative border w-full bg-[var(--job-card-background)] rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
+      className={`relative border w-full bg-[var(--job-card-bg)] rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
       style={{ ...combinedStyle }}
       drag
       onDragStart={handleDragStart}
