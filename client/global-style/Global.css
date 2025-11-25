@@ -88,7 +88,7 @@
     rgba(var(--color-blue-2-rgb), 0.92) 100%
   );
 
-  --job-card-background: #2a2730;
+  --job-card-background: #1d1b20;
 
   --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
     saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
