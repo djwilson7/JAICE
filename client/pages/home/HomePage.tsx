@@ -49,7 +49,6 @@ export function HomePage() {
   );
   const [editingJob, setEditingJob] = useState<JobCardType | null>(null);
 
-
   useEffect(() => {
     const handleResize = () => setViewportHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
@@ -63,7 +62,7 @@ export function HomePage() {
   const closeEditModal = () => {
     setEditingJob(null);
   };
-  
+
   const sortByOptions = [
     { value: "default", label: "Sort by" },
     { value: "new", label: "Newest First" },
@@ -389,7 +388,6 @@ export function HomePage() {
     return map;
   }, [filteredJobs]);
 
-
   const handleDelete = async (id: string): Promise<boolean> => {
     try {
       const res = await api("/api/jobs/set-delete", {
@@ -399,10 +397,9 @@ export function HomePage() {
         }),
       });
 
-      if (!(res && res.status === "success" && res.count > 0)) 
-      {
-      console.error("Delete API responded but did not delete any rows:", res);
-      return false;
+      if (!(res && res.status === "success" && res.count > 0)) {
+        console.error("Delete API responded but did not delete any rows:", res);
+        return false;
       }
       // remove job locally
       setJobs((prev) => prev.filter((job) => job.id !== id));
@@ -427,6 +424,9 @@ export function HomePage() {
       );
 
       const orderedJobs = [...jobsInColumn].sort((a, b) => {
+        if (a.reviewNeeded && !b.reviewNeeded) return -1;
+        if (!a.reviewNeeded && b.reviewNeeded) return 1;
+
         const aMatched = matchOrderMap.has(a.id);
         const bMatched = matchOrderMap.has(b.id);
 
@@ -463,8 +463,6 @@ export function HomePage() {
     handleJobCardClick,
     searchQuery,
   ]);
-
-  
 
   // show loading state while emails are being fetched
   return (
@@ -551,23 +549,28 @@ export function HomePage() {
             />
           )}
 
-      <NewApplication
-        isOpen={!!editingJob}
-        onClose={closeEditModal}
-        initialStage={editingJob?.column ?? editingJob?.applicationStage ?? ""}
-        initialData={editingJob ?? undefined}
-        onSave={(updated: Partial<JobCardType> & { id?: string }) => {
-          // merge updated job into local state
-          if (updated?.id) 
-          {
-            setJobs((prev) => prev.map((j) => (j.id === updated.id ?( updated as JobCardType ) : j)));
-          } else {
-            // if backend returns no id try to update by some fallback
-            setJobs((prev) => [updated as JobCardType, ...prev]);
-          }
-          setEditingJob(null);
-        }}
-      />
+          <NewApplication
+            isOpen={!!editingJob}
+            onClose={closeEditModal}
+            initialStage={
+              editingJob?.column ?? editingJob?.applicationStage ?? ""
+            }
+            initialData={editingJob ?? undefined}
+            onSave={(updated: Partial<JobCardType> & { id?: string }) => {
+              // merge updated job into local state
+              if (updated?.id) {
+                setJobs((prev) =>
+                  prev.map((j) =>
+                    j.id === updated.id ? (updated as JobCardType) : j
+                  )
+                );
+              } else {
+                // if backend returns no id try to update by some fallback
+                setJobs((prev) => [updated as JobCardType, ...prev]);
+              }
+              setEditingJob(null);
+            }}
+          />
         </motion.div>
       )}
     </AnimatePresence>

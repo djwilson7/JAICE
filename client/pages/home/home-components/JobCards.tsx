@@ -133,7 +133,6 @@ export function JobCard({
     e.preventDefault();
 
     setLocalReviewNeeded(false);
-    setIsOpen(true); // keep the card open to show the change
 
     // mark job as reviewed
     try {
@@ -144,6 +143,7 @@ export function JobCard({
           needs_review: false,
         }),
       });
+      setIsHovered(false);
     } catch (error) {
       console.error("Failed to mark job as reviewed:", error);
       setLocalReviewNeeded(true); // keep the review needed state if API call fails
