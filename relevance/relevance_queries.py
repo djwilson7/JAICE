@@ -52,15 +52,13 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
             # Map only minimal known fields
             provider_source = provider or "gmail"
             relevance_conf = float(model_results.relevant.get(str(staging_id), 0.0))
-            subject = decrypt_token(to_bytes(subject_enc))
-            body = decrypt_token(to_bytes(body_enc))
             # Build tuple aligned with job_applications schema
             values.append(
                 (
                     user_uid,            # user_uid
-                    subject,             # title
+                    subject_enc,             # title
                     None,                # company_name
-                    body,                # description
+                    body_enc,                # description
                     "staging",           # app_stage
                     provider_source,     # provider_source
                     None,                # recruiter_name
