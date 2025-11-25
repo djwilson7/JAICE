@@ -13,6 +13,7 @@ import { getCSSVar } from "@/utils/getCSSVar";
 import editIcon from "@/assets/icons/edit.svg";
 import viewIcon from "@/assets/icons/view.svg";
 import reviewIcon from "@/assets/icons/reviewed.svg";
+import trashIcon from "@/assets/icons/trash.svg";
 
 export function JobCard({
   job,
@@ -247,7 +248,7 @@ export function JobCard({
       id={job.id}
       title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
       className={`relative border w-full rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
-      style={{ ...combinedStyle, background: "var(--job-card-background)" }}
+      style={{ ...combinedStyle, background: "var(--job-card-bg)" }}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -437,54 +438,17 @@ export function JobCard({
               }}
               
               type="button"
-              className="small w-full 2xl:w-1/3"
+              className="small w-full"
               aria-label="Delete Job"
             >
-              Delete
+              <img
+              src={trashIcon}
+              alt="Trash Icon"
+              className="inline w-4 h-4 mr-1"
+            />
             </button>
 
-            {/* Delete button with confirmation */}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (isMultiSelecting || isDeleting) return;
-
-                setShowDeleteConfirm(true);
-              }}
-              
-              type="button"
-              className="small w-full 2xl:w-1/3"
-              aria-label="Delete Job"
-            >
-              Delete
-            </button>
-
-            {/* View Email button */}
-            {job.providerSource !== "manual_entry" && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  openMessage(job.id);
-                }}
-                type="button"
-                className="small w-full 2xl:w-1/3"
-              >
-                View Email
-              </button>
-            )}
-
-            
-          </div>
-            <button
-                type="button"
-                className={`small w-full 2xl:w-1/3 ${localReviewNeeded ? "reviewed" : "hidden"}`}
-                onClick={markAsReviewed}
-              >
-                Mark as Reviewed
-              </button>
-        </div>
+          {/* View Email button */}
           {job.providerSource !== "manual_entry" && (
             <motion.button
               onClick={(e) => {
@@ -502,11 +466,10 @@ export function JobCard({
             </motion.button>
           )}
 
+          {/* Mark as Reviewed button */}
           <motion.button
             type="button"
-            className={`small w-full ${
-              localReviewNeeded ? "reviewed" : "hidden"
-            }`}
+            className={`small w-full ${localReviewNeeded ? "reviewed" : "hidden"}`}
             onClick={markAsReviewed}
           >
             <img
@@ -517,7 +480,10 @@ export function JobCard({
           </motion.button>
         </motion.div>
       </motion.div>
-      {showDeleteConfirm && typeof window !== "undefined" && createPortal(modalMarkup, document.body)}
+
+      {/* Delete Confirmation Modal Portal */}
+      {showDeleteConfirm && createPortal(modalMarkup, document.body)}
+
     </motion.div>
   );
 }
