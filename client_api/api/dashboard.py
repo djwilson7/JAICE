@@ -384,8 +384,13 @@ async def grit_score(user: dict = Depends(get_current_user)):
                 AND is_deleted = FALSE
                 AND is_archived = FALSE
                 AND received_at ~ '[0-9]+$'
-                AND to_timestamp(received_at::bigint / 1000)
-                    >= now() - INTERVAL '7 days';
+                AND (
+                    CASE
+                        WHEN received_at ~ '^[0-9]+$'
+                            THEN to_timestamp(received_at::bigint / 1000)
+                        ELSE received_at::timestamptz
+                    END
+                ) >= now() - INTERVAL '7 days';
             """
             weekly_row = await conn.fetchrow(weekly_query, uid)
             weekly_apps = weekly_row["apps"] if weekly_row else 0
@@ -406,7 +411,13 @@ async def grit_score(user: dict = Depends(get_current_user)):
             consistency_query = """
             SELECT COUNT(*)::int AS active_days
             FROM (
-                SELECT DATE(TO_TIMESTAMP(received_at::bigint / 1000)) AS day
+                SELECT DATE(
+                    CASE
+                        WHEN received_at ~ '^[0-9]+$'
+                            THEN to_timestamp(received_at::bigint / 1000)
+                        ELSE received_at::timestamptz
+                    END
+                ) AS day
                 FROM public.job_applications
                 WHERE user_uid = $1
                     AND is_deleted = FALSE

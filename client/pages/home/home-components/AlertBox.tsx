@@ -40,15 +40,9 @@ export function AlertBox({ isOpen, setIsOpen, alertMessage }: AlertBoxProps) {
     });
   }, [isOpen, alertMessage]);
 
-  // This needs elevated to the global css (something like --icon-style that we can apply in <img className="..." />)
-  const iconStyle = {
-    filter:
-      "brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%)",
-  };
-
   return (
     <motion.div
-      className="flex items-center justify-start border gap-2 p-2 rounded cursor-pointer overflow-hidden"
+      className="flex items-center justify-start gap-2 p-2 rounded cursor-pointer overflow-hidden"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
       animate={{ width: targetWidth }}
@@ -59,8 +53,7 @@ export function AlertBox({ isOpen, setIsOpen, alertMessage }: AlertBoxProps) {
         <img
           src={bellIcon}
           alt="Alert Icon"
-          className="w-5 h-5 shrink-0"
-          style={iconStyle}
+          className="w-5 h-5 shrink-0 icon"
         />
 
         {/* Conditionally render the alert message if the box is open (on hover)*/}

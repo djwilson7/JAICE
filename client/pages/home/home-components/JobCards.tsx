@@ -9,6 +9,10 @@ import type { JobCardType } from "@/types/jobCardType";
 import { auth } from "@/global-services/firebase";
 import { api } from "@/global-services/api";
 import { createPortal } from "react-dom";
+import { getCSSVar } from "@/utils/getCSSVar";
+import editIcon from "@/assets/icons/edit.svg";
+import viewIcon from "@/assets/icons/view.svg";
+import reviewIcon from "@/assets/icons/reviewed.svg";
 
 export function JobCard({
   job,
@@ -31,7 +35,9 @@ export function JobCard({
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
-  const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(!!job.reviewNeeded);
+  const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(
+    !!job.reviewNeeded
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -67,8 +73,7 @@ export function JobCard({
     const userEmail = auth.currentUser?.email;
 
     // if the user is not authenticated, we cannot open the email, so we log an error and return early
-    if (!userEmail) 
-    {
+    if (!userEmail) {
       console.error("User is not authenticated. Cannot open email.");
       return;
     }
@@ -78,30 +83,31 @@ export function JobCard({
     window.open(url, "_blank");
   };
 
-  const cardBorderColor = useMemo (() => {
+  const cardBorderColor = useMemo(() => {
     const color =
-    //   // if email is marked as accepted make the card border green
-    //  job.applicationStage === "Accepted" ? "#10B981" :
+      //   // if email is marked as accepted make the card border green
+      //  job.applicationStage === "Accepted" ? "#10B981" :
 
-    //  // if email is marked as rejected make the card border red
-    //   job.applicationStage === "Rejected" ? "#EF4444" :
+      //  // if email is marked as rejected make the card border red
+      //   job.applicationStage === "Rejected" ? "#EF4444" :
 
       "transparent";
-    
+
     return {
-      border: color ===  "transparent" ? "1px solid transparent" : `1px solid ${color}`,
+      border:
+        color === "transparent"
+          ? "1px solid transparent"
+          : `1px solid ${color}`,
       transition: "border 0.3s ease",
     };
-
   }, [job.applicationStage]);
 
-  const reviewBorderColor = useMemo (() => {
+  const reviewBorderColor = useMemo(() => {
     // if email is marked as review needed make the card border orange
     return {
       boxShadow: localReviewNeeded ? "0 0 0 1px rgba(249,115,22,1)" : "none",
       transition: "box-shadow 0.0s ease",
     };
-    
   }, [localReviewNeeded]);
 
   const combinedStyle = {
@@ -119,7 +125,7 @@ export function JobCard({
   };
 
   const hoverMessageForReview = localReviewNeeded
-    ? "This job requires your review. Mark it as reviewed when done." 
+    ? "This job requires your review."
     : "";
 
   const markAsReviewed = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -135,7 +141,7 @@ export function JobCard({
         body: JSON.stringify({
           provider_message_ids: [job.id],
           needs_review: false,
-      }),
+        }),
       });
     } catch (error) {
       console.error("Failed to mark job as reviewed:", error);
@@ -240,8 +246,8 @@ export function JobCard({
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
       title={isHovered && hoverMessageForReview ? hoverMessageForReview : ""}
-      className={`relative border w-full p-4 rounded shadow-sm bg-[#1D1B20] flex items-center flex flex-col`}
-      style={combinedStyle}
+      className={`relative border w-full rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
+      style={{ ...combinedStyle, background: "var(--job-card-background)" }}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -251,30 +257,20 @@ export function JobCard({
         scale: 1.02,
         boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
-        borderColor: localReviewNeeded ? "#F97316" : 
-        
-        // if email is marked as accepted make the card border green
-        job.applicationStage === "Accepted" ? "#10B981" :
-
-        // if email is marked as rejected make the card border red
-        job.applicationStage === "Rejected" ? "#EF4444" : 
-        "#dfdfdfff",
+        borderColor: localReviewNeeded
+          ? "#F97316"
+          : // if email is marked as accepted make the card border green
+          job.applicationStage === "Accepted"
+          ? "#10B981"
+          : // if email is marked as rejected make the card border red
+          job.applicationStage === "Rejected"
+          ? "#EF4444"
+          : "#dfdfdfff",
       }}
-
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      
-
       // onTap cycles between expanding the card and selecting it based on isMultiSelecting
-      onTap={() => {
-        handleMultiSelectClick(job);
-        if (isMultiSelecting) {
-          setIsSelected(!isSelected);
-          return;
-        } else {
-          setIsOpen(!isOpen);
-        }
-      }}
+
       whileTap={{ cursor: "grabbing" }}
       whileDrag={{
         cursor: "grabbing",
@@ -286,67 +282,90 @@ export function JobCard({
       dragSnapToOrigin
       layout
     >
-    {/* Tooltip for Review Needed */}
-    <AnimatePresence>
-      {localReviewNeeded && isHovered && (
-        <motion.div
-          key="review-tooltip"
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.12 }}
-          role="tooltip"
-          aria-hidden={!isHovered}
-          className="absolute right-3 top-3 z-50 bg-orange-600 text-white text-xs rounded px-2 py-1"
-        >
-          {hoverMessageForReview}
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Tooltip for Review Needed */}
+      <motion.small
+        key="review-tooltip"
+        initial={{
+          opacity: 0,
+          height: 0,
+        }}
+        animate={{
+          opacity: localReviewNeeded && isHovered ? 1 : 0,
+          height: localReviewNeeded && isHovered ? "auto" : 0,
+        }}
+        exit={{
+          opacity: 0,
+          height: 0,
+        }}
+        transition={{ duration: 0.12 }}
+        role="tooltip"
+        aria-hidden={!isHovered}
+        className="w-full z-50 border-b border-orange-600 text-orange-600"
+      >
+        {hoverMessageForReview}
+      </motion.small>
 
       {/* Main Card Container Above (wraps all content) */}
-      
-      <div className="flex justify-between w-full items-center text-left">
-        <motion.div className="flex items-center gap-2 " layout>
+
+      <motion.div
+        className="flex justify-between w-full items-center text-left"
+        onTap={() => {
+          handleMultiSelectClick(job);
+          if (isMultiSelecting) {
+            setIsSelected(!isSelected);
+            return;
+          } else {
+            setIsOpen(!isOpen);
+          }
+        }}
+      >
+        <motion.div className="flex items-center gap-2 p-2 w-7/8" layout>
           {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
-          <AnimatePresence>
-            {/* This animates in the checkbox when we are in multi-select mode */}
-            {isMultiSelecting ? (
-              <motion.img
-                src={isSelected ? checkIcon : uncheckIcon}
-                alt={isSelected ? "Check Icon" : "Uncheck Icon"}
-                style={iconStyle}
-                className="w-4 h-4 opacity-50"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                layout
-              />
-            ) : null}
-          </AnimatePresence>
+          {/* This animates in the checkbox when we are in multi-select mode */}
+          <motion.img
+            src={isSelected ? checkIcon : uncheckIcon}
+            alt={isSelected ? "Check Icon" : "Uncheck Icon"}
+            style={iconStyle}
+            className="w-4 h-4 opacity-50"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{
+              opacity: isMultiSelecting ? 1 : 0,
+              width: isMultiSelecting ? "auto" : 0,
+            }}
+            exit={{ opacity: 0, width: 0 }}
+            layout
+          />
 
           {/* Job Title and date*/}
-          <div className="flex flex-col flex-1 min-w-0">
-            <p className="truncate">{job.title}</p>
+          <motion.div className="flex flex-col flex-1 min-w-0">
+            <p className="">{job.title}</p>
             {job.date && (
               <small className="text-gray-400 opacity-75">{job.date}</small>
             )}
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Chevron to expand/collapse job card details rotates via it's style argument */}
-        <img
-          src={downChevron}
-          alt="Show Content Handle"
-          style={iconStyle}
-          className="w-5 h-5 opacity-50"
-        />
-      </div>
+        <motion.div className="flex w-1/8 mr-2 justify-end">
+          <motion.img
+            src={downChevron}
+            alt="Show Content Handle"
+            className="w-5 h-5 opacity-50 icon"
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              duration: parseFloat(getCSSVar("--animation-duration")),
+            }}
+          />
+        </motion.div>
+      </motion.div>
 
       {/* Expanded Job Related Content */}
       <motion.div
-        className="overflow-hidden w-full"
+        className="overflow-hidden w-full px-4"
         animate={{
           height: isOpen ? "auto" : 0,
           opacity: isOpen ? 1 : 0,
@@ -354,28 +373,74 @@ export function JobCard({
         initial={false}
         transition={{ type: "spring", stiffness: 200, damping: 24 }}
       >
-        <div className="w-99/100 border-b my-2" />
+        <hr className="flex w-full my-2 opacity-20" />
         <div className="flex flex-col text-left w-full gap-1 pb-2">
-          
           <small style={{ color: "var(--color-blue-4)" }}>
             {job.companyName ?? "Unknown Company"}
           </small>
 
           <small className="text-sm text-white opacity-75">
-              {job.notes ?? "No additional notes."}
+            {job.notes ?? "No additional notes."}
           </small>
+        </div>
+      </motion.div>
 
-          <div className="flex 2xl:flex-row flex-col gap-2 w-full" >
+      <motion.div
+        key="review-tooltip"
+        initial={{ opacity: 0, height: 0 }}
+        animate={{
+          height: isHovered ? "auto" : 0,
+          opacity: isHovered ? 1 : 0,
+        }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.12 }}
+        role="tooltip"
+        aria-hidden={!isHovered}
+        className="w-full z-50"
+      >
+        <hr className="flex w-full opacity-20" />
+        <motion.div className="flex flex-row gap-2 p-2 w-full"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{
+            height: isHovered ? "auto" : 0,
+            opacity: isHovered ? 1 : 0,
+          }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.12 }}
+        >
 
+          {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
+          <motion.button
+            onClick={(e) => {
+              e.preventDefault();
+              onEdit?.(job);
+            }}
+            type="button"
+            className="small w-full"
+          >
+            <img
+              src={editIcon}
+              alt="Edit Icon"
+              className="inline w-4 h-4 mr-1"
+            />
+          </motion.button>
+
+            {/* Delete button with confirmation */}
             <button
               onClick={(e) => {
                 e.preventDefault();
-                onEdit?.(job);
+                e.stopPropagation();
+
+                if (isMultiSelecting || isDeleting) return;
+
+                setShowDeleteConfirm(true);
               }}
+              
               type="button"
               className="small w-full 2xl:w-1/3"
+              aria-label="Delete Job"
             >
-              Edit Application
+              Delete
             </button>
 
             {/* Delete button with confirmation */}
@@ -420,6 +485,37 @@ export function JobCard({
                 Mark as Reviewed
               </button>
         </div>
+          {job.providerSource !== "manual_entry" && (
+            <motion.button
+              onClick={(e) => {
+                e.preventDefault();
+                openMessage(job.id);
+              }}
+              type="button"
+              className="small w-full"
+            >
+              <img
+                src={viewIcon}
+                alt="View Icon"
+                className="inline w-4 h-4 mr-1"
+              />
+            </motion.button>
+          )}
+
+          <motion.button
+            type="button"
+            className={`small w-full ${
+              localReviewNeeded ? "reviewed" : "hidden"
+            }`}
+            onClick={markAsReviewed}
+          >
+            <img
+              src={reviewIcon}
+              alt="Review Icon"
+              className="inline w-4 h-4 mr-1"
+            />
+          </motion.button>
+        </motion.div>
       </motion.div>
       {showDeleteConfirm && typeof window !== "undefined" && createPortal(modalMarkup, document.body)}
     </motion.div>

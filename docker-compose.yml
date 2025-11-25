@@ -105,3 +105,20 @@ services:
       - "5555:5555"
     depends_on:
       - redis
+
+
+  openai_worker:
+    container_name: openai_worker
+    build:
+      context: .
+      dockerfile: ./OpenAI/Dockerfile.OpenAI
+    command: >
+      celery -A OpenAI.OpenAI_worker worker -Q openai_model_queue -l info -E -n openai_model -c 3
+    env_file:
+      - .env
+    volumes:
+      - ./OpenAI:/app/OpenAI
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
+    depends_on:
+      - redis

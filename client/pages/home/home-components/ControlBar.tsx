@@ -14,6 +14,7 @@ import { HomeInfoContent } from "@/pages/home/home-components/HomePageInfo";
 import { useEffect, useState } from "react";
 import { checkGmailStatus } from "../utils/checkGmailStatus";
 import { useNavigate } from "react-router";
+import Button from "@/global-components/button";
 
 interface ControlBarProps {
   isMultiSelecting: boolean;
@@ -117,16 +118,16 @@ export function ControlBar({
           />
         </div>
         {!gmailConnected && (
-          <div className="flex flex-row w-full items-center justify-center">
-            <div className="flex w-full sm:w-1/2 p-2 items-center justify-evenly gap-4">
+          <div className="flex flex-row items-center justify-center">
+            <div className="flex w-full p-2 items-center justify-evenly gap-4">
               <div className="flex flex-col">
-                <h4>Your email isn't connected!</h4>
-                <small>To get the most out of JAICE, connect your email.</small>
+                <h4 className="flex ">Your email isn't connected!</h4>
+                <small className="flex">To get the most out of JAICE, connect your email.</small>
               </div>
               <div className="flex">
-                <button onClick={() => navigate("/settings/account")}>
+                <Button onClick={() => navigate("/settings/account")}>
                   Settings
-                </button>
+                </Button>
               </div>
             </div>
           </div>

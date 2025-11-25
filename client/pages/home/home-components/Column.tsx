@@ -63,6 +63,8 @@ export function Column({
     minWidth: "15rem",
     minHeight: `${Math.max(sharedHeight, viewportHeight)}px`,
     height: "auto",
+    boxShadow: "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
+
   };
 
   // useCallback is used to memoize the drag handlers to prevent unnecessary re-renders
@@ -87,7 +89,6 @@ export function Column({
   // placeholder to handle saving new application data
   function handleSaveApplication(data: Partial<JobCardType> & { id?: string}) 
   {
-
     console.log("New Application Data:", data);
   }
 
@@ -134,7 +135,7 @@ export function Column({
           <h3>{count}</h3>
         </div>
         <div className="flex border-b mx-4 mb-2" />
-         <div className="flex flex-col items-center p-2 gap-4">
+        <div className="flex flex-col items-center p-2 gap-4">
           {hasChildren ? (children) : (
             <motion.div
               initial={{ opacity: 0 }}

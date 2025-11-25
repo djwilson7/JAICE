@@ -15,6 +15,8 @@ import quitIcon from "@/assets/icons/user-logout.svg";
 import searchIcon from "@/assets/icons/search.svg";
 import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
+import { getCSSVar } from "@/utils/getCSSVar";
+import resumeIcon from "@/assets/icons/resume.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
@@ -71,7 +73,7 @@ const NavButton = ({
         </div>
       </Button>
       <motion.span
-        className="text-white text-left overflow-hidden"
+        className="text-left overflow-hidden"
         style={{
           height: "1.25rem",
           display: "flex",
@@ -93,6 +95,7 @@ const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon },
   about: { route: "/auth-about", label: "About", icon: aboutIcon },
   dashboard: { route: "/dashboard", label: "Dashboard", icon: dashboardIcon },
+  resume: { route: "/resume", label: "Resume", icon: resumeIcon },
 };
 
 const settingsOptions = {
@@ -116,7 +119,7 @@ export function NavigationBar() {
 
   const [selectedButton, setSelectedButton] = useState<string>("");
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
-  const animationDuration = 0.2;
+  const animationDuration = parseFloat(getCSSVar("--animation-duration")) || 0.2;
   const [hoverEnabled, setHoverEnabled] = useState<boolean>(true);
 
   useEffect(() => {
@@ -124,19 +127,21 @@ export function NavigationBar() {
     const path = location.pathname;
 
     if (path === "/home") {
-      setSelectedButton("home");
-    } else if (path === "/auth-about") {
-      setSelectedButton("about");
-    } else if (path === "/dashboard") {
-      setSelectedButton("dashboard");
-    } else if (path === "/settings/account") {
-      setSelectedButton("account");
-    } else if (path === "/settings/accessibility") {
-      setSelectedButton("accessibility");
-    } else if (path === "/settings/notification") {
-      setSelectedButton("notification");
-    } else setSelectedButton("");
-  }, [location.pathname]);
+    setSelectedButton("home");
+  } else if (path === "/auth-about") {
+    setSelectedButton("about");
+  } else if (path === "/dashboard") {
+    setSelectedButton("dashboard");
+  } else if (path === "/resume") {
+    setSelectedButton("resume");
+  } else if (path === "/settings/account") {
+    setSelectedButton("account");
+  } else if (path === "/settings/accessibility") {
+    setSelectedButton("accessibility");
+  } else if (path === "/settings/notification") {
+    setSelectedButton("notification");
+  } else setSelectedButton("");
+}, [location.pathname]);
 
   const handleButtonClick = async (route: string, buttonId: string) => {
     setSelectedButton(buttonId);
@@ -199,7 +204,7 @@ export function NavigationBar() {
             />
 
             <motion.span
-              className="text-2xl line-clamp-1 text-white text-left"
+              className="text-2xl line-clamp-1 text-left"
               style={{ fontFamily: "var(--font-title)" }}
               variants={{
                 rest: { opacity: hoverEnabled ? 0 : 1 },
@@ -282,7 +287,7 @@ export function NavigationBar() {
                 />
               ) : (
                 <div className="w-full h-full bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xl font-bold">
+                  <span className="text-xl font-bold">
                     {firstName?.charAt(0)}
                   </span>
                 </div>
@@ -290,14 +295,14 @@ export function NavigationBar() {
             </div>
 
             {/* name placeholder */}
-            <div className="flex flex-col text-white">
+            <div className="flex flex-col">
               <h2 className="text-2xl text-left font-bold line-clamp-1">
                 {firstName} {lastName}
               </h2>
-              <small className="text-gray-300 text-left line-clamp-1">
+              <small className="text-left opacity-70 line-clamp-1">
                 {headerEmail}
               </small>
-              <caption className="text-gray-300 text-left line-clamp-1">
+              <caption className="text-left opacity-80 line-clamp-1">
                 Fresh Starter
               </caption>
             </div>
@@ -309,7 +314,7 @@ export function NavigationBar() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-transparent w-full"
               />
 
               {/* search icon inside the input field */}
