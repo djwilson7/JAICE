@@ -1,12 +1,11 @@
 from ner.ner_worker import celery_app
 from common.logger import get_logger
-from shared_worker_library.utils.task_definitions import TaskType, EmailStatus
-from shared_worker_library.db_queries.std_queries import get_encrypted_emails, update_staging_table_failure
+from shared_worker_library.utils.task_definitions import TaskType
+from shared_worker_library.db_queries.std_queries import get_encrypted_emails
 from ner.ner_queries import update_job_app_table
 from typing import List, Dict
 from common.security import decrypt_token
 from shared_worker_library.utils.to_bytes import to_bytes
-import random
 
 logging = get_logger()
 MAX_RETRIES = 3

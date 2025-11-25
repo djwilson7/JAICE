@@ -2,11 +2,10 @@ from relevance.relevance_worker import celery_app
 from common.logger import get_logger
 from shared_worker_library.utils.task_definitions import (
     TaskType,
-    EmailStatus,
     RelevanceModelResult,
 )
 from relevance.relevance_queries import update_job_app_table
-from shared_worker_library.db_queries.std_queries import get_encrypted_emails, update_staging_table_failure
+from shared_worker_library.db_queries.std_queries import get_encrypted_emails
 from common.security import decrypt_token
 from typing import List, Dict, cast
 import random
@@ -33,8 +32,7 @@ def relevance_task(trace_id: str, row_ids: list, attempt: int = 1):
 
     if attempt > MAX_RETRIES:
         logging.error(f"[{trace_id}] Exceeded maximum retries for relevance task.")
-        result = update_staging_table_failure(trace_id, row_ids)
-        return {"status": "failure", "result": result}
+        return {"status": "failure", "result": "max_retries_exceeded"}
 
     try:
         encrypted_emails = get_encrypted_emails(trace_id, row_ids)
@@ -78,7 +76,6 @@ def relevance_task(trace_id: str, row_ids: list, attempt: int = 1):
 
 def decrypt_email_content(trace_id: str, encrypted_emails: List[Dict]) -> List[Dict]:
     logging.info(f"[{trace_id}] Decrypting email content")
-    # This will need to be optimized to only create the necessary decrypted fields for the relevance model.
     decrypted_emails = []
     for email in encrypted_emails:
         try:

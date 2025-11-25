@@ -82,7 +82,7 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
             logging.warning(f"[{trace_id}] No valid rows to insert.")
             return {"status": "no_valid_rows"}
 
-        # 3️⃣ SQL aligned perfectly with schema
+        # SQL aligned with schema
         query = """
         INSERT INTO public.job_applications (
             user_uid,
@@ -113,7 +113,7 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
         ON CONFLICT (provider_message_id) DO NOTHING;
         """
 
-        # 4️⃣ Execute batch insert via shared helper
+        #  Execute batch insert via shared helper
         result = execute_transfer_query(
             trace_id=trace_id,
             query=query,

@@ -48,11 +48,11 @@ def insert_staging_records(trace_id: str, encrypted_emails: List[Dict]) -> List[
     insert_sql = """
         INSERT INTO internal_staging.email_staging (
             id, user_id_enc, trace_id, provider, provider_message_id,
-            subject_enc, sender_enc, received_at, body_enc, status
+            subject_enc, sender_enc, received_at, body_enc
         )
         VALUES (
             %(id)s, %(user_id_enc)s, %(trace_id)s, %(provider)s, %(provider_message_id)s,
-            %(subject_enc)s, %(sender_enc)s, %(received_at)s, %(body_enc)s, %(status)s
+            %(subject_enc)s, %(sender_enc)s, %(received_at)s, %(body_enc)s
         )
         RETURNING id;
     """
