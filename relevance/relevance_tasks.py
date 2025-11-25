@@ -86,6 +86,7 @@ def decrypt_email_content(trace_id: str, encrypted_emails: List[Dict]) -> List[D
                 {
                     "id": email["id"],
                     "body": decrypt_token(to_bytes(email["body_enc"])),
+                    "subject" : decrypt_token(to_bytes(email["subject_enc"])),
                 }
             )
         except Exception as e:
