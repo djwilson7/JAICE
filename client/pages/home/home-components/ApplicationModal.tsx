@@ -154,22 +154,22 @@ export default function NewApplication({ isOpen, onClose, initialStage = "", ini
         >
             <form
                 onSubmit={handleSave}
-                className="w-full max-w-md rounded-lg shadow-lg p-6 mx-4"
-                style={{ backgroundColor: "var(--color-blue-1)", color: "var(--color-blue-5)" }}
+                className="w-full max-w-xl rounded-lg shadow-lg p-10 mx-4"
+                style={{ background: "var(--card-background), var(--card-background)", border: "1px solid var(--color-blue-5)" }}
             >
                 {/* Header with title and close button */}
-                <div className="flex justify-between items-center mb-4">
+                <div className="relative flex items-center mb-4">
 
                     <h2 
                         id="new-app-title" 
-                        className="text-2xl font-semibold text-center w-full">
+                        className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-semibold">
                         {isEdit ? "Edit Application" : "New Application"}
                     </h2>
 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="addApplication"
+                        className="ml-auto addApplication"
                         aria-label={isEdit ? "Close Edit Application Form" : "Close New Application Form"}
                     >
                         ✕

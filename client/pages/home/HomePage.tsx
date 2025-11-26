@@ -33,8 +33,12 @@ export function HomePage() {
   const [isMenuOpen, setMenuOpen] = useState(false); // to track if the options menu is open
   const [isSearching, setIsSearching] = useState(false); // to track if the search bar is active
   const [searchQuery, setSearchQuery] = useState(""); // to track the current search query
+
   const [isAlertOpen, setIsAlertOpen] = useState(false); // to track if the alert box is open
-  const [alertMessage] = useState("No Alerts"); // to hold the current alert message
+  const [newJobsCount, setNewJobsCount] = useState(0); // to track the count of new jobs
+  const lastSeenCountRef = useRef<number>(0); // to track the last seen count of jobs
+  const alertMessage = newJobsCount > 0 ? `You have ${newJobsCount} new jobs` : "No Alerts"; // to hold the current alert message
+
   const [isInfoModalOpen, setInfoModalOpen] = useState(false); // to track if the info modal is open
   const [jobs, setJobs] = useState<JobCardType[]>([]); // to hold the list of job cards (initially set to mock data)
   const itemDraggedRef = useRef<JobCardType | null>(null); // to track the item being dragged
@@ -152,6 +156,8 @@ export function HomePage() {
         const cards = convertToJobCardArray(res.jobs);
         console.log("Transformed Job Cards:", cards);
         setJobs(cards);
+        lastSeenCountRef.current = cards.length;
+        setNewJobsCount
         setEmailsLoaded(true);
       }
     } catch (error) {
@@ -222,10 +228,28 @@ export function HomePage() {
   }, [userId]);
 
   const handleRealtimeChange = useCallback((event: any) => {
+    try {
+      if (event.type === "INSERT") 
+      {
+        setNewJobsCount((n) => n +1);
+      }
+    } catch (error) {
+      console.error("Error handling realtime job change:", error);
+    }
+
     setJobs((prev) => applyJobChange(prev, event));
   }, []);
   //subscribe to realtime changes using the rls token
   useJobRealtime(userId, rlsToken, handleRealtimeChange);
+
+  useEffect(() => {
+    if (isAlertOpen) 
+      {
+      // reset new jobs count after alert is viewed
+      setNewJobsCount(0);
+      lastSeenCountRef.current = jobs.length;
+    }
+  }, [isAlertOpen, jobs]);
 
   // ###########################################################################################
 
