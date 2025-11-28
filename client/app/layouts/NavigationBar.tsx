@@ -43,6 +43,7 @@ const MenuExpandButton = ({
         height: "2rem",
         width: "2rem",
         padding: "0.5rem",
+        background: "transparent",
       }}
     >
       <img
@@ -69,7 +70,7 @@ const NavButton = ({
 }) => {
   return (
     <div className="flex flex-row items-center gap-2">
-      <Button onClick={onClick} isSelected={isSelected}>
+      <Button onClick={onClick} isSelected={isSelected} style={{ background: isSelected ? undefined : "transparent" }}>
         <div className="flex items-center">
           <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
         </div>
@@ -232,9 +233,9 @@ export function NavigationBar() {
             </motion.span>
           </motion.header>
 
-          <hr className="w-full border-t-2 border-gray-400" />
+          <hr className="w-full border-t-2 border-[var(--color-blue-2)]"/>
 
-          <div className="flex flex-col items-left  h-full w-full justify-between group-hover:items-start">
+          <div className="flex flex-col items-left h-full w-full justify-between group-hover:items-start">
             {/* Primary Page Buttons*/}
 
             <section aria-label="Navigation Buttons">
@@ -330,19 +331,15 @@ export function NavigationBar() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-transparent w-full"
+                className="px-4 py-2 pl-10 rounded-lg border border-[var(--color-blue-2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue-3)] focus:border-transparent w-full"
               />
 
               {/* search icon inside the input field */}
               <img
                 src={searchIcon}
                 alt="Search"
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon"
                 // changes the color of  the icon
-                style={{
-                  filter:
-                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(70%) contrast(90%)",
-                }}
               />
             </div>
           </div>

@@ -56,7 +56,7 @@ export function SettingHeader({
       <small className="flex w-full text-center justify-center">
         {description}
       </small>
-      <hr className="border-t border-[var(--card-border)]" />
+        <hr className="w-full border-t-2 border-[var(--color-blue-2)]"/>
     </div>
   );
 }

@@ -63,6 +63,48 @@
   --job-card-bg: #1d1b20;
   --color-blue-purple: #232842; /* Used for Rejected Section */
 
+  --primary-gradient-color: #192836;
+  --applied-column-color: #4d4d3a;
+  --interview-column-color: #506d50;
+  --offer-column-color: #3d643d;
+  --accepted-column-color: #265726;
+  --rejected-column-color: #7a3034;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--applied-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--interview-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--offer-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--accepted-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--rejected-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
   /* Fonts */
   --font-title: "Baskerville", serif;
   --font-headline: "Baskerville", serif;
@@ -89,6 +131,7 @@
   );
 
   --job-card-background: #1d1b20;
+  --job-card-background-rgb: 29, 27, 32;
 
   --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
     saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
@@ -99,31 +142,69 @@
 /* Light theme overrides */
 html[data-theme="light"] {
   /* Backgrounds */
-  --color-bg: #efefef; /* page background (soft gray-white) */
+  --color-bg: #bebebe;
   --color-bg-rgb: 245, 247, 250;
   --color-bg-alt: linear-gradient(160deg, #ffffff, #eaf0f7, #ffffff);
 
-  /* Blues — tuned for clarity and text contrast */
-  --color-blue-1: #ffffff; /* side panels / card bg */
-  --color-blue-2: #97bcc7; /* hover / selected accent */
-  --color-blue-3: #1d4e89; /* primary accent blue */
-  --color-blue-4: #0e2f56; /* headings & button text (dark navy) */
-  --color-blue-5: #0b172a; /* main body text (very dark slate) */
+  /* Updated blue palette for light mode */
+  --color-blue-1: #c2ccd6; 
+  --color-blue-2: #a3b8c7;
+  --color-blue-3: #7fa5bb;
+  --color-blue-4: #4f7f99;
+  --color-blue-5: #25303a;
 
-  --color-blue-1-rgb: 214, 227, 243;
-  --color-blue-2-rgb: 175, 203, 239;
-  --color-blue-3-rgb: 29, 78, 137;
-  --color-blue-4-rgb: 14, 47, 86;
-  --color-blue-5-rgb: 11, 23, 42;
+  --color-blue-1-rgb: 194, 204, 214; 
+  --color-blue-2-rgb: 163, 184, 199;
+  --color-blue-3-rgb: 127, 165, 187;
+  --color-blue-4-rgb: 79, 127, 153;
+  --color-blue-5-rgb: 37, 48, 58;
 
-  /* Section / semantic accents */
-  --color-light-purple: #eae2f8; /* applied section */
-  --color-teal: #d4f3ef; /* interview section */
-  --color-dark-purple: #e6e2f3; /* offers */
-  --color-blue-gray: #e3e9f2; /* accepted */
-  --color-bright-red: #c62828; /* errors / alerts */
-
+  /* Other Colors */
   --job-card-background: #ffffff;
+  --job-card-background-rgb: 255, 255, 255;
+
+  /* Column Colors */
+  --primary-gradient-color: #c2ccd6;
+  --applied-column-color: #c7c7a5;
+  --interview-column-color: #a8c3a8;
+  --offer-column-color: #8fb48f;
+  --accepted-column-color: #6ea06e;
+  --rejected-column-color: #caa4a8;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--applied-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--interview-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--offer-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--accepted-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-gradient-color),
+    var(--rejected-column-color) 20%,
+    var(--primary-gradient-color) 95%
+  );
 
   /* Typography */
   --text-color-primary: black;
@@ -135,8 +216,8 @@ html[data-theme="light"] {
     rgba(var(--color-blue-2-rgb), 0.92) 100%
   );
 
-  --icon-filter: brightness(0) saturate(100%) invert(12%) sepia(8%)
-    saturate(1250%) hue-rotate(170deg) brightness(90%) contrast(95%);
+--icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg) brightness(90%) contrast(88%);
+
 }
 
 /* These styles should reference a variable above to dynamically adjust based on theme. */
@@ -173,6 +254,14 @@ body {
 .blueIcon {
   filter: brightness(0) invert(52%) sepia(24%) saturate(7493%)
     hue-rotate(170deg) brightness(95%) contrast(90%);
+}
+
+.job-card {
+  background: rgba(var(--job-card-background-rgb), 0.7);
+  border-radius: 8px;
+  opacity: 0.95;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
 }
 
 /* Typography */
@@ -237,9 +326,6 @@ button {
   font-family: var(--font-subheading);
   background-color: var(--color-blue-1);
   cursor: pointer;
-  color: var(--color-blue-4);
-
-  /* Smooth transition for border color on hover */
   transition: border-color 0.25s ease;
 }
 
@@ -249,7 +335,7 @@ button:hover {
 
 button.selected {
   background-color: var(--color-blue-2);
-  border-color: var(--color-blue-4);
+  border-color: var(--color-blue-3);
 }
 
 button.small {

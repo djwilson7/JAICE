@@ -247,7 +247,7 @@ export function JobCard({
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`relative border w-full bg-[var(--job-card-background)] rounded shadow-sm flex items-center flex flex-col ${cardBorderColor}`}
+      className={`w-full flex items-center flex flex-col ${cardBorderColor} job-card`}
       style={{ ...combinedStyle }}
       drag
       onDragStart={handleDragStart}
@@ -378,7 +378,7 @@ export function JobCard({
         initial={false}
         transition={{ type: "spring", stiffness: 200, damping: 24 }}
       >
-        <hr className="flex w-full my-2 opacity-20" />
+        <hr className="w-full border-t-2 border-[var(--color-blue-2)]" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
           <small style={{ color: "var(--color-blue-4)" }}>
             {job.companyName ?? "Unknown Company"}

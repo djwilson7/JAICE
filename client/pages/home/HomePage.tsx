@@ -19,7 +19,9 @@ import { applyJobChange } from "@/pages/home/utils/applyJobChange";
 import { getCurrentUserInfo } from "@/global-services/auth";
 import { MultiSelectBar } from "@/pages/home/home-components/MultiSelectBar";
 import Fuse from "fuse.js";
-import loadingAnimation from "@/assets/loaders/CircleVenn.json";
+import loadingAnimationDark from "@/assets/loaders/CircleVenn.json";
+import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
+
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
@@ -52,6 +54,20 @@ export function HomePage() {
     () => window.innerHeight
   );
   const [editingJob, setEditingJob] = useState<JobCardType | null>(null);
+
+  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
+  const [loadingAnimation, setLoadingAnimation] = useState<any>(initialTheme ? loadingAnimationLight : loadingAnimationDark);
+
+  useEffect(() => {
+    const updateLoadingSpinner = () => {
+      const htmlTheme = document.documentElement.getAttribute("data-theme");
+      setLoadingAnimation(htmlTheme === "light" ? loadingAnimationLight : loadingAnimationDark);
+    };
+    updateLoadingSpinner();
+    window.addEventListener("themechange", updateLoadingSpinner);
+    return () => window.removeEventListener("themechange", updateLoadingSpinner);
+  }, []);
+
 
   useEffect(() => {
     const handleResize = () => setViewportHeight(window.innerHeight);
@@ -353,29 +369,29 @@ export function HomePage() {
   // Column configuration for the Kanban board
   // Each column has an id, title, and background color
   const [baseConfig, setBaseConfig] = useState([
-    { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
-    { id: "interview", title: "Interview", bg: "var(--color-teal)" },
-    { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
-    { id: "accepted", title: "Accepted", bg: "var(--color-blue-gray)" },
+    { id: "applied", title: "Applied", bg: "var(--applied-column-bg)" },
+    { id: "interview", title: "Interview", bg: "var(--interview-column-bg)" },
+    { id: "offer", title: "Offer", bg: "var(--offer-column-bg)" },
+    { id: "accepted", title: "Accepted", bg: "var(--accepted-column-bg)" },
   ]);
 
   const switchAcceptedToRejected = useCallback(() => {
     setBaseConfig((prevConfig) => {
       if (prevConfig[3].id === "accepted") {
         return [
-          { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
-          { id: "interview", title: "Interview", bg: "var(--color-teal)" },
-          { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
-          { id: "rejected", title: "Rejected", bg: "var(--color-blue-purple)" },
+          { id: "applied", title: "Applied", bg: "var(--applied-column-bg)" },
+          { id: "interview", title: "Interview", bg: "var(--interview-column-bg)" },
+          { id: "offer", title: "Offer", bg: "var(--offer-column-bg)" },
+          { id: "rejected", title: "Rejected", bg: "var(--rejected-column-bg)" },
         ];
       } else {
         // Column configuration for the Kanban board
         // Each column has an id, title, and background color
         return [
-          { id: "applied", title: "Applied", bg: "var(--color-light-purple)" },
-          { id: "interview", title: "Interview", bg: "var(--color-teal)" },
-          { id: "offer", title: "Offer", bg: "var(--color-dark-purple)" },
-          { id: "accepted", title: "Accepted", bg: "var(--color-blue-gray)" },
+          { id: "applied", title: "Applied", bg: "var(--applied-column-bg)" },
+          { id: "interview", title: "Interview", bg: "var(--interview-column-bg)" },
+          { id: "offer", title: "Offer", bg: "var(--offer-column-bg)" },
+          { id: "accepted", title: "Accepted", bg: "var(--accepted-column-bg)" },
         ];
       }
     });
