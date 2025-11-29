@@ -57,6 +57,7 @@ export function Card({
         <section
             className={className}
             style={{ ...style, display: "flex", flexDirection: "column" }}
+            onClick={expandable ? onExpand : undefined}
             onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
                 (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
@@ -103,7 +104,7 @@ export function Card({
                     justifyContent: "center",
                     position: "relative",
                 }}
-                onClick={expandable ? onExpand : undefined}
+                onClick={(e) => e.stopPropagation()}
                 role={expandable ? "button" : undefined}
                 tabIndex={expandable ? 0 : undefined}
                 onKeyDown={
