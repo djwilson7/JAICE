@@ -9,7 +9,7 @@ export function CardSection({ children }: { children: React.ReactNode }) {
 export function SettingCard({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="flex flex-col rounded-xl w-full gap-4 p-4 shadow-lg"
+      className="flex flex-col rounded-xl w-full gap-4 p-4 shadow-lg card"
       style={{ background: "var(--card-background)" }}
     >
       {children}

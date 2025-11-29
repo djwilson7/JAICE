@@ -282,7 +282,7 @@ export function NavigationBar() {
 
       {/* Header */}
       <motion.header
-        className="flex flex-row px-8 py-8 bg-[var(--color-blue-1)] sticky top-0 z-100"
+        className="flex flex-row px-8 py-8 bg-[var(--color-blue-1)] sticky top-0 z-100 shadow"
         variants={{
           rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },

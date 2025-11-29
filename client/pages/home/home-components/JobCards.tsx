@@ -62,12 +62,6 @@ export function JobCard({
     onDragEnd();
   }, [onDragEnd]);
 
-  // Needs elevated to global css
-  const iconStyle = {
-    filter:
-      "brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%)",
-    ...(isOpen ? { transform: "rotate(180deg)" } : {}),
-  };
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -85,38 +79,6 @@ export function JobCard({
     // open the email in a new window
     const url = `https://mail.google.com/mail/u/${userEmail}/#inbox/${messageId}`;
     window.open(url, "_blank");
-  };
-
-  const cardBorderColor = useMemo(() => {
-    const color =
-      //   // if email is marked as accepted make the card border green
-      //  job.applicationStage === "Accepted" ? "#10B981" :
-
-      //  // if email is marked as rejected make the card border red
-      //   job.applicationStage === "Rejected" ? "#EF4444" :
-
-      "transparent";
-
-    return {
-      border:
-        color === "transparent"
-          ? "1px solid transparent"
-          : `1px solid ${color}`,
-      transition: "border 0.3s ease",
-    };
-  }, [job.applicationStage]);
-
-  const reviewBorderColor = useMemo(() => {
-    // if email is marked as review needed make the card border orange
-    return {
-      boxShadow: localReviewNeeded ? "0 0 0 1px rgba(249,115,22,1)" : "none",
-      transition: "box-shadow 0.0s ease",
-    };
-  }, [localReviewNeeded]);
-
-  const combinedStyle = {
-    ...cardBorderColor,
-    ...reviewBorderColor,
   };
 
   const variants = {
@@ -243,12 +205,13 @@ export function JobCard({
     </div>
   );
 
+  const needsReview = localReviewNeeded ? "review" : "";
+
   return (
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col ${cardBorderColor} job-card`}
-      style={{ ...combinedStyle }}
+      className={`w-full flex items-center flex flex-col job-card shadow ${needsReview}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -256,17 +219,7 @@ export function JobCard({
       animate={dimmed ? "dimmed" : "active"}
       whileHover={{
         scale: 1.02,
-        boxShadow: "0px 3px 10px rgba(0,0,0,0.2)",
         cursor: "pointer",
-        borderColor: localReviewNeeded
-          ? "#F97316"
-          : // if email is marked as accepted make the card border green
-          job.applicationStage === "Accepted"
-          ? "#10B981"
-          : // if email is marked as rejected make the card border red
-          job.applicationStage === "Rejected"
-          ? "#EF4444"
-          : "#dfdfdfff",
       }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -276,7 +229,6 @@ export function JobCard({
       whileDrag={{
         cursor: "grabbing",
         scale: 1.05,
-        boxShadow: "0px 5px 15px rgba(0,0,0,0.3)",
         pointerEvents: "none",
         zIndex: 1000,
       }}
@@ -331,8 +283,7 @@ export function JobCard({
           <motion.img
             src={isSelected ? checkIcon : uncheckIcon}
             alt={isSelected ? "Check Icon" : "Uncheck Icon"}
-            style={iconStyle}
-            className="w-4 h-4 opacity-50"
+            className="w-4 h-4 opacity-50 icon"
             initial={{ opacity: 0, width: 0 }}
             animate={{
               opacity: isMultiSelecting ? 1 : 0,

@@ -2,7 +2,7 @@
 
 import React, { useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import RejectedIcon from '@/assets/icons/refresh.svg';
+import RejectedIcon from "@/assets/icons/refresh.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
 import NewApplication from "./ApplicationModal";
 import type { JobCardType } from "@/types/jobCardType";
@@ -59,12 +59,9 @@ export function Column({
     background: bg,
     borderRadius: "8px",
     width: "100%",
-    border: "1px solid #ccc",
     minWidth: "15rem",
     minHeight: `${Math.max(sharedHeight, viewportHeight)}px`,
     height: "auto",
-    boxShadow: "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
-
   };
 
   // useCallback is used to memoize the drag handlers to prevent unnecessary re-renders
@@ -76,19 +73,16 @@ export function Column({
     onDragLeave();
   }, [onDragLeave]);
 
-  function openNewApplicationModal() 
-  {
+  function openNewApplicationModal() {
     setIsNewAppOpen(true);
   }
 
-  function closeNewApplicationModal() 
-  {
+  function closeNewApplicationModal() {
     setIsNewAppOpen(false);
   }
 
   // placeholder to handle saving new application data
-  function handleSaveApplication(data: Partial<JobCardType> & { id?: string}) 
-  {
+  function handleSaveApplication(data: Partial<JobCardType> & { id?: string }) {
     console.log("New Application Data:", data);
   }
 
@@ -103,7 +97,7 @@ export function Column({
         style={columnStyle}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
-        className="flex flex-col m-2 p-2 border-4 border-white transition-all duration-300"
+        className="flex flex-col m-2 p-2 transition-all duration-300 shadow"
         layout
         transition={{ type: "spring", stiffness: 120, damping: 18 }}
       >
@@ -114,43 +108,46 @@ export function Column({
             aria-label={`Add new application to ${title} stage`}
             title={`Add new application to ${title} stage`}
             onClick={openNewApplicationModal}
-
           >
             +
           </button>
-            <div className= "flex items-center gap-2">
-              <h3>{title}</h3>
+          <div className="flex items-center gap-2">
+            <h3>{title}</h3>
 
-              {showToggleRejectButton && onToggleReject && (
-                <button
-                  onClick={onToggleReject}
-                  className="group"
-                  style={{ background: "transparent", border: "none", padding: 5, cursor: "pointer" }}
-                  title="Switch to Accepted/Rejected"
-                >
-                  <img src={RejectedIcon}   
-                    alt="Switch toAccepted/Rejected"
-                    className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:rotate-180" 
-                    style={{ filter: "var(--icon-filter)" }}
-                    />
-                    
-                </button>
-              )}
-            </div>
-      
+            {showToggleRejectButton && onToggleReject && (
+              <button
+                onClick={onToggleReject}
+                className="group"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: 5,
+                  cursor: "pointer",
+                }}
+                title="Switch to Accepted/Rejected"
+              >
+                <img
+                  src={RejectedIcon}
+                  alt="Switch toAccepted/Rejected"
+                  className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:rotate-180"
+                  style={{ filter: "var(--icon-filter)" }}
+                />
+              </button>
+            )}
+          </div>
+
           <h3>{count}</h3>
         </div>
         <div className="flex border-b mx-4 mb-2" />
         <div className="flex flex-col items-center p-2 gap-4">
-          {hasChildren ? (children) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
+          {hasChildren ? (
+            children
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {<EmptyColumnPlaceholder title={title} />}
             </motion.div>
           )}
-        </div> 
+        </div>
       </motion.div>
 
       <NewApplication
@@ -161,4 +158,4 @@ export function Column({
       />
     </>
   );
-};
+}

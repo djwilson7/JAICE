@@ -12,7 +12,7 @@ import {
 type TextScale = "Small" | "Default" | "Large";
 type Theme = "light" | "dark";
 type MotionPreference = "Slow" | "Default" | "Fast";
-type ContrastLevel = "Low" | "Default" | "High" | "NoColor";
+type ContrastLevel = "Low" | "Default" | "High" | "BW";
 
 const TEXT_SCALE_KEY = "TEXT_SCALE";
 const THEME_KEY = "APP_THEME";
@@ -101,21 +101,24 @@ export function AccessibilityPage() {
     );
     localStorage.setItem(MOTION_PREFERENCE_KEY, motionPreference);
   }, [motionPreference]);
-  
 
   // ---------- CONTRAST LEVEL SETTINGS ----------
-  const [contrast, setContrast] = useState<ContrastLevel>(() => {
-    return (
-      (localStorage.getItem(CONTRAST_LEVEL_KEY) as ContrastLevel) || "Default"
-    );
-  });
-
   const contrastOptions = {
     Low: { key: "Low", fontSize: "1rem" },
     Default: { key: "Default", fontSize: "1rem" },
     High: { key: "High", fontSize: "1rem" },
-    BW: { key: "B/W", fontSize: "1rem" },
+    BW: { key: "BW", fontSize: "1rem" },
   };
+  
+  const [contrast, setContrast] = useState<ContrastLevel>(() => {
+    return (localStorage.getItem(CONTRAST_LEVEL_KEY) as ContrastLevel) ?? "Default";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-contrast", contrast);
+    localStorage.setItem(CONTRAST_LEVEL_KEY, contrast);
+    window.dispatchEvent(new Event("contrastchange"));
+  }, [contrast]);
 
   // ---------- RENDER ----------
   return (
