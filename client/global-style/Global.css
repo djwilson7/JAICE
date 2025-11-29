@@ -494,3 +494,30 @@ button.addApplication:hover {
   transform: scale(2);
   border-color: transparent;
 }
+
+button.undoRedo 
+{
+  transition: opacity 160ms ease, transform 160ms ease;
+  border: none;
+  opacity: 1;
+  background-color: transparent;
+}
+
+button.undoRedo:disabled 
+{
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+button.undoRedo:hover 
+{
+  transform: scale(1.2);
+  border-color: transparent;
+}
+
+button.undoRedo:active 
+{
+  transform: scale(1.0);
+}
+

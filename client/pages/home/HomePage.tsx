@@ -25,6 +25,8 @@ import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
+import undo from "@/assets/icons/undo-alt.svg";
+import redo from "@/assets/icons/redo-alt.svg";
 // import { fetchJobById } from "@/global-services/database";
 
 export function HomePage() {
@@ -54,6 +56,21 @@ export function HomePage() {
     () => window.innerHeight
   );
   const [editingJob, setEditingJob] = useState<JobCardType | null>(null);
+
+  // undo action for last change (delete or move)
+  type UndoAction = 
+    | {type: "delete"; job: JobCardType}
+    | {type: "move"; id: string; from: string; to: string; job?: JobCardType}
+    | {type: "deleteMultiple"; jobs: JobCardType[]}
+    | {type: "moveMultiple"; jobs: JobCardType[]; to: string}
+    | {type: "archiveMultiple"; jobs: JobCardType[]};
+
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
+  const [redoStack, setRedoStack] = useState<UndoAction[]>([]);
+
+  // mirror the stack in a ref for syncronus pop and push actions
+  const undoRef = useRef<UndoAction[]>([]);
+  const redoRef = useRef<UndoAction[]>([]);
 
   const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
   const [loadingAnimation, setLoadingAnimation] = useState<any>(initialTheme ? loadingAnimationLight : loadingAnimationDark);
@@ -322,6 +339,7 @@ export function HomePage() {
     if (itemDragged && isOver && itemDragged.column !== isOver) {
       console.log(`Dropped item ${itemDragged.id} into column ${isOver}`);
 
+      const prevColumn = itemDragged.column;
       const updatedCard = { ...itemDragged, column: isOver };
 
       setJobs((prev) =>
@@ -338,9 +356,25 @@ export function HomePage() {
             app_stage: updatedCard.column,
           }),
         });
+
+        // undo action
+        pushUndo({
+          type: "move",
+          id: itemDragged.id,
+          from: prevColumn ?? "",
+          to: isOver,
+          job: itemDragged,
+        });
+
         console.log("Job stage updated successfully");
       } catch (error) {
         console.error("Failed to update job stage:", error);
+
+        setJobs((prev) =>
+          prev.map((job) =>
+            job.id === itemDragged.id ? { ...job, column: prevColumn } : job
+          )
+        );
       }
     }
     itemDraggedRef.current = null;
@@ -429,6 +463,7 @@ export function HomePage() {
   }, [filteredJobs]);
 
   const handleDelete = async (id: string): Promise<boolean> => {
+    const jobToDelete = jobs.find((job) => job.id === id);
     try {
       const res = await api("/api/jobs/set-delete", {
         method: "POST",
@@ -447,12 +482,433 @@ export function HomePage() {
       setSelectedJobs((prev) => prev.filter((j) => j.id !== id));
       setIsMultiSelecting(false);
 
+      if (jobToDelete)
+      {
+        // set undo action
+        pushUndo({ type: "delete", job: jobToDelete });
+      }
+
       return true;
     } catch (error) {
       console.error("Failed to delete job with id:", id, error);
       return false;
     }
   };
+
+  // -----------------------------------------------------------------------------------
+  // handle Multiple Delete, move, archive actions from MultiSelectBar
+  // -----------------------------------------------------------------------------------
+  const handleDeleteMultiple = async (ids: string[]): Promise<boolean> => {
+    const jobsToDelete = jobs.filter((job) => ids.includes(job.id));
+
+    if (jobsToDelete.length === 0) return false;
+
+    try {
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+        }),
+      });
+
+      // remove jobs locally
+      setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+
+      // clear selection and multi select
+      setSelectedJobs((prev) => prev.filter((j) => !ids.includes(j.id)));
+      setIsMultiSelecting(false);
+      
+      // push undo action
+      pushUndo({ type: "deleteMultiple", jobs: jobsToDelete });
+      return true;
+
+    } catch (error) {
+      console.error("Failed to delete multiple jobs with ids:", ids, error);
+      return false;
+    }
+  };
+
+  const handleMoveMultiple = async (ids: string[], to: string): Promise<boolean> => {
+    const jobsToMove = jobs.filter((job) => ids.includes(job.id));
+
+    if (jobsToMove.length === 0) return false;
+
+    // snapshot of original columns
+    const snapshot = jobsToMove.map((job) => ({...job}));
+
+    try {
+      await api("/api/jobs/update-stage", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+          app_stage: to,
+        }),
+      });
+
+      // update jobs locally
+      setJobs((prev) =>
+        prev.map((job) =>
+          ids.includes(job.id) ? { ...job, column: to } : job
+        )
+      );
+
+      setSelectedJobs([]);
+      setIsMultiSelecting(false);
+
+      pushUndo({ type: "moveMultiple", jobs: snapshot, to });
+
+      return true;
+
+    } catch (error) {
+      console.error("Failed to move multiple jobs with ids:", ids, error);
+      return false;
+    }
+  };
+
+  const handleArchiveMultiple = async (ids: string[]): Promise<boolean> => {
+    const jobsToArchive = jobs.filter((job) => ids.includes(job.id));
+    if (jobsToArchive.length === 0) return false;
+
+    try {
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+        }),
+      });
+
+      // remove jobs locally
+      setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+
+      setSelectedJobs([]);
+      setIsMultiSelecting(false);
+
+      pushUndo({ type: "archiveMultiple", jobs: jobsToArchive });
+
+      return true;
+
+    } catch (error) {
+      console.error("Failed to archive multiple jobs with ids:", ids, error);
+      return false;
+    }
+  };
+
+  // ----------------------------------------------------------------------------------
+  //  UNDO / REDO FUNCTIONALITY
+  // ----------------------------------------------------------------------------------
+
+
+  // Undo last action (delete or move)
+  const pushUndo = (action: UndoAction) =>
+  {
+    setUndoStack((prev) => {
+      const next = [...prev, action];
+      undoRef.current = next;
+      return next;
+    });
+
+    // clear redo stack on new action
+    setRedoStack([]);
+    redoRef.current = [];
+  } 
+
+  // remove and return top undo action both undoStack and UndoRef
+  const popUndo = (): UndoAction | undefined => {
+    // get current undo stack from ref
+    const prevStack = undoRef.current;
+
+    // check if undo stack is empty
+    if (!prevStack || prevStack.length === 0) return undefined;
+
+    // get the top undo action
+    const action = prevStack[prevStack.length - 1];
+
+    // create next stack without the top action
+    const nextStack = prevStack.slice(0, prevStack.length - 1);
+
+    // keep ref and state in sync
+    undoRef.current = nextStack;
+    setUndoStack(nextStack);
+
+    return action;
+  };
+
+  // perform the undo action
+  async function performUndo()
+  {
+    // sync pop from ref
+    const action = popUndo();
+
+    if (!action) return;
+
+    // perform the undo based on action type
+    try {
+      // undo delete
+      if (action.type === "delete") 
+      {
+        const jobToRestore = action.job;
+
+        // toggle deleted state back
+        await api("/api/jobs/set-delete", 
+        {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [jobToRestore.id],
+          })
+        });
+
+        // re insert job locally
+        setJobs((prev) => [jobToRestore, ...prev]);
+
+      // undo move
+      } else if (action.type === "move") {
+
+        const { id, from } = action;
+
+        // move job back to original column
+        await api("/api/jobs/update-stage", 
+        {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [id],
+            app_stage: from,
+          }),
+        });
+        // update job locally
+        setJobs((prev) =>
+          prev.map((job) => (job.id === id ? { ...job, column: from } : job))
+        );
+      // undo multiple delete
+      } else if (action.type === "deleteMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/set-delete", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+          // re insert jobs locally
+          setJobs((prev) => [...action.jobs, ...prev]);
+
+        } catch (error) {
+          console.error("Failed to undo multiple delete:", error);
+        }
+    // undo multiple move
+    } else if (action.type === "moveMultiple") {
+      // restore multiple moved jobs
+      for (const job of action.jobs) 
+      {
+        try {
+          await api("/api/jobs/update-stage", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: [job.id],
+              app_stage: job.column,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to undo multiple move", error);
+        }
+      }
+      // update jobs locally
+      setJobs((prev) =>
+        prev.map((job) => {
+          const originalJob = action.jobs.find((j) => j.id === job.id);
+          return originalJob ? { ...job, column: originalJob.column } : job;
+        })
+      );
+    // undo multiple archive
+    } else if (action.type === "archiveMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+        try {
+          await api("/api/jobs/set-archive", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to undo multiple archive:", error);
+        }
+        // re insert jobs locally
+        setJobs((prev) => [...action.jobs, ...prev]);
+      }
+      // push redo action
+      pushRedo(action);
+
+    } catch (error) {
+      console.error("Failed to undo action:", error);
+    }
+  }
+
+  // Listen for Ctrl+Z to trigger undo
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const isUndo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z";
+
+      // only perform undo if there is an action to undo
+      if (isUndo)
+      {
+        e.preventDefault();
+        performUndo();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+
+  // ---------------------------------------------------------------------------------------
+  // redo last undo (delete or move)
+  const pushRedo = (action: UndoAction) =>
+  {
+    setRedoStack((prev) => {
+      const next = [...prev, action];
+      redoRef.current = next;
+      return next;
+    });
+  }
+
+    // remove and return top undo action both undoStack and UndoRef
+  const popRedo = (): UndoAction | undefined => {
+    // get current undo stack from ref
+    const prevStack = redoRef.current;
+
+    // check if undo stack is empty
+    if (!prevStack || prevStack.length === 0) return undefined;
+
+    // get the top undo action
+    const action = prevStack[prevStack.length - 1];
+
+    // create next stack without the top action
+    const nextStack = prevStack.slice(0, prevStack.length - 1);
+
+    // keep ref and state in sync
+    redoRef.current = nextStack;
+    setRedoStack(nextStack);
+
+    return action;
+  };
+
+  // perform the redo action
+  async function performRedo()
+  {
+    // sync pop from ref
+    const action = popRedo();
+
+    if (!action) return;
+
+    // perform the redo based on action type
+    try {
+      // redo delete
+      if (action.type === "delete") 
+      {
+        const jobToDelete = action.job;
+
+      // toggle deleted state back
+       await api("/api/jobs/set-delete", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [jobToDelete.id],
+          }),
+        });
+
+        setJobs((prev) => prev.filter((job) => job.id !== jobToDelete.id));
+
+      // undo move
+      } else if (action.type === "move") {
+
+        const { id, to } = action;
+
+        // move job back to column
+        await api("/api/jobs/update-stage", 
+        {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [id],
+            app_stage: to,
+          }),
+        });
+        // update job locally
+        setJobs((prev) => prev.map((job) => (job.id === id ? { ...job, column: to } : job))
+        );
+      } else if (action.type === "deleteMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/set-delete", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to redo multiple delete:", error);
+        }
+        setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+      } else if (action.type === "moveMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/update-stage", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+              app_stage: action.to,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to redo multiple move", error);
+        }
+        setJobs((prev) =>
+          prev.map((job) =>
+            ids.includes(job.id) ? { ...job, column: action.to } : job
+          )
+        );
+      } else if (action.type === "archiveMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/set-archive", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to redo multiple archive:", error);
+        }
+        setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+      }
+    } catch (error) {
+      console.error("Failed to redo action:", error);
+    }
+  }
+
+  // Listen for Ctrl+y to trigger redo
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const isRedo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y";
+
+      // only perform redo if there is an action to redo
+      if (isRedo)
+      {
+        e.preventDefault();
+        performRedo();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // ----------------------------------------------------------------------------------
+  //  END UNDO / REDO FUNCTIONALITY
+  // ----------------------------------------------------------------------------------
+
 
   // Group jobs by their column for rendering
   // This creates a mapping of column ids to arrays of JobCard components
@@ -503,6 +959,7 @@ export function HomePage() {
     handleJobCardClick,
     searchQuery,
   ]);
+  
 
   // show loading state while emails are being fetched
   return (
@@ -586,8 +1043,50 @@ export function HomePage() {
               selectedJobs={selectedJobs}
               setSelectedJobs={setSelectedJobs}
               setIsMultiSelecting={setIsMultiSelecting}
+              onDelete={handleDeleteMultiple}
+              onMove={handleMoveMultiple}
+              onArchive={handleArchiveMultiple}
             />
           )}
+
+          {/* Undo bar (stay until refresh or all undos performed) */}
+          {(undoStack.length > 0 || redoStack.length > 0) && !isMultiSelecting && (
+            <div 
+                className="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 flex items-center gap-3 bg-[var(--color-bg)]/80 rounded-3xl shadow-lg "
+                role="status"
+                aria-live="polite"
+              >
+                <span 
+                  title={undoStack.length === 0 ? "No actions to undo" : "Undo (Ctrl+Z)"}
+                  className="rounded"
+                >
+                  <button
+                    type="button"
+                    onClick={performUndo}
+                    aria-label="Undo last action"
+                    disabled={undoStack.length === 0}
+                    className={`p-2 undoRedo`}
+                  >
+                    <img src={undo} alt="Undo" className="w-5 h-5 icon" />
+                  </button>
+                </span>
+
+                <span 
+                  title={redoStack.length === 0 ? "No actions to redo" : "Redo (Ctrl+Y)"}
+                  className="rounded"
+                >
+                  <button
+                    type="button"
+                    onClick={performRedo}
+                    aria-label="Redo last action"
+                    disabled={redoStack.length === 0}
+                    className={`p-2 undoRedo`}
+                  >
+                    <img src={redo} alt="Redo" className="w-5 h-5 icon" />
+                  </button>
+                </span>
+              </div>
+            )}
 
           <NewApplication
             isOpen={!!editingJob}
@@ -610,6 +1109,7 @@ export function HomePage() {
               }
               setEditingJob(null);
             }}
+
           />
         </motion.div>
       )}
