@@ -60,7 +60,10 @@ export function HomePage() {
   // undo action for last change (delete or move)
   type UndoAction = 
     | {type: "delete"; job: JobCardType}
-    | {type: "move"; id: string; from: string; to: string; job?: JobCardType};
+    | {type: "move"; id: string; from: string; to: string; job?: JobCardType}
+    | {type: "deleteMultiple"; jobs: JobCardType[]}
+    | {type: "moveMultiple"; jobs: JobCardType[]; to: string}
+    | {type: "archiveMultiple"; jobs: JobCardType[]};
 
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
   const [redoStack, setRedoStack] = useState<UndoAction[]>([]);
@@ -492,7 +495,103 @@ export function HomePage() {
     }
   };
 
+  // -----------------------------------------------------------------------------------
+  // handle Multiple Delete, move, archive actions from MultiSelectBar
+  // -----------------------------------------------------------------------------------
+  const handleDeleteMultiple = async (ids: string[]): Promise<boolean> => {
+    const jobsToDelete = jobs.filter((job) => ids.includes(job.id));
 
+    if (jobsToDelete.length === 0) return false;
+
+    try {
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+        }),
+      });
+
+      // remove jobs locally
+      setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+
+      // clear selection and multi select
+      setSelectedJobs((prev) => prev.filter((j) => !ids.includes(j.id)));
+      setIsMultiSelecting(false);
+      
+      // push undo action
+      pushUndo({ type: "deleteMultiple", jobs: jobsToDelete });
+      return true;
+
+    } catch (error) {
+      console.error("Failed to delete multiple jobs with ids:", ids, error);
+      return false;
+    }
+  };
+
+  const handleMoveMultiple = async (ids: string[], to: string): Promise<boolean> => {
+    const jobsToMove = jobs.filter((job) => ids.includes(job.id));
+
+    if (jobsToMove.length === 0) return false;
+
+    // snapshot of original columns
+    const snapshot = jobsToMove.map((job) => ({...job}));
+
+    try {
+      await api("/api/jobs/update-stage", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+          app_stage: to,
+        }),
+      });
+
+      // update jobs locally
+      setJobs((prev) =>
+        prev.map((job) =>
+          ids.includes(job.id) ? { ...job, column: to } : job
+        )
+      );
+
+      setSelectedJobs([]);
+      setIsMultiSelecting(false);
+
+      pushUndo({ type: "moveMultiple", jobs: snapshot, to });
+
+      return true;
+
+    } catch (error) {
+      console.error("Failed to move multiple jobs with ids:", ids, error);
+      return false;
+    }
+  };
+
+  const handleArchiveMultiple = async (ids: string[]): Promise<boolean> => {
+    const jobsToArchive = jobs.filter((job) => ids.includes(job.id));
+    if (jobsToArchive.length === 0) return false;
+
+    try {
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+        }),
+      });
+
+      // remove jobs locally
+      setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+
+      setSelectedJobs([]);
+      setIsMultiSelecting(false);
+
+      pushUndo({ type: "archiveMultiple", jobs: jobsToArchive });
+
+      return true;
+
+    } catch (error) {
+      console.error("Failed to archive multiple jobs with ids:", ids, error);
+      return false;
+    }
+  };
 
   // ----------------------------------------------------------------------------------
   //  UNDO / REDO FUNCTIONALITY
@@ -579,8 +678,66 @@ export function HomePage() {
         setJobs((prev) =>
           prev.map((job) => (job.id === id ? { ...job, column: from } : job))
         );
+      // undo multiple delete
+      } else if (action.type === "deleteMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/set-delete", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+          // re insert jobs locally
+          setJobs((prev) => [...action.jobs, ...prev]);
+
+        } catch (error) {
+          console.error("Failed to undo multiple delete:", error);
+        }
+    // undo multiple move
+    } else if (action.type === "moveMultiple") {
+      // restore multiple moved jobs
+      for (const job of action.jobs) 
+      {
+        try {
+          await api("/api/jobs/update-stage", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: [job.id],
+              app_stage: job.column,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to undo multiple move", error);
+        }
       }
+      // update jobs locally
+      setJobs((prev) =>
+        prev.map((job) => {
+          const originalJob = action.jobs.find((j) => j.id === job.id);
+          return originalJob ? { ...job, column: originalJob.column } : job;
+        })
+      );
+    // undo multiple archive
+    } else if (action.type === "archiveMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+        try {
+          await api("/api/jobs/set-archive", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to undo multiple archive:", error);
+        }
+        // re insert jobs locally
+        setJobs((prev) => [...action.jobs, ...prev]);
+      }
+      // push redo action
       pushRedo(action);
+
     } catch (error) {
       console.error("Failed to undo action:", error);
     }
@@ -678,6 +835,53 @@ export function HomePage() {
         // update job locally
         setJobs((prev) => prev.map((job) => (job.id === id ? { ...job, column: to } : job))
         );
+      } else if (action.type === "deleteMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/set-delete", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to redo multiple delete:", error);
+        }
+        setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
+      } else if (action.type === "moveMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/update-stage", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+              app_stage: action.to,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to redo multiple move", error);
+        }
+        setJobs((prev) =>
+          prev.map((job) =>
+            ids.includes(job.id) ? { ...job, column: action.to } : job
+          )
+        );
+      } else if (action.type === "archiveMultiple") {
+        const ids = action.jobs.map((job) => job.id);
+
+        try {
+          await api("/api/jobs/set-archive", {
+            method: "POST",
+            body: JSON.stringify({
+              provider_message_ids: ids,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to redo multiple archive:", error);
+        }
+        setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
       }
     } catch (error) {
       console.error("Failed to redo action:", error);
@@ -839,11 +1043,14 @@ export function HomePage() {
               selectedJobs={selectedJobs}
               setSelectedJobs={setSelectedJobs}
               setIsMultiSelecting={setIsMultiSelecting}
+              onDelete={handleDeleteMultiple}
+              onMove={handleMoveMultiple}
+              onArchive={handleArchiveMultiple}
             />
           )}
 
           {/* Undo bar (stay until refresh or all undos performed) */}
-          {(undoStack.length > 0 || redoStack.length > 0) && (
+          {(undoStack.length > 0 || redoStack.length > 0) && !isMultiSelecting && (
             <div 
                 className="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 flex items-center gap-3 bg-[var(--color-bg)]/80 rounded-3xl shadow-lg "
                 role="status"

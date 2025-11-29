@@ -18,11 +18,17 @@ export function MultiSelectBar({
   selectedJobs,
   setSelectedJobs,
   setIsMultiSelecting,
+  onDelete,
+  onArchive,
+  onMove,
   className,
 }: {
   selectedJobs: JobCardType[];
   setSelectedJobs: (jobs: JobCardType[]) => void;
   setIsMultiSelecting: (isMultiSelecting: boolean) => void;
+  onDelete: (ids: string[]) => Promise<boolean>;
+  onArchive: (ids: string[]) => Promise<boolean>;
+  onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
 }) {
   const [hoverAction, setHoverAction] = useState<
@@ -41,13 +47,18 @@ export function MultiSelectBar({
   const handleMove = async (targetStage: string) => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-      await api("/api/jobs/update-stage", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-          app_stage: targetStage,
-        }),
-      });
+      if (onMove) 
+      {
+        await onMove(jobIds, targetStage);
+      } else {
+        await api("/api/jobs/update-stage", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: jobIds,
+            app_stage: targetStage,
+          }),
+        });
+      }
       console.log(`Moved ${selectedCount} jobs to ${targetStage}.`);
       setSelectedJobs([]);
       setShowMoveOptions(false);
@@ -85,16 +96,20 @@ export function MultiSelectBar({
     }
   };
 
-  const onArchive = async () => {
+  const onArchiveClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-
-      await api("/api/jobs/set-archive", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-        }),
-      });
+      if (onArchive)
+      {
+        await onArchive(jobIds);
+      } else {
+        await api("/api/jobs/set-archive", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: jobIds,
+          }),
+        });
+      }
       console.log("Archived selected jobs successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
@@ -105,16 +120,21 @@ export function MultiSelectBar({
     }
   };
 
-  const onDelete = async () => {
+  const onDeleteClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
 
-      await api("/api/jobs/set-delete", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-        }),
-      });
+      if (onDelete)
+      {        
+        await onDelete(jobIds);
+      } else {
+        await api("/api/jobs/set-delete", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: jobIds,
+          }),
+        });
+      }
       console.log("Deleted selected jobs successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
@@ -169,7 +189,7 @@ export function MultiSelectBar({
                   successIcon={folderCheckIcon}
                   failureIcon={folderXIcon}
                   alt="Archive"
-                  onClick={onArchive}
+                  onClick={onArchiveClicked}
                 />
               </div>
 
@@ -184,7 +204,7 @@ export function MultiSelectBar({
                   successIcon={trashCheckIcon}
                   failureIcon={trashXIcon}
                   alt="Delete"
-                  onClick={onDelete}
+                  onClick={onDeleteClicked}
                 />
               </div>
             </motion.div>
