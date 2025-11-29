@@ -23,6 +23,8 @@ import loadingAnimation from "@/assets/loaders/CircleVenn.json";
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
+import undo from "@/assets/icons/undo-alt.svg";
+import redo from "@/assets/icons/redo-alt.svg";
 // import { fetchJobById } from "@/global-services/database";
 
 export function HomePage() {
@@ -52,6 +54,18 @@ export function HomePage() {
     () => window.innerHeight
   );
   const [editingJob, setEditingJob] = useState<JobCardType | null>(null);
+
+  // undo action for last change (delete or move)
+  type UndoAction = 
+    | {type: "delete"; job: JobCardType}
+    | {type: "move"; id: string; from: string; to: string; job?: JobCardType};
+
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
+  const [redoStack, setRedoStack] = useState<UndoAction[]>([]);
+
+  // mirror the stack in a ref for syncronus pop and push actions
+  const undoRef = useRef<UndoAction[]>([]);
+  const redoRef = useRef<UndoAction[]>([]);
 
   useEffect(() => {
     const handleResize = () => setViewportHeight(window.innerHeight);
@@ -306,6 +320,7 @@ export function HomePage() {
     if (itemDragged && isOver && itemDragged.column !== isOver) {
       console.log(`Dropped item ${itemDragged.id} into column ${isOver}`);
 
+      const prevColumn = itemDragged.column;
       const updatedCard = { ...itemDragged, column: isOver };
 
       setJobs((prev) =>
@@ -322,9 +337,25 @@ export function HomePage() {
             app_stage: updatedCard.column,
           }),
         });
+
+        // undo action
+        pushUndo({
+          type: "move",
+          id: itemDragged.id,
+          from: prevColumn ?? "",
+          to: isOver,
+          job: itemDragged,
+        });
+
         console.log("Job stage updated successfully");
       } catch (error) {
         console.error("Failed to update job stage:", error);
+
+        setJobs((prev) =>
+          prev.map((job) =>
+            job.id === itemDragged.id ? { ...job, column: prevColumn } : job
+          )
+        );
       }
     }
     itemDraggedRef.current = null;
@@ -413,6 +444,7 @@ export function HomePage() {
   }, [filteredJobs]);
 
   const handleDelete = async (id: string): Promise<boolean> => {
+    const jobToDelete = jobs.find((job) => job.id === id);
     try {
       const res = await api("/api/jobs/set-delete", {
         method: "POST",
@@ -431,12 +463,232 @@ export function HomePage() {
       setSelectedJobs((prev) => prev.filter((j) => j.id !== id));
       setIsMultiSelecting(false);
 
+      if (jobToDelete)
+      {
+        // set undo action
+        pushUndo({ type: "delete", job: jobToDelete });
+      }
+
       return true;
     } catch (error) {
       console.error("Failed to delete job with id:", id, error);
       return false;
     }
   };
+
+
+
+  // ----------------------------------------------------------------------------------
+  //  UNDO / REDO FUNCTIONALITY
+  // ----------------------------------------------------------------------------------
+
+
+  // Undo last action (delete or move)
+  const pushUndo = (action: UndoAction) =>
+  {
+    setUndoStack((prev) => {
+      const next = [...prev, action];
+      undoRef.current = next;
+      return next;
+    });
+
+    // clear redo stack on new action
+    setRedoStack([]);
+    redoRef.current = [];
+  } 
+
+  // remove and return top undo action both undoStack and UndoRef
+  const popUndo = (): UndoAction | undefined => {
+    // get current undo stack from ref
+    const prevStack = undoRef.current;
+
+    // check if undo stack is empty
+    if (!prevStack || prevStack.length === 0) return undefined;
+
+    // get the top undo action
+    const action = prevStack[prevStack.length - 1];
+
+    // create next stack without the top action
+    const nextStack = prevStack.slice(0, prevStack.length - 1);
+
+    // keep ref and state in sync
+    undoRef.current = nextStack;
+    setUndoStack(nextStack);
+
+    return action;
+  };
+
+  // perform the undo action
+  async function performUndo()
+  {
+    // sync pop from ref
+    const action = popUndo();
+
+    if (!action) return;
+
+    // perform the undo based on action type
+    try {
+      // undo delete
+      if (action.type === "delete") 
+      {
+        const jobToRestore = action.job;
+
+        // toggle deleted state back
+        await api("/api/jobs/set-delete", 
+        {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [jobToRestore.id],
+          })
+        });
+
+        // re insert job locally
+        setJobs((prev) => [jobToRestore, ...prev]);
+
+      // undo move
+      } else if (action.type === "move") {
+
+        const { id, from } = action;
+
+        // move job back to original column
+        await api("/api/jobs/update-stage", 
+        {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [id],
+            app_stage: from,
+          }),
+        });
+        // update job locally
+        setJobs((prev) =>
+          prev.map((job) => (job.id === id ? { ...job, column: from } : job))
+        );
+      }
+      pushRedo(action);
+    } catch (error) {
+      console.error("Failed to undo action:", error);
+    }
+  }
+
+  // Listen for Ctrl+Z to trigger undo
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const isUndo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z";
+
+      // only perform undo if there is an action to undo
+      if (isUndo)
+      {
+        e.preventDefault();
+        performUndo();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+
+  // ---------------------------------------------------------------------------------------
+  // redo last undo (delete or move)
+  const pushRedo = (action: UndoAction) =>
+  {
+    setRedoStack((prev) => {
+      const next = [...prev, action];
+      redoRef.current = next;
+      return next;
+    });
+  }
+
+    // remove and return top undo action both undoStack and UndoRef
+  const popRedo = (): UndoAction | undefined => {
+    // get current undo stack from ref
+    const prevStack = redoRef.current;
+
+    // check if undo stack is empty
+    if (!prevStack || prevStack.length === 0) return undefined;
+
+    // get the top undo action
+    const action = prevStack[prevStack.length - 1];
+
+    // create next stack without the top action
+    const nextStack = prevStack.slice(0, prevStack.length - 1);
+
+    // keep ref and state in sync
+    redoRef.current = nextStack;
+    setRedoStack(nextStack);
+
+    return action;
+  };
+
+  // perform the redo action
+  async function performRedo()
+  {
+    // sync pop from ref
+    const action = popRedo();
+
+    if (!action) return;
+
+    // perform the redo based on action type
+    try {
+      // redo delete
+      if (action.type === "delete") 
+      {
+        const jobToDelete = action.job;
+
+      // toggle deleted state back
+       await api("/api/jobs/set-delete", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [jobToDelete.id],
+          }),
+        });
+
+        setJobs((prev) => prev.filter((job) => job.id !== jobToDelete.id));
+
+      // undo move
+      } else if (action.type === "move") {
+
+        const { id, to } = action;
+
+        // move job back to column
+        await api("/api/jobs/update-stage", 
+        {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [id],
+            app_stage: to,
+          }),
+        });
+        // update job locally
+        setJobs((prev) => prev.map((job) => (job.id === id ? { ...job, column: to } : job))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to redo action:", error);
+    }
+  }
+
+  // Listen for Ctrl+y to trigger redo
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const isRedo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y";
+
+      // only perform redo if there is an action to redo
+      if (isRedo)
+      {
+        e.preventDefault();
+        performRedo();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // ----------------------------------------------------------------------------------
+  //  END UNDO / REDO FUNCTIONALITY
+  // ----------------------------------------------------------------------------------
+
 
   // Group jobs by their column for rendering
   // This creates a mapping of column ids to arrays of JobCard components
@@ -487,6 +739,7 @@ export function HomePage() {
     handleJobCardClick,
     searchQuery,
   ]);
+  
 
   // show loading state while emails are being fetched
   return (
@@ -573,6 +826,45 @@ export function HomePage() {
             />
           )}
 
+          {/* Undo bar (stay until refresh or all undos performed) */}
+          {(undoStack.length > 0 || redoStack.length > 0) && (
+            <div 
+                className="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 flex items-center gap-3 bg-[var(--color-bg)]/80 rounded-3xl shadow-lg "
+                role="status"
+                aria-live="polite"
+              >
+                <span 
+                  title={undoStack.length === 0 ? "No actions to undo" : "Undo (Ctrl+Z)"}
+                  className="rounded"
+                >
+                  <button
+                    type="button"
+                    onClick={performUndo}
+                    aria-label="Undo last action"
+                    disabled={undoStack.length === 0}
+                    className={`p-2 undoRedo`}
+                  >
+                    <img src={undo} alt="Undo" className="w-5 h-5 icon" />
+                  </button>
+                </span>
+
+                <span 
+                  title={redoStack.length === 0 ? "No actions to redo" : "Redo (Ctrl+Y)"}
+                  className="rounded"
+                >
+                  <button
+                    type="button"
+                    onClick={performRedo}
+                    aria-label="Redo last action"
+                    disabled={redoStack.length === 0}
+                    className={`p-2 undoRedo`}
+                  >
+                    <img src={redo} alt="Redo" className="w-5 h-5 icon" />
+                  </button>
+                </span>
+              </div>
+            )}
+
           <NewApplication
             isOpen={!!editingJob}
             onClose={closeEditModal}
@@ -594,6 +886,7 @@ export function HomePage() {
               }
               setEditingJob(null);
             }}
+
           />
         </motion.div>
       )}
