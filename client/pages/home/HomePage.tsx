@@ -497,6 +497,7 @@ export function HomePage() {
 
   // -----------------------------------------------------------------------------------
   // handle Multiple Delete, move, archive actions from MultiSelectBar
+  // -----------------------------------------------------------------------------------
   const handleDeleteMultiple = async (ids: string[]): Promise<boolean> => {
     const jobsToDelete = jobs.filter((job) => ids.includes(job.id));
 
