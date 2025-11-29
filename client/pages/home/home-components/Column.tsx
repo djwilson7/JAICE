@@ -56,7 +56,7 @@ export function Column({
   }, [id, reportHeight]);
 
   const columnStyle = {
-    backgroundColor: bg,
+    background: bg,
     borderRadius: "8px",
     width: "100%",
     border: "1px solid #ccc",

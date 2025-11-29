@@ -131,7 +131,7 @@ export function FloatingInputField({
         top-2 
         z-10 
         origin-[0] 
-        bg-rgba(var(--color-blue-5-rgb), 0.1)
+        bg-transparent
         backdrop-blur-xl
         px-2 
         ${labelColorClass}
