@@ -74,7 +74,7 @@ export function CheckBoxToggle({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         {label ? (
-          <label className="select-none whitespace-nowrap ">{label}</label>
+          <label className="select-none whitespace-nowrap secondary-text">{label}</label>
         ) : null}
       </div>
     </motion.div>

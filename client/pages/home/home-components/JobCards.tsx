@@ -24,6 +24,8 @@ export function JobCard({
   dimmed,
   onEdit,
   onDelete,
+  isDeleting,
+  setIsDeleting,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
@@ -33,13 +35,14 @@ export function JobCard({
   dimmed: boolean;
   onEdit?: (job: JobCardType) => void;
   onDelete?: (id: string) => Promise<boolean>;
+  isDeleting: boolean;
+  setIsDeleting: (isDeleting: boolean) => void;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
   const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(
     !!job.reviewNeeded
   );
-  const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editHovered, setEditHovered] = useState(false);
   const [viewHovered, setViewHovered] = useState(false);
@@ -61,7 +64,6 @@ export function JobCard({
     // Notify parent component that drag has ended (clears job data from parent)
     onDragEnd();
   }, [onDragEnd]);
-
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -118,7 +120,10 @@ export function JobCard({
   // close modal with escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "escape") setShowDeleteConfirm(false);
+      if (e.key === "escape") {
+      setShowDeleteConfirm(false);
+      setIsDeleting(false);
+      }
     };
 
     if (showDeleteConfirm) window.addEventListener("keydown", onKey);
@@ -135,27 +140,27 @@ export function JobCard({
       onClick={() => setShowDeleteConfirm(false)}
     >
       {/* backdrop */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/60" />
 
       {/* dialog */}
       <div
-        className="relative z-60 bg-[#111014] rounded p-6 w-11/12 max-w-md shadow-lg border"
+        className="flex flex-col w-full z-60 max-w-md p-4 gap-4 glass"
         onClick={(e) => e.stopPropagation()}
       >
         <h3
           id={`delete-dialog-title-${job.id}`}
-          className="mb-2 text-lg font-semibold"
+          className="primary-text font-semibold"
         >
           Do you want to delete this card?
         </h3>
+        <p className="text-sm secondary-text">{job.title}</p>
 
-        <p className="text-sm text-gray-300 mb-4 truncate">{job.title}</p>
-
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 mt-2 justify-end">
           <button
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
+              setIsDeleting(false);
               setShowDeleteConfirm(false);
             }}
             type="button"
@@ -295,9 +300,9 @@ export function JobCard({
 
           {/* Job Title and date*/}
           <motion.div className="flex flex-col flex-1 min-w-0">
-            <p className="">{job.title}</p>
+            <p className="primary-text">{job.title}</p>
             {job.date && (
-              <small className="text-[var(--gray-color)]">{job.date}</small>
+              <small className="secondary-text">{job.date}</small>
             )}
           </motion.div>
         </motion.div>
@@ -329,17 +334,17 @@ export function JobCard({
         initial={false}
         transition={{ type: "spring", stiffness: 200, damping: 24 }}
       >
-        <hr className="w-full border-t-2 border-[var(--color-blue-2)]" />
+        <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
-          <small style={{ color: "var(--color-blue-4)" }}>
+          <small className="secondary-text font-semibold">
             {job.companyName ?? "Unknown Company"}
           </small>
 
-          <small className="">
+          <p className="primary-text">
             {job.description ?? "No description provided for this job."}
-          </small>
+          </p>
 
-          <small className="text-sm text-[var(--gray-color)]">
+          <small className="secondary-text">
             {job.notes ?? "No additional notes."}
           </small>
         </div>
@@ -358,7 +363,7 @@ export function JobCard({
         aria-hidden={!isHovered}
         className="w-full z-50"
       >
-        <hr className="flex w-full opacity-20" />
+        <hr className="header-split" />
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
           initial={{ opacity: 0, height: 0 }}
@@ -399,8 +404,9 @@ export function JobCard({
               e.stopPropagation();
 
               if (isMultiSelecting || isDeleting) return;
-
+              setIsDeleting(true);
               setShowDeleteConfirm(true);
+
             }}
             type="button"
             className="small w-full outline-none bg-transparent"

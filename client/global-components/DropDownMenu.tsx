@@ -61,12 +61,12 @@ export function DropDownMenu({
   // Styles
   const menuStyle: React.CSSProperties = {
     outline: "none",
-    backgroundColor: "var(--color-gray-2)",
+    background: "transparent",
     cursor: "pointer",
   };
 
   const optionStyle: React.CSSProperties = {
-    backgroundColor: "var(--color-blue-1)",
+    backgroundColor: "var(--primary-one)",
     cursor: "pointer",
   };
 

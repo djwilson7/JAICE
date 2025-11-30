@@ -4,6 +4,7 @@ import { Line } from "react-chartjs-2";
 import { applyChartDefaults } from "./chartSetup";
 import { Modal } from "./Modal";
 import { api } from "@/global-services/api";
+import Button from "@/global-components/button";
 
 type RangeOptions = 3 | 7 | 14 | 30 | 45 | 90;
 const RANGES: RangeOptions[] = [3, 7, 14, 30, 45, 90];
@@ -159,17 +160,13 @@ export function AppsOverTimeCard({
   }) => (
     <div className="flex gap-2 mb-4">
       {RANGES.map((r) => (
-        <button
+        <Button
           key={r}
           onClick={() => onChange(r)}
-          className={`px-3 py-1 rounded-lg text-sm transition
-            ${range === r
-              ? "bg-slate-700 text-white"
-              : "bg-slate-800 text-slate-300"
-            }`}
+          isSelected={range === r ? true : false}
         >
           {r} days
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -185,8 +182,8 @@ export function AppsOverTimeCard({
         onExpand={() => setOpen(true)}
       >
         <ChartHost>
-          {loading && <div className="text-slate-300">Loading...</div>}
-          {error && <div className="text-red-400">{error}</div>}
+          {loading && <div className="secondary-text">Loading...</div>}
+          {error && <div className="red-text">{error}</div>}
           {!loading && !error && <Line data={data} options={options} />}
         </ChartHost>
       </Card>

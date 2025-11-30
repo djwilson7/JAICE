@@ -28,7 +28,7 @@ export function SlidingToggle({ leftLabel, rightLabel, action, initialValue }: S
 
   const selectedStyle: React.CSSProperties = {
     fontWeight: "bold",
-    background: "var(--color-blue-1)",
+    background: "var(--primary-one)",
     width: "50%",
     height: "50px",
     borderRadius: "20px",
@@ -37,17 +37,17 @@ export function SlidingToggle({ leftLabel, rightLabel, action, initialValue }: S
     transition: "left 0.3s ease-in-out",
     position: "absolute",
     zIndex: 0,
-    boxShadow: "0 0px 10px rgba(var(--color-blue-3-rgb), 0.4)",
+    boxShadow: "0 0px 10px rgba(var(--primary-three-rgb), 0.4)",
     padding: "0.6em 1.2em"
   };
 
   const rightLabelStyle: React.CSSProperties = {
-    color: isLeft ? "var(--color-blue-4)" : "var(--color-blue-5)",
+    color: isLeft ? "var(--primary-four)" : "var(--primary-five)",
     fontSize: isLeft ? "var(--fs-body)" : "var(--fs-subheading)"
   };
 
   const leftLabelStyle: React.CSSProperties = {
-    color: isLeft ? "var(--color-blue-5)" : "var(--color-blue-4)",
+    color: isLeft ? "var(--primary-five)" : "var(--primary-four)",
     fontSize: isLeft ? "var(--fs-subheading)" : "var(--fs-body)"
   };
 

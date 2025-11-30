@@ -1,3 +1,4 @@
+import Button from "@/global-components/button";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -23,7 +24,7 @@ export function Modal({
             document.removeEventListener("keydown", onKey);
             document.body.style.overflow = prev;
         };
-    }, [open, onClose]);
+    }, [open, onClose]); 
 
     if (!open) return null;
 
@@ -48,7 +49,7 @@ export function Modal({
                     maxHeight,
                     padding: 16,
                     border: "1px solid rgba(255,255,255,0.25)",
-                    background: "linear-gradient(180deg, rgba(var(--color-blue-1-rgb),0.96) 0%, rgba(var(--color-blue-2-rgb),0.96) 100%)",
+                    background: "var(--primary-gradient)",
                     boxShadow: "0 18px 44px rgba(0,0,0,0.55)",
                     display: "flex",
                     flexDirection: "column",
@@ -59,9 +60,9 @@ export function Modal({
                 {title && (
                     <div className="flex items-center justify-between mb-3">
                         <h3 style={{ fontFamily: "var(--font-title)" }}>{title}</h3>
-                        <button onClick={onClose} className="px-3 py-1 rounded border border-white/20">
+                        <Button onClick={onClose}>
                             Close
-                        </button>
+                        </Button>
                     </div>
                 )}
                 <div style={{ position: "relative", width: "100%", height: "calc(100% - 40px)" }}>

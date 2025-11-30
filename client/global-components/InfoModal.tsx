@@ -26,23 +26,21 @@ export function InfoModal({ title, content, setIsOpen }: InfoModalProps) {
     minWidth: "40rem", //min width of 40rem
     borderRadius: "0.5rem",
     outline: "none",
-    backgroundColor: "rgba(var(--color-bg-rgb), 0.5)",
     cursor: "pointer",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    boxShadow: "0 0 5px rgba(255, 255, 255, 0.3)",
     zIndex: 90,
   };
 
   return (
-    <div style={modalStyle} className="backdrop-blur-md">
+    <div style={modalStyle} className="glass">
       {/* Header with Title and Close Button */}
       <div className="flex justify-between p-4 items-center w-full">
-        <h2 className="whitespace-nowrap">{title || "Info Modal Title (EX: Home Info)"}</h2>
+        <h2 className="whitespace-nowrap primary-text">{title || "Info Modal Title (EX: Home Info)"}</h2>
         <p onClick={() => setIsOpen(false)}>X</p>
       </div>
-      <hr className="w-full mb-1 border-white/20" />
+      <hr className="header-split" />
       
       {/* Content Area */}
       <div className="overflow-y-auto overflow-hidden">

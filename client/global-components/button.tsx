@@ -3,26 +3,38 @@ import React, { useState } from "react";
 
 export default function Button({
   onClick,
+  onMouseEnter,
+  onMouseLeave,
   children,
   isSelected = false,
   type = "button",
   style = {},
   className = "",
+  disabled = false,
+  title = "",
 }: {
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onMouseEnter?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onMouseLeave?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
   isSelected?: boolean;
   type?: "button" | "submit" | "reset";
   style?: React.CSSProperties;
   className?: string;
+  disabled?: boolean;
+  title?: string;
 }) {
   const selectedClass = isSelected ? "selected" : "";
   return (
     <button
       type={type}
       onClick={(event) =>  onClick?.(event) }
+      onMouseEnter={(event) => onMouseEnter?.(event)}
+      onMouseLeave={(event) => onMouseLeave?.(event)}
       className={`${selectedClass} ${className}`}
       style={style}
+      disabled={disabled}
+      title={title}
     >
       {children}
     </button>
@@ -39,6 +51,11 @@ interface HoverIconButtonProps {
     failureIcon: string;
     alt: string;
     onClick: () => Promise<boolean> | void;
+    disabled?: boolean;
+    className?: string;
+    style?: React.CSSProperties;
+    hoverClassName?: string;
+    title?: string;
 }
 
 export function HoverIconButton({
@@ -48,6 +65,11 @@ export function HoverIconButton({
   failureIcon,
   alt,
   onClick,
+  disabled,
+  className = "",
+  style = {},
+  hoverClassName = "",
+  title = "",
 }: HoverIconButtonProps) {
   const [state, setState] = useState<ButtonVisualState>("default");
 
@@ -75,16 +97,21 @@ export function HoverIconButton({
     }
   };
 
+
   return (
     <button
       onClick={handleClick}
       onMouseEnter={() => state === "default" && setState("hover")}
       onMouseLeave={() => state === "hover" && setState("default")}
+      disabled={disabled}
+      className={`${className}`}
+      style={style}
+      title={title}
     >
       <img
         src={getIcon()}
         alt={alt}
-        className="w-5 h-5 transition-all duration-150"
+        className={`w-5 h-5 transition-all duration-150 icon ${state === "hover" ? hoverClassName : ""}`}
       />
     </button>
   );

@@ -18,9 +18,11 @@ interface ColumnProps {
   reportHeight: (columnId: string, height: number) => void;
   sharedHeight: number;
   viewportHeight: number;
-
   showToggleRejectButton?: boolean;
   onToggleReject?: () => void;
+  isNewAppOpen: boolean;
+  setIsNewAppOpen: (isOpen: boolean) => void;
+  isHighlighted: string | null;
 }
 
 export function Column({
@@ -36,10 +38,12 @@ export function Column({
   viewportHeight,
   showToggleRejectButton,
   onToggleReject,
+  isNewAppOpen,
+  setIsNewAppOpen,
+  isHighlighted,
 }: ColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null); // Ref to the column div
   const hasChildren = count > 0;
-  const [isNewAppOpen, setIsNewAppOpen] = React.useState(false);
 
   useEffect(() => {
     const el = columnRef.current;
@@ -89,6 +93,8 @@ export function Column({
   // onPointerEnter and onPointerLeave are used to send the column id up to the parent for drag and drop handling
   // layout is used for smooth animations when removing or adding job cards (drag and drop)
   // React.Children.count(children) is the safe way to count the number of cards a columns has
+  const highlightColumn = isHighlighted === id || isHighlighted === "all";
+
   return (
     <>
       <motion.div
@@ -97,7 +103,7 @@ export function Column({
         style={columnStyle}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
-        className="flex flex-col m-2 p-2 transition-all duration-300 shadow"
+        className={`flex flex-col m-2 p-2 transition-all duration-300 shadow ${highlightColumn ? "highlighted" : ""}`}
         layout
         transition={{ type: "spring", stiffness: 120, damping: 18 }}
       >

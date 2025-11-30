@@ -38,8 +38,8 @@ export function rgba(color: string, alpha = 1): string {
 
 /* Theme defaults from the CSS variables */
 export function applyChartDefaults() {
-  const axis = rgba(cssVar("--color-blue-5-rgb"), 0.9);
-  const grid = rgba(cssVar("--color-blue-5-rgb"), 0.12);
+  const axis = rgba(cssVar("--primary-five-rgb"), 0.9);
+  const grid = rgba(cssVar("--primary-one-rgb"), 0.12);
 
   ChartJS.defaults.color = axis;
   ChartJS.defaults.font.family = "Poppins, sans-serif";

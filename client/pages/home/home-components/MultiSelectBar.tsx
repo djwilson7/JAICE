@@ -8,8 +8,8 @@ import folderCheckIcon from "@/assets/icons/folder-check.svg";
 import folderAddIcon from "@/assets/icons/folder-add.svg";
 import replaceIcon from "@/assets/icons/replace.svg";
 import upIcon from "@/assets/icons/angle-small-up.svg";
-import { HoverIconButton } from "@/global-components/button";
-import { useState } from "react";
+import Button, { HoverIconButton } from "@/global-components/button";
+import { useEffect, useState } from "react";
 import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,6 +22,7 @@ export function MultiSelectBar({
   onArchive,
   onMove,
   className,
+  setIsHighlighted,
 }: {
   selectedJobs: JobCardType[];
   setSelectedJobs: (jobs: JobCardType[]) => void;
@@ -30,6 +31,7 @@ export function MultiSelectBar({
   onArchive: (ids: string[]) => Promise<boolean>;
   onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
+  setIsHighlighted: (stage: string | null) => void;
 }) {
   const [hoverAction, setHoverAction] = useState<
     | "move"
@@ -47,8 +49,7 @@ export function MultiSelectBar({
   const handleMove = async (targetStage: string) => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-      if (onMove) 
-      {
+      if (onMove) {
         await onMove(jobIds, targetStage);
       } else {
         await api("/api/jobs/update-stage", {
@@ -70,28 +71,43 @@ export function MultiSelectBar({
 
   const selectedCount = selectedJobs.length ?? 0;
 
+  const [isEnabled, setIsEnabled] = useState(selectedCount > 0);
+
+  useEffect(() => {
+    setIsEnabled(selectedCount > 0);  
+  }, [selectedCount]);
+  
   const getStatusText = () => {
-    if (selectedCount === 0) return "No jobs selected.";
+    if (selectedCount === 0) return "Select jobs to see actions.";
     const plural = selectedCount > 1 ? "jobs" : "job";
 
     switch (hoverAction) {
       case "move":
+        setIsHighlighted("all");
         return `Move ${selectedCount} ${plural} to a new column?`;
       case "archive":
+        setIsHighlighted(null);
         return `Archive ${selectedCount} ${plural}?`;
       case "delete":
+        setIsHighlighted(null);
         return `Delete ${selectedCount} ${plural}?`;
       case "applied":
+        setIsHighlighted("applied");
         return `Move ${selectedCount} ${plural} to applied?`;
       case "interview":
+        setIsHighlighted("interview");
         return `Move ${selectedCount} ${plural} to interview?`;
       case "offer":
+        setIsHighlighted("offer");
         return `Move ${selectedCount} ${plural} to offer?`;
       case "accepted":
+        setIsHighlighted("accepted");
         return `Move ${selectedCount} ${plural} to accepted?`;
       case "back":
+        setIsHighlighted(null);
         return `Back to main actions.`;
       default:
+        setIsHighlighted(null);
         return `${selectedCount} ${plural} selected.`;
     }
   };
@@ -99,8 +115,7 @@ export function MultiSelectBar({
   const onArchiveClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-      if (onArchive)
-      {
+      if (onArchive) {
         await onArchive(jobIds);
       } else {
         await api("/api/jobs/set-archive", {
@@ -124,8 +139,7 @@ export function MultiSelectBar({
     try {
       const jobIds = selectedJobs.map((j) => j.id);
 
-      if (onDelete)
-      {        
+      if (onDelete) {
         await onDelete(jobIds);
       } else {
         await api("/api/jobs/set-delete", {
@@ -149,9 +163,15 @@ export function MultiSelectBar({
     <div
       className={
         className ||
-        "fixed bottom-2 w-1/2 md:w-[40rem] justify-center items-center flex flex-col bg-black/60 rounded-xl p-3 gap-2 backdrop-blur-md border border-white/10 shadow-lg"
+        "fixed bottom-6 justify-center items-center flex flex-col gap-1 rounded-xl p-1 glass"
       }
     >
+      <div className="w-full text-center">
+        <p className="secondary-text transition-all duration-200">
+          {getStatusText()}
+        </p>
+      </div>
+      <hr className="header-split"/> 
       {/* Button area */}
       <div className="relative w-full">
         <AnimatePresence mode="wait">
@@ -162,19 +182,22 @@ export function MultiSelectBar({
               initial={{ y: 0, rotateX: 0, opacity: 1 }}
               exit={{ y: -40, opacity: 0, rotateX: 90 }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="flex justify-around items-center gap-5"
+              className="flex w-full justify-around items-center gap-4 py-2 px-8"
             >
               {/* Move */}
               <button
                 onClick={() => setShowMoveOptions(true)}
-                className="group"
+                className="group small w-1/3 flex justify-center items-center"
                 onMouseEnter={() => setHoverAction("move")}
                 onMouseLeave={() => setHoverAction(null)}
+                disabled={!isEnabled}
+                style={{background: "transparent"}}
+                title="Move selected jobs to a different column"
               >
                 <img
                   src={replaceIcon}
                   alt="Move to new column"
-                  className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:-rotate-90"
+                  className={`w-4 h-4 icon ${hoverAction === "move" ? "greenIcon" : ""} transition-transform duration-300 ease-in-out group-hover:-rotate-90`}
                 />
               </button>
 
@@ -182,6 +205,7 @@ export function MultiSelectBar({
               <div
                 onMouseEnter={() => setHoverAction("archive")}
                 onMouseLeave={() => setHoverAction(null)}
+                className="w-1/3 flex justify-center items-center"
               >
                 <HoverIconButton
                   baseIcon={folderIcon}
@@ -190,6 +214,11 @@ export function MultiSelectBar({
                   failureIcon={folderXIcon}
                   alt="Archive"
                   onClick={onArchiveClicked}
+                  disabled={!isEnabled}
+                  className="small w-full flex justify-center items-center"
+                  style={{background: "transparent"}}
+                  hoverClassName="orangeIcon"
+                  title="Mark selected jobs as archived"
                 />
               </div>
 
@@ -197,6 +226,7 @@ export function MultiSelectBar({
               <div
                 onMouseEnter={() => setHoverAction("delete")}
                 onMouseLeave={() => setHoverAction(null)}
+                className="w-1/3"
               >
                 <HoverIconButton
                   baseIcon={trashIcon}
@@ -205,6 +235,11 @@ export function MultiSelectBar({
                   failureIcon={trashXIcon}
                   alt="Delete"
                   onClick={onDeleteClicked}
+                  disabled={!isEnabled}
+                  className="small w-full flex justify-center items-center"
+                  style={{background: "transparent"}}
+                  hoverClassName="redIcon"
+                  title="Delete selected jobs"
                 />
               </div>
             </motion.div>
@@ -216,7 +251,7 @@ export function MultiSelectBar({
               animate={{ y: 0, opacity: 1, rotateX: 0 }}
               exit={{ y: 40, opacity: 0, rotateX: 90 }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="flex flex-col sm:flex-row justify-around items-center gap-3"
+              className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
             >
               {["Applied", "Interview", "Offer", "Accepted"].map((stage) => (
                 <div
@@ -224,30 +259,26 @@ export function MultiSelectBar({
                     setHoverAction(`${stage}`.toLowerCase() as any)
                   }
                   onMouseLeave={() => setHoverAction(null)}
+                  className={`w-full flex justify-center items-center ${hoverAction === `${stage}`.toLowerCase() ? "highlighted" : ""}`}
                 >
-                  <button key={stage} onClick={() => handleMove(stage)}>
+                  <Button key={stage} onClick={() => handleMove(stage)} className={`small w-full items-center justify-center`} style={{background: "transparent"}}>
                     {stage}
-                  </button>
+                  </Button>
                 </div>
               ))}
-              <button onClick={() => setShowMoveOptions(false)}>
+              <Button onClick={() => setShowMoveOptions(false)} className="small w-full items-center justify-center flex" style={{background: "transparent"}}>
                 <img
                   src={upIcon}
                   alt="Move to new column"
-                  className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:-rotate-90"
+                  className="w-5 h-5 icon transition-transform duration-300 ease-in-out group-hover:-rotate-90"
                 />
-              </button>
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Status text */}
-      <div className="w-full text-center">
-        <p className="text-sm text-gray-200 transition-all duration-200">
-          {getStatusText()}
-        </p>
-      </div>
     </div>
   );
 }

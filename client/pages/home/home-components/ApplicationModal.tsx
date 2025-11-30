@@ -154,8 +154,8 @@ export default function NewApplication({ isOpen, onClose, initialStage = "", ini
         >
             <form
                 onSubmit={handleSave}
-                className="w-full max-w-xl rounded-lg shadow-lg p-10 mx-4"
-                style={{ background: "var(--card-background), var(--card-background)", border: "1px solid var(--color-blue-5)" }}
+                className="w-full max-w-xl rounded-lg shadow-lg p-10 mx-4 glass"
+                style={{ background: "var(--primary-gradient)", border: "1px solid var(--color-blue-5)" }}
             >
                 {/* Header with title and close button */}
                 <div className="relative flex items-center mb-4">

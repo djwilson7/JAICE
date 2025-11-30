@@ -27,6 +27,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
 import undo from "@/assets/icons/undo-alt.svg";
 import redo from "@/assets/icons/redo-alt.svg";
+import Button from "@/global-components/button";
 // import { fetchJobById } from "@/global-services/database";
 
 export function HomePage() {
@@ -47,11 +48,16 @@ export function HomePage() {
   const [jobs, setJobs] = useState<JobCardType[]>([]); // to hold the list of job cards (initially set to mock data)
   const itemDraggedRef = useRef<JobCardType | null>(null); // to track the item being dragged
   const isOverRef = useRef<string | null>(null); // to track which column is being hovered over during drag-and-drop
+  const [isDragging, setIsDragging] = useState(false); // to track if an item is being dragged
   const [emailsLoaded, setEmailsLoaded] = useState(false); // to track if emails have been loaded
   const [isLoadingEmails, setIsLoadingEmails] = useState(false); // to prevent multiple email load attempts
   const [rlsToken, setRlsToken] = useState<string | null>(null); // to hold the RLS JWT token
   const [sortedJobs, setSortedJobs] = useState<JobCardType[]>([]); // to hold the sorted list of job cards
   const [filteredJobs, setFilteredJobs] = useState<JobCardType[]>([]); // to hold the filtered list of job cards based on search
+  const [isDeleting, setIsDeleting] = useState(false); // to track if the delete confirmation modal is open 
+  const [isNewAppOpen, setIsNewAppOpen] = useState(false); // to track if the new application modal is open
+  const [isHighlighted, setIsHighlighted] = useState<string | null>(null); // to track if a column is highlighted
+  
   const [viewportHeight, setViewportHeight] = useState(
     () => window.innerHeight
   );
@@ -71,6 +77,23 @@ export function HomePage() {
   // mirror the stack in a ref for syncronus pop and push actions
   const undoRef = useRef<UndoAction[]>([]);
   const redoRef = useRef<UndoAction[]>([]);
+
+  //This hides the redo/undo button during alternate interactions.
+  // Searching, multiselecting, info modal, dragging, editing, deleting, adding new apps
+  const [showRedoUndo, setShowRedoUndo] = useState((undoStack.length > 0 || redoStack.length > 0));
+  useEffect(() => {
+    const hasRedoUndo = undoStack.length > 0 || redoStack.length > 0; // If either stack has items
+    const userIsSearching = searchQuery.trim().length > 0;            // If the user is actively searching
+    const userIsMultiSelecting = isMultiSelecting;                    // If the user is multi selecting jobs
+    const userHasInfoModalOpen = isInfoModalOpen;                     // If the user has the info modal open
+    const userIsDragging = isDragging;                    // If the user is not currently dragging an item
+    const userIsEditingJob = editingJob !== null;                // If the user is editing or adding a new application
+    const userIsDeleting = isDeleting;
+    const userHasNewAppOpen = isNewAppOpen;
+    const shouldShow = hasRedoUndo && !userIsSearching && !userIsMultiSelecting && !userHasInfoModalOpen && !userIsDragging && !userIsEditingJob && !userHasNewAppOpen && !userIsDeleting;
+    setShowRedoUndo(shouldShow);
+  }, [undoStack, redoStack, isMultiSelecting, searchQuery, isInfoModalOpen, isDragging, editingJob, isDeleting, isNewAppOpen]);
+
 
   const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
   const [loadingAnimation, setLoadingAnimation] = useState<any>(initialTheme ? loadingAnimationLight : loadingAnimationDark);
@@ -320,6 +343,7 @@ export function HomePage() {
 
   const handleDragStart = (JobCard: JobCardType) => {
     setIsMultiSelecting(false);
+    setIsDragging(true);
     itemDraggedRef.current = JobCard;
   };
 
@@ -333,6 +357,7 @@ export function HomePage() {
 
   const handleDragEnd = async () => {
     // If an item was dragged and is over a different column, update its column
+    setIsDragging(false);
     const itemDragged = itemDraggedRef.current;
     const isOver = isOverRef.current;
 
@@ -946,6 +971,8 @@ export function HomePage() {
           dimmed={!!searchQuery && !matchOrderMap.has(job.id)}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          isDeleting={isDeleting}
+          setIsDeleting={setIsDeleting}
         />
       ));
 
@@ -1030,6 +1057,9 @@ export function HomePage() {
                       column.id === "accepted" || column.id === "rejected"
                     }
                     onToggleReject={toggleAcceptedToRejected}
+                    isNewAppOpen={isNewAppOpen}
+                    setIsNewAppOpen={setIsNewAppOpen}
+                    isHighlighted={isHighlighted}
                   >
                     {jobsByColumn[column.id]}{" "}
                     {/* render the JobCards associated with the columns id */}
@@ -1046,13 +1076,14 @@ export function HomePage() {
               onDelete={handleDeleteMultiple}
               onMove={handleMoveMultiple}
               onArchive={handleArchiveMultiple}
+              setIsHighlighted={setIsHighlighted}
             />
           )}
 
           {/* Undo bar (stay until refresh or all undos performed) */}
-          {(undoStack.length > 0 || redoStack.length > 0) && !isMultiSelecting && (
+          {showRedoUndo && !isMultiSelecting && (
             <div 
-                className="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 flex items-center gap-3 bg-[var(--color-bg)]/80 rounded-3xl shadow-lg "
+                className="flex flex-row fixed bottom-6 justify-center items-center flex gap-1 rounded-xl p-1 glass"
                 role="status"
                 aria-live="polite"
               >
@@ -1060,7 +1091,7 @@ export function HomePage() {
                   title={undoStack.length === 0 ? "No actions to undo" : "Undo (Ctrl+Z)"}
                   className="rounded"
                 >
-                  <button
+                  <Button
                     type="button"
                     onClick={performUndo}
                     aria-label="Undo last action"
@@ -1068,7 +1099,7 @@ export function HomePage() {
                     className={`p-2 undoRedo`}
                   >
                     <img src={undo} alt="Undo" className="w-5 h-5 icon" />
-                  </button>
+                  </Button>
                 </span>
 
                 <span 
@@ -1087,6 +1118,9 @@ export function HomePage() {
                 </span>
               </div>
             )}
+          
+          <div className="fixed bottom-0 w-full bg-transparent z-25" style={{boxShadow: "var(--page-shadow)"}}></div>          
+
 
           <NewApplication
             isOpen={!!editingJob}

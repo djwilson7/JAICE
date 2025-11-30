@@ -22,10 +22,11 @@ export function LandingPage() {
     window.addEventListener("themechange", updateBrand);
     return () => window.removeEventListener("themechange", updateBrand);
   }, []);
+
   return (
     <div
       className="flex flex-col gap-10 min-h-screen p-[2rem] md:flex-row overflow-auto"
-      style={{ background: "var(--color-bg-alt)" }}
+      style={{ background: "var(--primary-gradient)" }}
     >
       {/* *Top Container */}
       <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
@@ -35,15 +36,15 @@ export function LandingPage() {
             <img src={brandImg} className="fit-cover" />
           </div>
           <div className="text-left">
-            <h1>Job Application Intelligence</h1>
-            <h1>& Career Enhancement</h1>
+            <h1 className="primary-text">Job Application Intelligence</h1>
+            <h1 className="primary-text">& Career Enhancement</h1>
           </div>
-          <h2>Simplify Your Job Hunt</h2>
+          <h2 className="secondary-text">Simplify Your Job Hunt</h2>
         </div>
       </div>
 
       {/* *Form Container */}
-      <div className="flex w-full  px-[2rem] py-[4rem] items-center justify-center">
+      <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
         {/* Inner Container */}
         <div className="flex flex-col w-[30rem]">
           <LandingForm />

@@ -6,13 +6,16 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { router } from "@/global-services/router";
 import AuthProvider from "@/global-components/AuthProvider";
+import { SettingsProvider } from "@/pages/settings/provider/SettingsProvider";
 
 const root = document.getElementById("root");
 
 ReactDOM.createRoot(root!).render(
-    <React.StrictMode>
-        <AuthProvider>
-            <RouterProvider router={router} />
-        </AuthProvider>
-    </React.StrictMode>
+  <React.StrictMode>
+    <SettingsProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </SettingsProvider>
+  </React.StrictMode>
 );

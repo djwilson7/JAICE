@@ -186,7 +186,7 @@ export function NavigationBar() {
       {/* Navigation Bar */}
       <nav className="absolute left-0 h-screen">
         <motion.div
-          className="fixed z-200 left-0 h-full bg-[var(--color-blue-1)] flex flex-col items-left justify-center p-1 gap-3 pt-10 overflow-hidden"
+          className="fixed primary-color z-200 left-0 h-full flex flex-col items-left justify-center p-1 gap-3 pt-10 overflow-hidden"
           variants={{
             rest: { width: restWidth },
             hover: { width: "15rem" },
@@ -233,7 +233,7 @@ export function NavigationBar() {
             </motion.span>
           </motion.header>
 
-          <hr className="w-full border-t-2 border-[var(--color-blue-2)]"/>
+          <hr className="header-split"/>
 
           <div className="flex flex-col items-left h-full w-full justify-between group-hover:items-start">
             {/* Primary Page Buttons*/}
@@ -282,7 +282,7 @@ export function NavigationBar() {
 
       {/* Header */}
       <motion.header
-        className="flex flex-row px-8 py-8 bg-[var(--color-blue-1)] sticky top-0 z-100 shadow"
+        className="flex flex-row px-8 py-8 primary-color sticky top-0 z-100 shadow"
         variants={{
           rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
@@ -313,13 +313,13 @@ export function NavigationBar() {
 
             {/* name placeholder */}
             <div className="flex flex-col">
-              <h2 className="text-2xl text-left font-bold line-clamp-1">
+              <h2 className="text-2xl text-left font-bold primary-text line-clamp-1">
                 {firstName} {lastName}
               </h2>
-              <small className="text-left text-[var(--gray-color)] line-clamp-1">
+              <small className="text-left secondary-text line-clamp-1">
                 {headerEmail}
               </small>
-              <caption className="text-left text-[var(--gray-color)] line-clamp-1">
+              <caption className="text-left secondary-text line-clamp-1">
                 Fresh Starter
               </caption>
             </div>
@@ -339,20 +339,20 @@ export function NavigationBar() {
                 src={searchIcon}
                 alt="Search"
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon"
-                // changes the color of  the icon
               />
             </div>
           </div>
         </div>
       </motion.header>
       <motion.div
-        className="overflow-x-auto shadow-inner"
+        className="overflow-x-auto shadow-inner min-h-[calc(100vh-8rem)]"
         variants={{
           rest: { marginLeft: restWidth },
           hover: { marginLeft: "15rem" },
         }}
         animate={navIsHovered ? "hover" : "rest"}
         transition={{ duration: animationDuration }}
+        style={{ background: "var(--page-gradient)" }}
       >
         <Outlet />
       </motion.div>
