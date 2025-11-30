@@ -17,11 +17,10 @@ import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
 import resumeIcon from "@/assets/icons/resume.svg";
-import brandLight from "@/assets/images/brand_light.png";
-import brandDark from "@/assets/images/brand_dark.png";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
+import { useBrandImage } from "@/global-services/useBrandImage";
 
 const MenuExpandButton = ({
   hoverEnabled,
@@ -126,18 +125,7 @@ export function NavigationBar() {
     parseFloat(getCSSVar("--animation-duration")) || 0.2;
   const [hoverEnabled, setHoverEnabled] = useState<boolean>(true);
 
-  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
-  const [brandImg, setBrandImg] = useState<string>(initialTheme ? brandLight : brandDark);
-
-  useEffect(() => {
-    const updateBrand = () => {
-      const htmlTheme = document.documentElement.getAttribute("data-theme");
-      setBrandImg(htmlTheme === "light" ? brandLight : brandDark);
-    };
-    updateBrand();
-    window.addEventListener("themechange", updateBrand);
-    return () => window.removeEventListener("themechange", updateBrand);
-  }, []);
+  const brandImg = useBrandImage();
 
   useEffect(() => {
     // Update selected button based on current path

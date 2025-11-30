@@ -24,6 +24,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem(SETTINGS_KEYS.THEME, theme);
+    window.dispatchEvent(new Event("themechange"));
   }, [theme]);
 
   // TEXT SCALE
@@ -37,13 +38,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       textScale === "small" ? "0.85" : textScale === "large" ? "1.15" : "1";
     document.documentElement.style.setProperty("--text-scale", scale);
     localStorage.setItem(SETTINGS_KEYS.TEXT_SCALE, textScale);
+    window.dispatchEvent(new Event("textscalechange"));
   }, [textScale]);
 
   // MOTION
   const [motion, setMotion] = useState<MotionPreference>(
     () =>
       (localStorage.getItem(SETTINGS_KEYS.MOTION) as MotionPreference) ||
-      "Default"
+      "default"
   );
 
   useEffect(() => {
@@ -54,18 +56,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       duration
     );
     localStorage.setItem(SETTINGS_KEYS.MOTION, motion);
+    window.dispatchEvent(new Event("motionchange"));
   }, [motion]);
 
   // CONTRAST
   const [contrast, setContrast] = useState<ContrastLevel>(
     () =>
       (localStorage.getItem(SETTINGS_KEYS.CONTRAST) as ContrastLevel) ||
-      "Default"
+      "default"
   );
 
   useEffect(() => {
     document.documentElement.setAttribute("data-contrast", contrast);
     localStorage.setItem(SETTINGS_KEYS.CONTRAST, contrast);
+    window.dispatchEvent(new Event("contrastchange"));
   }, [contrast]);
 
   const value: SettingsContextValue = {

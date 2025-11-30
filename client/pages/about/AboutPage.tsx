@@ -3,9 +3,7 @@
 import * as React from "react"
 import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
-import brandDark from "@/assets/images/brand_dark.png";
-import brandLight from "@/assets/images/brand_light.png";
-import { useEffect, useState } from "react";
+import { useBrandImage } from "@/global-services/useBrandImage";
 
 /* Reuseable section wrapper (title + opt. eyebrow + 2-column layout) */
 function Section({
@@ -145,19 +143,7 @@ function TeamGrid({
 
 export function AboutPage() {
   const navigate = useNavigate();
-  
-  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
-  const [brandImg, setBrandImg] = useState<string>(initialTheme ? brandLight : brandDark);
-
-  useEffect(() => {
-    const updateBrand = () => {
-      const htmlTheme = document.documentElement.getAttribute("data-theme");
-      setBrandImg(htmlTheme === "light" ? brandLight : brandDark);
-    };
-    updateBrand();
-    window.addEventListener("themechange", updateBrand);
-    return () => window.removeEventListener("themechange", updateBrand);
-  }, []);
+  const brandImg = useBrandImage();
 
   return (
     <div style={{ background: "var(--primary-gradient)" }} className="min-h-screen">
