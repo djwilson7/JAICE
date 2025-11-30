@@ -100,7 +100,7 @@
   --glass-bg-hover: rgba(0, 0, 0, 0.8);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-hover: rgba(255, 255, 255, 0.2);
-  
+
   --shadow-color: #ffffff;
   --shadow-color-rgb: 255, 255, 255;
   --black-color: #000000;
@@ -248,11 +248,11 @@ html[data-theme="light"] {
 
   /* Primary Colors */
   --primary-one: #c2ccd6;
-  --primary-two: #a3b8c7; 
+  --primary-two: #a3b8c7;
   --primary-three: #7fa5bb;
   --primary-four: #4f7f99;
   --primary-five: #25303a;
-  
+
   --primary-one-rgb: 194, 204, 214; /* Dark Blue (Sidebar Background) */
   --primary-two-rgb: 163, 184, 199; /* Medium Dark Blue (Selected Button) */
   --primary-three-rgb: 127, 165, 187; /* Medium Blue (Not Currently Used) */
@@ -333,7 +333,7 @@ html[data-theme="light"] {
   --fs-subheading: calc(20px * var(--text-scale));
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
-  
+
   --animation-duration: 0.3s;
   --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
     brightness(90%) contrast(88%);
@@ -395,14 +395,19 @@ html[data-contrast="low"] {
 
 html[data-contrast="default"] {
   /* Effects */
-  --shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-  --job-card-review-border: 1px solid var(--orange-color);
+  --shadow: 0 0 5px rgba(var(--shadow-color-rgb), 0.3);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.4);
 
+  --job-card-review-border: 1px solid var(--orange-color);
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.5);
+  --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
   /* Button at rest */
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
   --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
-  
+
   /* Button on Hover */
   --button-hover-background: var(--primary-one);
   --button-hover-border: 1px solid var(--primary-three);
@@ -465,50 +470,54 @@ html[data-contrast="bw"] {
 
 /* 
 ################################################################
-  BASE ELEMENT OVERRIDES
+BASE ELEMENT OVERRIDES
 
-  These styles define the default look and behavior for core HTML
-  elements across the entire application. Every <button>, <input>,
-  <a>, etc. will inherit these baseline styles unless explicitly
-  overridden.
+These rules define the default look and behavior for the basic HTML
+elements used throughout the app. Every <button>, <input>, <a>, etc.
+automatically starts with these styles unless something more specific
+replaces them.
 
-  Example:
-    <button>New Button</button>
-      → receives the global base button styling.
+Example:
+  <button>New Button</button>
+    → gets the global button styling.
 
-    <button className="shadow">New Button</button>
-      → receives the base button styling + the .shadow class.
+  <button className="shadow">New Button</button>
+    → gets the global button styling any overrides from the “shadow” class.
 
+If we want all links across the site to look the same, this is where
+we define that shared appearance.
 
-  For example if we wanted all website links to share a common style,
-  we would define that here.
+Example (notice there’s no "." or "#" — we’re styling the tag directly):
+  a {
+    color: var(--primary-one);
+    text-decoration: none;
+  }
 
-  Example: (notice there is no preceding . or # because this is a base element)
-    a {
-      color: var(--primary-one);
-      text-decoration: none;
-    }
+  a:hover {
+    text-decoration: underline;
+  }
 
-    a:hover {
-      text-decoration: underline;
-    }
+This makes every <a> tag use the same color and removes the default
+underline, while still adding an underline when the user hovers.
 
-    This ensures all <a> elements across the app have consistent styling.
-    Specifically, this would set all links to use the primary-one color
-    and remove the default underline.
+Guiding Principles:
+- Base element overrides set the universal foundation so the UI feels
+  consistent everywhere.
 
-    The :hover rule adds an underline when the user hover overs the element.
+- Custom classes are optional add-ons for special cases or unique
+  styling needs. Add them to override or apply additional styles.
 
-  Guiding Principles:
-  - Base Element Overrides: Set the universal baseline for commonly 
-    used elements so the UI stays consistent.
-  - Custom Classes: Add-on styles used for specific contexts or
-    one-off variations. Apply these only when needed.
-  - If a custom style is repeatedly used across multiple components,
-    promote it to a base override for consistency and to reduce duplication.
-  - Theme-responsive or accessibility-sensitive elements should rely 
-    on CSS variables that update automatically based on the current 
-    theme or user settings.
+- If you find yourself using the same custom style in multiple places,
+  consider moving it here so it becomes a new shared default.
+
+- Anything that should react to Light/Dark mode, contrast settings, or
+  accessibility preferences should rely on our CSS variables (they
+  update automatically for you).
+
+- Order Matters:
+  Base styles come first.
+  Custom classes come after.
+  This lets custom classes safely “layer” on top of the base styling.
 ################################################################
 */
 html,
@@ -608,7 +617,6 @@ button.selected {
 }
 
 button.small {
-  border-radius: 20px;
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
   font-weight: 500;
@@ -648,15 +656,12 @@ button.red:hover {
 button.reviewed {
   align-items: center;
   align-self: start;
-  border-radius: 12px;
-  border: 1px solid transparent;
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
   font-weight: 500;
   font-family: var(--font-subheading);
   cursor: pointer;
   color: var(--color-white);
-  background-color: transparent;
   transition: all 0.25s ease;
 }
 
@@ -689,15 +694,15 @@ button.undoRedo {
   background-color: transparent;
 }
 
+button.undoRedo:hover {
+  transform: scale(1.2);
+  border-color: transparent;
+}
+
 button.undoRedo:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-}
-
-button.undoRedo:hover {
-  transform: scale(1.2);
-  border-color: transparent;
 }
 
 button.undoRedo:active {
@@ -708,10 +713,10 @@ button.undoRedo:active {
 
 /* 
 ###############################################################
-  CUSTOM CLASSES (UTILITY + THEME-RESPONSIVE)
+CUSTOM CLASSES (UTILITY + THEME-RESPONSIVE)
 
-  These classes are optional and only apply when explicitly added
-  to an element (className="your-class").
+These classes are optional. They only apply when you manually add them
+to an element (className="example").
 
   They are intended for:
   - Utility styling (e.g., shadows, borders, layout helpers)
@@ -833,7 +838,7 @@ button.undoRedo:active {
 }
 
 .header-split {
-  border: 1px solid var(--primary-two);
+  border: 1px solid var(--gray-color);
   width: 100%;
   opacity: 0.5;
 }
