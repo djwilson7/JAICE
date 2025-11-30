@@ -247,18 +247,21 @@ export function JobCard({
           opacity: 0,
           height: 0,
         }}
+        
         animate={{
           opacity: localReviewNeeded && isHovered ? 1 : 0,
           height: localReviewNeeded && isHovered ? "auto" : 0,
         }}
+
         exit={{
           opacity: 0,
           height: 0,
         }}
+
         transition={{ duration: 0.12 }}
         role="tooltip"
         aria-hidden={!isHovered}
-        className="w-full z-50 border-b border-orange-600 text-orange-600"
+        className="w-full z-50 border-b border-[var(--orange-color)] text-[var(--orange-color)]"
       >
         {hoverMessageForReview}
       </motion.small>

@@ -1083,7 +1083,7 @@ export function HomePage() {
           {/* Undo bar (stay until refresh or all undos performed) */}
           {showRedoUndo && !isMultiSelecting && (
             <div 
-                className="flex flex-row fixed bottom-6 justify-center items-center flex gap-1 rounded-xl p-1 glass"
+                className="flex flex-row fixed bottom-6 justify-center items-center flex gap-1 rounded-xl p-1 glass z-2"
                 role="status"
                 aria-live="polite"
               >
@@ -1119,7 +1119,7 @@ export function HomePage() {
               </div>
             )}
           
-          <div className="fixed bottom-0 w-full bg-transparent z-25" style={{boxShadow: "var(--page-shadow)"}}></div>          
+          <div className="fixed bottom-0 w-full bg-transparent z-1" style={{boxShadow: "var(--page-shadow)"}}></div>          
 
 
           <NewApplication

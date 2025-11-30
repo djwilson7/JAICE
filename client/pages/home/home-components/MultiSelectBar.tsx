@@ -164,7 +164,7 @@ export function MultiSelectBar({
     <div
       className={
         className ||
-        "fixed bottom-6 justify-center items-center flex flex-col gap-1 rounded-xl p-1 glass"
+        "fixed bottom-6 justify-center items-center flex flex-col gap-1 rounded-xl p-1 glass z-2"
       }
     >
       <div className="w-full text-center">

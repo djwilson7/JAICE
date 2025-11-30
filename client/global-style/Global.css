@@ -108,9 +108,15 @@
   --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
   --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
 
-  --red-color: #c0392b;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #c71d0a;
   --purple-color: #8e44ad;
-  --gray-color: #c5c5c5;
+  --gray-color: #c6c6c6;
+
+  --orange-color: #da681b;
+  --orange-icon-filter: brightness(0) saturate(100%) invert(54%) sepia(83%)
+    saturate(3278%) hue-rotate(358deg) brightness(94%) contrast(95%);
 
   /* Primary Colors */
   --primary-one: #192836; /* Dark Blue (Sidebar Background) */
@@ -182,10 +188,10 @@
   );
 
   /* Fonts and Text*/
-  --text-primary: #ffffff;
-  --text-secondary: #c6c6c6;
-  --text-red: #ff6b6b;
-  --text-orange: #ffa94d;
+  --text-primary: var(--white-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
 
   --font-title: "Baskerville", serif;
   --font-headline: "Baskerville", serif;
@@ -217,7 +223,7 @@ html[data-theme="light"] {
   --page-bg: #bebebe;
   --page-bg-highlight: #eaeaea;
   --page-bg-rgb: 190, 190, 190;
-  --page-shadow: 0px 0px 4rem 4rem rgba(255, 255, 255, 0.5);
+  --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
 
   --modal-background: white;
   --modal-background-rgb: 255, 255, 255;
@@ -234,16 +240,19 @@ html[data-theme="light"] {
   --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
   --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
 
+  --black-color: #000000;
+  --white-color: #ffffff;
   --red-color: #c0392b;
   --purple-color: #8e44ad;
-  --gray-color: #7a7a7a;
+  --gray-color: #565656;
+  --orange-color: #d35400;
 
   /* Primary Colors */
-  --primary-one: #c2ccd6; /* Dark Blue (Sidebar Background) */
-  --primary-two: #a3b8c7; /* Medium Dark Blue (Selected Button) */
-  --primary-three: #7fa5bb; /* Medium Blue (Not Currently Used) */
-  --primary-four: #4f7f99; /* Light Blue (Text/Icons on Button) */
-  --primary-five: #25303a; /* Very Light Blue (Main Text) */
+  --primary-one: #c2ccd6;
+  --primary-two: #a3b8c7;
+  --primary-three: #7fa5bb;
+  --primary-four: #4f7f99;
+  --primary-five: #25303a;
 
   --primary-one-rgb: 194, 204, 214; /* Dark Blue (Sidebar Background) */
   --primary-two-rgb: 163, 184, 199; /* Medium Dark Blue (Selected Button) */
@@ -261,8 +270,8 @@ html[data-theme="light"] {
 
   --primary-gradient: linear-gradient(
     180deg,
-    rgba(var(--primary-one-rgb), 0.92) 0%,
-    rgba(var(--primary-two-rgb), 0.92) 100%
+    rgba(var(--primary-two-rgb), 0.92) 0%,
+    rgba(var(--primary-four-rgb), 0.92) 100%
   );
 
   /* Other Colors */
@@ -308,10 +317,10 @@ html[data-theme="light"] {
   );
 
   /* Fonts and Text*/
-  --text-primary: #000000;
-  --text-secondary: #515151;
-  --text-red: #fc6161;
-  --text-orange: #ffa94d;
+  --text-primary: var(--black-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
 
   --font-title: "Baskerville", serif;
   --font-headline: "Baskerville", serif;
@@ -325,7 +334,7 @@ html[data-theme="light"] {
   --fs-subheading: calc(20px * var(--text-scale));
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
-  
+
   --animation-duration: 0.3s;
   --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
     brightness(90%) contrast(88%);
@@ -361,6 +370,9 @@ html[data-contrast="low"] {
   /* Effects */
   --shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 
+  --orange-color: #f4a673;
+  --orange-icon-filter: brightness(0) saturate(100%) invert(81%) sepia(46%)
+    saturate(1273%) hue-rotate(326deg) brightness(101%) contrast(92%);
   /* Button at rest */
   --button-background: none;
   --button-border: 1px solid transparent;
@@ -715,8 +727,7 @@ button.undoRedo:active {
 }
 
 .orangeIcon {
-  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
-    hue-rotate(359deg) brightness(99%) contrast(102%);
+  filter: var(--orange-icon-filter)
 }
 
 .greenIcon {
@@ -762,7 +773,7 @@ button.undoRedo:active {
 }
 
 .review {
-  border: 1px solid orangered;
+  border: 1px solid var(--orange-color);
 }
 
 .shadow {
