@@ -210,13 +210,13 @@ export function JobCard({
     </div>
   );
 
-  const needsReview = localReviewNeeded ? "review" : "";
+  const needsReview = localReviewNeeded ? "review" : "shadow";
 
   return (
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col job-card shadow ${needsReview}`}
+      className={`w-full flex items-center flex flex-col job-card ${needsReview}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -261,7 +261,7 @@ export function JobCard({
         transition={{ duration: 0.12 }}
         role="tooltip"
         aria-hidden={!isHovered}
-        className="w-full z-50 border-b border-[var(--orange-color)] text-[var(--orange-color)]"
+        className="w-full z-50 review-header"
       >
         {hoverMessageForReview}
       </motion.small>

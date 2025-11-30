@@ -100,23 +100,21 @@
   --glass-bg-hover: rgba(0, 0, 0, 0.8);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-hover: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  --glass-shadow-hover: 0 0 10px 2px rgba(255, 255, 255, 0.6);
-
-  --job-card-background: #1d1b20;
-  --job-card-background-rgb: 29, 27, 32;
-  --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
-  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
-
+  
+  --shadow-color: #ffffff;
+  --shadow-color-rgb: 255, 255, 255;
   --black-color: #000000;
   --white-color: #ffffff;
   --red-color: #c71d0a;
   --purple-color: #8e44ad;
   --gray-color: #c6c6c6;
-
   --orange-color: #da681b;
-  --orange-icon-filter: brightness(0) saturate(100%) invert(54%) sepia(83%)
-    saturate(3278%) hue-rotate(358deg) brightness(94%) contrast(95%);
+  --orange-color-rgb: 218, 104, 27;
+
+  --job-card-background: #1d1b20;
+  --job-card-background-rgb: 29, 27, 32;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
 
   /* Primary Colors */
   --primary-one: #192836; /* Dark Blue (Sidebar Background) */
@@ -220,8 +218,8 @@ Light theme overrides
 */
 html[data-theme="light"] {
   /* Backgrounds */
-  --page-bg: #bebebe;
-  --page-bg-highlight: #eaeaea;
+  --page-bg: #929090;
+  --page-bg-highlight: #c0bebe;
   --page-bg-rgb: 190, 190, 190;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
 
@@ -232,28 +230,29 @@ html[data-theme="light"] {
   --glass-bg-hover: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(0, 0, 0, 0.1);
   --glass-border-hover: rgba(0, 0, 0, 0.2);
-  --glass-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  --glass-shadow-hover: 0 0 10px 2px rgba(0, 0, 0, 0.6);
+
+  --shadow-color: #000000;
+  --shadow-color-rgb: 0, 0, 0;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #c0392b;
+  --purple-color: #8e44ad;
+  --gray-color: #393636;
+  --orange-color: #d35400;
+  --orange-color-rgb: 211, 84, 0;
 
   --job-card-background: #d4d4d4;
   --job-card-background-rgb: 212, 212, 212;
   --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
   --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
 
-  --black-color: #000000;
-  --white-color: #ffffff;
-  --red-color: #c0392b;
-  --purple-color: #8e44ad;
-  --gray-color: #565656;
-  --orange-color: #d35400;
-
   /* Primary Colors */
   --primary-one: #c2ccd6;
-  --primary-two: #a3b8c7;
+  --primary-two: #a3b8c7; 
   --primary-three: #7fa5bb;
   --primary-four: #4f7f99;
   --primary-five: #25303a;
-
+  
   --primary-one-rgb: 194, 204, 214; /* Dark Blue (Sidebar Background) */
   --primary-two-rgb: 163, 184, 199; /* Medium Dark Blue (Selected Button) */
   --primary-three-rgb: 127, 165, 187; /* Medium Blue (Not Currently Used) */
@@ -334,7 +333,7 @@ html[data-theme="light"] {
   --fs-subheading: calc(20px * var(--text-scale));
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
-
+  
   --animation-duration: 0.3s;
   --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
     brightness(90%) contrast(88%);
@@ -368,37 +367,42 @@ html[data-theme="light"] {
 */
 html[data-contrast="low"] {
   /* Effects */
-  --shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
 
-  --orange-color: #f4a673;
-  --orange-icon-filter: brightness(0) saturate(100%) invert(81%) sepia(46%)
-    saturate(1273%) hue-rotate(326deg) brightness(101%) contrast(92%);
+  --job-card-review-border: none;
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.3);
+  --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 0.3);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 0.7);
+  --icon-opacity: 0.7;
+
   /* Button at rest */
   --button-background: none;
   --button-border: 1px solid transparent;
-  --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
+  --button-shadow: 0 0 0 transparent;
 
   /* Button on Hover */
   --button-hover-background: none;
-  --button-hover-border: 1px solid var(--primary-three);
-  --button-hover-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-  --button-hover-scale: 1.05;
+  --button-hover-border: 1px solid transparent;
+  --button-hover-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  --button-hover-scale: 1.01;
 
   /* Button when selected */
   --button-selected-background: var(--primary-two);
   --button-selected-color: none;
-  --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+  --button-selected-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 html[data-contrast="default"] {
   /* Effects */
   --shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  --job-card-review-border: 1px solid var(--orange-color);
 
   /* Button at rest */
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
   --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
-
+  
   /* Button on Hover */
   --button-hover-background: var(--primary-one);
   --button-hover-border: 1px solid var(--primary-three);
@@ -414,6 +418,7 @@ html[data-contrast="default"] {
 html[data-contrast="high"] {
   /* Effects */
   --shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+  --job-card-review-border: 1.2px solid var(--orange-color);
 
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
@@ -604,19 +609,23 @@ button.selected {
 
 button.small {
   border-radius: 20px;
-  border: 1px solid transparent;
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
   font-weight: 500;
   font-family: var(--font-subheading);
-  background-color: var(--primary-one);
   cursor: pointer;
-  color: var(--text-primary);
   transition: all 0.25s ease;
+  background: var(--button-background);
+  box-shadow: var(--button-shadow);
+  border: var(--button-border);
+  color: var(--text-primary);
 }
 
 button.small:hover {
-  border-color: var(--primary-four);
+  background: var(--button-hover-background);
+  border: var(--button-hover-border);
+  box-shadow: var(--button-hover-shadow);
+  transform: scale(var(--button-hover-scale, 1));
 }
 
 button.red {
@@ -727,7 +736,9 @@ button.undoRedo:active {
 }
 
 .orangeIcon {
-  filter: var(--orange-icon-filter)
+  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
+    hue-rotate(359deg) brightness(99%) contrast(102%);
+  opacity: var(--icon-opacity);
 }
 
 .greenIcon {
@@ -745,19 +756,19 @@ button.undoRedo:active {
   border-radius: 8px;
   backdrop-filter: blur(10px);
   border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--shadow);
   transition: all var(--animation-duration) ease;
 }
 
 .glass:hover {
   background: var(--glass-bg-hover);
   border: var(--glass-border-hover);
-  box-shadow: var(--glass-shadow-hover);
+  box-shadow: var(--shadow-hover);
 }
 
 .job-card {
   background: var(--job-card-bg);
-  border-radius: 8px;
+  border-radius: 20px;
   backdrop-filter: blur(10px);
 }
 
@@ -773,7 +784,14 @@ button.undoRedo:active {
 }
 
 .review {
-  border: 1px solid var(--orange-color);
+  border: var(--job-card-review-border);
+  box-shadow: var(--job-card-review-shadow);
+}
+
+.review-header {
+  color: var(--job-card-review-header-text);
+  font-weight: 100;
+  border-bottom: var(--job-card-review-border-header);
 }
 
 .shadow {
