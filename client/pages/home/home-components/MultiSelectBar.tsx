@@ -64,6 +64,7 @@ export function MultiSelectBar({
       setSelectedJobs([]);
       setShowMoveOptions(false);
       setIsMultiSelecting(false);
+      setIsHighlighted(null);
     } catch (err) {
       console.error("Failed to move jobs:", err);
     }

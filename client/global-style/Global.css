@@ -110,6 +110,7 @@
 
   --red-color: #c0392b;
   --purple-color: #8e44ad;
+  --gray-color: #c5c5c5;
 
   /* Primary Colors */
   --primary-one: #192836; /* Dark Blue (Sidebar Background) */
@@ -200,11 +201,8 @@
   --fs-caption: calc(14px * var(--text-scale));
 
   --animation-duration: 0.3s;
-
   --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
     saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
-
-  --gray-color: #c5c5c5;
 }
 
 /* 
@@ -216,79 +214,119 @@ Light theme overrides
 */
 html[data-theme="light"] {
   /* Backgrounds */
-  --color-bg: #bebebe;
-  --color-bg-rgb: 245, 247, 250;
-  --color-bg-alt: linear-gradient(160deg, #ffffff, #eaf0f7, #ffffff);
+  --page-bg: #bebebe;
+  --page-bg-highlight: #eaeaea;
+  --page-bg-rgb: 190, 190, 190;
+  --page-shadow: 0px 0px 4rem 4rem rgba(255, 255, 255, 0.5);
 
-  /* Updated blue palette for light mode */
-  --color-blue-1: #c2ccd6;
-  --color-blue-2: #a3b8c7;
-  --color-blue-3: #7fa5bb;
-  --color-blue-4: #4f7f99;
-  --color-blue-5: #25303a;
+  --modal-background: white;
+  --modal-background-rgb: 255, 255, 255;
 
-  --color-blue-1-rgb: 194, 204, 214;
-  --color-blue-2-rgb: 163, 184, 199;
-  --color-blue-3-rgb: 127, 165, 187;
-  --color-blue-4-rgb: 79, 127, 153;
-  --color-blue-5-rgb: 37, 48, 58;
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-bg-hover: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-border-hover: rgba(0, 0, 0, 0.2);
+  --glass-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  --glass-shadow-hover: 0 0 10px 2px rgba(0, 0, 0, 0.6);
 
-  /* Other Colors */
-  --job-card-background: #ffffff;
-  --job-card-background-rgb: 255, 255, 255;
+  --job-card-background: #d4d4d4;
+  --job-card-background-rgb: 212, 212, 212;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
 
-  /* Column Colors */
-  --primary-gradient-color: #c2ccd6;
-  --applied-column-color: #c7c7a5;
-  --interview-column-color: #a8c3a8;
-  --offer-column-color: #8fb48f;
-  --accepted-column-color: #6ea06e;
-  --rejected-column-color: #caa4a8;
-
-  --applied-column-bg: linear-gradient(
-    180deg,
-    var(--primary-gradient-color),
-    var(--applied-column-color) 20%,
-    var(--primary-gradient-color) 95%
-  );
-
-  --interview-column-bg: linear-gradient(
-    180deg,
-    var(--primary-gradient-color),
-    var(--interview-column-color) 20%,
-    var(--primary-gradient-color) 95%
-  );
-
-  --offer-column-bg: linear-gradient(
-    180deg,
-    var(--primary-gradient-color),
-    var(--offer-column-color) 20%,
-    var(--primary-gradient-color) 95%
-  );
-
-  --accepted-column-bg: linear-gradient(
-    180deg,
-    var(--primary-gradient-color),
-    var(--accepted-column-color) 20%,
-    var(--primary-gradient-color) 95%
-  );
-
-  --rejected-column-bg: linear-gradient(
-    180deg,
-    var(--primary-gradient-color),
-    var(--rejected-column-color) 20%,
-    var(--primary-gradient-color) 95%
-  );
-
-  /* Typography */
+  --red-color: #c0392b;
+  --purple-color: #8e44ad;
   --gray-color: #7a7a7a;
 
-  --card-background: linear-gradient(
+  /* Primary Colors */
+  --primary-one: #c2ccd6; /* Dark Blue (Sidebar Background) */
+  --primary-two: #a3b8c7; /* Medium Dark Blue (Selected Button) */
+  --primary-three: #7fa5bb; /* Medium Blue (Not Currently Used) */
+  --primary-four: #4f7f99; /* Light Blue (Text/Icons on Button) */
+  --primary-five: #25303a; /* Very Light Blue (Main Text) */
+
+  --primary-one-rgb: 194, 204, 214; /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 163, 184, 199; /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 127, 165, 187; /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 79, 127, 153; /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 37, 48, 58; /* Very Light Blue (Main Text) */
+
+  /* Gradients */
+  --page-gradient: linear-gradient(
+    160deg,
+    var(--page-bg-highlight),
+    var(--page-bg),
+    var(--page-bg-highlight)
+  );
+
+  --primary-gradient: linear-gradient(
     180deg,
     rgba(var(--primary-one-rgb), 0.92) 0%,
     rgba(var(--primary-two-rgb), 0.92) 100%
   );
 
+  /* Other Colors */
+  --applied-color: #c7c7a5;
+  --interview-color: #a8c3a8;
+  --offer-color: #8fb48f;
+  --accepted-color: #6ea06e;
+  --rejected-color: #caa4a8;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  /* Fonts and Text*/
+  --text-primary: #000000;
+  --text-secondary: #515151;
+  --text-red: #fc6161;
+  --text-orange: #ffa94d;
+
+  --font-title: "Baskerville", serif;
+  --font-headline: "Baskerville", serif;
+  --font-subheading: "Poppins", sans-serif;
+  --font-body: "Poppins", sans-serif;
+  --font-caption: "Poppins", sans-serif;
+
+  --text-scale: 1;
+  --fs-title: calc(40px * var(--text-scale));
+  --fs-headline: calc(28px * var(--text-scale));
+  --fs-subheading: calc(20px * var(--text-scale));
+  --fs-body: calc(16px * var(--text-scale));
+  --fs-caption: calc(14px * var(--text-scale));
+  
+  --animation-duration: 0.3s;
   --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
     brightness(90%) contrast(88%);
 }
@@ -645,7 +683,6 @@ button.undoRedo:active {
   transform: scale(1);
 }
 
-
 /* Add more base elements styles above this line */
 
 /* 
@@ -771,6 +808,5 @@ button.undoRedo:active {
   width: 100%;
   opacity: 0.5;
 }
-
 
 /* Add more custom classes above this line */
