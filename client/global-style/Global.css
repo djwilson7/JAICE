@@ -422,8 +422,14 @@ html[data-contrast="default"] {
 
 html[data-contrast="high"] {
   /* Effects */
-  --shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+  --shadow: 0 0 5px rgba(var(--shadow-color-rgb), 0.7);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.6);
+
   --job-card-review-border: 1.2px solid var(--orange-color);
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.7);
+  --job-card-review-border-header: 1.2px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
 
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
@@ -581,6 +587,13 @@ small {
   font-size: var(--fs-caption);
 }
 
+/* 
+  #################################################################################
+  Base Button Styles:
+
+  Any declared alterations beyond the ### will inherit from these base styles.
+  This ensures consistency across all button variants unless explicitly changed.
+
 /* Base Button Styling */
 button {
   border-radius: 20px;
@@ -596,6 +609,7 @@ button {
   color: var(--text-primary);
 }
 
+/* Base Button Hover State */
 button:hover {
   background: var(--button-hover-background);
   border: var(--button-hover-border);
@@ -603,12 +617,17 @@ button:hover {
   transform: scale(var(--button-hover-scale, 1));
 }
 
+/* Base Button Disabled State */
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
   transform: scale(0.95);
 }
 
+/*
+  ###########################################################################
+  Button Variants Below (These inherit from the base button styles above)
+*/
 button.selected {
   background: var(--button-selected-background);
   box-shadow: var(--button-selected-shadow);
@@ -616,88 +635,103 @@ button.selected {
   color: var(--text-secondary);
 }
 
+/* 
+  Small Button variant only needs to override specific properties
+  It will inherit the rest from the base button styles
+
+  Think of the .small as a modifier that tweaks the base button
+  instead of redefining everything from scratch. :)
+
+  So the variant gets everything from the base, and then we say
+  but a small button should have these specific differences.
+
+  The exception being if the base button doesn't define the attribute that 
+  needs adjusted. In that case, we have to define it fully here.
+*/
 button.small {
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  background: var(--button-background);
-  box-shadow: var(--button-shadow);
-  border: var(--button-border);
-  color: var(--text-primary);
 }
 
-button.small:hover {
+/* 
+  The hover state is inherited from the base button styles,
+  so no need to redefine it here unless it needs to be different
+*/
+/* button.small:hover {
   background: var(--button-hover-background);
   border: var(--button-hover-border);
   box-shadow: var(--button-hover-shadow);
   transform: scale(var(--button-hover-scale, 1));
-}
+} */
 
+/*
+  Red Button variant only needs to override specific properties
+  It will inherit the rest from the base button styles
+*/
 button.red {
-  border-radius: 20px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: var(--fs-subheading);
-  font-weight: 500;
-  font-family: var(--font-subheading);
   background-color: var(--color-bright-red);
-  cursor: pointer;
   color: var(--primary-five);
-  transition: all 0.25s ease;
 }
 
+/*
+  Perfect override from the defined base button hover state
+*/
 button.red:hover {
   border-color: var(--primary-five);
 }
 
-button.reviewed {
-  align-items: center;
-  align-self: start;
-  padding: 0.25em 0.5em;
-  font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  color: var(--color-white);
-  transition: all 0.25s ease;
-}
-
-button.reviewed:hover {
-  border-color: var(--color-white);
-}
-
-button.addApplication {
-  background-color: transparent;
-  border-radius: 20px;
+/*
+  addApplication has been updated to create a roundSmall button variant instead
+  This is for both the add applicaiton button and the 
+  rotation button for the accepted and rejected column.
+*/
+/* button.addApplication {
+  background: transparent;
   border: 1px solid transparent;
-  padding: 0em 0.5em;
-  font-size: var(--fs-subheading);
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  color: var(--primary-five);
-  transition: all 0.25s ease;
+  padding: 0.5rem;
+  filter: var(--icon-filter);
+} */
+
+button.roundSmall {
+  background: none;
+  box-shadow: none;
+  padding: 0.2rem;
+  font-size: 0.875rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border: none;
 }
 
-button.addApplication:hover {
+/* 
+  Instead of scaling the whole button,
+  we can just scale the "+" icon inside 
+  
+  Intended for two purposes.
+
+  1. It prevents the full size button from eating the layout space
+  2. It prevents the layout from shifting when the button scales.
+*/
+/* button.addApplication:hover {
   transform: scale(2);
-  border-color: transparent;
-}
+} */
 
 button.undoRedo {
   transition: opacity 160ms ease, transform 160ms ease;
   border: none;
   opacity: 1;
   background-color: transparent;
+  box-shadow: none;
 }
 
 button.undoRedo:hover {
   transform: scale(1.2);
   border-color: transparent;
 }
+
 
 button.undoRedo:disabled {
   opacity: 0.5;
