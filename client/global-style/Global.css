@@ -985,6 +985,10 @@ to an element (className="example").
   background: var(--primary-one);
 }
 
+.primary-gradient {
+  background: var(--primary-gradient);
+}
+
 .primary-text {
   color: var(--text-primary);
 }

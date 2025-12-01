@@ -39,7 +39,7 @@ export function AccessibilityPage() {
   const contrastOptions = CONTRAST_OPTIONS;
 
   return (
-    <main className="flex flex-col w-full h-full md:flex-row p-2 md:p-5">
+    <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4">
       <CardSection>
         <SettingCard>
           <SettingHeader

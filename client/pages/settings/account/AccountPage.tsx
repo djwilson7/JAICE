@@ -257,9 +257,9 @@ export function AccountPage() {
           </h1>
         </div> */}
         {/* Right/Bottom Content */}
-        <div className="flex flex-col md:flex-row w-full h-full items-top justify-around gap-4 md:m-4 p-4">
+        <div className="flex flex-col md:flex-row w-full h-full items-top justify-evenly p-4 gap-4">
           {/* Right panel */}
-          <section className="flex flex-col w-full md:w-1/2  pl-1 pr-1 md:pl-4 md:pr-4 pt-2 pb-2">
+          <section className="flex flex-col w-full md:w-1/2  pl-1 pr-1 md:px-4 py-2 rounded-xl shadow primary-gradient">
             <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
               Profile Info
             </h1>
@@ -333,7 +333,7 @@ export function AccountPage() {
             </div>
           </section>
 
-          <section className="flex flex-col w-full md:w-1/2 pl-1 pr-1 md:pl-4 md:pr-4 pt-2 pb-2">
+          <section className="flex flex-col w-full md:w-1/2  pl-1 pr-1 md:px-4 py-2 rounded-xl shadow primary-gradient">
             <div className="flex w-full flex-col">
               <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
                 Account Security

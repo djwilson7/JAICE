@@ -99,7 +99,7 @@ export function HoverIconButton({
 
 
   return (
-    <button
+    <Button
       onClick={handleClick}
       onMouseEnter={() => state === "default" && setState("hover")}
       onMouseLeave={() => state === "hover" && setState("default")}
@@ -113,6 +113,6 @@ export function HoverIconButton({
         alt={alt}
         className={`w-5 h-5 transition-all duration-150 icon ${state === "hover" ? hoverClassName : ""}`}
       />
-    </button>
+    </Button>
   );
 }

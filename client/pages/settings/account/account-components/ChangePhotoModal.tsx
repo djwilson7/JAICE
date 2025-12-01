@@ -1,5 +1,5 @@
 import { useAuth } from "@/global-components/AuthProvider";
-import { HoverIconButton } from "@/global-components/button";
+import Button, { HoverIconButton } from "@/global-components/button";
 import xIcon from "@/assets/icons/x.svg";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { useState } from "react";
@@ -20,6 +20,16 @@ export function ChangePhotoModal({
   const { user, applyProfileUpdate } = useAuth();
   const [photoURL, setPhotoURL] = useState<string>(user?.photoURL || "");
 
+  const [xButtonStyle, setXButtonStyle] = useState<String>("w-5 h-5");
+
+  const handleEnterXButtonHover = () => {
+    setXButtonStyle("w-8 h-8");
+  };
+
+  const handleLeaveXButtonHover = () => {
+    setXButtonStyle("w-5 h-5");
+  };
+
   const handleSavePhoto = async () => {
     await applyProfileUpdate(undefined, photoURL);
     setShowModal(false);
@@ -28,29 +38,41 @@ export function ChangePhotoModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="flex flex-col bg-black/80 p-6 rounded-lg shadow-lg w-1/3 gap-6">
-        <div className="flex flex-row items-center justify-between px-2">
-          <h2 className="text-xl font-semibold">Change Profile Photo</h2>
+      <div className="flex relative  flex-col p-6 w-1/3 gap-6 shadow glass">
+        <div className="flex flex-row items-center justify-start">
+          <h2 className="text-xl font-semibold primary-text">
+            Change Profile Photo
+          </h2>
 
-          <HoverIconButton
-            onClick={() => setShowModal(false)}
-            baseIcon={xIcon}
-            hoverIcon={xIcon}
-            successIcon={xIcon}
-            failureIcon={xIcon}
-            alt="Close Modal"
-          />
+          <div className="flex absolute items-center justify-center top-0 right-0 m-4 w-8 h-8">
+            <Button
+              onClick={() => setShowModal(false)}
+              className="roundSmall"
+              onMouseEnter={handleEnterXButtonHover}
+              onMouseLeave={handleLeaveXButtonHover}
+              title="Close Modal"
+            >
+              <img
+                src={xIcon}
+                alt="Close Modal"
+                className={xButtonStyle + " icon"}
+              />
+            </Button>
+          </div>
         </div>
 
-        <FloatingInputField
-          label="URL to new profile photo"
-          type="text"
-          value={photoURL}
-          isValid={null}
-          action={setPhotoURL}
-        />
-
-        <button onClick={handleSavePhoto}>Save Photo</button>
+        <div className="">
+          <FloatingInputField
+            label="URL to new profile photo"
+            type="text"
+            value={photoURL}
+            isValid={null}
+            action={setPhotoURL}
+          />
+        </div>
+        <div className="flex w-1/2">
+          <Button onClick={handleSavePhoto}>Save Photo</Button>
+        </div>
       </div>
     </div>
   );
