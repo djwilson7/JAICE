@@ -33,7 +33,7 @@ function useThemeIcon() {
       return halfCircleIcon;
     }
     return theme === "light" ? sunIcon : moonIcon;
-  }
+  };
 
   const [themeIcon, setThemeIcon] = useState<string>(computeThemeIcon());
 
@@ -52,13 +52,15 @@ function useThemeIcon() {
   return themeIcon;
 }
 
-const ThemeToggleButton = ({
-}: {}) => {
-
+const ThemeToggleButton = ({}: {}) => {
   const themeIcon = useThemeIcon();
+  const titleText =
+    themeIcon === moonIcon ? "Flip to Light Mode" : "Flip to Dark Mode";
+
   const handleThemeToggle = () => {
     const currentTheme = document.documentElement.getAttribute("data-theme");
-    const currentContrast = document.documentElement.getAttribute("data-contrast");
+    const currentContrast =
+      document.documentElement.getAttribute("data-contrast");
 
     if (currentContrast === "bw") {
       const newTheme = "dark";
@@ -69,7 +71,7 @@ const ThemeToggleButton = ({
       window.dispatchEvent(new Event("appearancechange"));
       return;
     }
-  
+
     const newTheme = currentTheme === "light" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", newTheme);
 
@@ -81,15 +83,12 @@ const ThemeToggleButton = ({
     <button
       onClick={handleThemeToggle}
       className="z-201 right-8 cornerFloating"
+      title={titleText}
     >
-      <img
-        src={themeIcon}
-        alt="Theme Icon"
-        className="icon"
-      />
+      <img src={themeIcon} alt="Theme Icon" className="icon" />
     </button>
   );
-}
+};
 
 const MenuExpandButton = ({
   hoverEnabled,
@@ -106,7 +105,11 @@ const MenuExpandButton = ({
       <img
         src={hoverEnabled ? compressIcon : expandIcon}
         alt={hoverEnabled ? "Compress" : "Expand"}
-        title={hoverEnabled ? "Keep Navigation Bar Expanded" : "Hover to Expand Navigation Bar"}
+        title={
+          hoverEnabled
+            ? "Keep Navigation Bar Expanded"
+            : "Hover to Expand Navigation Bar"
+        }
         className="icon"
       />
     </button>
@@ -128,7 +131,7 @@ const NavButton = ({
 }) => {
   return (
     <div className="flex flex-row items-center gap-2">
-      <Button onClick={onClick} isSelected={isSelected} className="navButton" >
+      <Button onClick={onClick} isSelected={isSelected} className="navButton">
         <div className="flex items-center">
           <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
         </div>
@@ -225,7 +228,7 @@ export function NavigationBar() {
   const restWidth = hoverEnabled ? "6rem" : "15rem";
 
   return (
-    <div className="h-screen relative overflow-x-hidden">
+    <div className="h-screen overflow-x-hidden">
       <MenuExpandButton
         hoverEnabled={hoverEnabled}
         setHoverEnabled={setHoverEnabled}
@@ -281,7 +284,7 @@ export function NavigationBar() {
             </motion.span>
           </motion.header>
 
-          <hr className="header-split"/>
+          <hr className="header-split" />
 
           <div className="flex flex-col items-left h-full w-full justify-between group-hover:items-start">
             {/* Primary Page Buttons*/}
