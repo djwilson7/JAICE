@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 import Button from "@/global-components/button";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useAuth } from "@/global-components/AuthProvider";
 import { logOut } from "@/global-services/auth";
 // Icons
@@ -17,10 +17,79 @@ import compressIcon from "@/assets/icons/compress.svg";
 import expandIcon from "@/assets/icons/expand.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
 import resumeIcon from "@/assets/icons/resume.svg";
+import sunIcon from "@/assets/icons/sun.svg";
+import moonIcon from "@/assets/icons/moon.svg";
+import halfCircleIcon from "@/assets/icons/half-circle.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
 import { useBrandImage } from "@/global-services/useBrandImage";
+
+function useThemeIcon() {
+  const computeThemeIcon = () => {
+    const theme = document.documentElement.getAttribute("data-theme");
+    const contrast = document.documentElement.getAttribute("data-contrast");
+    if (contrast === "bw") {
+      return halfCircleIcon;
+    }
+    return theme === "light" ? sunIcon : moonIcon;
+  }
+
+  const [themeIcon, setThemeIcon] = useState<string>(computeThemeIcon());
+
+  useEffect(() => {
+    const updateIcon = () => setThemeIcon(computeThemeIcon());
+
+    updateIcon();
+
+    window.addEventListener("appearancechange", updateIcon);
+
+    return () => {
+      window.removeEventListener("appearancechange", updateIcon);
+    };
+  }, []);
+
+  return themeIcon;
+}
+
+const ThemeToggleButton = ({
+}: {}) => {
+
+  const themeIcon = useThemeIcon();
+  const handleThemeToggle = () => {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const currentContrast = document.documentElement.getAttribute("data-contrast");
+
+    if (currentContrast === "bw") {
+      const newTheme = "dark";
+      const newContrast = "high";
+
+      document.documentElement.setAttribute("data-theme", newTheme);
+      document.documentElement.setAttribute("data-contrast", newContrast);
+      window.dispatchEvent(new Event("appearancechange"));
+      return;
+    }
+  
+    const newTheme = currentTheme === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", newTheme);
+
+    const event = new Event("appearancechange");
+    window.dispatchEvent(event);
+  };
+
+  return (
+    <button
+      onClick={handleThemeToggle}
+      className="z-201 right-8 cornerFloating"
+    >
+      <img
+        src={themeIcon}
+        alt="Theme Icon"
+        className="icon"
+      />
+    </button>
+  );
+}
 
 const MenuExpandButton = ({
   hoverEnabled,
@@ -32,23 +101,13 @@ const MenuExpandButton = ({
   return (
     <button
       onClick={() => setHoverEnabled(!hoverEnabled)}
-      className="flex absolute top-0 left-0 m-2 z-201"
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        margin: "0.5rem",
-        zIndex: 201,
-        height: "2rem",
-        width: "2rem",
-        padding: "0.5rem",
-        background: "transparent",
-      }}
+      className="z-201 left-0 ml-2 cornerFloating"
     >
       <img
         src={hoverEnabled ? compressIcon : expandIcon}
         alt={hoverEnabled ? "Compress" : "Expand"}
-        className="object-fit aspect-square w-full h-full icon"
+        title={hoverEnabled ? "Keep Navigation Bar Expanded" : "Hover to Expand Navigation Bar"}
+        className="icon"
       />
     </button>
   );
@@ -166,11 +225,12 @@ export function NavigationBar() {
   const restWidth = hoverEnabled ? "6rem" : "15rem";
 
   return (
-    <div className="h-screen overflow-x-hidden">
+    <div className="h-screen relative overflow-x-hidden">
       <MenuExpandButton
         hoverEnabled={hoverEnabled}
         setHoverEnabled={setHoverEnabled}
       />
+      <ThemeToggleButton />
       {/* Navigation Bar */}
       <nav className="absolute left-0 h-screen">
         <motion.div

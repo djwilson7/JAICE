@@ -72,6 +72,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     window.dispatchEvent(new Event("appearancechange"));
   }, [contrast]);
 
+  useEffect(() => {
+    const syncFromDom = () => {
+      const domTheme = document.documentElement.getAttribute(
+        "data-theme"
+      ) as Theme;
+      const domContrast = document.documentElement.getAttribute(
+        "data-contrast"
+      ) as ContrastLevel;
+
+      if (domTheme && domTheme !== theme) setTheme(domTheme);
+      if (domContrast && domContrast !== contrast) setContrast(domContrast);
+    };
+
+    window.addEventListener("appearancechange", syncFromDom);
+
+    return () => window.removeEventListener("appearancechange", syncFromDom);
+  }, [theme, contrast]);
+
   const value: SettingsContextValue = {
     theme,
     setTheme,

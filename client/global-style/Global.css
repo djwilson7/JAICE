@@ -370,6 +370,12 @@ html[data-theme="light"] {
 */
 html[data-contrast="low"] {
   /* Effects */
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
   --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
   --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
 
@@ -380,7 +386,7 @@ html[data-contrast="low"] {
   --icon-opacity: 0.7;
 
   /* Button at rest */
-  --button-background: none;
+  --button-background: rgba(var(--primary-one-rgb), 0.8);
   --button-border: 1px solid transparent;
   --button-shadow: 0 0 0 transparent;
 
@@ -849,6 +855,17 @@ button.roundSmall {
   justify-content: center;
   display: flex;
   border: none;
+}
+
+button.cornerFloating {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
+  top: 0;
+  margin-top: 0.5rem;
+  background: none;
+  box-shadow: none;
+  padding: 0.3rem;
 }
 
 /* 
