@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 import Button from "@/global-components/button";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/global-components/AuthProvider";
 import { logOut } from "@/global-services/auth";
 // Icons
