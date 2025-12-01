@@ -156,7 +156,7 @@ export function Column({
             <h3>{count}</h3>
           </div>
           {showToggleRejectButton && onToggleReject && (
-              <div className="absolute right-1/4 mx-2 w-8 h-8 justify-center items-center">
+              <div className="absolute right-[2em] mx-2 w-8 h-8 justify-center items-center">
                 <Button
                   type="button"
                   onClick={onToggleReject}
