@@ -69,7 +69,7 @@ const NavButton = ({
 }) => {
   return (
     <div className="flex flex-row items-center gap-2">
-      <Button onClick={onClick} isSelected={isSelected} style={{ background: isSelected ? undefined : "transparent" }}>
+      <Button onClick={onClick} isSelected={isSelected} className="navButton" >
         <div className="flex items-center">
           <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
         </div>
@@ -163,7 +163,7 @@ export function NavigationBar() {
   const firstName = user?.displayName?.split(" ")[0] || null;
   const lastName = user?.displayName?.split(" ").slice(1).join(" ") || null;
   const headerEmail = user?.email?.toString() || null;
-  const restWidth = hoverEnabled ? "5rem" : "15rem";
+  const restWidth = hoverEnabled ? "6rem" : "15rem";
 
   return (
     <div className="h-screen overflow-x-hidden">
@@ -174,7 +174,7 @@ export function NavigationBar() {
       {/* Navigation Bar */}
       <nav className="absolute left-0 h-screen">
         <motion.div
-          className="fixed primary-color z-200 left-0 h-full flex flex-col items-left justify-center p-1 gap-3 pt-10 overflow-hidden"
+          className="fixed primary-color z-200 left-0 h-full flex flex-col items-left justify-center gap-3 pt-10 pb-5 overflow-hidden"
           variants={{
             rest: { width: restWidth },
             hover: { width: "15rem" },

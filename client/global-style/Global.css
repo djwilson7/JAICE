@@ -771,6 +771,15 @@ button.selected {
   color: var(--text-secondary);
 }
 
+button.navButton {
+  padding: 1rem;
+  width: 4rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+}
 /* 
   Small Button variant only needs to override specific properties
   It will inherit the rest from the base button styles
