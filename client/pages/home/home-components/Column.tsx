@@ -5,8 +5,6 @@ import { motion } from "framer-motion";
 import RejectedIcon from "@/assets/icons/refresh.svg";
 import plusIcon from "@/assets/icons/plus.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
-import NewApplication from "./ApplicationModal";
-import type { JobCardType } from "@/types/jobCardType";
 import Button from "@/global-components/button";
 
 interface ColumnProps {
@@ -22,9 +20,8 @@ interface ColumnProps {
   viewportHeight: number;
   showToggleRejectButton?: boolean;
   onToggleReject?: () => void;
-  isNewAppOpen: boolean;
-  setIsNewAppOpen: (isOpen: boolean) => void;
   isHighlighted: string | null;
+  openJobAppModal: (columnId: string) => void;
 }
 
 export function Column({
@@ -40,9 +37,8 @@ export function Column({
   viewportHeight,
   showToggleRejectButton,
   onToggleReject,
-  isNewAppOpen,
-  setIsNewAppOpen,
   isHighlighted,
+  openJobAppModal,
 }: ColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null); // Ref to the column div
   const hasChildren = count > 0;
@@ -79,18 +75,6 @@ export function Column({
     onDragLeave();
   }, [onDragLeave]);
 
-  function openNewApplicationModal() {
-    setIsNewAppOpen(true);
-  }
-
-  function closeNewApplicationModal() {
-    setIsNewAppOpen(false);
-  }
-
-  // placeholder to handle saving new application data
-  function handleSaveApplication(data: Partial<JobCardType> & { id?: string }) {
-    console.log("New Application Data:", data);
-  }
 
   // onPointerEnter and onPointerLeave are used to send the column id up to the parent for drag and drop handling
   // layout is used for smooth animations when removing or adding job cards (drag and drop)
@@ -125,7 +109,7 @@ export function Column({
         style={columnStyle}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
-        className={`flex flex-col m-2 p-2 transition-all duration-300 shadow ${
+        className={`flex flex-col m-2 p-2 animate-element corner-radius shadow ${
           highlightColumn ? "highlighted" : ""
         }`}
         layout
@@ -138,14 +122,14 @@ export function Column({
               className="roundSmall"
               aria-label={`Add new application to ${title} stage`}
               title={`Add new application to ${title} stage`}
-              onClick={openNewApplicationModal}
+              onClick={() => openJobAppModal(id)}
               onMouseEnter={handleMouseOverAddButton}
               onMouseLeave={handleMouseOutAddButton}
             >
               <img
                 src={plusIcon}
                 alt="Add Application"
-                className={`${addButtonStyle} icon items-center justify-center transition-all duration-300 ease-in-out`}
+                className={`flex ${addButtonStyle} icon animate-element`}
               />
             </Button>
           </div>
@@ -169,7 +153,7 @@ export function Column({
                   <img
                     src={RejectedIcon}
                     alt="Switch toAccepted/Rejected"
-                    className={`${hoverButtonStyle} icon transition-transform duration-300 ease-in-out group-hover:rotate-180`}
+                    className={`${hoverButtonStyle} icon animate-element group-hover:rotate-180`}
                   />
                 </Button>
               </div>
@@ -186,13 +170,6 @@ export function Column({
           )}
         </div>
       </motion.div>
-
-      <NewApplication
-        isOpen={isNewAppOpen}
-        onClose={closeNewApplicationModal}
-        initialStage={title}
-        onSave={handleSaveApplication}
-      />
     </>
   );
 }

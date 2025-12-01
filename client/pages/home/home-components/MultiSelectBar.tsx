@@ -168,7 +168,7 @@ export function MultiSelectBar({
       }
     >
       <div className="w-full text-center">
-        <p className="secondary-text transition-all duration-200">
+        <p className="secondary-text animate-element">
           {getStatusText()}
         </p>
       </div>
@@ -186,7 +186,7 @@ export function MultiSelectBar({
               className="flex w-full justify-around items-center gap-4 py-2 px-8"
             >
               {/* Move */}
-              <button
+              <Button
                 onClick={() => setShowMoveOptions(true)}
                 className="group small w-1/3 flex justify-center items-center"
                 onMouseEnter={() => setHoverAction("move")}
@@ -198,9 +198,9 @@ export function MultiSelectBar({
                 <img
                   src={replaceIcon}
                   alt="Move to new column"
-                  className={`w-4 h-4 icon ${hoverAction === "move" ? "greenIcon" : ""} transition-transform duration-300 ease-in-out group-hover:-rotate-90`}
+                  className={`w-4 h-4 icon ${hoverAction === "move" ? "greenIcon" : ""} animate-element group-hover:-rotate-90`}
                 />
-              </button>
+              </Button>
 
               {/* Archive */}
               <div
@@ -216,7 +216,7 @@ export function MultiSelectBar({
                   alt="Archive"
                   onClick={onArchiveClicked}
                   disabled={!isEnabled}
-                  className="small w-full flex justify-center items-center"
+                  className="small w-full flex justify-center items-center animate-element"
                   style={{background: "transparent"}}
                   hoverClassName="orangeIcon"
                   title="Mark selected jobs as archived"

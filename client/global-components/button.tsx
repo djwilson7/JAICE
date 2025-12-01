@@ -31,7 +31,7 @@ export default function Button({
       onClick={(event) =>  onClick?.(event) }
       onMouseEnter={(event) => onMouseEnter?.(event)}
       onMouseLeave={(event) => onMouseLeave?.(event)}
-      className={`${selectedClass} ${className}`}
+      className={`${selectedClass} ${className} animate-element`}
       style={style}
       disabled={disabled}
       title={title}
@@ -104,14 +104,14 @@ export function HoverIconButton({
       onMouseEnter={() => state === "default" && setState("hover")}
       onMouseLeave={() => state === "hover" && setState("default")}
       disabled={disabled}
-      className={`${className}`}
+      className={`${className} animate-element`}
       style={style}
       title={title}
     >
       <img
         src={getIcon()}
         alt={alt}
-        className={`w-5 h-5 transition-all duration-150 icon ${state === "hover" ? hoverClassName : ""}`}
+        className={`w-5 h-5 icon animate-element ${state === "hover" ? hoverClassName : ""}`}
       />
     </Button>
   );

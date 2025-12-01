@@ -1,7 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
@@ -22,10 +22,10 @@ export function JobCard({
   isMultiSelecting,
   handleMultiSelectClick,
   dimmed,
-  onEdit,
   onDelete,
   isDeleting,
   setIsDeleting,
+  openJobAppModal,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
@@ -33,10 +33,10 @@ export function JobCard({
   isMultiSelecting: boolean;
   handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
-  onEdit?: (job: JobCardType) => void;
   onDelete?: (id: string) => Promise<boolean>;
   isDeleting: boolean;
   setIsDeleting: (isDeleting: boolean) => void;
+  openJobAppModal: (job: JobCardType) => void;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
@@ -140,7 +140,7 @@ export function JobCard({
       onClick={() => setShowDeleteConfirm(false)}
     >
       {/* backdrop */}
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 modal-backdrop" />
 
       {/* dialog */}
       <div
@@ -216,7 +216,7 @@ export function JobCard({
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col job-card ${needsReview}`}
+      className={`w-full flex items-center flex flex-col job-card animate-element ${needsReview}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -379,10 +379,7 @@ export function JobCard({
         >
           {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
           <motion.button
-            onClick={(e) => {
-              e.preventDefault();
-              onEdit?.(job);
-            }}
+            onClick={() => openJobAppModal(job)}
             type="button"
             className="small w-full"
             style={{ background: "transparent" }}

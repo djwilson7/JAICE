@@ -204,6 +204,7 @@
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
 
+  --corner-radius: 20px;
   --animation-duration: 0.3s;
   --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
     saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
@@ -337,6 +338,7 @@ html[data-theme="light"] {
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
 
+  --corner-radius: 20px;
   --animation-duration: 0.3s;
   --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
     brightness(90%) contrast(88%);
@@ -738,13 +740,13 @@ small {
 
 /* Base Button Styling */
 button {
-  border-radius: 20px;
+  border-radius: var(--corner-radius);
   padding: 0.6em 1.2em;
   font-size: var(--fs-subheading);
   font-weight: 500;
   font-family: var(--font-subheading);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all var(--animation-duration) ease;
   background: var(--button-background);
   box-shadow: var(--button-shadow);
   border: var(--button-border);
@@ -932,6 +934,15 @@ to an element (className="example").
   filter: var(--icon-filter);
 }
 
+.corner-radius {
+  border-radius: var(--corner-radius);
+}
+
+.modal-backdrop {
+  background: rgba(var(--modal-background-rgb), 0.7);
+  backdrop-filter: blur(2px);
+}
+
 .redIcon {
   filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
 }
@@ -954,7 +965,7 @@ to an element (className="example").
 
 .glass {
   background: var(--glass-bg);
-  border-radius: 8px;
+  border-radius: var(--corner-radius);
   backdrop-filter: blur(10px);
   border: var(--glass-border);
   box-shadow: var(--shadow);
@@ -969,7 +980,7 @@ to an element (className="example").
 
 .job-card {
   background: var(--job-card-bg);
-  border-radius: 20px;
+  border-radius: var(--corner-radius);
   backdrop-filter: blur(10px);
 }
 
@@ -980,7 +991,7 @@ to an element (className="example").
 .modal {
   background: rgba(var(--modal-background-rgb), 0.6);
   backdrop-filter: blur(10px);
-  border-radius: 8px;
+  border-radius: var(--corner-radius);
   border: 1px solid var(--primary-five);
 }
 
@@ -999,12 +1010,13 @@ to an element (className="example").
   box-shadow: var(--shadow);
 }
 
+.animate-element {
+  transition: all var(--animation-duration) ease;
+}
+
 .highlighted {
   box-shadow: 0 0 10px 2px var(--primary-four);
-  transform: scale(1.01);
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-  border-radius: 20px;
+  border-radius: var(--corner-radius);
 }
 
 .primary-color {
@@ -1033,6 +1045,7 @@ to an element (className="example").
 
 .card {
   background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
   gap: 1rem;
   padding: 1rem;
 }
