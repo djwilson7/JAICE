@@ -24,7 +24,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem(SETTINGS_KEYS.THEME, theme);
-    window.dispatchEvent(new Event("themechange"));
+    window.dispatchEvent(new Event("appearancechange"));
   }, [theme]);
 
   // TEXT SCALE
@@ -69,7 +69,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-contrast", contrast);
     localStorage.setItem(SETTINGS_KEYS.CONTRAST, contrast);
-    window.dispatchEvent(new Event("contrastchange"));
+    window.dispatchEvent(new Event("appearancechange"));
   }, [contrast]);
 
   const value: SettingsContextValue = {

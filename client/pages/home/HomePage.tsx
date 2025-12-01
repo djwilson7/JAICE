@@ -21,6 +21,7 @@ import { MultiSelectBar } from "@/pages/home/home-components/MultiSelectBar";
 import Fuse from "fuse.js";
 import loadingAnimationDark from "@/assets/loaders/CircleVenn.json";
 import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
+import loadingAnimationBW from "@/assets/loaders/CircleVennBW.json";
 
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -94,13 +95,19 @@ export function HomePage() {
     setShowRedoUndo(shouldShow);
   }, [undoStack, redoStack, isMultiSelecting, searchQuery, isInfoModalOpen, isDragging, editingJob, isDeleting, isNewAppOpen]);
 
-
+  const isBWMode = document.documentElement.getAttribute("data-contrast") === "bw";
   const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
-  const [loadingAnimation, setLoadingAnimation] = useState<any>(initialTheme ? loadingAnimationLight : loadingAnimationDark);
+  const [loadingAnimation, setLoadingAnimation] = useState<any>(
+    isBWMode ? loadingAnimationBW : (initialTheme ? loadingAnimationLight : loadingAnimationDark));
 
   useEffect(() => {
     const updateLoadingSpinner = () => {
       const htmlTheme = document.documentElement.getAttribute("data-theme");
+      const htmlContrast = document.documentElement.getAttribute("data-contrast");
+      if (htmlContrast === "bw") {
+        setLoadingAnimation(loadingAnimationBW);
+        return;
+      }
       setLoadingAnimation(htmlTheme === "light" ? loadingAnimationLight : loadingAnimationDark);
     };
     updateLoadingSpinner();

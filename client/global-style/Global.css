@@ -259,6 +259,9 @@ html[data-theme="light"] {
   --primary-four-rgb: 79, 127, 153; /* Light Blue (Text/Icons on Button) */
   --primary-five-rgb: 37, 48, 58; /* Very Light Blue (Main Text) */
 
+  --primary-dark: #ffffff;
+  --primary-light: #000000;
+  
   /* Gradients */
   --page-gradient: linear-gradient(
     160deg,
@@ -449,11 +452,143 @@ html[data-contrast="high"] {
 
 html[data-contrast="bw"] {
   /* Effects */
-  --shadow: 0 0 5px rgba(255, 255, 255, 0.6);
 
-  --button-background: rgb(46, 46, 46);
-  --button-border: 1px solid transparent;
-  --button-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+  /* 
+    ###################################################################################
+    Using Dark Mode as the primary palette base for BW mode 
+  */
+  --page-bg: #7a7a7a;
+  --page-bg-highlight: #7a7a7a;
+  --page-bg-rgb: 30, 28, 32;
+  --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+
+  --modal-background: black;
+  --modal-background-rgb: 0, 0, 0;
+
+  --glass-bg: rgba(0, 0, 0, 0.5);
+  --glass-bg-hover: rgba(0, 0, 0, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+
+  --shadow-color: #ffffff;
+  --shadow-color-rgb: 255, 255, 255;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #c71d0a;
+  --purple-color: #8e44ad;
+  --gray-color: #d7d7d7;
+  --orange-color: #da681b;
+  --orange-color-rgb: 218, 104, 27;
+
+  --job-card-background: #484848;
+  --job-card-background-rgb: 72, 72, 72;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 1);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 1);
+
+  /* Primary Colors */
+  --primary-one: #1a1a1a; /* Dark Blue (Sidebar Background) */
+  --primary-two: #595e61; /* Medium Dark Blue (Selected Button) */
+  --primary-three: #c2c2c2; /* Medium Blue (Not Currently Used) */
+  --primary-four: #d3d3d3; /* Light Blue (Text/Icons on Button) */
+  --primary-five: #f2f1ef; /* Very Light Blue (Main Text) */
+
+  --primary-one-rgb: 26, 26, 26; /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 89, 94, 97; /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 194, 194, 194; /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 211, 211, 211; /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+
+  /* Gradients */
+  --page-gradient: linear-gradient(
+    160deg,
+    var(--page-bg-highlight),
+    var(--page-bg),
+    var(--page-bg-highlight)
+  );
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
+
+  /* Other Colors */
+  --applied-color: #1a1a1a;
+  --interview-color: #1a1a1a;
+  --offer-color: #1a1a1a;
+  --accepted-color: #1a1a1a;
+  --rejected-color: #1a1a1a;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  /* Fonts and Text*/
+  --text-primary: var(--white-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
+
+  --font-title: "Baskerville", serif;
+  --font-headline: "Baskerville", serif;
+  --font-subheading: "Poppins", sans-serif;
+  --font-body: "Poppins", sans-serif;
+  --font-caption: "Poppins", sans-serif;
+
+  --text-scale: 1;
+  --fs-title: calc(40px * var(--text-scale));
+  --fs-headline: calc(28px * var(--text-scale));
+  --fs-subheading: calc(20px * var(--text-scale));
+  --fs-body: calc(16px * var(--text-scale));
+  --fs-caption: calc(14px * var(--text-scale));
+
+  --animation-duration: 0.3s;
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+
+  --shadow: none;
+  --shadow-hover: none;
+
+  --job-card-review-border: 1.2px solid var(--orange-color);
+  --job-card-review-shadow: none;
+  --job-card-review-border-header: 1.2px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
+
+  --button-background: var(--primary-one);
+  --button-border: 1px solid rgba(var(--primary-five-rgb), 1);
+  --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
 
   /* Button on Hover */
   --button-hover-background: black;
@@ -462,7 +597,7 @@ html[data-contrast="bw"] {
   --button-hover-scale: 1.05;
 
   /* Button when selected */
-  --button-selected-background: rgb(87, 87, 87);
+  --button-selected-background: var(--primary-two);
   --button-selected-border: none;
   --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
 
@@ -470,6 +605,7 @@ html[data-contrast="bw"] {
     brightness(100%) contrast(100%);
 
   --color-bg-alt: linear-gradient(160deg, black, white, black);
+
 }
 
 /* Add additional accessibility adjustments above this line */
