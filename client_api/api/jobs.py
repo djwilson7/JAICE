@@ -361,3 +361,42 @@ async def flip_deleted_state(
     except Exception as e:
         logging.error(f"[{trace_id}] Error toggling deleted state: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Get Deleted Jobs
+@router.get("/trash", summary="Get users deleted job applications")
+async def get_trashed_jobs(user: dict = Depends(get_current_user)):
+
+    uid = user.get("uid")
+    query = """
+    SELECT *
+    FROM public.job_applications
+    WHERE user_uid = $1 AND is_deleted = TRUE
+    ORDER BY received_at DESC
+    """
+
+    try:
+        async with get_connection() as conn:
+            rows = await conn.fetch(query, uid)
+            return {"status": "success", "jobs": [dict(r) for r in rows]}
+        
+    except Exception as e:
+        logging.error(f"Error fetching trash jobs for user {uid}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# Get Archived Jobs
+@router.get("/archive", summary="Get user's archived job applications")
+async def get_archive(user: dict = Depends(get_current_user)):
+    uid = user.get("uid")
+    query = """
+    SELECT *
+    FROM public.job_applications
+    WHERE user_uid = $1 AND is_archived = TRUE
+    ORDER BY updated_at DESC
+    """
+    try:
+        async with get_connection() as conn:
+            rows = await conn.fetch(query, uid)
+            return {"status": "success", "jobs": [dict(r) for r in rows]}
+    except Exception as e:
+        logging.error(f"Error fetching archived jobs for user {uid}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

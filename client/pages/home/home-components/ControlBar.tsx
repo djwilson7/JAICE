@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import { checkGmailStatus } from "../utils/checkGmailStatus";
 import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
+import undoTrash from "@/assets/icons/trash-undo.svg";
+import viewArchive from "@/assets/icons/folder.svg";
 
 interface ControlBarProps {
   isMultiSelecting: boolean;
@@ -39,6 +41,9 @@ interface ControlBarProps {
   infoModalLabel?: string;
   isInfoModalOpen: boolean;
   setInfoModalOpen: (value: boolean) => void;
+
+  onOpenTrash?: () => void;
+  onOpenArchive?: () => void;
 
 }
 
@@ -92,6 +97,9 @@ export function ControlBar({
   infoModalLabel,
   isInfoModalOpen,
   setInfoModalOpen,
+
+  onOpenTrash,
+  onOpenArchive,
 
 }: ControlBarProps) {
   const navigate = useNavigate();
@@ -156,6 +164,25 @@ export function ControlBar({
             isChecked={isMultiSelecting}
             setIsChecked={setIsMultiSelecting}
           />
+
+          {/* Undo Trash Button */}
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => onOpenTrash?.()}
+          >
+            <img src={undoTrash} alt="Undo Trash Icon" className="w-5 h-5 icon" />
+          </button>
+
+          {/* View Archive Button */}
+          <button
+            type="button"
+            aria-label="Archive Button"
+            className="icon-button"
+            onClick={() => onOpenArchive?.()}
+          >
+            <img src={viewArchive} alt="View Archive Icon" className="w-5 h-5 icon" />
+          </button>
 
           {/* Info Modal Toggle */}
           <CheckBoxToggle

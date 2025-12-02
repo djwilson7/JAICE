@@ -21,6 +21,7 @@ import { MultiSelectBar } from "@/pages/home/home-components/MultiSelectBar";
 import Fuse from "fuse.js";
 import loadingAnimationDark from "@/assets/loaders/CircleVenn.json";
 import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
+import TrashArchiveModal from "./home-components/TrashArchiveModal";
 
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -38,6 +39,17 @@ export function HomePage() {
   const [isMenuOpen, setMenuOpen] = useState(false); // to track if the options menu is open
   const [isSearching, setIsSearching] = useState(false); // to track if the search bar is active
   const [searchQuery, setSearchQuery] = useState(""); // to track the current search query
+
+  // trash/archive modal state
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+
+  const [trashItems, setTrashItems] = useState<JobCardType[]>([]);
+  const [archiveItems, setArchiveItems] = useState<JobCardType[]>([]);
+
+  const [isLoadingTrash, setIsLoadingTrash] = useState(false);
+  const [isLoadingArchive, setIsLoadingArchive] = useState(false);
+  
 
   const [isAlertOpen, setIsAlertOpen] = useState(false); // to track if the alert box is open
   const [newJobsCount, setNewJobsCount] = useState(0); // to track the count of new jobs
@@ -200,8 +212,8 @@ export function HomePage() {
     loadEmails();
   }, []);
 
-  async function loadEmails() {
-    if (emailsLoaded || isLoadingEmails) return; // Prevent multiple loads
+  async function loadEmails(force = false) {
+    if (!force && (emailsLoaded || isLoadingEmails)) return; // Prevent multiple loads
 
     setIsLoadingEmails(true);
 
@@ -223,6 +235,62 @@ export function HomePage() {
       setIsLoadingEmails(false);
     }
   }
+
+  // Load Trash and Archive Modal Items
+  async function loadTrash() 
+  {
+    if (isLoadingTrash) return;
+
+    setIsLoadingTrash(true);
+
+    try {
+      const res = await api("/api/jobs/trash");
+
+      if (res.status === "success" && Array.isArray(res.jobs)) 
+      {
+        setTrashItems(convertToJobCardArray(res.jobs));
+      } else {
+        setTrashItems([]);
+      }
+    } catch (error) {
+      console.error("Failed to load trash items:", error);
+    } finally {
+      setIsLoadingTrash(false);
+    }
+  }
+
+  async function loadArchive()
+  {
+    if (isLoadingArchive) return;
+
+    setIsLoadingArchive(true);
+
+    try {
+      const res = await api("/api/jobs/archive");
+
+      if (res.status === "success" && Array.isArray(res.jobs))
+      {
+        setArchiveItems(convertToJobCardArray(res.jobs));
+      } else {
+        setArchiveItems([]);
+      }
+    } catch (error) {
+      console.error("Failed to load archive items:", error);
+    } finally {
+      setIsLoadingArchive(false);
+    }
+  }
+
+  const openTrash = async () => {
+    setIsTrashOpen(true);
+    await loadTrash();
+  };
+
+  const openArchive = async () => {
+    setIsArchiveOpen(true);
+    await loadArchive();
+  };
+
 
   // Mint rls jwt token for realtime subscription (30 min expiry)
   useEffect(() => {
@@ -1035,6 +1103,8 @@ export function HomePage() {
               infoModalLabel={isInfoModalOpen ? "Info" : ""}
               isInfoModalOpen={isInfoModalOpen}
               setInfoModalOpen={setInfoModalOpen}
+              onOpenTrash={openTrash}
+              onOpenArchive={openArchive}
             />
             {/* Kan Ban Columns */}
             <div className="flex gap-4 w-full">
@@ -1088,7 +1158,6 @@ export function HomePage() {
                 aria-live="polite"
               >
                 <span 
-                  title={undoStack.length === 0 ? "No actions to undo" : "Undo (Ctrl+Z)"}
                   className="rounded"
                 >
                   <Button
@@ -1097,6 +1166,7 @@ export function HomePage() {
                     aria-label="Undo last action"
                     disabled={undoStack.length === 0}
                     className={`p-2 undoRedo`}
+                    title={undoStack.length === 0 ? "No actions to undo" : "Undo (Ctrl+Z)"}
                   >
                     <img src={undo} alt="Undo" className="w-5 h-5 icon" />
                   </Button>
@@ -1144,6 +1214,80 @@ export function HomePage() {
               setEditingJob(null);
             }}
 
+          />
+
+          <TrashArchiveModal
+            isOpen={isTrashOpen}
+            onClose={() => setIsTrashOpen(false)}
+            mode="trash"
+            items={trashItems}
+            onAction={async (action, ids) => {
+              if (!ids || ids.length === 0) return;
+
+              try {
+                if (action === "undelete") 
+                {
+                  // toggle deleted state 
+                  await api("/api/jobs/set-delete", {
+                    method: "POST",
+                    body: JSON.stringify({ provider_message_ids: ids }),
+                  });
+
+                  // remove from modal list locally
+                  setTrashItems((prev) => prev.filter((j) => !ids.includes(j.id)));
+
+                  // refresh main jobs list so restored items appear
+                  await loadEmails(true);
+
+                } else if (action === "delete_permanently") {
+
+                  // permanently delete
+                  await api("/api/jobs/delete", {
+                    method: "POST",
+                    body: JSON.stringify({ provider_message_ids: ids }),
+                  });
+
+                  setTrashItems((prev) => prev.filter((j) => !ids.includes(j.id)));
+                }
+
+              } catch (err) {
+                console.error("Trash action failed:", err);
+
+                await loadTrash();
+              }
+            }}
+          />
+
+          <TrashArchiveModal
+            isOpen={isArchiveOpen}
+            onClose={() => setIsArchiveOpen(false)}
+            mode="archive"
+            items={archiveItems}
+            onAction={async (action, ids) => {
+
+              if (!ids || ids.length === 0) return;
+
+              try {
+                if (action === "unarchive") 
+                {
+                  // toggle archived state on server
+                  await api("/api/jobs/set-archive", {
+                    method: "POST",
+                    body: JSON.stringify({ provider_message_ids: ids }),
+                  });
+
+                  // remove from archive list locally
+                  setArchiveItems((prev) => prev.filter((j) => !ids.includes(j.id)));
+
+                  // refresh main jobs list so unarchived items show
+                  await loadEmails(true);
+                }
+
+              } catch (err) {
+                console.error("Archive action failed:", err);
+                await loadArchive();
+              }
+            }}
           />
         </motion.div>
       )}
