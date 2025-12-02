@@ -1,5 +1,6 @@
 import Button from "@/global-components/button";
 import { CloseButton } from "@/global-components/CloseButton";
+import { createPortal } from "react-dom";
 
 interface UnlinkGmailModalProps {
   isOpen: boolean;
@@ -14,9 +15,9 @@ export function UnlinkGmailModal({
 }: UnlinkGmailModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
-      <div className="flex relative flex-col p-6 w-[500px] shadow modal">
+  return createPortal(
+    <div className="modal-backdrop">
+      <div className="w-[500px] modal">
         <div className="flex flex-row items-center justify-between">
           <h2 className="font-semibold primary-text">Unlink Gmail Account</h2>
           <CloseButton
@@ -59,6 +60,7 @@ export function UnlinkGmailModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

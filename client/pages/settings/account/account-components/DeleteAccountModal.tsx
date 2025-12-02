@@ -1,5 +1,6 @@
 import Button from "@/global-components/button";
 import { CloseButton } from "@/global-components/CloseButton";
+import { createPortal } from "react-dom";
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -14,9 +15,9 @@ export function DeleteAccountModal({
 }: DeleteAccountModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
-      <div className="flex relative flex-col p-6 w-[500px] shadow modal">
+  return createPortal(
+    <div className="modal-backdrop">
+      <div className="w-[500px] shadow modal">
         <div className="flex flex-row items-center justify-between">
           <h2 className="font-semibold primary-text">
             Delete Your JAICE Account
@@ -78,6 +79,7 @@ export function DeleteAccountModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>, 
+    document.body
   );
 }

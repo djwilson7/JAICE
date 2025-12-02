@@ -1,7 +1,7 @@
 import Button from "@/global-components/button";
 import xIcon from "@/assets/icons/x.svg";
 import { useState } from "react";
-// import { localfiles } from "@/directory/path/to/localimport";
+import { createPortal } from "react-dom";
 interface DaysToSyncProps {
   show: boolean;
   options: number[];
@@ -27,7 +27,7 @@ export function DaysToSync({
     setXButtonStyle("w-5 h-5");
   }
 
-  return (
+  return createPortal(
       <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
       <div className="flex relative flex-col p-6 w-1/3 gap-6 shadow modal">
         <div className="flex flex-row items-center justify-start">
@@ -64,6 +64,7 @@ export function DaysToSync({
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

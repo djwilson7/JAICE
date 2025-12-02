@@ -133,7 +133,7 @@ export function JobCard({
   // delete confirmation modal
   const modalMarkup = (
     <div
-      className="fixed inset-0 z-1000 flex items-center justify-center modal-backdrop"
+      className="modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby={`delete-dialog-title-${job.id}`}
@@ -141,7 +141,7 @@ export function JobCard({
     >
       {/* dialog */}
       <div
-        className="flex flex-col w-full z-60 max-w-md p-4 gap-4 modal"
+        className="w-[400px] modal"
         onClick={(e) => e.stopPropagation()}
       >
         <h3

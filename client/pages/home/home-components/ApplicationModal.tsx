@@ -13,6 +13,8 @@ import { api } from "@/global-services/api";
 import type { JobCardType } from "@/types/jobCardType";
 import Button from "@/global-components/button";
 import xIcon from "@/assets/icons/x.svg";
+import { createPortal } from "react-dom";
+
 /*
     The new application modal is now a central component that handles
 
@@ -212,9 +214,9 @@ export default function NewApplication({
   }
   // Set the modal title based on the presence of a job title (new vs edit)
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop"
+      className="modal-backdrop"
       onClick={handleOverlayClick}
       aria-labelledby="new-app-title"
       role="dialog"
@@ -223,10 +225,6 @@ export default function NewApplication({
       <form
         onSubmit={handleSave}
         className="w-full max-w-xl p-10 modal"
-        style={{
-          background: "var(--primary-gradient)",
-          border: "1px solid var(--color-blue-5)",
-        }}
       >
         {/* Header with title and close button */}
         <div className="relative flex w-full items-center mb-4 justify-center">
@@ -270,7 +268,7 @@ export default function NewApplication({
 
           {/* Job Title input field */}
           <label className="block">
-            <span className="text-gray-700 dark:text-gray-300">Job Title</span>
+            <span className="primary-text">Job Title</span>
             <input
               className="mt-1 block w-full border rounded px-2 py-1"
               value={jobTitle}
@@ -281,7 +279,7 @@ export default function NewApplication({
 
           {/* Company Name input field */}
           <label className="block">
-            <span className="text-sm font-medium">Company</span>
+            <span className="primary-text">Company</span>
             <input
               className="mt-1 block w-full border rounded px-2 py-1"
               value={companyName}
@@ -292,7 +290,7 @@ export default function NewApplication({
 
           {/* Notes field is optional*/}
           <label className="block">
-            <span className="text-sm font-medium">Notes (optional)</span>
+            <span className="primary-text">Notes (optional)</span>
             <textarea
               className="mt-1 block w-full border rounded px-2 py-1"
               rows={4}
@@ -312,6 +310,7 @@ export default function NewApplication({
           </button>
         </div>
       </form>
-    </div>
-  );
+    </div>,
+    document.body
+  )
 }

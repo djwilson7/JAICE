@@ -41,6 +41,7 @@ export function MultiSelectBar({
     | "interview"
     | "offer"
     | "accepted"
+    | "rejected"
     | "back"
     | null
   >(null);
@@ -75,9 +76,9 @@ export function MultiSelectBar({
   const [isEnabled, setIsEnabled] = useState(selectedCount > 0);
 
   useEffect(() => {
-    setIsEnabled(selectedCount > 0);  
+    setIsEnabled(selectedCount > 0);
   }, [selectedCount]);
-  
+
   const getStatusText = () => {
     if (selectedCount === 0) return "Select jobs to see actions.";
     const plural = selectedCount > 1 ? "jobs" : "job";
@@ -104,6 +105,9 @@ export function MultiSelectBar({
       case "accepted":
         setIsHighlighted("accepted");
         return `Move ${selectedCount} ${plural} to accepted?`;
+      case "rejected":
+        setIsHighlighted("rejected");
+        return `Move ${selectedCount} ${plural} to rejected?`;
       case "back":
         setIsHighlighted(null);
         return `Back to main actions.`;
@@ -159,127 +163,146 @@ export function MultiSelectBar({
       return false;
     }
   };
+  const dim = "w-[35px] h-[35px]";
+  const labelDim = "w-[90px] h-[50px]";
 
   return (
-    <div
-      className={
-        className ||
-        "fixed bottom-6 justify-center items-center flex flex-col gap-1 rounded-xl p-1 glass z-2"
-      }
-    >
-      <div className="w-full text-center">
-        <p className="secondary-text animate-element">
-          {getStatusText()}
-        </p>
-      </div>
-      <hr className="header-split"/> 
-      {/* Button area */}
-      <div className="relative w-full">
-        <AnimatePresence mode="wait">
-          {!showMoveOptions ? (
-            // Default actions
-            <motion.div
-              key="default"
-              initial={{ y: 0, rotateX: 0, opacity: 1 }}
-              exit={{ y: -40, opacity: 0, rotateX: 90 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="flex w-full justify-around items-center gap-4 py-2 px-8"
-            >
-              {/* Move */}
-              <Button
-                onClick={() => setShowMoveOptions(true)}
-                className="group small w-1/3 flex justify-center items-center"
-                onMouseEnter={() => setHoverAction("move")}
-                onMouseLeave={() => setHoverAction(null)}
-                disabled={!isEnabled}
-                style={{background: "transparent"}}
-                title="Move selected jobs to a different column"
+    <div className={className || "glass min-w-[500px]"}>
+      <div className="w-full p-2 flex flex-col">
+        <div className="w-full text-center">
+          <p className="secondary-text animate-element">{getStatusText()}</p>
+        </div>
+        <hr className="header-split my-2" />
+        {/* Button area */}
+        <div className="w-full overflow-hidden ">
+          <AnimatePresence mode="wait">
+            {!showMoveOptions ? (
+              // Default actions
+              <motion.div
+                key="default"
+                initial={{ y: 0, rotateX: 0, opacity: 1 }}
+                exit={{ y: -40, opacity: 0, rotateX: 90 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="flex w-full gap-4 py-2 items-center justify-evenly"
               >
-                <img
-                  src={replaceIcon}
-                  alt="Move to new column"
-                  className={`w-4 h-4 icon ${hoverAction === "move" ? "greenIcon" : ""} animate-element group-hover:-rotate-90`}
-                />
-              </Button>
-
-              {/* Archive */}
-              <div
-                onMouseEnter={() => setHoverAction("archive")}
-                onMouseLeave={() => setHoverAction(null)}
-                className="w-1/3 flex justify-center items-center"
-              >
-                <HoverIconButton
-                  baseIcon={folderIcon}
-                  hoverIcon={folderAddIcon}
-                  successIcon={folderCheckIcon}
-                  failureIcon={folderXIcon}
-                  alt="Archive"
-                  onClick={onArchiveClicked}
-                  disabled={!isEnabled}
-                  className="small w-full flex justify-center items-center animate-element"
-                  style={{background: "transparent"}}
-                  hoverClassName="orangeIcon"
-                  title="Mark selected jobs as archived"
-                />
-              </div>
-
-              {/* Delete */}
-              <div
-                onMouseEnter={() => setHoverAction("delete")}
-                onMouseLeave={() => setHoverAction(null)}
-                className="w-1/3"
-              >
-                <HoverIconButton
-                  baseIcon={trashIcon}
-                  hoverIcon={trashAddIcon}
-                  successIcon={trashCheckIcon}
-                  failureIcon={trashXIcon}
-                  alt="Delete"
-                  onClick={onDeleteClicked}
-                  disabled={!isEnabled}
-                  className="small w-full flex justify-center items-center"
-                  style={{background: "transparent"}}
-                  hoverClassName="redIcon"
-                  title="Delete selected jobs"
-                />
-              </div>
-            </motion.div>
-          ) : (
-            // Move options
-            <motion.div
-              key="move"
-              initial={{ y: 40, opacity: 0, rotateX: -90 }}
-              animate={{ y: 0, opacity: 1, rotateX: 0 }}
-              exit={{ y: 40, opacity: 0, rotateX: 90 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
-            >
-              {["Applied", "Interview", "Offer", "Accepted"].map((stage) => (
-                <div
-                  onMouseEnter={() =>
-                    setHoverAction(`${stage}`.toLowerCase() as any)
-                  }
-                  onMouseLeave={() => setHoverAction(null)}
-                  className={`w-full flex justify-center items-center ${hoverAction === `${stage}`.toLowerCase() ? "highlighted" : ""}`}
-                >
-                  <Button key={stage} onClick={() => handleMove(stage)} className={`small w-full items-center justify-center`} style={{background: "transparent"}}>
-                    {stage}
+                {/* Move */}
+                <div className={dim}>
+                  <Button
+                    onClick={() => setShowMoveOptions(true)}
+                    className="group roundSmall"
+                    onMouseEnter={() => setHoverAction("move")}
+                    onMouseLeave={() => setHoverAction(null)}
+                    disabled={!isEnabled}
+                    style={{ background: "transparent" }}
+                    title="Move selected jobs to a different column"
+                  >
+                    <img
+                      src={replaceIcon}
+                      alt="Move to new column"
+                      className={`flex w-full h-full icon animate-element group-hover:-rotate-90 ${
+                        hoverAction === "move" ? "greenIcon" : ""
+                      }`}
+                    />
                   </Button>
                 </div>
-              ))}
-              <Button onClick={() => setShowMoveOptions(false)} className="small w-full items-center justify-center flex" style={{background: "transparent"}}>
-                <img
-                  src={upIcon}
-                  alt="Move to new column"
-                  className="w-5 h-5 icon transition-transform duration-300 ease-in-out group-hover:-rotate-90"
-                />
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
-      {/* Status text */}
+                {/* Archive */}
+                <div
+                  onMouseEnter={() => setHoverAction("archive")}
+                  onMouseLeave={() => setHoverAction(null)}
+                  className={dim}
+                >
+                  <HoverIconButton
+                    baseIcon={folderIcon}
+                    hoverIcon={folderAddIcon}
+                    successIcon={folderCheckIcon}
+                    failureIcon={folderXIcon}
+                    alt="Archive"
+                    onClick={onArchiveClicked}
+                    disabled={!isEnabled}
+                    className="roundSmall"
+                    style={{ background: "transparent" }}
+                    hoverClassName="orangeIcon"
+                    title="Mark selected jobs as archived"
+                  />
+                </div>
+
+                {/* Delete */}
+                <div
+                  onMouseEnter={() => setHoverAction("delete")}
+                  onMouseLeave={() => setHoverAction(null)}
+                  className={dim}
+                >
+                  <HoverIconButton
+                    baseIcon={trashIcon}
+                    hoverIcon={trashAddIcon}
+                    successIcon={trashCheckIcon}
+                    failureIcon={trashXIcon}
+                    alt="Delete"
+                    onClick={onDeleteClicked}
+                    disabled={!isEnabled}
+                    className="roundSmall"
+                    style={{ background: "transparent" }}
+                    hoverClassName="redIcon"
+                    title="Delete selected jobs"
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              // Move options
+              <motion.div
+                key="move"
+                initial={{ y: 40, opacity: 0, rotateX: -90 }}
+                animate={{ y: 0, opacity: 1, rotateX: 0 }}
+                exit={{ y: 40, opacity: 0, rotateX: 90 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
+              >
+                {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map((stage) => (
+                  <div
+                    onMouseEnter={() =>
+                      setHoverAction(`${stage}`.toLowerCase() as any)
+                    }
+                    onMouseLeave={() => setHoverAction(null)}
+                    className={`${labelDim} ${
+                      hoverAction === `${stage}`.toLowerCase()
+                        ? "highlighted"
+                        : ""
+                    }`}
+                  >
+                    <Button
+                      key={stage}
+                      onClick={() => handleMove(stage)}
+                      className={`ovalSmall`}
+                      style={{ background: "transparent" }}
+                    >
+                      <p className="animate-element primary-text">
+                        {stage}
+                      </p>
+                    </Button>
+                  </div>
+                ))}
+                <div className={dim}>
+                  <Button
+                    onClick={() => setShowMoveOptions(false)}
+                    className="roundSmall"
+                    style={{ background: "transparent" }}
+                    
+                  >
+                    <img
+                      src={upIcon}
+                      alt="Move to new column"
+                      className="icon transition-transform duration-300 ease-in-out group-hover:-rotate-90"
+                    />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Status text */}
+      </div>
     </div>
   );
 }

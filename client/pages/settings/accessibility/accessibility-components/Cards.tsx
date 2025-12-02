@@ -29,14 +29,16 @@ export function SettingButton({
   onClick,
   style,
   isSelected,
+  title,
 }: {
   label: string;
   onClick: () => void;
   style?: React.CSSProperties;
   isSelected?: boolean;
+  title?: string;
 }) {
   return (
-    <Button className="w-full" isSelected={isSelected} style={style} onClick={onClick}>
+    <Button className="w-full" isSelected={isSelected} style={style} onClick={onClick} title={title}>
       {label}
     </Button>
   );

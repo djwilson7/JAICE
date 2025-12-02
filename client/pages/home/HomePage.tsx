@@ -1118,11 +1118,7 @@ export function HomePage() {
 
           {/* Undo bar (stay until refresh or all undos performed) */}
           {showRedoUndo && !isMultiSelecting && (
-            <div
-              className="flex flex-row fixed bottom-6 justify-center items-center flex gap-1 rounded-xl p-1 glass z-2"
-              role="status"
-              aria-live="polite"
-            >
+            <div className="glass" role="status" aria-live="polite">
               <span
                 title={
                   undoStack.length === 0
@@ -1136,7 +1132,7 @@ export function HomePage() {
                   onClick={performUndo}
                   aria-label="Undo last action"
                   disabled={undoStack.length === 0}
-                  className={`p-2 undoRedo`}
+                  className={`undoRedo`}
                 >
                   <img src={undo} alt="Undo" className="w-5 h-5 icon" />
                 </Button>
@@ -1155,7 +1151,7 @@ export function HomePage() {
                   onClick={performRedo}
                   aria-label="Redo last action"
                   disabled={redoStack.length === 0}
-                  className={`p-2 undoRedo`}
+                  className={`undoRedo`}
                 >
                   <img src={redo} alt="Redo" className="w-5 h-5 icon" />
                 </button>
@@ -1164,7 +1160,7 @@ export function HomePage() {
           )}
 
           <div
-            className="fixed bottom-0 w-full bg-transparent z-1"
+            className="relative bottom-0 w-full bg-transparent z-1"
             style={{ boxShadow: "var(--page-shadow)" }}
           ></div>
 

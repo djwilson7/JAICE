@@ -754,6 +754,11 @@ button {
   box-shadow: var(--button-shadow);
   border: var(--button-border);
   color: var(--text-primary);
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
 /* Base Button Hover State */
@@ -822,6 +827,18 @@ button.roundSmall {
   border: none;
 }
 
+button.ovalSmall {
+  background: none;
+  box-shadow: none;
+  font-size: 0.875rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border: none;
+}
+
 button.cornerFloating {
   position: absolute;
   width: 2rem;
@@ -839,6 +856,7 @@ button.undoRedo {
   opacity: 1;
   background-color: transparent;
   box-shadow: none;
+  border-radius: var(--corner-radius);
 }
 
 button.undoRedo:hover {
@@ -879,6 +897,72 @@ to an element (className="example").
 ###############################################################
 */
 
+.app-header {
+  background: rgba(var(--primary-one-rgb), 1);
+  box-shadow: var(--shadow);
+  position: fixed;
+  top: 0;
+  display: flex;
+  flex-direction: row;
+  height: 6rem;
+  width: 100vw;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  overflow: hidden;
+  scroll-behavior: none;
+  min-width: 1200px;
+}
+
+.app-content {
+  background: var(--page-gradient);
+  display: flex;
+  position: fixed;
+  top: 6rem;
+  bottom: 0;
+  width: 100vw;
+}
+
+.profile-picture {
+  border-radius: 50%;
+  aspect-ratio: 1/1;
+  width: 4rem;
+  min-width: 4rem;
+}
+
+.brandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1/1;
+  height: 6rem;
+}
+
+.modal-backdrop {
+  background: rgba(var(--modal-background-rgb), 0.7);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  z-index: 10000;
+}
+
+.modal {
+  background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  min-width: 400px;
+  z-index: 1001;
+}
 /* Icon Filter and Color Overrides */
 .icon {
   filter: var(--icon-filter);
@@ -888,10 +972,6 @@ to an element (className="example").
   border-radius: var(--corner-radius);
 }
 
-.modal-backdrop {
-  background: rgba(var(--modal-background-rgb), 0.7);
-  backdrop-filter: blur(2px);
-}
 
 .redIcon {
   filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
@@ -920,6 +1000,12 @@ to an element (className="example").
   border: var(--glass-border);
   box-shadow: var(--shadow);
   transition: all var(--animation-duration) ease;
+  position: fixed;
+  bottom: 1rem;
+  justify-content: center;
+  display: flex;
+  z-index: 50;
+  
 }
 
 .glass:hover {
@@ -938,10 +1024,7 @@ to an element (className="example").
   background: var(--job-card-bg-hover);
 }
 
-.modal {
-  background: var(--primary-gradient);
-  border-radius: var(--corner-radius);
-}
+
 
 .review {
   border: var(--job-card-review-border);
@@ -1011,5 +1094,7 @@ to an element (className="example").
   width: 100%;
   opacity: 0.5;
 }
+
+
 
 /* Add more custom classes above this line */

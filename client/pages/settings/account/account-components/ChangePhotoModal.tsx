@@ -1,9 +1,11 @@
 import { useAuth } from "@/global-components/AuthProvider";
-import Button, { HoverIconButton } from "@/global-components/button";
+import Button from "@/global-components/button";
 import xIcon from "@/assets/icons/x.svg";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+
 interface ChangePhotoModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
@@ -36,7 +38,7 @@ export function ChangePhotoModal({
     navigate(location.pathname);
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
       <div className="flex relative flex-col p-6 w-1/3 gap-6 shadow modal">
         <div className="flex flex-row items-center justify-start">
@@ -74,6 +76,7 @@ export function ChangePhotoModal({
           <Button onClick={handleSavePhoto}>Save Photo</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

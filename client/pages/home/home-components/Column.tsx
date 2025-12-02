@@ -59,7 +59,6 @@ export function Column({
 
   const columnStyle = {
     background: bg,
-    borderRadius: "8px",
     width: "100%",
     minWidth: "15rem",
     minHeight: `${Math.max(sharedHeight, viewportHeight)}px`,
@@ -74,7 +73,6 @@ export function Column({
   const handlePointerLeave = useCallback(() => {
     onDragLeave();
   }, [onDragLeave]);
-
 
   // onPointerEnter and onPointerLeave are used to send the column id up to the parent for drag and drop handling
   // layout is used for smooth animations when removing or adding job cards (drag and drop)
@@ -94,7 +92,7 @@ export function Column({
   function handleMouseOverCycleButton() {
     setHoverButtonStyle("w-5 h-5");
   }
-  
+
   function handleMouseOutCycleButton() {
     setHoverButtonStyle("w-3 h-3");
   }
@@ -140,24 +138,24 @@ export function Column({
             <h3>{count}</h3>
           </div>
           {showToggleRejectButton && onToggleReject && (
-              <div className="absolute right-[2em] mx-2 w-8 h-8 justify-center items-center">
-                <Button
-                  type="button"
-                  onClick={onToggleReject}
-                  className="group roundSmall"
-                  aria-label="Switch to Accepted/Rejected"
-                  title="Switch to Accepted/Rejected"
-                  onMouseEnter={handleMouseOverCycleButton}
-                  onMouseLeave={handleMouseOutCycleButton}
-                >
-                  <img
-                    src={RejectedIcon}
-                    alt="Switch toAccepted/Rejected"
-                    className={`${hoverButtonStyle} icon animate-element group-hover:rotate-180`}
-                  />
-                </Button>
-              </div>
-            )}
+            <div className="absolute right-[2em] mx-2 w-8 h-8 justify-center items-center">
+              <Button
+                type="button"
+                onClick={onToggleReject}
+                className="group roundSmall"
+                aria-label="Switch to Accepted/Rejected"
+                title="Switch to Accepted/Rejected"
+                onMouseEnter={handleMouseOverCycleButton}
+                onMouseLeave={handleMouseOutCycleButton}
+              >
+                <img
+                  src={RejectedIcon}
+                  alt="Switch toAccepted/Rejected"
+                  className={`${hoverButtonStyle} icon animate-element group-hover:rotate-180`}
+                />
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex border-b mx-4 mb-2" />
         <div className="flex flex-col items-center p-2 gap-4">
