@@ -3,31 +3,17 @@
 import { useNavigate } from "react-router";
 import { LandingForm } from "@/pages/landing/landing-components/LandingForm";
 import Button from "@/global-components/button";
-import brandDark from "@/assets/images/brand_dark.png";
-import brandLight from "@/assets/images/brand_light.png";
-import { useEffect, useState } from "react";
+import { useBrandImage } from "@/global-services/useBrandImage";
 
 export function LandingPage() {
   const navigate = useNavigate();
-  
-  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
-  const [brandImg, setBrandImg] = useState<string>(initialTheme ? brandLight : brandDark);
-
-  useEffect(() => {
-    const updateBrand = () => {
-      const htmlTheme = document.documentElement.getAttribute("data-theme");
-      setBrandImg(htmlTheme === "light" ? brandLight : brandDark);
-    };
-    updateBrand();
-    window.addEventListener("themechange", updateBrand);
-    return () => window.removeEventListener("themechange", updateBrand);
-  }, []);
+  const brandImg = useBrandImage();
 
   return (
     <div
-      className="flex flex-col gap-10 min-h-screen p-[2rem] md:flex-row overflow-auto"
-      style={{ background: "var(--primary-gradient)" }}
+      className="flex flex-col fixed inset-0 md:flex-row overflow-auto landing-gradient"
     >
+    
       {/* *Top Container */}
       <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
         {/* Inner Container */}

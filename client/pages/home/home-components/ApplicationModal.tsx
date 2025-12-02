@@ -214,7 +214,7 @@ export default function NewApplication({
 
   return (
     <div
-      className="absolute inset-0 flex items-center justify-center z-50 modal-backdrop"
+      className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop"
       onClick={handleOverlayClick}
       aria-labelledby="new-app-title"
       role="dialog"
@@ -222,7 +222,7 @@ export default function NewApplication({
     >
       <form
         onSubmit={handleSave}
-        className="w-full max-w-xl rounded-lg shadow-lg p-10 glass"
+        className="w-full max-w-xl p-10 modal"
         style={{
           background: "var(--primary-gradient)",
           border: "1px solid var(--color-blue-5)",

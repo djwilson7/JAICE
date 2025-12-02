@@ -33,7 +33,7 @@ export function Modal({
             aria-modal="true"
             role="dialog"
             aria-label={title ?? "Expanded view"}
-            className="fixed inset-0 z-[100] flex items-center justify-center"
+            className="fixed inset-0 z-1000 flex items-center justify-center modal-backdrop"
             onMouseDown={(e) => {
                 // click the backgroudn to close (ignores clicks inside the dialog)
                 if (e.target === e.currentTarget) onClose();
@@ -42,14 +42,14 @@ export function Modal({
         >
             <div
                 ref={ref}
-                className="rounded-2xl"
+                className="rounded-2xl modal"
                 style={{
                     width: maxWidth,
                     height: maxHeight,
                     maxHeight,
                     padding: 16,
                     border: "1px solid rgba(255,255,255,0.25)",
-                    background: "var(--primary-gradient)",
+                    // background: "var(--primary-gradient)",
                     boxShadow: "0 18px 44px rgba(0,0,0,0.55)",
                     display: "flex",
                     flexDirection: "column",

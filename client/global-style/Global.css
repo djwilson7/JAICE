@@ -89,7 +89,7 @@
 :root {
   /* Main Color Palettes */
   --page-bg: #1e1c20;
-  --page-bg-highlight: #48454b;
+  --page-bg-highlight: #333035;
   --page-bg-rgb: 30, 28, 32;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
 
@@ -105,7 +105,7 @@
   --shadow-color-rgb: 255, 255, 255;
   --black-color: #000000;
   --white-color: #ffffff;
-  --red-color: #c71d0a;
+  --red-color: #611b13;
   --purple-color: #8e44ad;
   --gray-color: #c6c6c6;
   --orange-color: #da681b;
@@ -131,10 +131,10 @@
 
   /* Gradients */
   --page-gradient: linear-gradient(
-    160deg,
-    var(--page-bg-highlight),
+    180deg,
     var(--page-bg),
-    var(--page-bg-highlight)
+    var(--page-bg-highlight),
+    var(--page-bg)
   );
 
   --primary-gradient: linear-gradient(
@@ -236,7 +236,7 @@ html[data-theme="light"] {
   --shadow-color-rgb: 0, 0, 0;
   --black-color: #000000;
   --white-color: #ffffff;
-  --red-color: #c0392b;
+  --red-color: #cf4839;
   --purple-color: #8e44ad;
   --gray-color: #393636;
   --orange-color: #d35400;
@@ -265,10 +265,10 @@ html[data-theme="light"] {
   
   /* Gradients */
   --page-gradient: linear-gradient(
-    160deg,
-    var(--page-bg-highlight),
+    180deg,
     var(--page-bg),
-    var(--page-bg-highlight)
+    var(--page-bg-highlight),
+    var(--page-bg)
   );
 
   --primary-gradient: linear-gradient(
@@ -378,6 +378,7 @@ html[data-contrast="low"] {
     rgba(var(--primary-one-rgb), 0.92) 0%,
     rgba(var(--primary-two-rgb), 0.92) 100%
   );
+
   --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
   --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
 
@@ -414,6 +415,8 @@ html[data-contrast="default"] {
   --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 1);
   --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
   --icon-opacity: 1;
+
+
   /* Button at rest */
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
@@ -482,7 +485,7 @@ html[data-contrast="bw"] {
   --shadow-color-rgb: 255, 255, 255;
   --black-color: #000000;
   --white-color: #ffffff;
-  --red-color: #c71d0a;
+  --red-color: #5f0a00;
   --purple-color: #8e44ad;
   --gray-color: #d7d7d7;
   --orange-color: #da681b;
@@ -737,7 +740,7 @@ small {
 
   Any declared alterations beyond the ### will inherit from these base styles.
   This ensures consistency across all button variants unless explicitly changed.
-
+*/
 /* Base Button Styling */
 button {
   border-radius: var(--corner-radius);
@@ -788,63 +791,23 @@ button.navButton {
   justify-content: center;
   margin-left: 1rem;
 }
-/* 
-  Small Button variant only needs to override specific properties
-  It will inherit the rest from the base button styles
 
-  Think of the .small as a modifier that tweaks the base button
-  instead of redefining everything from scratch. :)
-
-  So the variant gets everything from the base, and then we say
-  but a small button should have these specific differences.
-
-  The exception being if the base button doesn't define the attribute that 
-  needs adjusted. In that case, we have to define it fully here.
-*/
 button.small {
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
 }
 
-/* 
-  The hover state is inherited from the base button styles,
-  so no need to redefine it here unless it needs to be different
-*/
-/* button.small:hover {
-  background: var(--button-hover-background);
-  border: var(--button-hover-border);
-  box-shadow: var(--button-hover-shadow);
-  transform: scale(var(--button-hover-scale, 1));
-} */
-
-/*
-  Red Button variant only needs to override specific properties
-  It will inherit the rest from the base button styles
-*/
 button.red {
   border: 1px solid transparent;
-  background-color: var(--color-bright-red);
-  color: var(--primary-five);
+  background: var(--red-color);
+  color: var(--white-color);
 }
 
-/*
-  Perfect override from the defined base button hover state
-*/
 button.red:hover {
-  border-color: var(--primary-five);
+  background: var(--white-color);
+  color: var(--red-color);
+  border-color: var(--red-color);
 }
-
-/*
-  addApplication has been updated to create a roundSmall button variant instead
-  This is for both the add applicaiton button and the 
-  rotation button for the accepted and rejected column.
-*/
-/* button.addApplication {
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 0.5rem;
-  filter: var(--icon-filter);
-} */
 
 button.roundSmall {
   background: none;
@@ -869,19 +832,6 @@ button.cornerFloating {
   box-shadow: none;
   padding: 0.3rem;
 }
-
-/* 
-  Instead of scaling the whole button,
-  we can just scale the "+" icon inside 
-  
-  Intended for two purposes.
-
-  1. It prevents the full size button from eating the layout space
-  2. It prevents the layout from shifting when the button scales.
-*/
-/* button.addApplication:hover {
-  transform: scale(2);
-} */
 
 button.undoRedo {
   transition: opacity 160ms ease, transform 160ms ease;
@@ -989,10 +939,8 @@ to an element (className="example").
 }
 
 .modal {
-  background: rgba(var(--modal-background-rgb), 0.6);
-  backdrop-filter: blur(10px);
+  background: var(--primary-gradient);
   border-radius: var(--corner-radius);
-  border: 1px solid var(--primary-five);
 }
 
 .review {
@@ -1025,6 +973,14 @@ to an element (className="example").
 
 .primary-gradient {
   background: var(--primary-gradient);
+}
+
+.landing-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 1) 0%,
+    rgba(var(--primary-two-rgb), 1) 100%
+  );
 }
 
 .primary-text {

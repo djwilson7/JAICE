@@ -37,8 +37,8 @@ export function ChangePhotoModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="flex relative  flex-col p-6 w-1/3 gap-6 shadow glass">
+    <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
+      <div className="flex relative flex-col p-6 w-1/3 gap-6 shadow modal">
         <div className="flex flex-row items-center justify-start">
           <h2 className="text-xl font-semibold primary-text">
             Change Profile Photo

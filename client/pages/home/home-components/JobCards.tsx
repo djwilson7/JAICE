@@ -121,8 +121,8 @@ export function JobCard({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "escape") {
-      setShowDeleteConfirm(false);
-      setIsDeleting(false);
+        setShowDeleteConfirm(false);
+        setIsDeleting(false);
       }
     };
 
@@ -133,18 +133,15 @@ export function JobCard({
   // delete confirmation modal
   const modalMarkup = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-1000 flex items-center justify-center modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby={`delete-dialog-title-${job.id}`}
       onClick={() => setShowDeleteConfirm(false)}
     >
-      {/* backdrop */}
-      <div className="absolute inset-0 modal-backdrop" />
-
       {/* dialog */}
       <div
-        className="flex flex-col w-full z-60 max-w-md p-4 gap-4 glass"
+        className="flex flex-col w-full z-60 max-w-md p-4 gap-4 modal"
         onClick={(e) => e.stopPropagation()}
       >
         <h3
@@ -200,7 +197,7 @@ export function JobCard({
               }
             }}
             type="button"
-            className="small bg-red-600 text-white"
+            className="small red"
             aria-label="Confirm delete"
           >
             {isDeleting ? "Deleting..." : "Yes, delete"}
@@ -247,17 +244,14 @@ export function JobCard({
           opacity: 0,
           height: 0,
         }}
-        
         animate={{
           opacity: localReviewNeeded && isHovered ? 1 : 0,
           height: localReviewNeeded && isHovered ? "auto" : 0,
         }}
-
         exit={{
           opacity: 0,
           height: 0,
         }}
-
         transition={{ duration: 0.12 }}
         role="tooltip"
         aria-hidden={!isHovered}
@@ -304,9 +298,7 @@ export function JobCard({
           {/* Job Title and date*/}
           <motion.div className="flex flex-col flex-1 min-w-0">
             <p className="primary-text">{job.title}</p>
-            {job.date && (
-              <small className="secondary-text">{job.date}</small>
-            )}
+            {job.date && <small className="secondary-text">{job.date}</small>}
           </motion.div>
         </motion.div>
 
@@ -406,7 +398,6 @@ export function JobCard({
               if (isMultiSelecting || isDeleting) return;
               setIsDeleting(true);
               setShowDeleteConfirm(true);
-
             }}
             type="button"
             className="small w-full outline-none bg-transparent"

@@ -451,6 +451,7 @@ export function AccountPage() {
                     // disabled={busy}
                     aria-busy={busy}
                     // className="red"
+                    className="red"
                     style={{ minWidth: "100%" }}
                   >
                     {busy ? "Deleting..." : "Delete Account"}
