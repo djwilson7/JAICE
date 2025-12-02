@@ -63,10 +63,7 @@ export function DaysToSync({
             </button>
           ))}
         </div>
-        
       </div>
     </div>
-
-
   );
 }

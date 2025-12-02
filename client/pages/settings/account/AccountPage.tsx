@@ -11,6 +11,9 @@ import { useAuth } from "@/global-components/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
 import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
+import { UnlinkGmailModal } from "@/pages/settings/account/account-components/UnlinkGmailModal";
+import { DeleteAccountModal } from "./account-components/DeleteAccountModal";
+
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -30,7 +33,7 @@ export function AccountPage() {
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
     null
   );
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showChangePhotoModal, setShowChangePhotoModal] = useState(false);
 
   const handleShowChangePhotoModal = () => {
@@ -40,6 +43,8 @@ export function AccountPage() {
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailBusy, setGmailBusy] = useState(false);
   const [showDaysToSync, setShowDaysToSync] = useState(false);
+  const [showUnlinkGmailModal, setShowUnlinkGmailModal] = useState(false);
+
   const [daysToSync, setDaysToSync] = useState<number | null>(null);
 
   const daysToSyncOptions = [3, 7, 14, 45];
@@ -109,10 +114,10 @@ export function AccountPage() {
 
   async function handleShowModal() {
     if (gmailConnected) {
-      await handleGmailLinking();
-      return;
+      setShowUnlinkGmailModal(true);
+    } else {
+      setShowDaysToSync(true);
     }
-    setShowDaysToSync(true);
   }
 
   // Handle the user's selection of days to sync from Gmail
@@ -164,11 +169,6 @@ export function AccountPage() {
   }
 
   async function unlinkGmail() {
-    const proceed = window.confirm(
-      "Unlinking your Gmail account will require you to log in again. Continue?"
-    );
-    if (!proceed) return { status: "cancelled" };
-
     try {
       const revoke = await api("/api/auth/revoke-gmail-consent", {
         method: "POST",
@@ -202,14 +202,14 @@ export function AccountPage() {
     ? "Unlink Gmail"
     : "Link Gmail";
 
+
   async function handleDelete() {
-    setDeleteAccountError(null);
+    setShowDeleteModal(true);
+    return;
+  }
 
-    const sure = window.confirm(
-      "This will permanently delete your account. This cannot be undone. Continue?"
-    );
-    if (!sure) return;
-
+  async function deleteAccount() {
+    setDeleteAccountError(null)
     try {
       setBusy(true);
 
@@ -245,10 +245,7 @@ export function AccountPage() {
 
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
-    <div
-      className="w-full h-full"
-      style={{ background: "var(--color-bg)" }}
-    >
+    <div className="w-full h-full" style={{ background: "var(--color-bg)" }}>
       <main className="flex flex-col md:flex-row w-full justify-center">
         {/* Left/Top Heading*/}
         {/* <div className="w-full md:w-1/2">
@@ -477,6 +474,19 @@ export function AccountPage() {
       <ChangePhotoModal
         showModal={showChangePhotoModal}
         setShowModal={setShowChangePhotoModal}
+      />
+      <UnlinkGmailModal
+        isOpen={showUnlinkGmailModal}
+        onClose={() => setShowUnlinkGmailModal(false)}
+        onConfirm={async () => {
+          await handleGmailLinking();
+          setShowUnlinkGmailModal(false);
+        }}
+      />
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={deleteAccount}
       />
     </div>
   );
