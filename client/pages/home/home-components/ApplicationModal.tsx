@@ -48,8 +48,6 @@ interface NewApplicationProps {
   isOpen: boolean; // Trigger the open of the modal
   setIsOpen: (isOpen: boolean) => void; // Provided so the modal can close itself
   payload: string | JobCardType | null; // The payload to update modal state
-  initialStage?: string;
-  initialData?: Partial<JobCardType> & { id?: string }; // pre fill data if editing
   onSave?: (data: Partial<JobCardType> & { id?: string }) => void;
 }
 
@@ -101,8 +99,6 @@ export default function NewApplication({
   isOpen,
   setIsOpen,
   payload,
-  initialStage = "",
-  initialData,
   onSave,
 }: NewApplicationProps) {
   if (!isOpen) return null; // Don't render if not open

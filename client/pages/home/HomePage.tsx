@@ -1172,8 +1172,6 @@ export function HomePage() {
             isOpen={isJobAppModalOpen}
             setIsOpen={setIsJobAppModalOpen}
             payload={jobAppModalPayload}
-            // initialStage={jobAppModalPayload}
-            // initialData={editingJob ?? undefined}
             onSave={(updated: Partial<JobCardType> & { id?: string }) => {
               // merge updated job into local state
               if (updated?.id) {
