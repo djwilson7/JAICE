@@ -258,14 +258,22 @@ export function AccountPage() {
   const rowContentRules = "flex w-full md:w-1/2";
   const errorRules = "flex w-full items-center justify-center my-2";
 
-  const Row = ({rowError,  children }: { rowError?: string; children: React.ReactNode }) => (
+  const Row = ({
+    rowError,
+    children,
+  }: {
+    rowError?: string;
+    children: React.ReactNode;
+  }) => (
     <div className={`${rowRules}`}>
       <div className={rowAlignmentRules}>{children}</div>
-      <div className={errorRules}>
+      {rowError && (
+        <div className={errorRules}>
         <small className="red-text" role="alert">
-          {rowError} asdf
+          {rowError}
         </small>
       </div>
+      )}
     </div>
   );
 
@@ -274,192 +282,188 @@ export function AccountPage() {
   );
 
   const Section = ({ children }: { children: React.ReactNode }) => (
-    <section className="account-section w-[400px] sm:w-[500px] md:w-[600px] lg:w-1/2 animate-element">{children}</section>
+    <section className="account-section w-[400px] sm:w-[500px] md:w-[600px] lg:w-1/2 animate-element">
+      {children}
+    </section>
   );
 
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
     <div className="page-style bg-[var(--page-gradient)]">
       <div className="flex flex-col items-center p-8 gap-8 lg:flex-row lg:items-start">
-          <Section>
-            <SectionHeader title="Profile Settings" />
-            <SectionBody>
-              <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
-                <div className="w-24 h-24 rounded-full bg-[var(--card-border)] mb-4 aspect-square">
-                  <img
-                    src={profilePicURL || userIcon}
-                    alt="Profile Picture"
-                    className="w-full h-full rounded-full object-cover p-0.5"
-                  />
-                </div>
-                <div className="flex flex-col gap-2 text-center items-center jusitfy-evenly">
-                  <div className="flex gap-4">
-                    <Button onClick={() => handleShowChangePhotoModal()}>
-                      Change
-                    </Button>
-                  </div>
-                  <div className="text-sm font-light">
-                    <small className="text-sm opacity-80 font-light">
-                      Update your profile picture URL.
-                    </small>
-                  </div>
-                </div>
+        <Section>
+          <SectionHeader title="Profile Settings" />
+          <SectionBody>
+            <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
+              <div className="w-24 h-24 rounded-full bg-[var(--card-border)] mb-4 aspect-square">
+                <img
+                  src={profilePicURL || userIcon}
+                  alt="Profile Picture"
+                  className="w-full h-full rounded-full object-cover p-0.5"
+                />
               </div>
-
-              <div className="flex flex-col w-full my-4 gap-4">
-                <FloatingInputField
-                  label="First Name"
-                  type="text"
-                  value={firstNameField}
-                  action={handleFirstNameInput}
-                  isValid={true}
-                />
-                <FloatingInputField
-                  label="Last Name"
-                  type="text"
-                  value={lastNameField}
-                  action={handleLastNameInput}
-                  isValid={true}
-                />
-                <FloatingInputField
-                  label="Phone Number"
-                  type="text"
-                  value={phoneNumberField}
-                  action={handlePhoneNumberInput}
-                  isValid={true}
-                />
-                <div className="flex w-full justify-between items-center gap-4">
-                  <Button
-                    onClick={() => handleSaveProfile()}
-                    style={{ minWidth: "50%" }}
-                  >
-                    Save Profile
-                  </Button>
-                  <small
-                    className="flex w-full text-sm text-red-400 text-left"
-                    role="alert"
-                  >
-                    {saveProfileError}
-                  </small>
-                </div>
-                <div className="flex w-full items-center justify-center my-2">
-                  <small className="text-sm text-red-400" role="alert"></small>
-                </div>
-              </div>
-            </SectionBody>
-          </Section>
-
-          <Section>
-            <SectionHeader title="Account Settings" />
-
-            {/*Gmail Integration*/}
-            <SectionBody>
-              <Row rowError={gmailError || "asdfasdf"}>
-                <RowItem>
-                  <div className="flex flex-col">
-                    <h3 className="text-lg text-left font-medium">
-                      Gmail Integration
-                    </h3>
-                    <small className="text-sm text-left opacity-60 ">
-                      Connect your Gmail account to allow email parsing and
-                      analysis.
-                    </small>
-                  </div>
-                </RowItem>
-                <RowItem>
-                  <Button
-                    onClick={handleShowModal}
-                    style={{ minWidth: "100%" }}
-                  >
-                    {gmailButtonText}
-                  </Button>
-                </RowItem>
-              </Row>
-
-              <Row rowError={passwordError || "asdfasdf"}>
-                <RowItem>
-                  <FloatingInputField
-                    label="Reset Password"
-                    type="password"
-                    value=""
-                    action={() => console.log("User is entering new password.")}
-                    isValid={true}
-                    style={{ minWidth: "100%" }}
-                  />
-                </RowItem>
-                <RowItem>
-                  <Button
-                    onClick={() => console.log("Change Password clicked")}
-                    style={{ minWidth: "100%" }}
-                  >
+              <div className="flex flex-col gap-2 text-center items-center jusitfy-evenly">
+                <div className="flex gap-4">
+                  <Button onClick={() => handleShowChangePhotoModal()}>
                     Change
                   </Button>
-                </RowItem>
-              </Row>
+                </div>
+                <div className="text-sm font-light">
+                  <small className="text-sm opacity-80 font-light">
+                    Update your profile picture URL.
+                  </small>
+                </div>
+              </div>
+            </div>
 
-              {/* 2FA */}
-              <div className="flex flex-col items-center justify-center my-4 items-center w-full">
-                <div className="flex w-full gap-4">
-                  <div className="flex flex-col w-3/4">
-                    <h3 className="text-lg text-left font-medium mt-4">
-                      Two-Factor Authentication (2FA)
-                    </h3>
-                    <small className="text-sm text-left opacity-60 mb-4">
-                      Enable 2FA to add an extra layer of security to your
-                      account.
-                    </small>
-                  </div>
-                  <div className="flex items-center justify-center w-1/4">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        onChange={() => console.log("2FA toggled")}
-                      />
-                      <div
-                        className="w-11 h-6 bg-gray-600 
+            <div className="flex flex-col w-full my-4 gap-4">
+              <FloatingInputField
+                label="First Name"
+                type="text"
+                value={firstNameField}
+                action={handleFirstNameInput}
+                isValid={true}
+              />
+              <FloatingInputField
+                label="Last Name"
+                type="text"
+                value={lastNameField}
+                action={handleLastNameInput}
+                isValid={true}
+              />
+              <FloatingInputField
+                label="Phone Number"
+                type="text"
+                value={phoneNumberField}
+                action={handlePhoneNumberInput}
+                isValid={true}
+              />
+              <div className="flex w-full justify-between items-center gap-4">
+                <Button
+                  onClick={() => handleSaveProfile()}
+                  style={{ minWidth: "50%" }}
+                >
+                  Save Profile
+                </Button>
+                <small
+                  className="flex w-full text-sm text-red-400 text-left"
+                  role="alert"
+                >
+                  {saveProfileError}
+                </small>
+              </div>
+              <div className="flex w-full items-center justify-center my-2">
+                <small className="text-sm text-red-400" role="alert"></small>
+              </div>
+            </div>
+          </SectionBody>
+        </Section>
+
+        <Section>
+          <SectionHeader title="Account Settings" />
+
+          {/*Gmail Integration*/}
+          <SectionBody>
+            <Row rowError={gmailError || ""}>
+              <RowItem>
+                <div className="flex flex-col">
+                  <h3 className="text-lg text-left font-medium">
+                    Gmail Integration
+                  </h3>
+                  <small className="text-sm text-left opacity-60 ">
+                    Connect your Gmail account to allow email parsing and
+                    analysis.
+                  </small>
+                </div>
+              </RowItem>
+              <RowItem>
+                <Button onClick={handleShowModal} style={{ minWidth: "100%" }}>
+                  {gmailButtonText}
+                </Button>
+              </RowItem>
+            </Row>
+
+            <Row rowError={passwordError || ""}>
+              <RowItem>
+                <FloatingInputField
+                  label="Reset Password"
+                  type="password"
+                  value=""
+                  action={() => console.log("User is entering new password.")}
+                  isValid={true}
+                  style={{ minWidth: "100%" }}
+                />
+              </RowItem>
+              <RowItem>
+                <Button
+                  onClick={() => console.log("Change Password clicked")}
+                  style={{ minWidth: "100%" }}
+                >
+                  Change
+                </Button>
+              </RowItem>
+            </Row>
+
+            {/* 2FA */}
+            <Row rowError={twoFAError || ""}>
+              <RowItem>
+                <div className="flex flex-col w-3/4">
+                  <h3 className="text-lg text-left font-medium mt-4">
+                    Two-Factor Authentication (2FA)
+                  </h3>
+                  <small className="text-sm text-left opacity-60 mb-4">
+                    Enable 2FA to add an extra layer of security to your
+                    account.
+                  </small>
+                </div>
+              </RowItem>
+
+              <RowItem>
+                <div className="flex items-center justify-center w-1/4">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      onChange={() => console.log("2FA toggled")}
+                    />
+                    <div
+                      className="w-11 h-6 bg-gray-600 
                     rounded-full peer peer-focus:ring-blue-300 peer-checked:bg-blue-600 
                     after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 
                     after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
-                      ></div>
-                    </label>
-                  </div>
+                    ></div>
+                  </label>
                 </div>
-                <div className="flex w-full items-center justify-center my-2">
-                  <small className="text-sm text-red-400" role="alert">
-                    {twoFAError}
+              </RowItem>
+            </Row>
+            {/* Delete Account */}
+            <Row rowError={deleteAccountError || ""}>
+              <RowItem>
+                <div className="flex flex-col">
+                  <h3 className="text-lg text-left font-medium">
+                    Delete your JAICE account?
+                  </h3>
+                  <small className="text-sm text-left opacity-60 ">
+                    This will permanently delete your account and all associated
+                    data.
                   </small>
                 </div>
-              </div>
+              </RowItem>
 
-              {/* Delete Account */}
-              <Row rowError={deleteAccountError || "asdfasdf"}>
-                <RowItem>
-                  <div className="flex flex-col">
-                    <h3 className="text-lg text-left font-medium">
-                      Delete your JAICE account?
-                    </h3>
-                    <small className="text-sm text-left opacity-60 ">
-                      This will permanently delete your account and all
-                      associated data.
-                    </small>
-                  </div>
-                </RowItem>
-
-                <RowItem>
-                  <Button
-                    onClick={handleDelete}
-                    // disabled={busy}
-                    aria-busy={busy}
-                    // className="red"
-                    className="red"
-                  >
-                    {busy ? "Deleting..." : "Delete Account"}
-                  </Button>
-                </RowItem>
-              </Row>
-            </SectionBody>
-          </Section>
+              <RowItem>
+                <Button
+                  onClick={handleDelete}
+                  // disabled={busy}
+                  aria-busy={busy}
+                  // className="red"
+                  className="red"
+                >
+                  {busy ? "Deleting..." : "Delete Account"}
+                </Button>
+              </RowItem>
+            </Row>
+          </SectionBody>
+        </Section>
       </div>
       {/*Modals Overlays*/}
       <DaysToSync
