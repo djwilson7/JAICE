@@ -1,6 +1,5 @@
 import Button from "@/global-components/button";
-import { CloseButton } from "@/global-components/CloseButton";
-import { createPortal } from "react-dom";
+import { Modal } from "@/global-components/Modal";
 
 interface UnlinkGmailModalProps {
   isOpen: boolean;
@@ -15,52 +14,40 @@ export function UnlinkGmailModal({
 }: UnlinkGmailModalProps) {
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="modal-backdrop">
-      <div className="w-[500px] modal">
-        <div className="flex flex-row items-center justify-between">
-          <h2 className="font-semibold primary-text">Unlink Gmail Account</h2>
-          <CloseButton
-            onClick={() => {
-              onClose();
-            }}
-          />
-        </div>
-        <hr className="header-split mb-4" />
-        <div className="flex flex-col">
-          <div className="flex flex-col text-left secondary-text gap-4">
-            <p className="">
-              Unlinking your Gmail will pause all syncing and email processing.
-              Your JAICE data stays intact — you'll just need to relink Gmail if
-              you want to continue using automatic tracking.
-            </p>
-            <p className="primary-text">
-              Once unlinked, Quick Sign-In through Gmail will also be disabled
-              until you reconnect.
-            </p>
-          </div>
-        </div>
-        <hr className="header-split mt-4" />
-        <div className="flex flex-row justify-end gap-4 mt-4">
-          <Button
-            onClick={() => {
-              onClose();
-            }}
-            className="small w-1/2"
-          >
-            Keep Gmail Linked
-          </Button>
-          <Button
-            onClick={() => {
-              onConfirm();
-            }}
-            className="small red w-1/2"
-          >
-            Stop Gmail Syncing
-          </Button>
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} modalTitle="Unlink Gmail Account">
+      <div className="flex flex-col">
+        <div className="flex flex-col text-left secondary-text gap-4">
+          <p className="">
+            Unlinking your Gmail will pause all syncing and email processing.
+            Your JAICE data stays intact — you'll just need to relink Gmail if
+            you want to continue using automatic tracking.
+          </p>
+          <p className="primary-text">
+            Once unlinked, Quick Sign-In through Gmail will also be disabled
+            until you reconnect.
+          </p>
         </div>
       </div>
-    </div>,
-    document.body
+      <hr className="header-split mt-4" />
+      <div className="flex flex-row justify-center gap-4 mt-4">
+        <Button
+          onClick={() => {
+            onClose();
+          }}
+          className="green"
+        >
+          <h4>Keep Gmail Linked</h4>
+        </Button>
+        <Button
+          onClick={() => {
+            onConfirm();
+          }}
+          className="red"
+        >
+          <h4>Stop Gmail Syncing</h4>
+        </Button>
+      </div>
+    </Modal>
   );
 }

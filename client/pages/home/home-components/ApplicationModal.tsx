@@ -12,8 +12,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import type { JobCardType } from "@/types/jobCardType";
 import Button from "@/global-components/button";
-import xIcon from "@/assets/icons/x.svg";
-import { createPortal } from "react-dom";
+import { Modal } from "@/global-components/Modal";
 
 /*
     The new application modal is now a central component that handles
@@ -208,42 +207,9 @@ export default function NewApplication({
     }
   }
 
-  // close when clicking outside the modal
-  function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (e.target === e.currentTarget) setIsOpen(false);
-  }
-  // Set the modal title based on the presence of a job title (new vs edit)
-
-  return createPortal(
-    <div
-      className="modal-backdrop"
-      onClick={handleOverlayClick}
-      aria-labelledby="new-app-title"
-      role="dialog"
-      aria-modal="true"
-    >
-      <form
-        onSubmit={handleSave}
-        className="w-full max-w-xl p-10 modal"
-      >
-        {/* Header with title and close button */}
-        <div className="relative flex w-full items-center mb-4 justify-center">
-          <h2 id="new-app-title" className="primary-text">
-            {modalTitle}
-          </h2>
-          <div className="absolute right-0 top-0  flex items-center justify-center">
-            <Button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="roundSmall"
-              aria-label={"Close Application Modal"}
-              title={"Close Application Modal"}
-            >
-              <img src={xIcon} alt="Close" className="w-5 h-5 icon" />
-            </Button>
-          </div>
-        </div>
-
+  return (
+    <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} modalTitle={modalTitle}>
+      <form onSubmit={handleSave} className="w-full max-w-xl">
         {/* Form Fields */}
         <div className="space-y-4">
           <label className="block">
@@ -266,6 +232,7 @@ export default function NewApplication({
             </select>
           </label>
 
+
           {/* Job Title input field */}
           <label className="block">
             <span className="primary-text">Job Title</span>
@@ -276,7 +243,6 @@ export default function NewApplication({
               required
             />
           </label>
-
           {/* Company Name input field */}
           <label className="block">
             <span className="primary-text">Company</span>
@@ -287,8 +253,8 @@ export default function NewApplication({
               required
             />
           </label>
-
           {/* Notes field is optional*/}
+
           <label className="block">
             <span className="primary-text">Notes (optional)</span>
             <textarea
@@ -299,18 +265,15 @@ export default function NewApplication({
             />
           </label>
         </div>
-
-        <div className="mt-5 flex justify-center gap-3">
+        <div className="flex w-full mt-4 justify-end">
           {/* Save button to submit the form */}
-          <button
-            type="submit"
-            className="px-4 py-2 rounded bg-blue-600 text-white justify-center"
-          >
-            {buttonLabel}
-          </button>
+          <div className="flex w-1/2">
+            <Button type="submit" className="green">
+              <h4>{buttonLabel}</h4>
+            </Button>
+          </div>
         </div>
       </form>
-    </div>,
-    document.body
-  )
+    </Modal>
+  );
 }

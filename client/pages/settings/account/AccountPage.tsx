@@ -202,14 +202,13 @@ export function AccountPage() {
     ? "Unlink Gmail"
     : "Link Gmail";
 
-
   async function handleDelete() {
     setShowDeleteModal(true);
     return;
   }
 
   async function deleteAccount() {
-    setDeleteAccountError(null)
+    setDeleteAccountError(null);
     try {
       setBusy(true);
 
@@ -243,26 +242,58 @@ export function AccountPage() {
     }
   }
 
+  const SectionHeader = ({ title }: { title: string }) => (
+    <div className="flex w-full flex-col">
+      <h1 className="w-full text-center">{title}</h1>
+      <hr className="header-split" />
+    </div>
+  );
+
+  const SectionBody = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex flex-col w-full my-4 gap-4">{children}</div>
+  );
+
+  const rowRules = "flex flex-col w-full items-center justify-center py-4";
+  const rowAlignmentRules = "flex flex-col w-full md:flex-row gap-4";
+  const rowContentRules = "flex w-full md:w-1/2";
+  const errorRules = "flex w-full items-center justify-center my-2";
+
+  const Row = ({
+    rowError,
+    children,
+  }: {
+    rowError?: string;
+    children: React.ReactNode;
+  }) => (
+    <div className={`${rowRules}`}>
+      <div className={rowAlignmentRules}>{children}</div>
+      {rowError && (
+        <div className={errorRules}>
+        <small className="red-text" role="alert">
+          {rowError}
+        </small>
+      </div>
+      )}
+    </div>
+  );
+
+  const RowItem = ({ children }: { children: React.ReactNode }) => (
+    <div className={rowContentRules}>{children}</div>
+  );
+
+  const Section = ({ children }: { children: React.ReactNode }) => (
+    <section className="account-section w-[400px] sm:w-[500px] md:w-[600px] lg:w-1/2 animate-element">
+      {children}
+    </section>
+  );
+
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
-    <div className="w-full h-full" style={{ background: "var(--color-bg)" }}>
-      <main className="flex flex-col md:flex-row w-full justify-center">
-        {/* Left/Top Heading*/}
-        {/* <div className="w-full md:w-1/2">
-          <h1 className="text-2xl md:text-3xl font-semibold leading-snug">
-            Account Settings
-          </h1>
-        </div> */}
-        {/* Right/Bottom Content */}
-        <div className="flex flex-col md:flex-row w-full h-full items-top justify-evenly p-4 gap-4">
-          {/* Right panel */}
-          <section className="flex flex-col w-full md:w-1/2  pl-1 pr-1 md:px-4 py-2 rounded-xl shadow primary-gradient">
-            <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
-              Profile Info
-            </h1>
-            <hr className="w-full border-t-1 border-[var(--card-border)]" />
-
-            {/*Profile image*/}
+    <div className="page-style bg-[var(--page-gradient)]">
+      <div className="flex flex-col items-center p-8 gap-8 lg:flex-row lg:items-start">
+        <Section>
+          <SectionHeader title="Profile Settings" />
+          <SectionBody>
             <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
               <div className="w-24 h-24 rounded-full bg-[var(--card-border)] mb-4 aspect-square">
                 <img
@@ -285,7 +316,6 @@ export function AccountPage() {
               </div>
             </div>
 
-            {/*Name and Number*/}
             <div className="flex flex-col w-full my-4 gap-4">
               <FloatingInputField
                 label="First Name"
@@ -323,25 +353,20 @@ export function AccountPage() {
                 </small>
               </div>
               <div className="flex w-full items-center justify-center my-2">
-                <small className="text-sm text-red-400" role="alert">
-                  {/* Profile save error messages go here */}
-                </small>
+                <small className="text-sm text-red-400" role="alert"></small>
               </div>
             </div>
-          </section>
+          </SectionBody>
+        </Section>
 
-          <section className="flex flex-col w-full md:w-1/2  pl-1 pr-1 md:px-4 py-2 rounded-xl shadow primary-gradient">
-            <div className="flex w-full flex-col">
-              <h1 className="text-2xl md:text-3xl font-semibold leading-snug w-full text-left my-4">
-                Account Security
-              </h1>
-              <hr className="w-full border-t-1 border-[var(--card-border)]" />
-            </div>
+        <Section>
+          <SectionHeader title="Account Settings" />
 
-            {/*Gmail Integration*/}
-            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
-              <div className="flex w-full gap-4">
-                <div className="flex flex-col w-1/2">
+          {/*Gmail Integration*/}
+          <SectionBody>
+            <Row rowError={gmailError || ""}>
+              <RowItem>
+                <div className="flex flex-col">
                   <h3 className="text-lg text-left font-medium">
                     Gmail Integration
                   </h3>
@@ -350,54 +375,38 @@ export function AccountPage() {
                     analysis.
                   </small>
                 </div>
-                <div className="flex items-center justify-center w-1/2">
-                  <Button
-                    onClick={handleShowModal}
-                    style={{ minWidth: "100%" }}
-                  >
-                    {gmailButtonText}
-                  </Button>
-                </div>
-              </div>
-              <div className="flex w-full items-center justify-center my-2">
-                <small className="text-sm text-red-400" role="alert">
-                  {gmailError}
-                </small>
-              </div>
-            </div>
+              </RowItem>
+              <RowItem>
+                <Button onClick={handleShowModal} style={{ minWidth: "100%" }}>
+                  {gmailButtonText}
+                </Button>
+              </RowItem>
+            </Row>
 
-            {/* Password Reset */}
-            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
-              <div className="flex w-full gap-4 py-2">
-                <div className="flex w-1/2 items-center">
-                  <FloatingInputField
-                    label="Reset Password"
-                    type="password"
-                    value=""
-                    action={() => console.log("User is entering new password.")}
-                    isValid={true}
-                    style={{ minWidth: "100%" }}
-                  />
-                </div>
-                <div className="flex items-center justify-center w-1/2">
-                  <Button
-                    onClick={() => console.log("Change Password clicked")}
-                    style={{ minWidth: "100%" }}
-                  >
-                    Change
-                  </Button>
-                </div>
-              </div>
-              <div className="flex w-full items-center justify-center my-2">
-                <small className="text-sm text-red-400" role="alert">
-                  {passwordError}
-                </small>
-              </div>
-            </div>
+            <Row rowError={passwordError || ""}>
+              <RowItem>
+                <FloatingInputField
+                  label="Reset Password"
+                  type="password"
+                  value=""
+                  action={() => console.log("User is entering new password.")}
+                  isValid={true}
+                  style={{ minWidth: "100%" }}
+                />
+              </RowItem>
+              <RowItem>
+                <Button
+                  onClick={() => console.log("Change Password clicked")}
+                  style={{ minWidth: "100%" }}
+                >
+                  Change
+                </Button>
+              </RowItem>
+            </Row>
 
             {/* 2FA */}
-            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
-              <div className="flex w-full gap-4">
+            <Row rowError={twoFAError || ""}>
+              <RowItem>
                 <div className="flex flex-col w-3/4">
                   <h3 className="text-lg text-left font-medium mt-4">
                     Two-Factor Authentication (2FA)
@@ -407,6 +416,9 @@ export function AccountPage() {
                     account.
                   </small>
                 </div>
+              </RowItem>
+
+              <RowItem>
                 <div className="flex items-center justify-center w-1/4">
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -422,18 +434,12 @@ export function AccountPage() {
                     ></div>
                   </label>
                 </div>
-              </div>
-              <div className="flex w-full items-center justify-center my-2">
-                <small className="text-sm text-red-400" role="alert">
-                  {twoFAError}
-                </small>
-              </div>
-            </div>
-
+              </RowItem>
+            </Row>
             {/* Delete Account */}
-            <div className="flex flex-col items-center justify-center my-4 items-center w-full">
-              <div className="flex w-full gap-4">
-                <div className="flex flex-col w-1/2">
+            <Row rowError={deleteAccountError || ""}>
+              <RowItem>
+                <div className="flex flex-col">
                   <h3 className="text-lg text-left font-medium">
                     Delete your JAICE account?
                   </h3>
@@ -442,28 +448,23 @@ export function AccountPage() {
                     data.
                   </small>
                 </div>
-                <div className="flex items-center justify-center w-1/2">
-                  <Button
-                    onClick={handleDelete}
-                    // disabled={busy}
-                    aria-busy={busy}
-                    // className="red"
-                    className="red"
-                    style={{ minWidth: "100%" }}
-                  >
-                    {busy ? "Deleting..." : "Delete Account"}
-                  </Button>
-                </div>
-              </div>
-              <div className="flex w-full items-center justify-center my-2">
-                <small className="text-sm text-red-400" role="alert">
-                  {deleteAccountError}
-                </small>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
+              </RowItem>
+
+              <RowItem>
+                <Button
+                  onClick={handleDelete}
+                  // disabled={busy}
+                  aria-busy={busy}
+                  // className="red"
+                  className="red"
+                >
+                  {busy ? "Deleting..." : "Delete Account"}
+                </Button>
+              </RowItem>
+            </Row>
+          </SectionBody>
+        </Section>
+      </div>
       {/*Modals Overlays*/}
       <DaysToSync
         show={showDaysToSync}
