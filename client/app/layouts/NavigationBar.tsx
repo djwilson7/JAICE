@@ -3,10 +3,12 @@ import { NavButton } from "../nav-components/NavButton";
 import { ThemeToggleButton } from "../nav-components/ThemeToggleButton";
 import { MenuToggleButton } from "../nav-components/MenuToggleButton";
 
+import { MainHeader } from "@/app/nav-components/MainHeader";
+
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/global-components/AuthProvider";
 import { logOut } from "@/global-services/auth";
+
 // Icons
 import homeIcon from "@/assets/icons/home.svg";
 import aboutIcon from "@/assets/icons/book-open-cover.svg";
@@ -15,14 +17,12 @@ import accountIcon from "@/assets/icons/user.svg";
 import accessibilityIcon from "@/assets/icons/hand-paper.svg";
 import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
-import searchIcon from "@/assets/icons/search.svg";
 
 import { getCSSVar } from "@/utils/getCSSVar";
 import resumeIcon from "@/assets/icons/resume.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
-import { useBrandImage } from "@/global-services/useBrandImage";
 
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
@@ -76,14 +76,9 @@ export function NavigationBar() {
 
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
 
-  const animationDuration =
-    parseFloat(getCSSVar("--animation-duration")) || 0.2;
-
   const [hoverMode, setHoverMode] = useState<
     "hover" | "locked-open" | "locked-closed"
   >("hover");
-
-  const brandImg = useBrandImage();
 
   useEffect(() => {
     // Update selected button based on current path
@@ -116,12 +111,6 @@ export function NavigationBar() {
     navigate(route);
   };
 
-  const { user } = useAuth();
-  const profilePic = user?.photoURL;
-  const firstName = user?.displayName?.split(" ")[0] || null;
-  const lastName = user?.displayName?.split(" ").slice(1).join(" ") || null;
-  const headerEmail = user?.email?.toString() || null;
-
   const restWidthMap = {
     "locked-closed": "6rem",
     hover: "6rem",
@@ -136,68 +125,11 @@ export function NavigationBar() {
 
   return (
     <div className="h-screen min-page-width overflow-x-hidden">
-      <motion.header
-        className={`app-header z-500`}
-        initial="rest"
-        transition={{ duration: animationDuration }}
-      >
-        <div className={`flex w-full h-full items-center justify-center gap-4`}>
-          <div className="flex items-center gap-4 w-1/4 h-full">
-            <div className="profile-picture">
-              {profilePic ? (
-                <img
-                  src={profilePic}
-                  alt="Profile"
-                  className="w-full h-full object-cover rounded-full border-2 border-[var(--color-blue-3)]"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-xl font-bold">
-                    {firstName?.charAt(0)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col">
-              <h2 className="text-2xl text-left font-bold primary-text line-clamp-1">
-                {firstName} {lastName}
-              </h2>
-              <small className="text-left secondary-text line-clamp-1">
-                {headerEmail}
-              </small>
-              <small className="text-left secondary-text line-clamp-1">
-                Fresh Starter
-              </small>
-            </div>
-          </div>
-          <div className="flex w-1/2 h-full justify-center items-center">
-            <div className="brandIcon">
-              <img src={brandImg} alt="JAICE" className="object-cover" />
-            </div>
-            <h2 className="">Simplify Your Job Hunt</h2>
-          </div>
-          <div className="flex w-1/4 h-full justify-center items-center">
-            <div className="relative w-full ">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="px-4 py-2 pl-10 rounded-lg border border-[var(--color-blue-2)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue-3)] focus:border-transparent w-full"
-              />
-
-              <img
-                src={searchIcon}
-                alt="Search"
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon"
-              />
-            </div>
-          </div>
-        </div>
-      </motion.header>
+      <MainHeader />
 
       <div className={`app-content`}>
         <nav
-          className={`flex absolute left-0 top-0  h-full primary-color hidden md:block animate-element`}
+          className={`flex absolute left-0 top-0  h-full primary-color animate-element`}
         >
           <motion.div
             className="z-50 h-full flex flex-col py-4 items-left justify-center gap-3 overflow-hidden"
@@ -209,7 +141,9 @@ export function NavigationBar() {
             animate={navIsHovered ? "hover" : "rest"}
             onMouseEnter={() => setNavIsHovered(true)}
             onMouseLeave={() => setNavIsHovered(false)}
-            transition={{ duration: animationDuration }}
+            transition={{
+              duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
+            }}
           >
             <div className="flex flex-col items-left h-full w-full justify-between group-hover:items-start">
               <section aria-label="Navigation Buttons">
@@ -276,7 +210,9 @@ export function NavigationBar() {
             hover: { marginLeft: hoverWidthMap[hoverMode] },
           }}
           animate={navIsHovered ? "hover" : "rest"}
-          transition={{ duration: animationDuration }}
+          transition={{
+            duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
+          }}
           style={{ background: "var(--page-gradient)" }}
         >
           <Outlet />

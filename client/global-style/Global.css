@@ -728,8 +728,7 @@ span,
 label,
 button,
 input,
-textarea,
-div {
+textarea {
   font-size: var(--fs-body);
 }
 
@@ -959,7 +958,6 @@ to an element (className="example").
   padding: 0 1rem;
   overflow: hidden;
   scroll-behavior: none;
-  min-width: 1200px;
 }
 
 .app-content {
@@ -987,11 +985,18 @@ to an element (className="example").
   box-shadow: var(--shadow);
 }
 
-.profile-picture {
+.profile-picture-container {
   border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--white-color);
+  box-shadow: var(--shadow);
+}
+
+.profile-picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   aspect-ratio: 1/1;
-  width: 4rem;
-  min-width: 4rem;
 }
 
 .brandIcon {
@@ -999,7 +1004,6 @@ to an element (className="example").
   align-items: center;
   justify-content: center;
   aspect-ratio: 1/1;
-  height: 6rem;
 }
 
 .modal-backdrop {
@@ -1167,6 +1171,37 @@ to an element (className="example").
   opacity: 0.5;
 }
 
+.brand-block {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
 
+.brand-block .brand-tag {
+  font-family: var(--font-headline);
+}
 
+.user-block {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.user-block .text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.text-container .user-name {
+  font-weight: 600;
+  font-family: var(--font-headline)
+}
+
+.text-container .secondary-info {
+  font-weight: 400;
+}
 /* Add more custom classes above this line */
