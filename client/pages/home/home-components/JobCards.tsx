@@ -134,6 +134,11 @@ export function JobCard({
 
   const needsReview = localReviewNeeded ? "review" : "shadow";
 
+  const closeDelete = () => {
+    setShowDeleteConfirm(false);
+    setIsDeleting(false);
+  }
+  
   return (
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
@@ -391,7 +396,7 @@ export function JobCard({
               message="Are you sure you want to delete the selected item/s? You can undo this action from the Trash however it will be permanently deleted after 30 days."
               confirmLabel="Delete"
               isProcessing={isProcessingDelete}
-              onCancel={() => setShowDeleteConfirm(false)}
+              onCancel={closeDelete}
               onConfirm={async () => {
                 setIsProcessingDelete(true);
       
@@ -400,7 +405,7 @@ export function JobCard({
       
                 } finally {
                   setIsProcessingDelete(false);
-                  setShowDeleteConfirm(false);
+                  closeDelete();
                 }
               }}
             />
