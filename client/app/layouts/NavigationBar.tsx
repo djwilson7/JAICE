@@ -1,5 +1,8 @@
 // import { localfiles } from "@/directory/path/to/localimport";
-import Button from "@/global-components/button";
+import { NavButton } from "../nav-components/NavButton";
+import { ThemeToggleButton } from "../nav-components/ThemeToggleButton";
+import { MenuToggleButton } from "../nav-components/MenuToggleButton";
+
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/global-components/AuthProvider";
@@ -14,205 +17,12 @@ import notificationIcon from "@/assets/icons/bell-notification-social-media.svg"
 import quitIcon from "@/assets/icons/user-logout.svg";
 import searchIcon from "@/assets/icons/search.svg";
 
-import openMenuIcon from "@/assets/icons/openMenuIcon.svg";
-import closeMenuIcon from "@/assets/icons/closedMenuIcon.svg";
-import hoverMenuIcon from "@/assets/icons/hoverMenuIcon.svg";
-
 import { getCSSVar } from "@/utils/getCSSVar";
 import resumeIcon from "@/assets/icons/resume.svg";
-import sunIcon from "@/assets/icons/sun.svg";
-import moonIcon from "@/assets/icons/moon.svg";
-import halfCircleIcon from "@/assets/icons/half-circle.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
 import { useBrandImage } from "@/global-services/useBrandImage";
-
-function useThemeIcon() {
-  const computeThemeIcon = () => {
-    const theme = document.documentElement.getAttribute("data-theme");
-    const contrast = document.documentElement.getAttribute("data-contrast");
-    if (contrast === "bw") {
-      return halfCircleIcon;
-    }
-    return theme === "light" ? sunIcon : moonIcon;
-  };
-
-  const [themeIcon, setThemeIcon] = useState<string>(computeThemeIcon());
-
-  useEffect(() => {
-    const updateIcon = () => setThemeIcon(computeThemeIcon());
-
-    updateIcon();
-
-    window.addEventListener("appearancechange", updateIcon);
-
-    return () => {
-      window.removeEventListener("appearancechange", updateIcon);
-    };
-  }, []);
-
-  return themeIcon;
-}
-
-const ThemeToggleButton = ({
-  hoverMode,
-}: {
-  hoverMode: "hover" | "locked-open" | "locked-closed";
-}) => {
-  const themeIcon = useThemeIcon();
-  const titleText =
-    themeIcon === moonIcon ? "Flip to Light Mode" : "Flip to Dark Mode";
-
-  const handleThemeToggle = () => {
-    const currentTheme = document.documentElement.getAttribute("data-theme");
-    const currentContrast =
-      document.documentElement.getAttribute("data-contrast");
-
-    if (currentContrast === "bw") {
-      const newTheme = "dark";
-      const newContrast = "high";
-
-      document.documentElement.setAttribute("data-theme", newTheme);
-      document.documentElement.setAttribute("data-contrast", newContrast);
-      window.dispatchEvent(new Event("appearancechange"));
-      return;
-    }
-
-    const newTheme = currentTheme === "light" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", newTheme);
-
-    const event = new Event("appearancechange");
-    window.dispatchEvent(event);
-  };
-
-  const iconLabelMap = {
-    [sunIcon]: "Light Mode",
-    [moonIcon]: "Dark Mode",
-    [halfCircleIcon]: "B/W Contrast Mode",
-  };
-
-  const buttonLabel = iconLabelMap[themeIcon] ?? "Mode";
-
-  return (
-    <NavButton
-      icon={themeIcon}
-      label={buttonLabel}
-      onClick={handleThemeToggle}
-      isSelected={false}
-      hoverMode={hoverMode}
-      title={titleText}
-    />
-  );
-};
-
-// Adding a perm lock to the hover state, so user can keep the menu closed on hover as well.
-// So always open, always closed, or hover to open.
-const MenuExpandButton = ({
-  hoverMode,
-  setHoverMode,
-}: {
-  hoverMode: "hover" | "locked-open" | "locked-closed";
-  setHoverMode: (value: "hover" | "locked-open" | "locked-closed") => void;
-}) => {
-  const menuIconMap = {
-    "locked-closed": closeMenuIcon,
-    hover: hoverMenuIcon,
-    "locked-open": openMenuIcon,
-  };
-
-  const handleHoverModeToggle = () => {
-    if (hoverMode === "locked-closed") {
-      setHoverMode("hover");
-    } else if (hoverMode === "hover") {
-      setHoverMode("locked-open");
-    } else {
-      setHoverMode("locked-closed");
-    }
-  };
-
-  const iconLabelMap = {
-    "locked-closed": "Always Closed",
-    hover: "Hover Mode",
-    "locked-open": "Always Open",
-  };
-
-  const titleMap = {
-    "locked-closed": "Flip to Hover Mode",
-    hover: "Flip to Always Open",
-    "locked-open": "Flip to Always Closed",
-  };
-
-  return (
-    <NavButton
-      onClick={handleHoverModeToggle}
-      isSelected={false}
-      label={iconLabelMap[hoverMode]}
-      icon={menuIconMap[hoverMode]}
-      hoverMode={hoverMode}
-      title={titleMap[hoverMode]}
-    />
-  );
-};
-
-const NavButton = ({
-  icon,
-  label,
-  onClick,
-  isSelected,
-  hoverMode,
-  title,
-}: {
-  icon: string;
-  label: string;
-  onClick: () => void;
-  isSelected: boolean;
-  hoverMode: "hover" | "locked-open" | "locked-closed";
-  title?: string;
-}) => {
-
-  const hoverModeRestMap = {
-    "locked-closed": false,
-    hover: false,
-    "locked-open": true,
-  };
-
-  const hoverModeLabelOpacityMap = {
-    "locked-closed": 0,
-    "hover": 1,
-    "locked-open": 1,
-  };
-
-  return (
-    <div className="flex flex-row items-center gap-2">
-      <Button
-        onClick={onClick}
-        isSelected={isSelected}
-        className="navButton"
-        title={title}
-      >
-        <div className="flex items-center">
-          <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
-        </div>
-      </Button>
-      <motion.span
-        className="text-left overflow-hidden whitespace-nowrap"
-        style={{
-          height: "1.25rem",
-          display: "flex",
-          alignItems: "center",
-        }}
-        variants={{
-          rest: { opacity: hoverModeRestMap[hoverMode] ? 1 : 0 },
-          hover: { opacity: hoverModeLabelOpacityMap[hoverMode] },
-        }}
-        transition={{ duration: 0.15 }}
-      >
-        {label}
-      </motion.span>
-    </div>
-  );
-};
 
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
@@ -265,7 +75,7 @@ export function NavigationBar() {
   const [selectedButton, setSelectedButton] = useState<string>("");
 
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
-  
+
   const animationDuration =
     parseFloat(getCSSVar("--animation-duration")) || 0.2;
 
@@ -314,13 +124,13 @@ export function NavigationBar() {
 
   const restWidthMap = {
     "locked-closed": "6rem",
-    "hover": "6rem",
+    hover: "6rem",
     "locked-open": "15rem",
   };
 
   const hoverWidthMap = {
     "locked-closed": "6rem",
-    "hover": "15rem",
+    hover: "15rem",
     "locked-open": "15rem",
   };
 
@@ -386,7 +196,9 @@ export function NavigationBar() {
       </motion.header>
 
       <div className={`app-content`}>
-        <nav className={`flex absolute left-0 top-0  h-full primary-color`}>
+        <nav
+          className={`flex absolute left-0 top-0  h-full primary-color hidden md:block animate-element`}
+        >
           <motion.div
             className="z-50 h-full flex flex-col py-4 items-left justify-center gap-3 overflow-hidden"
             variants={{
@@ -435,7 +247,7 @@ export function NavigationBar() {
                     <ThemeToggleButton hoverMode={hoverMode} />
                   </li>
                   <li key="menu-expand">
-                    <MenuExpandButton
+                    <MenuToggleButton
                       hoverMode={hoverMode}
                       setHoverMode={setHoverMode}
                     />
