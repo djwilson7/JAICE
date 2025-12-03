@@ -132,86 +132,6 @@ export function JobCard({
     return () => window.removeEventListener("keydown", onKey);
   }, [showDeleteConfirm]);
 
-  // // delete confirmation modal
-  // const modalMarkup = (
-  //   <div
-  //     className="fixed inset-0 z-50 flex items-center justify-center"
-  //     role="dialog"
-  //     aria-modal="true"
-  //     aria-labelledby={`delete-dialog-title-${job.id}`}
-  //     onClick={() => setShowDeleteConfirm(false)}
-  //   >
-  //     {/* backdrop */}
-  //     <div className="absolute inset-0 bg-black/60" />
-
-  //     {/* dialog */}
-  //     <div
-  //       className="flex flex-col w-full z-60 max-w-md p-4 gap-4 glass"
-  //       onClick={(e) => e.stopPropagation()}
-  //     >
-  //       <h3
-  //         id={`delete-dialog-title-${job.id}`}
-  //         className="primary-text font-semibold"
-  //       >
-  //         Do you want to delete this card?
-  //       </h3>
-  //       <p className="text-sm secondary-text">{job.title}</p>
-
-  //       <div className="flex gap-2 mt-2 justify-end">
-  //         <button
-  //           onClick={(e) => {
-  //             e.stopPropagation();
-  //             e.preventDefault();
-  //             setIsDeleting(false);
-  //             setShowDeleteConfirm(false);
-  //           }}
-  //           type="button"
-  //           className="small"
-  //           aria-label="Cancel delete"
-  //         >
-  //           Cancel
-  //         </button>
-
-  //         <button
-  //           onClick={async (e) => {
-  //             e.stopPropagation();
-  //             e.preventDefault();
-
-  //             if (isDeleting || isMultiSelecting) return;
-
-  //             if (!onDelete) {
-  //               setShowDeleteConfirm(false);
-  //               return;
-  //             }
-
-  //             setIsDeleting(true);
-  //             try {
-  //               const success = await onDelete(job.id);
-  //               if (!success) {
-  //                 console.error("Failed to delete job with id:", job.id);
-  //               }
-  //             } catch (error) {
-  //               console.error(
-  //                 "Error occurred while deleting job with id:",
-  //                 job.id,
-  //                 error
-  //               );
-  //             } finally {
-  //               setIsDeleting(false);
-  //               setShowDeleteConfirm(false);
-  //             }
-  //           }}
-  //           type="button"
-  //           className="small bg-red-600 text-white"
-  //           aria-label="Confirm delete"
-  //         >
-  //           {isDeleting ? "Deleting..." : "Yes, delete"}
-  //         </button>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-
   const needsReview = localReviewNeeded ? "review" : "shadow";
 
   return (
@@ -244,7 +164,6 @@ export function JobCard({
     >
       {/* Tooltip for Review Needed */}
       <motion.small
-        key="review-tooltip"
         initial={{
           opacity: 0,
           height: 0,
@@ -351,7 +270,6 @@ export function JobCard({
       </motion.div>
 
       <motion.div
-        key="review-tooltip"
         initial={{ opacity: 0, height: 0 }}
         animate={{
           height: isHovered ? "auto" : 0,

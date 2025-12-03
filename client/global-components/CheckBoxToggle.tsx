@@ -72,6 +72,7 @@ export function CheckBoxToggle({
             setIsChecked(!isChecked);
           }}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          onChange={() => console.log("Checked Box")}
         />
         {label ? (
           <label className="select-none whitespace-nowrap secondary-text">{label}</label>

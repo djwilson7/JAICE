@@ -356,9 +356,9 @@ export function NavigationBar() {
               <small className="text-left secondary-text line-clamp-1">
                 {headerEmail}
               </small>
-              <caption className="text-left secondary-text line-clamp-1">
+              <small className="text-left secondary-text line-clamp-1">
                 Fresh Starter
-              </caption>
+              </small>
             </div>
           </div>
           <div className="flex w-1/2 h-full justify-center items-center">
