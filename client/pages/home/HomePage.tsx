@@ -22,6 +22,7 @@ import Fuse from "fuse.js";
 import loadingAnimationDark from "@/assets/loaders/CircleVenn.json";
 import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
 import TrashArchiveModal from "./home-components/TrashArchiveModal";
+import loadingAnimationBW from "@/assets/loaders/CircleVennBW.json";
 
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -54,7 +55,8 @@ export function HomePage() {
   const [isAlertOpen, setIsAlertOpen] = useState(false); // to track if the alert box is open
   const [newJobsCount, setNewJobsCount] = useState(0); // to track the count of new jobs
   const lastSeenCountRef = useRef<number>(0); // to track the last seen count of jobs
-  const alertMessage = newJobsCount > 0 ? `You have ${newJobsCount} new jobs` : "No Alerts"; // to hold the current alert message
+  const alertMessage =
+    newJobsCount > 0 ? `You have ${newJobsCount} new jobs` : "No Alerts"; // to hold the current alert message
 
   const [isInfoModalOpen, setInfoModalOpen] = useState(false); // to track if the info modal is open
   const [jobs, setJobs] = useState<JobCardType[]>([]); // to hold the list of job cards (initially set to mock data)
@@ -66,22 +68,21 @@ export function HomePage() {
   const [rlsToken, setRlsToken] = useState<string | null>(null); // to hold the RLS JWT token
   const [sortedJobs, setSortedJobs] = useState<JobCardType[]>([]); // to hold the sorted list of job cards
   const [filteredJobs, setFilteredJobs] = useState<JobCardType[]>([]); // to hold the filtered list of job cards based on search
-  const [isDeleting, setIsDeleting] = useState(false); // to track if the delete confirmation modal is open 
-  const [isNewAppOpen, setIsNewAppOpen] = useState(false); // to track if the new application modal is open
+  const [isDeleting, setIsDeleting] = useState(false); // to track if the delete confirmation modal is open
+  const [isJobAppModalOpen, setIsJobAppModalOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState<string | null>(null); // to track if a column is highlighted
-  
+
   const [viewportHeight, setViewportHeight] = useState(
     () => window.innerHeight
   );
-  const [editingJob, setEditingJob] = useState<JobCardType | null>(null);
 
   // undo action for last change (delete or move)
-  type UndoAction = 
-    | {type: "delete"; job: JobCardType}
-    | {type: "move"; id: string; from: string; to: string; job?: JobCardType}
-    | {type: "deleteMultiple"; jobs: JobCardType[]}
-    | {type: "moveMultiple"; jobs: JobCardType[]; to: string}
-    | {type: "archiveMultiple"; jobs: JobCardType[]};
+  type UndoAction =
+    | { type: "delete"; job: JobCardType }
+    | { type: "move"; id: string; from: string; to: string; job?: JobCardType }
+    | { type: "deleteMultiple"; jobs: JobCardType[] }
+    | { type: "moveMultiple"; jobs: JobCardType[]; to: string }
+    | { type: "archiveMultiple"; jobs: JobCardType[] };
 
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
   const [redoStack, setRedoStack] = useState<UndoAction[]>([]);
@@ -92,48 +93,73 @@ export function HomePage() {
 
   //This hides the redo/undo button during alternate interactions.
   // Searching, multiselecting, info modal, dragging, editing, deleting, adding new apps
-  const [showRedoUndo, setShowRedoUndo] = useState((undoStack.length > 0 || redoStack.length > 0));
+  const [showRedoUndo, setShowRedoUndo] = useState(
+    undoStack.length > 0 || redoStack.length > 0
+  );
   useEffect(() => {
     const hasRedoUndo = undoStack.length > 0 || redoStack.length > 0; // If either stack has items
-    const userIsSearching = searchQuery.trim().length > 0;            // If the user is actively searching
-    const userIsMultiSelecting = isMultiSelecting;                    // If the user is multi selecting jobs
-    const userHasInfoModalOpen = isInfoModalOpen;                     // If the user has the info modal open
-    const userIsDragging = isDragging;                    // If the user is not currently dragging an item
-    const userIsEditingJob = editingJob !== null;                // If the user is editing or adding a new application
+    const userIsSearching = searchQuery.trim().length > 0; // If the user is actively searching
+    const userIsMultiSelecting = isMultiSelecting; // If the user is multi selecting jobs
+    const userHasInfoModalOpen = isInfoModalOpen; // If the user has the info modal open
+    const userIsDragging = isDragging; // If the user is not currently dragging an item
     const userIsDeleting = isDeleting;
-    const userHasNewAppOpen = isNewAppOpen;
-    const shouldShow = hasRedoUndo && !userIsSearching && !userIsMultiSelecting && !userHasInfoModalOpen && !userIsDragging && !userIsEditingJob && !userHasNewAppOpen && !userIsDeleting;
+    const userHasNewAppOpen = isJobAppModalOpen;
+    const shouldShow =
+      hasRedoUndo &&
+      !userIsSearching &&
+      !userIsMultiSelecting &&
+      !userHasInfoModalOpen &&
+      !userIsDragging &&
+      !userHasNewAppOpen &&
+      !userIsDeleting;
     setShowRedoUndo(shouldShow);
-  }, [undoStack, redoStack, isMultiSelecting, searchQuery, isInfoModalOpen, isDragging, editingJob, isDeleting, isNewAppOpen]);
+  }, [
+    undoStack,
+    redoStack,
+    isMultiSelecting,
+    searchQuery,
+    isInfoModalOpen,
+    isDragging,
+    isDeleting,
+    isJobAppModalOpen,
+  ]);
 
-
-  const initialTheme = document.documentElement.getAttribute("data-theme") === "light";
-  const [loadingAnimation, setLoadingAnimation] = useState<any>(initialTheme ? loadingAnimationLight : loadingAnimationDark);
+  const isBWMode =
+    document.documentElement.getAttribute("data-contrast") === "bw";
+  const initialTheme =
+    document.documentElement.getAttribute("data-theme") === "light";
+  const [loadingAnimation, setLoadingAnimation] = useState<any>(
+    isBWMode
+      ? loadingAnimationBW
+      : initialTheme
+      ? loadingAnimationLight
+      : loadingAnimationDark
+  );
 
   useEffect(() => {
     const updateLoadingSpinner = () => {
       const htmlTheme = document.documentElement.getAttribute("data-theme");
-      setLoadingAnimation(htmlTheme === "light" ? loadingAnimationLight : loadingAnimationDark);
+      const htmlContrast =
+        document.documentElement.getAttribute("data-contrast");
+      if (htmlContrast === "bw") {
+        setLoadingAnimation(loadingAnimationBW);
+        return;
+      }
+      setLoadingAnimation(
+        htmlTheme === "light" ? loadingAnimationLight : loadingAnimationDark
+      );
     };
     updateLoadingSpinner();
     window.addEventListener("themechange", updateLoadingSpinner);
-    return () => window.removeEventListener("themechange", updateLoadingSpinner);
+    return () =>
+      window.removeEventListener("themechange", updateLoadingSpinner);
   }, []);
-
 
   useEffect(() => {
     const handleResize = () => setViewportHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const openEditModal = (job: JobCardType) => {
-    setEditingJob(job);
-  };
-
-  const closeEditModal = () => {
-    setEditingJob(null);
-  };
 
   const sortByOptions = [
     { value: "default", label: "Sort by" },
@@ -225,7 +251,7 @@ export function HomePage() {
         console.log("Transformed Job Cards:", cards);
         setJobs(cards);
         lastSeenCountRef.current = cards.length;
-        setNewJobsCount
+        setNewJobsCount;
         setEmailsLoaded(true);
       }
     } catch (error) {
@@ -353,9 +379,8 @@ export function HomePage() {
 
   const handleRealtimeChange = useCallback((event: any) => {
     try {
-      if (event.type === "INSERT") 
-      {
-        setNewJobsCount((n) => n +1);
+      if (event.type === "INSERT") {
+        setNewJobsCount((n) => n + 1);
       }
     } catch (error) {
       console.error("Error handling realtime job change:", error);
@@ -367,8 +392,7 @@ export function HomePage() {
   useJobRealtime(userId, rlsToken, handleRealtimeChange);
 
   useEffect(() => {
-    if (isAlertOpen) 
-      {
+    if (isAlertOpen) {
       // reset new jobs count after alert is viewed
       setNewJobsCount(0);
       lastSeenCountRef.current = jobs.length;
@@ -507,18 +531,34 @@ export function HomePage() {
       if (prevConfig[3].id === "accepted") {
         return [
           { id: "applied", title: "Applied", bg: "var(--applied-column-bg)" },
-          { id: "interview", title: "Interview", bg: "var(--interview-column-bg)" },
+          {
+            id: "interview",
+            title: "Interview",
+            bg: "var(--interview-column-bg)",
+          },
           { id: "offer", title: "Offer", bg: "var(--offer-column-bg)" },
-          { id: "rejected", title: "Rejected", bg: "var(--rejected-column-bg)" },
+          {
+            id: "rejected",
+            title: "Rejected",
+            bg: "var(--rejected-column-bg)",
+          },
         ];
       } else {
         // Column configuration for the Kanban board
         // Each column has an id, title, and background color
         return [
           { id: "applied", title: "Applied", bg: "var(--applied-column-bg)" },
-          { id: "interview", title: "Interview", bg: "var(--interview-column-bg)" },
+          {
+            id: "interview",
+            title: "Interview",
+            bg: "var(--interview-column-bg)",
+          },
           { id: "offer", title: "Offer", bg: "var(--offer-column-bg)" },
-          { id: "accepted", title: "Accepted", bg: "var(--accepted-column-bg)" },
+          {
+            id: "accepted",
+            title: "Accepted",
+            bg: "var(--accepted-column-bg)",
+          },
         ];
       }
     });
@@ -575,8 +615,7 @@ export function HomePage() {
       setSelectedJobs((prev) => prev.filter((j) => j.id !== id));
       setIsMultiSelecting(false);
 
-      if (jobToDelete)
-      {
+      if (jobToDelete) {
         // set undo action
         pushUndo({ type: "delete", job: jobToDelete });
       }
@@ -610,24 +649,26 @@ export function HomePage() {
       // clear selection and multi select
       setSelectedJobs((prev) => prev.filter((j) => !ids.includes(j.id)));
       setIsMultiSelecting(false);
-      
+
       // push undo action
       pushUndo({ type: "deleteMultiple", jobs: jobsToDelete });
       return true;
-
     } catch (error) {
       console.error("Failed to delete multiple jobs with ids:", ids, error);
       return false;
     }
   };
 
-  const handleMoveMultiple = async (ids: string[], to: string): Promise<boolean> => {
+  const handleMoveMultiple = async (
+    ids: string[],
+    to: string
+  ): Promise<boolean> => {
     const jobsToMove = jobs.filter((job) => ids.includes(job.id));
 
     if (jobsToMove.length === 0) return false;
 
     // snapshot of original columns
-    const snapshot = jobsToMove.map((job) => ({...job}));
+    const snapshot = jobsToMove.map((job) => ({ ...job }));
 
     try {
       await api("/api/jobs/update-stage", {
@@ -640,9 +681,7 @@ export function HomePage() {
 
       // update jobs locally
       setJobs((prev) =>
-        prev.map((job) =>
-          ids.includes(job.id) ? { ...job, column: to } : job
-        )
+        prev.map((job) => (ids.includes(job.id) ? { ...job, column: to } : job))
       );
 
       setSelectedJobs([]);
@@ -651,7 +690,6 @@ export function HomePage() {
       pushUndo({ type: "moveMultiple", jobs: snapshot, to });
 
       return true;
-
     } catch (error) {
       console.error("Failed to move multiple jobs with ids:", ids, error);
       return false;
@@ -679,7 +717,6 @@ export function HomePage() {
       pushUndo({ type: "archiveMultiple", jobs: jobsToArchive });
 
       return true;
-
     } catch (error) {
       console.error("Failed to archive multiple jobs with ids:", ids, error);
       return false;
@@ -690,10 +727,8 @@ export function HomePage() {
   //  UNDO / REDO FUNCTIONALITY
   // ----------------------------------------------------------------------------------
 
-
   // Undo last action (delete or move)
-  const pushUndo = (action: UndoAction) =>
-  {
+  const pushUndo = (action: UndoAction) => {
     setUndoStack((prev) => {
       const next = [...prev, action];
       undoRef.current = next;
@@ -703,7 +738,7 @@ export function HomePage() {
     // clear redo stack on new action
     setRedoStack([]);
     redoRef.current = [];
-  } 
+  };
 
   // remove and return top undo action both undoStack and UndoRef
   const popUndo = (): UndoAction | undefined => {
@@ -727,8 +762,7 @@ export function HomePage() {
   };
 
   // perform the undo action
-  async function performUndo()
-  {
+  async function performUndo() {
     // sync pop from ref
     const action = popUndo();
 
@@ -737,30 +771,26 @@ export function HomePage() {
     // perform the undo based on action type
     try {
       // undo delete
-      if (action.type === "delete") 
-      {
+      if (action.type === "delete") {
         const jobToRestore = action.job;
 
         // toggle deleted state back
-        await api("/api/jobs/set-delete", 
-        {
+        await api("/api/jobs/set-delete", {
           method: "POST",
           body: JSON.stringify({
             provider_message_ids: [jobToRestore.id],
-          })
+          }),
         });
 
         // re insert job locally
         setJobs((prev) => [jobToRestore, ...prev]);
 
-      // undo move
+        // undo move
       } else if (action.type === "move") {
-
         const { id, from } = action;
 
         // move job back to original column
-        await api("/api/jobs/update-stage", 
-        {
+        await api("/api/jobs/update-stage", {
           method: "POST",
           body: JSON.stringify({
             provider_message_ids: [id],
@@ -771,7 +801,7 @@ export function HomePage() {
         setJobs((prev) =>
           prev.map((job) => (job.id === id ? { ...job, column: from } : job))
         );
-      // undo multiple delete
+        // undo multiple delete
       } else if (action.type === "deleteMultiple") {
         const ids = action.jobs.map((job) => job.id);
 
@@ -784,36 +814,34 @@ export function HomePage() {
           });
           // re insert jobs locally
           setJobs((prev) => [...action.jobs, ...prev]);
-
         } catch (error) {
           console.error("Failed to undo multiple delete:", error);
         }
-    // undo multiple move
-    } else if (action.type === "moveMultiple") {
-      // restore multiple moved jobs
-      for (const job of action.jobs) 
-      {
-        try {
-          await api("/api/jobs/update-stage", {
-            method: "POST",
-            body: JSON.stringify({
-              provider_message_ids: [job.id],
-              app_stage: job.column,
-            }),
-          });
-        } catch (error) {
-          console.error("Failed to undo multiple move", error);
+        // undo multiple move
+      } else if (action.type === "moveMultiple") {
+        // restore multiple moved jobs
+        for (const job of action.jobs) {
+          try {
+            await api("/api/jobs/update-stage", {
+              method: "POST",
+              body: JSON.stringify({
+                provider_message_ids: [job.id],
+                app_stage: job.column,
+              }),
+            });
+          } catch (error) {
+            console.error("Failed to undo multiple move", error);
+          }
         }
-      }
-      // update jobs locally
-      setJobs((prev) =>
-        prev.map((job) => {
-          const originalJob = action.jobs.find((j) => j.id === job.id);
-          return originalJob ? { ...job, column: originalJob.column } : job;
-        })
-      );
-    // undo multiple archive
-    } else if (action.type === "archiveMultiple") {
+        // update jobs locally
+        setJobs((prev) =>
+          prev.map((job) => {
+            const originalJob = action.jobs.find((j) => j.id === job.id);
+            return originalJob ? { ...job, column: originalJob.column } : job;
+          })
+        );
+        // undo multiple archive
+      } else if (action.type === "archiveMultiple") {
         const ids = action.jobs.map((job) => job.id);
         try {
           await api("/api/jobs/set-archive", {
@@ -830,7 +858,6 @@ export function HomePage() {
       }
       // push redo action
       pushRedo(action);
-
     } catch (error) {
       console.error("Failed to undo action:", error);
     }
@@ -842,8 +869,7 @@ export function HomePage() {
       const isUndo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z";
 
       // only perform undo if there is an action to undo
-      if (isUndo)
-      {
+      if (isUndo) {
         e.preventDefault();
         performUndo();
       }
@@ -853,19 +879,17 @@ export function HomePage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-
   // ---------------------------------------------------------------------------------------
   // redo last undo (delete or move)
-  const pushRedo = (action: UndoAction) =>
-  {
+  const pushRedo = (action: UndoAction) => {
     setRedoStack((prev) => {
       const next = [...prev, action];
       redoRef.current = next;
       return next;
     });
-  }
+  };
 
-    // remove and return top undo action both undoStack and UndoRef
+  // remove and return top undo action both undoStack and UndoRef
   const popRedo = (): UndoAction | undefined => {
     // get current undo stack from ref
     const prevStack = redoRef.current;
@@ -887,8 +911,7 @@ export function HomePage() {
   };
 
   // perform the redo action
-  async function performRedo()
-  {
+  async function performRedo() {
     // sync pop from ref
     const action = popRedo();
 
@@ -897,12 +920,11 @@ export function HomePage() {
     // perform the redo based on action type
     try {
       // redo delete
-      if (action.type === "delete") 
-      {
+      if (action.type === "delete") {
         const jobToDelete = action.job;
 
-      // toggle deleted state back
-       await api("/api/jobs/set-delete", {
+        // toggle deleted state back
+        await api("/api/jobs/set-delete", {
           method: "POST",
           body: JSON.stringify({
             provider_message_ids: [jobToDelete.id],
@@ -911,14 +933,12 @@ export function HomePage() {
 
         setJobs((prev) => prev.filter((job) => job.id !== jobToDelete.id));
 
-      // undo move
+        // undo move
       } else if (action.type === "move") {
-
         const { id, to } = action;
 
         // move job back to column
-        await api("/api/jobs/update-stage", 
-        {
+        await api("/api/jobs/update-stage", {
           method: "POST",
           body: JSON.stringify({
             provider_message_ids: [id],
@@ -926,7 +946,8 @@ export function HomePage() {
           }),
         });
         // update job locally
-        setJobs((prev) => prev.map((job) => (job.id === id ? { ...job, column: to } : job))
+        setJobs((prev) =>
+          prev.map((job) => (job.id === id ? { ...job, column: to } : job))
         );
       } else if (action.type === "deleteMultiple") {
         const ids = action.jobs.map((job) => job.id);
@@ -987,8 +1008,7 @@ export function HomePage() {
       const isRedo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y";
 
       // only perform redo if there is an action to redo
-      if (isRedo)
-      {
+      if (isRedo) {
         e.preventDefault();
         performRedo();
       }
@@ -1002,6 +1022,24 @@ export function HomePage() {
   //  END UNDO / REDO FUNCTIONALITY
   // ----------------------------------------------------------------------------------
 
+  // This sets the job app modal's payload.
+  // String -> Column ID
+  // JobCardType -> A specific job to load
+  // null -> Empty state / closing the modal
+  const [jobAppModalPayload, setJobAppModalPayload] = useState<
+    string | JobCardType | null
+  >(null);
+
+  // The trigger to open the job apps modal and set it's payload
+  // Passed to the column and job card components
+  // Column will assign the column id as the payload
+  // JobCard will assign the specific job card as the payload
+  // Null is for empty state / closing
+  // This is strictly for opening the modal, closing is handled within the modal component itself
+  const openJobAppModal = (payload: string | JobCardType | null) => {
+    setJobAppModalPayload(payload);
+    setIsJobAppModalOpen(true);
+  };
 
   // Group jobs by their column for rendering
   // This creates a mapping of column ids to arrays of JobCard components
@@ -1037,10 +1075,10 @@ export function HomePage() {
           isMultiSelecting={isMultiSelecting}
           handleMultiSelectClick={handleJobCardClick}
           dimmed={!!searchQuery && !matchOrderMap.has(job.id)}
-          onEdit={openEditModal}
           onDelete={handleDelete}
           isDeleting={isDeleting}
           setIsDeleting={setIsDeleting}
+          openJobAppModal={openJobAppModal}
         />
       ));
 
@@ -1054,7 +1092,6 @@ export function HomePage() {
     handleJobCardClick,
     searchQuery,
   ]);
-  
 
   // show loading state while emails are being fetched
   return (
@@ -1079,7 +1116,7 @@ export function HomePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="w-full h-full flex items-center justify-center flex-col "
+          className="w-full h-full flex items-center justify-center flex-col"
         >
           {/* ^ Page Container ^ */}
           <div className="w-full h-full flex flex-col items-center gap-4 p-4 overflow-y-auto">
@@ -1127,9 +1164,8 @@ export function HomePage() {
                       column.id === "accepted" || column.id === "rejected"
                     }
                     onToggleReject={toggleAcceptedToRejected}
-                    isNewAppOpen={isNewAppOpen}
-                    setIsNewAppOpen={setIsNewAppOpen}
                     isHighlighted={isHighlighted}
+                    openJobAppModal={openJobAppModal}
                   >
                     {jobsByColumn[column.id]}{" "}
                     {/* render the JobCards associated with the columns id */}
@@ -1152,53 +1188,56 @@ export function HomePage() {
 
           {/* Undo bar (stay until refresh or all undos performed) */}
           {showRedoUndo && !isMultiSelecting && (
-            <div 
-                className="flex flex-row fixed bottom-6 justify-center items-center flex gap-1 rounded-xl p-1 glass z-2"
-                role="status"
-                aria-live="polite"
+            <div className="glass" role="status" aria-live="polite">
+              <span
+                title={
+                  undoStack.length === 0
+                    ? "No actions to undo"
+                    : "Undo (Ctrl+Z)"
+                }
+                className="rounded"
               >
-                <span 
-                  className="rounded"
+                <Button
+                  type="button"
+                  onClick={performUndo}
+                  aria-label="Undo last action"
+                  disabled={undoStack.length === 0}
+                  className={`undoRedo`}
                 >
-                  <Button
-                    type="button"
-                    onClick={performUndo}
-                    aria-label="Undo last action"
-                    disabled={undoStack.length === 0}
-                    className={`p-2 undoRedo`}
-                    title={undoStack.length === 0 ? "No actions to undo" : "Undo (Ctrl+Z)"}
-                  >
-                    <img src={undo} alt="Undo" className="w-5 h-5 icon" />
-                  </Button>
-                </span>
+                  <img src={undo} alt="Undo" className="w-5 h-5 icon" />
+                </Button>
+              </span>
 
-                <span 
-                  title={redoStack.length === 0 ? "No actions to redo" : "Redo (Ctrl+Y)"}
-                  className="rounded"
+              <span
+                title={
+                  redoStack.length === 0
+                    ? "No actions to redo"
+                    : "Redo (Ctrl+Y)"
+                }
+                className="rounded"
+              >
+                <button
+                  type="button"
+                  onClick={performRedo}
+                  aria-label="Redo last action"
+                  disabled={redoStack.length === 0}
+                  className={`undoRedo`}
                 >
-                  <button
-                    type="button"
-                    onClick={performRedo}
-                    aria-label="Redo last action"
-                    disabled={redoStack.length === 0}
-                    className={`p-2 undoRedo`}
-                  >
-                    <img src={redo} alt="Redo" className="w-5 h-5 icon" />
-                  </button>
-                </span>
-              </div>
-            )}
-          
-          <div className="fixed bottom-0 w-full bg-transparent z-1" style={{boxShadow: "var(--page-shadow)"}}></div>          
+                  <img src={redo} alt="Redo" className="w-5 h-5 icon" />
+                </button>
+              </span>
+            </div>
+          )}
 
+          <div
+            className="relative bottom-0 w-full bg-transparent z-1"
+            style={{ boxShadow: "var(--page-shadow)" }}
+          ></div>
 
           <NewApplication
-            isOpen={!!editingJob}
-            onClose={closeEditModal}
-            initialStage={
-              editingJob?.column ?? editingJob?.applicationStage ?? ""
-            }
-            initialData={editingJob ?? undefined}
+            isOpen={isJobAppModalOpen}
+            setIsOpen={setIsJobAppModalOpen}
+            payload={jobAppModalPayload}
             onSave={(updated: Partial<JobCardType> & { id?: string }) => {
               // merge updated job into local state
               if (updated?.id) {
@@ -1211,9 +1250,7 @@ export function HomePage() {
                 // if backend returns no id try to update by some fallback
                 setJobs((prev) => [updated as JobCardType, ...prev]);
               }
-              setEditingJob(null);
             }}
-
           />
 
           <TrashArchiveModal

@@ -89,7 +89,7 @@
 :root {
   /* Main Color Palettes */
   --page-bg: #1e1c20;
-  --page-bg-highlight: #48454b;
+  --page-bg-highlight: #333035;
   --page-bg-rgb: 30, 28, 32;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
 
@@ -105,7 +105,8 @@
   --shadow-color-rgb: 255, 255, 255;
   --black-color: #000000;
   --white-color: #ffffff;
-  --red-color: #c71d0a;
+  --red-color: #611b13;
+  --green-color: #063a01;
   --purple-color: #8e44ad;
   --gray-color: #c6c6c6;
   --orange-color: #da681b;
@@ -131,10 +132,10 @@
 
   /* Gradients */
   --page-gradient: linear-gradient(
-    160deg,
-    var(--page-bg-highlight),
+    180deg,
     var(--page-bg),
-    var(--page-bg-highlight)
+    var(--page-bg-highlight),
+    var(--page-bg)
   );
 
   --primary-gradient: linear-gradient(
@@ -204,6 +205,7 @@
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
 
+  --corner-radius: 20px;
   --animation-duration: 0.3s;
   --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
     saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
@@ -223,8 +225,8 @@ html[data-theme="light"] {
   --page-bg-rgb: 190, 190, 190;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
 
-  --modal-background: white;
-  --modal-background-rgb: 255, 255, 255;
+  --modal-background: rgb(0, 0, 0);
+  --modal-background-rgb: 0, 0, 0;
 
   --glass-bg: rgba(255, 255, 255, 0.5);
   --glass-bg-hover: rgba(255, 255, 255, 0.8);
@@ -235,7 +237,8 @@ html[data-theme="light"] {
   --shadow-color-rgb: 0, 0, 0;
   --black-color: #000000;
   --white-color: #ffffff;
-  --red-color: #c0392b;
+  --red-color: #cf4839;
+  --green-color: #3b7735;
   --purple-color: #8e44ad;
   --gray-color: #393636;
   --orange-color: #d35400;
@@ -259,12 +262,15 @@ html[data-theme="light"] {
   --primary-four-rgb: 79, 127, 153; /* Light Blue (Text/Icons on Button) */
   --primary-five-rgb: 37, 48, 58; /* Very Light Blue (Main Text) */
 
+  --primary-dark: #ffffff;
+  --primary-light: #000000;
+  
   /* Gradients */
   --page-gradient: linear-gradient(
-    160deg,
-    var(--page-bg-highlight),
+    180deg,
     var(--page-bg),
-    var(--page-bg-highlight)
+    var(--page-bg-highlight),
+    var(--page-bg)
   );
 
   --primary-gradient: linear-gradient(
@@ -334,6 +340,7 @@ html[data-theme="light"] {
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
 
+  --corner-radius: 20px;
   --animation-duration: 0.3s;
   --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
     brightness(90%) contrast(88%);
@@ -367,6 +374,13 @@ html[data-theme="light"] {
 */
 html[data-contrast="low"] {
   /* Effects */
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
+
   --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
   --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
 
@@ -377,7 +391,7 @@ html[data-contrast="low"] {
   --icon-opacity: 0.7;
 
   /* Button at rest */
-  --button-background: none;
+  --button-background: rgba(var(--primary-one-rgb), 0.8);
   --button-border: 1px solid transparent;
   --button-shadow: 0 0 0 transparent;
 
@@ -403,6 +417,8 @@ html[data-contrast="default"] {
   --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 1);
   --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
   --icon-opacity: 1;
+
+
   /* Button at rest */
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
@@ -422,8 +438,14 @@ html[data-contrast="default"] {
 
 html[data-contrast="high"] {
   /* Effects */
-  --shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+  --shadow: 0 0 5px rgba(var(--shadow-color-rgb), 0.7);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.6);
+
   --job-card-review-border: 1.2px solid var(--orange-color);
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.7);
+  --job-card-review-border-header: 1.2px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
 
   --button-background: var(--primary-one);
   --button-border: 1px solid transparent;
@@ -443,11 +465,144 @@ html[data-contrast="high"] {
 
 html[data-contrast="bw"] {
   /* Effects */
-  --shadow: 0 0 5px rgba(255, 255, 255, 0.6);
 
-  --button-background: rgb(46, 46, 46);
-  --button-border: 1px solid transparent;
-  --button-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+  /* 
+    ###################################################################################
+    Using Dark Mode as the primary palette base for BW mode 
+  */
+  --page-bg: #7a7a7a;
+  --page-bg-highlight: #7a7a7a;
+  --page-bg-rgb: 30, 28, 32;
+  --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+
+  --modal-background: black;
+  --modal-background-rgb: 0, 0, 0;
+
+  --glass-bg: rgba(0, 0, 0, 0.5);
+  --glass-bg-hover: rgba(0, 0, 0, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+
+  --shadow-color: #ffffff;
+  --shadow-color-rgb: 255, 255, 255;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #5f0a00;
+  --green-color: #0a5f00;
+  --purple-color: #8e44ad;
+  --gray-color: #d7d7d7;
+  --orange-color: #da681b;
+  --orange-color-rgb: 218, 104, 27;
+
+  --job-card-background: #484848;
+  --job-card-background-rgb: 72, 72, 72;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 1);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 1);
+
+  /* Primary Colors */
+  --primary-one: #1a1a1a; /* Dark Blue (Sidebar Background) */
+  --primary-two: #595e61; /* Medium Dark Blue (Selected Button) */
+  --primary-three: #c2c2c2; /* Medium Blue (Not Currently Used) */
+  --primary-four: #d3d3d3; /* Light Blue (Text/Icons on Button) */
+  --primary-five: #f2f1ef; /* Very Light Blue (Main Text) */
+
+  --primary-one-rgb: 26, 26, 26; /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 89, 94, 97; /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 194, 194, 194; /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 211, 211, 211; /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+
+  /* Gradients */
+  --page-gradient: linear-gradient(
+    160deg,
+    var(--page-bg-highlight),
+    var(--page-bg),
+    var(--page-bg-highlight)
+  );
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
+
+  /* Other Colors */
+  --applied-color: #1a1a1a;
+  --interview-color: #1a1a1a;
+  --offer-color: #1a1a1a;
+  --accepted-color: #1a1a1a;
+  --rejected-color: #1a1a1a;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  /* Fonts and Text*/
+  --text-primary: var(--white-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
+
+  --font-title: "Baskerville", serif;
+  --font-headline: "Baskerville", serif;
+  --font-subheading: "Poppins", sans-serif;
+  --font-body: "Poppins", sans-serif;
+  --font-caption: "Poppins", sans-serif;
+
+  --text-scale: 1;
+  --fs-title: calc(40px * var(--text-scale));
+  --fs-headline: calc(28px * var(--text-scale));
+  --fs-subheading: calc(20px * var(--text-scale));
+  --fs-body: calc(16px * var(--text-scale));
+  --fs-caption: calc(14px * var(--text-scale));
+
+  --animation-duration: 0.3s;
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+
+  --shadow: none;
+  --shadow-hover: none;
+
+  --job-card-review-border: 1.2px solid var(--orange-color);
+  --job-card-review-shadow: none;
+  --job-card-review-border-header: 1.2px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
+
+  --button-background: var(--primary-one);
+  --button-border: 1px solid rgba(var(--primary-five-rgb), 1);
+  --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
 
   /* Button on Hover */
   --button-hover-background: black;
@@ -456,7 +611,7 @@ html[data-contrast="bw"] {
   --button-hover-scale: 1.05;
 
   /* Button when selected */
-  --button-selected-background: rgb(87, 87, 87);
+  --button-selected-background: var(--primary-two);
   --button-selected-border: none;
   --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
 
@@ -464,6 +619,7 @@ html[data-contrast="bw"] {
     brightness(100%) contrast(100%);
 
   --color-bg-alt: linear-gradient(160deg, black, white, black);
+
 }
 
 /* Add additional accessibility adjustments above this line */
@@ -581,21 +737,34 @@ small {
   font-size: var(--fs-caption);
 }
 
+/* 
+  #################################################################################
+  Base Button Styles:
+
+  Any declared alterations beyond the ### will inherit from these base styles.
+  This ensures consistency across all button variants unless explicitly changed.
+*/
 /* Base Button Styling */
 button {
-  border-radius: 20px;
+  border-radius: var(--corner-radius);
   padding: 0.6em 1.2em;
   font-size: var(--fs-subheading);
   font-weight: 500;
   font-family: var(--font-subheading);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all var(--animation-duration) ease;
   background: var(--button-background);
   box-shadow: var(--button-shadow);
   border: var(--button-border);
   color: var(--text-primary);
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
+/* Base Button Hover State */
 button:hover {
   background: var(--button-hover-background);
   border: var(--button-hover-border);
@@ -603,12 +772,19 @@ button:hover {
   transform: scale(var(--button-hover-scale, 1));
 }
 
+/* Base Button Disabled State */
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
   transform: scale(0.95);
+  background: var(--button-background);
+  color: var(--text-primary);
 }
 
+/*
+  ###########################################################################
+  Button Variants Below (These inherit from the base button styles above)
+*/
 button.selected {
   background: var(--button-selected-background);
   box-shadow: var(--button-selected-shadow);
@@ -616,75 +792,93 @@ button.selected {
   color: var(--text-secondary);
 }
 
+button.navButton {
+  padding: 1rem;
+  width: 4rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+}
+
 button.small {
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  background: var(--button-background);
-  box-shadow: var(--button-shadow);
-  border: var(--button-border);
-  color: var(--text-primary);
-}
-
-button.small:hover {
-  background: var(--button-hover-background);
-  border: var(--button-hover-border);
-  box-shadow: var(--button-hover-shadow);
-  transform: scale(var(--button-hover-scale, 1));
 }
 
 button.red {
-  border-radius: 20px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: var(--fs-subheading);
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  background-color: var(--color-bright-red);
-  cursor: pointer;
-  color: var(--primary-five);
-  transition: all 0.25s ease;
+  background: var(--red-color);
+  color: var(--white-color);
 }
 
 button.red:hover {
-  border-color: var(--primary-five);
+  background: var(--white-color);
+  color: var(--red-color);
+  border-color: var(--red-color);
 }
 
-button.reviewed {
-  align-items: center;
-  align-self: start;
-  padding: 0.25em 0.5em;
-  font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  color: var(--color-white);
-  transition: all 0.25s ease;
+button.red:disabled {
+  background: var(--gray-color);
+  color: var(--red-color);
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-button.reviewed:hover {
-  border-color: var(--color-white);
-}
-
-button.addApplication {
-  background-color: transparent;
-  border-radius: 20px;
+button.green {
   border: 1px solid transparent;
-  padding: 0em 0.5em;
-  font-size: var(--fs-subheading);
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  color: var(--primary-five);
-  transition: all 0.25s ease;
+  background: var(--green-color);
+  color: var(--white-color);
 }
 
-button.addApplication:hover {
-  transform: scale(2);
-  border-color: transparent;
+button.green:hover {
+  background: var(--white-color);
+  color: var(--green-color);
+  border-color: var(--green-color);
+}
+
+button.green:disabled {
+  background: var(--gray-color);
+  color: var(--green-color);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.roundSmall {
+  background: none;
+  box-shadow: none;
+  padding: 0.2rem;
+  font-size: 0.875rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border: none;
+}
+
+button.ovalSmall {
+  background: none;
+  box-shadow: none;
+  font-size: 0.875rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border: none;
+}
+
+button.cornerFloating {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
+  top: 0;
+  margin-top: 0.5rem;
+  background: none;
+  box-shadow: none;
+  padding: 0.3rem;
 }
 
 button.undoRedo {
@@ -692,12 +886,15 @@ button.undoRedo {
   border: none;
   opacity: 1;
   background-color: transparent;
+  box-shadow: none;
+  border-radius: var(--corner-radius);
 }
 
 button.undoRedo:hover {
   transform: scale(1.2);
   border-color: transparent;
 }
+
 
 button.undoRedo:disabled {
   opacity: 0.5;
@@ -747,10 +944,81 @@ to an element (className="example").
 ###############################################################
 */
 
+.app-header {
+  background: rgba(var(--primary-one-rgb), 1);
+  box-shadow: var(--shadow);
+  position: fixed;
+  top: 0;
+  display: flex;
+  flex-direction: row;
+  height: 6rem;
+  width: 100vw;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  overflow: hidden;
+  scroll-behavior: none;
+  min-width: 1200px;
+}
+
+.app-content {
+  background: var(--page-gradient);
+  display: flex;
+  position: fixed;
+  top: 6rem;
+  bottom: 0;
+  width: 100vw;
+}
+
+.profile-picture {
+  border-radius: 50%;
+  aspect-ratio: 1/1;
+  width: 4rem;
+  min-width: 4rem;
+}
+
+.brandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1/1;
+  height: 6rem;
+}
+
+.modal-backdrop {
+  background: rgba(var(--modal-background-rgb), 0.7);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  z-index: 10000;
+}
+
+.modal {
+  background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  min-width: 400px;
+  z-index: 1001;
+}
 /* Icon Filter and Color Overrides */
 .icon {
   filter: var(--icon-filter);
 }
+
+.corner-radius {
+  border-radius: var(--corner-radius);
+}
+
 
 .redIcon {
   filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
@@ -774,11 +1042,17 @@ to an element (className="example").
 
 .glass {
   background: var(--glass-bg);
-  border-radius: 8px;
+  border-radius: var(--corner-radius);
   backdrop-filter: blur(10px);
   border: var(--glass-border);
   box-shadow: var(--shadow);
   transition: all var(--animation-duration) ease;
+  position: fixed;
+  bottom: 1rem;
+  justify-content: center;
+  display: flex;
+  z-index: 50;
+  
 }
 
 .glass:hover {
@@ -789,7 +1063,7 @@ to an element (className="example").
 
 .job-card {
   background: var(--job-card-bg);
-  border-radius: 20px;
+  border-radius: var(--corner-radius);
   backdrop-filter: blur(10px);
 }
 
@@ -797,12 +1071,7 @@ to an element (className="example").
   background: var(--job-card-bg-hover);
 }
 
-.modal {
-  background: rgba(var(--modal-background-rgb), 0.6);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid var(--primary-five);
-}
+
 
 .review {
   border: var(--job-card-review-border);
@@ -819,16 +1088,29 @@ to an element (className="example").
   box-shadow: var(--shadow);
 }
 
+.animate-element {
+  transition: all var(--animation-duration) ease;
+}
+
 .highlighted {
   box-shadow: 0 0 10px 2px var(--primary-four);
-  transform: scale(1.01);
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-  border-radius: 20px;
+  border-radius: var(--corner-radius);
 }
 
 .primary-color {
   background: var(--primary-one);
+}
+
+.primary-gradient {
+  background: var(--primary-gradient);
+}
+
+.landing-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 1) 0%,
+    rgba(var(--primary-two-rgb), 1) 100%
+  );
 }
 
 .primary-text {
@@ -849,6 +1131,7 @@ to an element (className="example").
 
 .card {
   background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
   gap: 1rem;
   padding: 1rem;
 }
@@ -858,5 +1141,7 @@ to an element (className="example").
   width: 100%;
   opacity: 0.5;
 }
+
+
 
 /* Add more custom classes above this line */

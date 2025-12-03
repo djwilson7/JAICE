@@ -2,7 +2,7 @@ import Button from "@/global-components/button";
 
 export function CardSection({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col w-full lg:w-1/2 gap-4 p-4">{children}</div>
+    <div className="flex flex-col w-full lg:w-1/2 gap-4 ">{children}</div>
   );
 }
 
@@ -29,14 +29,16 @@ export function SettingButton({
   onClick,
   style,
   isSelected,
+  title,
 }: {
   label: string;
   onClick: () => void;
   style?: React.CSSProperties;
   isSelected?: boolean;
+  title?: string;
 }) {
   return (
-    <Button className="w-full" isSelected={isSelected} style={style} onClick={onClick}>
+    <Button className="w-full" isSelected={isSelected} style={style} onClick={onClick} title={title}>
       {label}
     </Button>
   );

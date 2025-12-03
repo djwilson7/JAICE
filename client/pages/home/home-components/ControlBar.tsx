@@ -44,7 +44,6 @@ interface ControlBarProps {
 
   onOpenTrash?: () => void;
   onOpenArchive?: () => void;
-
 }
 
 /**
@@ -100,7 +99,6 @@ export function ControlBar({
 
   onOpenTrash,
   onOpenArchive,
-
 }: ControlBarProps) {
   const navigate = useNavigate();
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -130,7 +128,9 @@ export function ControlBar({
             <div className="flex w-full p-2 items-center justify-evenly gap-4">
               <div className="flex flex-col">
                 <h4 className="flex ">Your email isn't connected!</h4>
-                <small className="flex">To get the most out of JAICE, connect your email.</small>
+                <small className="flex">
+                  To get the most out of JAICE, connect your email.
+                </small>
               </div>
               <div className="flex">
                 <Button onClick={() => navigate("/settings/account")}>
@@ -166,23 +166,35 @@ export function ControlBar({
           />
 
           {/* Undo Trash Button */}
-          <button
-            type="button"
-            className="icon-button"
-            onClick={() => onOpenTrash?.()}
-          >
-            <img src={undoTrash} alt="Undo Trash Icon" className="w-5 h-5 icon" />
-          </button>
+          <div>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => onOpenTrash?.()}
+            >
+              <img
+                src={undoTrash}
+                alt="Undo Trash Icon"
+                className="w-5 h-5 icon"
+              />
+            </button>
+          </div>
 
           {/* View Archive Button */}
-          <button
-            type="button"
-            aria-label="Archive Button"
-            className="icon-button"
-            onClick={() => onOpenArchive?.()}
-          >
-            <img src={viewArchive} alt="View Archive Icon" className="w-5 h-5 icon" />
-          </button>
+          <div>
+            <button
+              type="button"
+              aria-label="Archive Button"
+              className="icon-button"
+              onClick={() => onOpenArchive?.()}
+            >
+              <img
+                src={viewArchive}
+                alt="View Archive Icon"
+                className="w-5 h-5 icon"
+              />
+            </button>
+          </div>
 
           {/* Info Modal Toggle */}
           <CheckBoxToggle

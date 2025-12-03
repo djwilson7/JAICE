@@ -22,10 +22,10 @@ export function JobCard({
   isMultiSelecting,
   handleMultiSelectClick,
   dimmed,
-  onEdit,
   onDelete,
   isDeleting,
   setIsDeleting,
+  openJobAppModal,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
@@ -33,10 +33,10 @@ export function JobCard({
   isMultiSelecting: boolean;
   handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
-  onEdit?: (job: JobCardType) => void;
   onDelete?: (id: string) => Promise<boolean>;
   isDeleting: boolean;
   setIsDeleting: (isDeleting: boolean) => void;
+  openJobAppModal: (job: JobCardType) => void;
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
@@ -123,8 +123,8 @@ export function JobCard({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "escape") {
-      setShowDeleteConfirm(false);
-      setIsDeleting(false);
+        setShowDeleteConfirm(false);
+        setIsDeleting(false);
       }
     };
 
@@ -218,7 +218,7 @@ export function JobCard({
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col job-card ${needsReview}`}
+      className={`w-full flex items-center flex flex-col job-card animate-element ${needsReview}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -249,17 +249,14 @@ export function JobCard({
           opacity: 0,
           height: 0,
         }}
-        
         animate={{
           opacity: localReviewNeeded && isHovered ? 1 : 0,
           height: localReviewNeeded && isHovered ? "auto" : 0,
         }}
-
         exit={{
           opacity: 0,
           height: 0,
         }}
-
         transition={{ duration: 0.12 }}
         role="tooltip"
         aria-hidden={!isHovered}
@@ -306,9 +303,7 @@ export function JobCard({
           {/* Job Title and date*/}
           <motion.div className="flex flex-col flex-1 min-w-0">
             <p className="primary-text">{job.title}</p>
-            {job.date && (
-              <small className="secondary-text">{job.date}</small>
-            )}
+            {job.date && <small className="secondary-text">{job.date}</small>}
           </motion.div>
         </motion.div>
 
@@ -381,10 +376,7 @@ export function JobCard({
         >
           {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
           <motion.button
-            onClick={(e) => {
-              e.preventDefault();
-              onEdit?.(job);
-            }}
+            onClick={() => openJobAppModal(job)}
             type="button"
             className="small w-full"
             style={{ background: "transparent" }}
@@ -411,7 +403,6 @@ export function JobCard({
               if (isMultiSelecting || isDeleting) return;
               setIsDeleting(true);
               setShowDeleteConfirm(true);
-
             }}
             type="button"
             className="small w-full outline-none bg-transparent"

@@ -3,26 +3,30 @@ import brandLight from "@/assets/images/brand_light.png";
 import brandDark from "@/assets/images/brand_dark.png";
 
 export function useBrandImage() {
-  // Initial read from DOM
-  const initialTheme =
-    document.documentElement.getAttribute("data-theme") === "light";
+  const computeBrand = () => {
+    const theme = document.documentElement.getAttribute("data-theme");
+    const contrast = document.documentElement.getAttribute("data-contrast");
+    
+    if (contrast === "bw") {
+      return brandDark;
+    }
+    return theme === "light" ? brandLight : brandDark;
+  };
 
-  const [brandImg, setBrandImg] = useState<string>(
-    initialTheme ? brandLight : brandDark
-  );
+  const [brandImg, setBrandImg] = useState<string>(computeBrand());
 
   useEffect(() => {
-    const updateBrand = () => {
-      const theme = document.documentElement.getAttribute("data-theme");
-      setBrandImg(theme === "light" ? brandLight : brandDark);
-    };
+    const updateBrand = () => setBrandImg(computeBrand());
 
     // Apply immediately in case theme changed before this component mounted
     updateBrand();
 
     // Listen for theme changes dispatched by SettingsProvider
-    window.addEventListener("themechange", updateBrand);
-    return () => window.removeEventListener("themechange", updateBrand);
+    window.addEventListener("appearancechange", updateBrand);
+
+    return () => {
+      window.removeEventListener("appearancechange", updateBrand);
+    };
   }, []);
 
   return brandImg;

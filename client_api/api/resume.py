@@ -2,7 +2,12 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from common.logger import get_logger
 from typing import Any
 
-router = APIRouter()
+# router = APIRouter(
+#     prefix="/api/resume",   # 👈 add this
+#     tags=["resume"],
+# )
+
+router = APIRouter(tags=["resume"])
 logging = get_logger()
 
 
@@ -22,5 +27,6 @@ async def upload_resume(file: UploadFile = File(...)) -> Any:
         result = evaluate_resume_pdf(contents)
         return result
     except Exception as e:
-        logging.error(f"Error evaluating resume: {e}")
-        raise HTTPException(status_code=500, detail="Failed to evaluate resume.")
+        logging.error("Error evaluating resume", exc_info=True)
+        # ⚠️ DEV-ONLY: expose the error so we can see it
+        raise HTTPException(status_code=500, detail=f"Failed to evaluate resume: {e}")

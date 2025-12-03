@@ -39,7 +39,7 @@ export function AccessibilityPage() {
   const contrastOptions = CONTRAST_OPTIONS;
 
   return (
-    <main className="flex flex-col w-full h-full md:flex-row p-2 md:p-5">
+    <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4">
       <CardSection>
         <SettingCard>
           <SettingHeader
@@ -54,6 +54,7 @@ export function AccessibilityPage() {
                 style={{ fontSize: option.value }}
                 onClick={() => setTextScale(key as TextScale)}
                 isSelected={textScale === key}
+                title={option.title}
               />
             ))}
           </ButtonRow>
@@ -71,6 +72,7 @@ export function AccessibilityPage() {
                 label={option.label}
                 onClick={() => setTheme(key as Theme)}
                 isSelected={theme === key}
+                title={option.title}
               />
             ))}
           </ButtonRow>
@@ -91,6 +93,7 @@ export function AccessibilityPage() {
                 style={{ fontSize: option.value }}
                 onClick={() => setMotion(key as MotionPreference)}
                 isSelected={motion === key}
+                title={option.title}
               />
             ))}
           </ButtonRow>
@@ -108,6 +111,7 @@ export function AccessibilityPage() {
                 label={option.label}
                 onClick={() => setContrast(key as ContrastLevel)}
                 isSelected={contrast === key}
+                title={option.title}
               />
             ))}
           </ButtonRow>
