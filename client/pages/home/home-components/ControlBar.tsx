@@ -4,13 +4,13 @@ import { CheckBoxToggle } from "@/global-components/CheckBoxToggle";
 import { DropDownMenu } from "@/global-components/DropDownMenu";
 import { SearchBar } from "@/global-components/SearchBar";
 import filterIcon from "@/assets/icons/filter.svg";
-import infoIcon from "@/assets/icons/info.svg";
+// import infoIcon from "@/assets/icons/info.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import { AlertBox } from "@/pages/home/home-components/AlertBox";
-import { InfoModal } from "@/global-components/InfoModal";
-import { motion, AnimatePresence } from "framer-motion";
-import { HomeInfoContent } from "@/pages/home/home-components/HomePageInfo";
+// import { InfoModal } from "@/global-components/InfoModal";
+// import { motion, AnimatePresence } from "framer-motion";
+// import { HomeInfoContent } from "@/pages/home/home-components/HomePageInfo";
 import { useEffect, useState } from "react";
 import { checkGmailStatus } from "../utils/checkGmailStatus";
 import { useNavigate } from "react-router";
@@ -38,9 +38,9 @@ interface ControlBarProps {
   setIsAlertOpen: (value: boolean) => void;
   alertMessage?: string;
 
-  infoModalLabel?: string;
-  isInfoModalOpen: boolean;
-  setInfoModalOpen: (value: boolean) => void;
+  // infoModalLabel?: string;
+  // isInfoModalOpen: boolean;
+  // setInfoModalOpen: (value: boolean) => void;
 
   onOpenTrash?: () => void;
   onOpenArchive?: () => void;
@@ -93,9 +93,9 @@ export function ControlBar({
   setIsAlertOpen,
   alertMessage,
 
-  infoModalLabel,
-  isInfoModalOpen,
-  setInfoModalOpen,
+  // infoModalLabel,
+  // isInfoModalOpen,
+  // setInfoModalOpen,
 
   onOpenTrash,
   onOpenArchive,
@@ -197,18 +197,18 @@ export function ControlBar({
           </div>
 
           {/* Info Modal Toggle */}
-          <CheckBoxToggle
+          {/* <CheckBoxToggle
             label={infoModalLabel}
             inactiveIcon={infoIcon}
             activeIcon={infoIcon}
             isChecked={isInfoModalOpen}
             setIsChecked={() => setInfoModalOpen(!isInfoModalOpen)}
-          />
+          /> */}
         </div>
       </div>
 
       {/* Info Modal: Nested near it's trigger, although it's fixed position removes it from the control bar hierarchy */}
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {isInfoModalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -222,7 +222,7 @@ export function ControlBar({
             ></InfoModal>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </div>
   );
 }

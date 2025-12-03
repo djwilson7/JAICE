@@ -1137,9 +1137,9 @@ export function HomePage() {
               isAlertOpen={isAlertOpen}
               setIsAlertOpen={setIsAlertOpen}
               alertMessage={alertMessage}
-              infoModalLabel={isInfoModalOpen ? "Info" : ""}
-              isInfoModalOpen={isInfoModalOpen}
-              setInfoModalOpen={setInfoModalOpen}
+              // infoModalLabel={isInfoModalOpen ? "Info" : ""}
+              // isInfoModalOpen={isInfoModalOpen}
+              // setInfoModalOpen={setInfoModalOpen}
               onOpenTrash={openTrash}
               onOpenArchive={openArchive}
             />
