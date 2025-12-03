@@ -2,33 +2,42 @@ import os
 import io
 import json
 import time
-import openai
+from openai import OpenAI
 from typing import Dict, Any
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
+from common.logger import get_logger
 
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+logging = get_logger()
+client = OpenAI() 
+#openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def call_openai_chat(model: str, messages: list, max_tokens: int = 512, temperature: float = 0.0) -> Dict[str, Any]:
-    """Call OpenAI ChatCompletion with simple retry/backoff and return parsed text + raw response."""
-    for attempt in range(3):
-        try:
-            resp = openai.ChatCompletion.create(
+    """Call OpenAI Chat Completions with simple retry/backoff and return parsed text + raw response."""
+    last_error: Exception | None = None
+
+    #for attempt in range(3):
+    try:
+            resp = client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-            text = resp.choices[0].message["content"]
+            text = resp.choices[0].message.content
             return {"raw": text, "response": resp}
-        except Exception as e:
-            # simple exponential backoff
-            time.sleep(2 ** attempt)
+    except Exception as e:
+            last_error = e
+            logging.error(
+                f"OpenAI call failed on attempt: {e}",
+                exc_info=True,
+            )
+            #time.sleep(2 ** attempt)   add back up {attempt + 1}
 
-    raise RuntimeError("OpenAI calls failed after retries")
+    raise RuntimeError(f"OpenAI calls failed after retries: {last_error}")
 
 
 def classify_email_stage(email_text: str, model: str | None = None) -> Dict[str, Any]:

@@ -5,9 +5,12 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
 COPY ./client_api ./client_api
 COPY ./common ./common
+COPY ./OpenAI ./OpenAI
 
 # Install dependencies
 RUN pip install --no-cache-dir -r ./client_api/req.txt 
+RUN pip install --no-cache-dir -r ./OpenAI/req.txt
+
 # && \
 RUN pip install ./common 
     # && \

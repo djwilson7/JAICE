@@ -62,7 +62,7 @@ export function Resume() {
       const form = new FormData();
       form.append("file", pdfFile, pdfFile.name);
 
-      const resp = await fetch("/api/resume/upload", {
+      const resp = await fetch("http://localhost:8000/api/resume/upload", {
         method: "POST",
         body: form,
       });
@@ -89,7 +89,7 @@ export function Resume() {
         Paste your resume text below and I&apos;ll generate a clearer, more impactful version.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block">
           <span className="block font-medium mb-1">Your resume text</span>
           <textarea
@@ -107,7 +107,7 @@ export function Resume() {
         >
           {loading ? "Improving..." : "Improve Resume"}
         </button>
-      </form>
+      </form> */}
 
       <div className="pt-6 border-t border-slate-800">
         <h2 className="text-xl font-semibold">Upload PDF Resume</h2>
