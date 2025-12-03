@@ -1,7 +1,8 @@
 import Button from "@/global-components/button";
-import xIcon from "@/assets/icons/x.svg";
-import { useState } from "react";
 import { createPortal } from "react-dom";
+import { ModalHeader } from "@/global-components/ModalHeader";
+import { Modal } from "@/global-components/Modal";
+
 interface DaysToSyncProps {
   show: boolean;
   options: number[];
@@ -16,55 +17,71 @@ export function DaysToSync({
   onSelection,
   onCancel,
 }: DaysToSyncProps) {
-  if (!show) return null;
-  const [xButtonStyle, setXButtonStyle] = useState<String>("w-5 h-5");
-
-  const handleEnterXButtonHover = () => {
-    setXButtonStyle("w-8 h-8");
-  };
-  
-  const handleLeaveXButtonHover = () => {
-    setXButtonStyle("w-5 h-5");
-  }
-
-  return createPortal(
-      <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
-      <div className="flex relative flex-col p-6 w-1/3 gap-6 shadow modal">
-        <div className="flex flex-row items-center justify-start">
-          <h2 className="text-xl font-semibold primary-text">
-            How far back should we sync your emails?
-          </h2>
-
-          <div className="flex absolute items-center justify-center top-0 right-0 m-4 w-8 h-8">
-            <Button
-              onClick={onCancel}
-              className="roundSmall"
-              onMouseEnter={handleEnterXButtonHover}
-              onMouseLeave={handleLeaveXButtonHover}
-              title="Close Modal"
-            >
-              <img
-                src={xIcon}
-                alt="Close Modal"
-                className={xButtonStyle + " icon"}
-              />
+  return (
+    <Modal isOpen={show} onClose={onCancel} modalTitle="Link Gmail">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <h3 className="primary-text">How far back should we look?</h3>
+          <p className="secondary-text">
+            Once your Gmail is linked, JAICE will go back through your inbox for
+            the timeframe you pick. We only add emails that are job-related so
+            you decide how much history we work with.
+          </p>
+        </div>
+        <p className="primary-text">
+          Thinking about your recent job search, how far back would you like us
+          to look?
+        </p>
+      </div>
+      <hr className="header-split" />
+      <div className="flex flex-row w-full gap-2">
+        {options.map((days) => (
+          <div className="w-1/4" key={days}>
+            <Button onClick={() => onSelection(days)} className="">
+              <h4>{days} days</h4>
             </Button>
           </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-center gap-4 justify-center w-full">
-          {options.map((days) => (
-            <button
-              key={days}
-              onClick={() => onSelection(days)}
-              className="w-full py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors mb-2"
-            >
-              {days} days
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
-    </div>,
-    document.body
+    </Modal>
   );
+
+  // return createPortal(
+  //   <div className="modal-backdrop">
+  //     <div className="modal w-lg">
+  //       <ModalHeader title="Link Gmail" onClose={onCancel} />
+  //       <hr className="header-split" />
+  //       <div className="flex flex-col gap-4 m-4">
+  //         <div className="flex flex-col gap-2">
+  //           <h3 className="primary-text">How far back should we look?</h3>
+  //           <p className="secondary-text">
+  //             Once your Gmail is linked, JAICE will go back through your inbox
+  //             for the timeframe you pick. We only add emails that are
+  //             job-related so you decide how much history we work with.
+  //           </p>
+  //         </div>
+
+  //         <p className="primary-text">
+  //           Thinking about your recent job search, how far back would you like
+  //           us to look?
+  //         </p>
+  //       </div>
+  //       <hr className="header-split" />
+  //       <div className="flex flex-row w-full h-[70px] gap-2 p-4">
+  //         {options.map((days) => (
+  //           <div className="w-1/4">
+  //             <Button
+  //               key={days}
+  //               onClick={() => onSelection(days)}
+  //               className=""
+  //             >
+  //               <h4 className="">{days} days</h4>
+  //             </Button>
+  //           </div>
+  //         ))}
+  //       </div>
+  //     </div>
+  //   </div>,
+  //   document.body
+  // );
 }

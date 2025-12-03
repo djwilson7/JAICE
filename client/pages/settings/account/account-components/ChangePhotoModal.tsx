@@ -1,10 +1,9 @@
 import { useAuth } from "@/global-components/AuthProvider";
 import Button from "@/global-components/button";
-import xIcon from "@/assets/icons/x.svg";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createPortal } from "react-dom";
+import { Modal } from "@/global-components/Modal";
 
 interface ChangePhotoModalProps {
   showModal: boolean;
@@ -22,61 +21,50 @@ export function ChangePhotoModal({
   const { user, applyProfileUpdate } = useAuth();
   const [photoURL, setPhotoURL] = useState<string>(user?.photoURL || "");
 
-  const [xButtonStyle, setXButtonStyle] = useState<String>("w-5 h-5");
-
-  const handleEnterXButtonHover = () => {
-    setXButtonStyle("w-8 h-8");
-  };
-
-  const handleLeaveXButtonHover = () => {
-    setXButtonStyle("w-5 h-5");
-  };
-
   const handleSavePhoto = async () => {
     await applyProfileUpdate(undefined, photoURL);
     setShowModal(false);
     navigate(location.pathname);
   };
 
-  return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center z-1000 modal-backdrop">
-      <div className="flex relative flex-col p-6 w-1/3 gap-6 shadow modal">
-        <div className="flex flex-row items-center justify-start">
-          <h2 className="text-xl font-semibold primary-text">
-            Change Profile Photo
-          </h2>
-
-          <div className="flex absolute items-center justify-center top-0 right-0 m-4 w-8 h-8">
-            <Button
-              onClick={() => setShowModal(false)}
-              className="roundSmall"
-              onMouseEnter={handleEnterXButtonHover}
-              onMouseLeave={handleLeaveXButtonHover}
-              title="Close Modal"
-            >
-              <img
-                src={xIcon}
-                alt="Close Modal"
-                className={xButtonStyle + " icon"}
-              />
-            </Button>
-          </div>
+  return (
+    <Modal
+      isOpen={showModal}
+      onClose={() => setShowModal(false)}
+      modalTitle="Change Profile Photo"
+    >
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-2">
+          <h3 className="primary-text">
+            Set a new profile URL for your account.
+          </h3>
+          <p className="secondary-text">
+            This photo is only visible to you within JAICE and helps personalize
+            your experience.
+          </p>
         </div>
 
-        <div className="">
+        <div className="flex flex-col gap-2">
           <FloatingInputField
-            label="URL to new profile photo"
+            label="Profile Photo URL"
             type="text"
             value={photoURL}
             isValid={null}
             action={setPhotoURL}
           />
-        </div>
-        <div className="flex w-1/2">
-          <Button onClick={handleSavePhoto}>Save Photo</Button>
+          <small className="secondary-text">
+            You can use any image hosting service to upload your photo and get a
+            direct image URL. If the image is already online, just right-click
+            it, choose “Copy image address,” paste the link here, and hit Save.
+          </small>
         </div>
       </div>
-    </div>,
-    document.body
+      <hr className="header-split" />
+      <div className="flex flex-row justify-center gap-4 mt-4 w-1/2">
+        <Button onClick={handleSavePhoto} className="green">
+          <h4>Save Photo</h4>
+        </Button>
+      </div>
+    </Modal>
   );
 }
