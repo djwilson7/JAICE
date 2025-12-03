@@ -133,45 +133,106 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
         return ""
 
 
+
 def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str, Any]:
     """Evaluate a resume PDF and return structured feedback.
 
-    Returns a dict: {score:0-1, strengths:[...], weaknesses:[...], suggestions: str}
+    Returns:
+    {
+      "score": 0-100,
+      "strengths": [str, ...],
+      "weaknesses": [str, ...],
+      "suggestions": str,
+      "raw": str
+    }
     """
     text = extract_text_from_pdf(file_bytes)
 
     if not text:
-        return {"score": 0.0, "strengths": [], "weaknesses": ["Could not extract text from PDF"], "suggestions": "Upload a searchable PDF or a plain-text resume."}
+        return {
+            "score": 0,
+            "strengths": [],
+            "weaknesses": ["Could not extract text from PDF"],
+            "suggestions": "Upload a searchable PDF or a plain-text resume.",
+            "raw": "",
+        }
 
-    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-3.5-turbo")
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4.1-mini")
 
-    system = {"role": "system", "content": "You are a resume reviewer. Provide concise, actionable feedback."}
+    system = {
+        "role": "system",
+        "content": "You are a resume reviewer. Provide concise, actionable feedback."
+    }
 
     user = {
         "role": "user",
         "content": (
-            "Review the resume content below and respond with a JSON object exactly matching this schema:\n"
-            "{\"score\": <float 0-1>, \"strengths\": [<strings>], \"weaknesses\": [<strings>], \"suggestions\": <string>}\n\nResume:\n"
-            + (text[:4000])
+            "Review the resume content below and respond ONLY with a single JSON object. "
+            "Do not include explanations or code fences.\n\n"
+            "Schema:\n"
+            "{\n"
+            '  \"score\": <number between 0 and 100>,\n'
+            '  \"strengths\": [<string>, ...],\n'
+            '  \"weaknesses\": [<string>, ...],\n'
+            '  \"suggestions\": <string>\n'
+            "}\n\n"
+            "Resume:\n" + text[:4000]
         ),
     }
 
     out = call_openai_chat(model_name, [system, user], max_tokens=800, temperature=0.0)
-    raw = out.get("raw", "")
+    raw = out.get("raw", "") or ""
 
+    # ---- JSON extraction / parsing ----
     try:
-        start = raw.find("{")
-        json_str = raw[start:] if start != -1 else raw
+        # Isolate from first '{' to last '}'
+        start = raw.index("{")
+        end = raw.rfind("}")
+        json_str = raw[start:end + 1]
+
+        # Strip any leftover code fences
+        json_str = json_str.replace("```json", "").replace("```", "").strip()
+
         parsed = json.loads(json_str)
     except Exception:
-        # best-effort parse: return raw in suggestions
-        return {"score": 0.0, "strengths": [], "weaknesses": [], "suggestions": raw}
+        # Fallback: show raw in suggestions so UI still displays something
+        return {
+            "score": 0,
+            "strengths": [],
+            "weaknesses": [],
+            "suggestions": raw or "Model returned an unexpected format.",
+            "raw": raw,
+        }
 
-    # normalize fields
+    # ---- Normalize fields ----
+    # Score: accept 0–1 *or* 0–100; convert to int 0–100
+    score_raw = parsed.get("score", 0)
+    try:
+        score_val = float(score_raw)
+    except (TypeError, ValueError):
+        score_val = 0.0
+
+    if 0.0 <= score_val <= 1.0:
+        score_val *= 100.0
+
+    score = int(round(max(0.0, min(100.0, score_val))))
+
+    strengths = parsed.get("strengths") or []
+    if isinstance(strengths, str):
+        strengths = [strengths]
+    strengths = [str(s).strip() for s in strengths if str(s).strip()]
+
+    weaknesses = parsed.get("weaknesses") or []
+    if isinstance(weaknesses, str):
+        weaknesses = [weaknesses]
+    weaknesses = [str(w).strip() for w in weaknesses if str(w).strip()]
+
+    suggestions = str(parsed.get("suggestions", "")).strip()
+
     return {
-        "score": float(parsed.get("score", 0.0)),
-        "strengths": parsed.get("strengths", []),
-        "weaknesses": parsed.get("weaknesses", []),
-        "suggestions": parsed.get("suggestions", ""),
+        "score": score,
+        "strengths": strengths,
+        "weaknesses": weaknesses,
+        "suggestions": suggestions,
         "raw": raw,
     }
