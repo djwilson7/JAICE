@@ -400,3 +400,53 @@ async def get_archive(user: dict = Depends(get_current_user)):
     except Exception as e:
         logging.error(f"Error fetching archived jobs for user {uid}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/permanently-delete", summary="Permanently delete job applications")
+async def permanent_delete_jobs(payload: dict = Body(...), user: dict = Depends(get_current_user)):
+    """
+    Permanently delete job applications.
+    Expected payload:
+        - provider_message_ids (list of strings)
+        - confirm (bool): must be True to proceed
+    Returns: {"status": "success", "deleted_count": int, "deleted_ids": [list of strings]}
+    """
+    trace_id = str(uuid.uuid4())
+    uid = user.get("uid")
+
+    message_ids = payload.get("provider_message_ids")
+    confirm = payload.get("confirm")
+
+    if not message_ids or not isinstance(message_ids, (list, tuple)) or len(message_ids) == 0:
+        raise HTTPException(status_code=400, detail="Missing required data or confirmation")
+    
+    if confirm is not True:
+        raise HTTPException(status_code=400, detail="Deletion not confirmed")
+
+    query = """
+        DELETE FROM public.job_applications
+        WHERE provider_message_id = ANY($1)
+        AND user_uid = $2
+        RETURNING provider_message_id
+    """
+
+    try:
+        async with get_connection() as conn:
+            deleted_rows = await conn.fetch(query, message_ids, uid)
+
+        count = len(deleted_rows)
+
+        if count == 0:
+            raise HTTPException(status_code=404, detail="No matching jobs found to delete")
+
+        logging.info(f"[{trace_id}] Permanently deleted {count} job(s) for user {uid}.")
+
+        return {
+            "status": "success",
+            "count": count,
+            "deleted": [r["provider_message_id"] for r in deleted_rows],
+        }
+
+    except Exception as e:
+        logging.error(f"[{trace_id}] Error permanently deleting job applications: {e}")
+
+        raise HTTPException(status_code=500, detail=str(e))

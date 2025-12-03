@@ -1242,9 +1242,12 @@ export function HomePage() {
                 } else if (action === "delete_permanently") {
 
                   // permanently delete
-                  await api("/api/jobs/delete", {
+                  await api("/api/jobs/permanently-delete", {
                     method: "POST",
-                    body: JSON.stringify({ provider_message_ids: ids }),
+                    body: JSON.stringify({ 
+                      provider_message_ids: ids, 
+                      confirm: true 
+                    }),
                   });
 
                   setTrashItems((prev) => prev.filter((j) => !ids.includes(j.id)));

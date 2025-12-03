@@ -101,9 +101,12 @@ export default function TrashArchiveModal({
 
                 } else {
                     // delete permanently
-                    await api("/api/jobs/delete", {
+                    await api("/api/jobs/permanently-delete", {
                         method: "POST",
-                        body: JSON.stringify({ provider_message_ids: ids }),
+                        body: JSON.stringify({ 
+                          provider_message_ids: ids,
+                          confirm: true
+                        }),
                     });
                 }
             }
