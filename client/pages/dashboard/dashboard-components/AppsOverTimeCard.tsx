@@ -4,24 +4,34 @@ import { Line } from "react-chartjs-2";
 import { applyChartDefaults } from "./chartSetup";
 import { Modal } from "./Modal";
 import { api } from "@/global-services/api";
+import Button from "@/global-components/button";
 
-const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+type RangeOptions = 3 | 7 | 14 | 30 | 45 | 90;
+const RANGES: RangeOptions[] = [3, 7, 14, 30, 45, 90];
+
+// Generate the last N days as labels
+function lastNDaysLabels(n: number) {
+  const labels = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    labels.push(
+      date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    );
+  }
+  return labels;
+}
+
+// Slice arrays by selected range
+function applyRange(arr: number[], range: number) {
+  if (!arr || arr.length === 0) return [];
+  return arr.slice(-range);
+}
 
 export function AppsOverTimeCard({
-
   className = "",
   height,
 }: {
@@ -30,6 +40,8 @@ export function AppsOverTimeCard({
 }) {
   const [open, setOpen] = useState(false);
 
+  const [range, setRange] = useState<RangeOptions>(90);
+
   const [applied, setApplied] = useState<number[]>([]);
   const [interview, setInterview] = useState<number[]>([]);
   const [offer, setOffer] = useState<number[]>([]);
@@ -37,16 +49,6 @@ export function AppsOverTimeCard({
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    console.log("STATE VALUES", {
-      applied,
-      interview,
-      offer,
-      accepted,
-    });
-  }, [applied, interview, offer, accepted]);
-
 
   useEffect(() => {
     applyChartDefaults();
@@ -65,17 +67,12 @@ export function AppsOverTimeCard({
 
         const d = res?.data ?? {};
 
-        console.log("apps-over-time response", d); // TEMP: verify values
-
-        // d.applied etc. are already full arrays from the backend
-        setApplied(d.applied ?? new Array(MONTH_LABELS.length).fill(0));
-        setInterview(d.interview ?? new Array(MONTH_LABELS.length).fill(0));
-        setOffer(d.offer ?? new Array(MONTH_LABELS.length).fill(0));
-        setAccepted(d.accepted ?? new Array(MONTH_LABELS.length).fill(0));
+        setApplied(d.applied ?? []);
+        setInterview(d.interview ?? []);
+        setOffer(d.offer ?? []);
+        setAccepted(d.accepted ?? []);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load data",
-        );
+        setError(err instanceof Error ? err.message : "Failed to load data",);
       } finally {
         if (alive) setLoading(false);
       }
@@ -87,6 +84,14 @@ export function AppsOverTimeCard({
     };
   }, []);
 
+  // Filtered datasets based on selected range
+  const filteredApplied = applyRange(applied, range);
+  const filteredInterview = applyRange(interview, range);
+  const filteredOffer = applyRange(offer, range);
+  const filteredAccepted = applyRange(accepted, range);
+
+  const labels = lastNDaysLabels(range);
+
   const colors = {
     applied: "#F59E0B",
     interview: "#22D3EE",
@@ -94,14 +99,12 @@ export function AppsOverTimeCard({
     accepted: "#34D399",
   };
 
-  const labels = MONTH_LABELS;
-
   const data = {
     labels,
     datasets: [
       {
         label: "Applied",
-        data: applied,
+        data: filteredApplied,
         borderColor: colors.applied,
         tension: 0.35,
         fill: false,
@@ -109,7 +112,7 @@ export function AppsOverTimeCard({
       },
       {
         label: "Interview",
-        data: interview,
+        data: filteredInterview,
         borderColor: colors.interview,
         tension: 0.35,
         fill: false,
@@ -117,7 +120,7 @@ export function AppsOverTimeCard({
       },
       {
         label: "Offer",
-        data: offer,
+        data: filteredOffer,
         borderColor: colors.offer,
         tension: 0.35,
         fill: false,
@@ -125,7 +128,7 @@ export function AppsOverTimeCard({
       },
       {
         label: "Accepted",
-        data: accepted,
+        data: filteredAccepted,
         borderColor: colors.accepted,
         tension: 0.35,
         fill: false,
@@ -143,30 +146,56 @@ export function AppsOverTimeCard({
       y: {
         beginAtZero: true,
         grid: { color: "rgba(255,255,255,0.09)" },
-        // make sure you are NOT forcing max: 1 anywhere
       },
     },
   };
+
+  // Shared range selector component
+  const RangeSelector = ({
+    range,
+    onChange,
+  }: {
+    range: RangeOptions;
+    onChange: (value: RangeOptions) => void;
+  }) => (
+    <div className="flex gap-2 mb-4">
+      {RANGES.map((r) => (
+        <Button
+          key={r}
+          onClick={() => onChange(r)}
+          isSelected={range === r ? true : false}
+        >
+          {r} days
+        </Button>
+      ))}
+    </div>
+  );
 
   return (
     <>
       <Card
         title="Stages Over Time"
-        subtitle="90-day trend"
+        subtitle={`${range}-day trend`}
         className={`${className} cursor-pointer`}
         height={height ?? "18rem"}
         expandable
         onExpand={() => setOpen(true)}
       >
         <ChartHost>
-          {loading && <div className="text-slate-300">Loading...</div>}
-          {error && <div className="text-red-400">{error}</div>}
+          {loading && <div className="secondary-text">Loading...</div>}
+          {error && <div className="red-text">{error}</div>}
           {!loading && !error && <Line data={data} options={options} />}
         </ChartHost>
       </Card>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Stages Over Time">
-        <Line data={data} options={options} />
+        <div className="px-4 pt-2">
+          <RangeSelector range={range} onChange={setRange} />
+        </div>
+
+        <div className="h-[60vh] px-4 pb-4">
+          <Line data={data} options={options} />
+        </div>
       </Modal>
     </>
   );

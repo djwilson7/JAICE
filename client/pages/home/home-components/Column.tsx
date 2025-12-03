@@ -1,11 +1,11 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import RejectedIcon from '@/assets/icons/refresh.svg';
+import RejectedIcon from "@/assets/icons/refresh.svg";
+import plusIcon from "@/assets/icons/plus.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
-import NewApplication from "./ApplicationModal";
-import type { JobCardType } from "@/types/jobCardType";
+import Button from "@/global-components/button";
 
 interface ColumnProps {
   id: string;
@@ -18,9 +18,10 @@ interface ColumnProps {
   reportHeight: (columnId: string, height: number) => void;
   sharedHeight: number;
   viewportHeight: number;
-
   showToggleRejectButton?: boolean;
   onToggleReject?: () => void;
+  isHighlighted: string | null;
+  openJobAppModal: (columnId: string) => void;
 }
 
 export function Column({
@@ -36,10 +37,11 @@ export function Column({
   viewportHeight,
   showToggleRejectButton,
   onToggleReject,
+  isHighlighted,
+  openJobAppModal,
 }: ColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null); // Ref to the column div
   const hasChildren = count > 0;
-  const [isNewAppOpen, setIsNewAppOpen] = React.useState(false);
 
   useEffect(() => {
     const el = columnRef.current;
@@ -56,15 +58,11 @@ export function Column({
   }, [id, reportHeight]);
 
   const columnStyle = {
-    backgroundColor: bg,
-    borderRadius: "8px",
+    background: bg,
     width: "100%",
-    border: "1px solid #ccc",
     minWidth: "15rem",
     minHeight: `${Math.max(sharedHeight, viewportHeight)}px`,
     height: "auto",
-    boxShadow: "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
-
   };
 
   // useCallback is used to memoize the drag handlers to prevent unnecessary re-renders
@@ -76,25 +74,31 @@ export function Column({
     onDragLeave();
   }, [onDragLeave]);
 
-  function openNewApplicationModal() 
-  {
-    setIsNewAppOpen(true);
-  }
-
-  function closeNewApplicationModal() 
-  {
-    setIsNewAppOpen(false);
-  }
-
-  // placeholder to handle saving new application data
-  function handleSaveApplication(data: Partial<JobCardType> & { id?: string}) 
-  {
-    console.log("New Application Data:", data);
-  }
-
   // onPointerEnter and onPointerLeave are used to send the column id up to the parent for drag and drop handling
   // layout is used for smooth animations when removing or adding job cards (drag and drop)
   // React.Children.count(children) is the safe way to count the number of cards a columns has
+  const highlightColumn = isHighlighted === id || isHighlighted === "all";
+  const [addButtonStyle, setAddButtonStyle] = useState("w-3 h-3");
+  const [hoverButtonStyle, setHoverButtonStyle] = useState("w-3 h-3");
+
+  function handleMouseOverAddButton() {
+    setAddButtonStyle("w-5 h-5");
+  }
+
+  function handleMouseOutAddButton() {
+    setAddButtonStyle("w-3 h-3");
+  }
+
+  function handleMouseOverCycleButton() {
+    setHoverButtonStyle("w-5 h-5");
+  }
+
+  function handleMouseOutCycleButton() {
+    setHoverButtonStyle("w-3 h-3");
+  }
+
+  // You can add any hover effect logic here if needed
+
   return (
     <>
       <motion.div
@@ -103,56 +107,67 @@ export function Column({
         style={columnStyle}
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
-        className="flex flex-col m-2 p-2 border-4 border-white transition-all duration-300"
+        className={`flex flex-col m-2 p-2 animate-element corner-radius shadow ${
+          highlightColumn ? "highlighted" : ""
+        }`}
         layout
         transition={{ type: "spring", stiffness: 120, damping: 18 }}
       >
-        <div className="flex items-center justify-between p-4 select-none">
-          <button
-            type="button"
-            className="addApplication"
-            aria-label={`Add new application to ${title} stage`}
-            onClick={openNewApplicationModal}
-
-          >
-            +
-          </button>
-            <div className= "flex items-center gap-2">
-              <h3>{title}</h3>
-
-              {showToggleRejectButton && onToggleReject && (
-                <button
-                  onClick={onToggleReject}
-                  className="group"
-                >
-                  <img src={RejectedIcon}   
-                    alt="Switch toAccepted/Rejected"
-                    className="w-5 h-5 transition-transform duration-300 ease-in-out group-hover:rotate-180" />
-                </button>
-              )}
+        <div className="flex relative items-center justify-between w-full h-[4rem] select-none">
+          <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center">
+            <Button
+              type="button"
+              className="roundSmall"
+              aria-label={`Add new application to ${title} stage`}
+              title={`Add new application to ${title} stage`}
+              onClick={() => openJobAppModal(id)}
+              onMouseEnter={handleMouseOverAddButton}
+              onMouseLeave={handleMouseOutAddButton}
+            >
+              <img
+                src={plusIcon}
+                alt="Add Application"
+                className={`flex ${addButtonStyle} icon animate-element`}
+              />
+            </Button>
+          </div>
+          <div className="flex w-full h-full items-center justify-center">
+            <h3>{title}</h3>
+          </div>
+          <div className="flex absolute right-2 mx-2 h-full items-center justify-center ">
+            <h3>{count}</h3>
+          </div>
+          {showToggleRejectButton && onToggleReject && (
+            <div className="absolute right-[2em] mx-2 w-8 h-8 justify-center items-center">
+              <Button
+                type="button"
+                onClick={onToggleReject}
+                className="group roundSmall"
+                aria-label="Switch to Accepted/Rejected"
+                title="Switch to Accepted/Rejected"
+                onMouseEnter={handleMouseOverCycleButton}
+                onMouseLeave={handleMouseOutCycleButton}
+              >
+                <img
+                  src={RejectedIcon}
+                  alt="Switch toAccepted/Rejected"
+                  className={`${hoverButtonStyle} icon animate-element group-hover:rotate-180`}
+                />
+              </Button>
             </div>
-      
-          <h3>{count}</h3>
+          )}
         </div>
         <div className="flex border-b mx-4 mb-2" />
         <div className="flex flex-col items-center p-2 gap-4">
-          {hasChildren ? (children) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
+          {hasChildren ? (
+            children
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {<EmptyColumnPlaceholder title={title} />}
             </motion.div>
           )}
-        </div> 
+        </div>
       </motion.div>
-
-      <NewApplication
-        isOpen={isNewAppOpen}
-        onClose={closeNewApplicationModal}
-        initialStage={title}
-        onSave={handleSaveApplication}
-      />
     </>
   );
-};
+}

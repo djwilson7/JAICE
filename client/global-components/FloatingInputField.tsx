@@ -54,13 +54,13 @@ export function FloatingInputField({
   // Determine border and label colors based on validity
   const borderColorClass =
     isValid || isValid === null
-      ? "border-[var(--color-blue-4)] focus:border-[var(--color-blue-5)]"
+      ? "border-[var(--primary-four)] focus:border-[var(--primary-five)]"
       : "border-red-500 focus:border-red-600";
 
   // Determine label color based on validity
   const labelColorClass =
     isValid || isValid === null
-      ? "text-[var(--color-blue-4)] peer-focus:text-[var(--color-blue-5)]"
+      ? "text-[var(--primary-four)] peer-focus:text-[var(--primary-five)]"
       : "text-red-500 peer-focus:text-red-600";
 
   // Functions to cycle the focus and blur states, setting coords for tooltip
@@ -102,7 +102,7 @@ export function FloatingInputField({
         pt-4 
         w-full 
         text-sm 
-        text-[var(--color-blue-5)] 
+        text-[var(--primary-five)] 
         bg-transparent 
         rounded-lg 
         border-1 
@@ -110,7 +110,7 @@ export function FloatingInputField({
         appearance-none 
         focus:outline-none 
         focus:ring-0 
-        focus:border-[var(--color-blue-5)]
+        focus:border-[var(--primary-five)]
         peer
         `}
         placeholder=" "
@@ -127,20 +127,19 @@ export function FloatingInputField({
         duration-300 
         transform 
         -translate-y-4 
-        scale-75 
+        scale-90 
         top-2 
         z-10 
         origin-[0] 
-        bg-rgba(var(--color-blue-5-rgb), 0.1)
+        bg-transparent
         backdrop-blur-xl
         px-2 
-        ${labelColorClass}
-        peer-focus:px-2 
+        ${labelColorClass} 
         peer-placeholder-shown:scale-100 
         peer-placeholder-shown:-translate-y-1/2 
         peer-placeholder-shown:top-1/2 
         peer-focus:top-2 
-        peer-focus:scale-75 
+        peer-focus:scale-90 
         peer-focus:-translate-y-4 
         rtl:peer-focus:translate-x-1/4 
         rtl:peer-focus:left-auto 
@@ -159,7 +158,7 @@ export function FloatingInputField({
             role="tooltip"
           >
             <p className="font-bold w-full text-center">{errorTitle}</p>
-            <p>{errorMessage}</p>
+            <p className="red-text">{errorMessage}</p>
           </div>,
           document.body
         )}

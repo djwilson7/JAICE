@@ -1,6 +1,6 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import Button from "@/global-components/button";
 import {
@@ -17,7 +17,7 @@ export function LogIn() {
   const [validEmail, setValidEmail] = useState<boolean | null>(null);
   const [validPassword, setValidPassword] = useState<boolean | null>(null);
   const navigate = useNavigate();
-
+  const [isEnabled, setIsEnabled] = useState(false);
   // The following functions handle real-time input and validation
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     // Prevent default form submission behavior
@@ -46,6 +46,8 @@ export function LogIn() {
     await LogUserIn({ navigate, email, password });
   };
 
+  const submitTitle = isEnabled ? "Log In" : "Fill out all fields correctly to log in";
+
   // The following functions handle real-time input and validation
   const handleEmailInput = (value: string) => {
     setEmail(value);
@@ -56,6 +58,18 @@ export function LogIn() {
     setPassword(value);
     setValidPassword(validatePassword(value) && value !== "");
   };
+
+  const handleEnableCheck = () => {
+    if (validEmail && validPassword) {
+      setIsEnabled(true);
+    } else {
+      setIsEnabled(false);
+    }
+  };
+
+  useEffect(() => {
+    handleEnableCheck();
+  }, [validEmail, validPassword]);
 
   return (
     <div>
@@ -74,7 +88,7 @@ export function LogIn() {
           isValid={validPassword}
           action={handlePasswordInput}
         />
-        <Button type="submit">Log In</Button>
+        <Button type="submit" disabled={!isEnabled} title={submitTitle}>Log In</Button>
       </form>
     </div>
   );

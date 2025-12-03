@@ -108,7 +108,7 @@ export function SearchBar({
                 setIsFocused(false);
                 if (searchQuery === "") setIsSearching(false);
               }}
-              className="w-full h-full border-transparent focus:border-transparent focus:ring-0 outline-none bg-[var(--color-gray-2)] rounded"
+              className="w-full h-full border-transparent focus:border-transparent focus:ring-0 outline-none rounded"
             />
 
             {/* Clear Icon appears when there is text in the input */}

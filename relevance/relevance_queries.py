@@ -43,23 +43,24 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
                 _trace_id,
                 provider,
                 provider_message_id,
-                _subject_enc,
+                subject_enc,
                 _sender_enc,
                 received_at,
-                _body_enc,
+                body_enc,
             ) = row
 
             # Map only minimal known fields
             provider_source = provider or "gmail"
             relevance_conf = float(model_results.relevant.get(str(staging_id), 0.0))
-
+            subject = decrypt_token(to_bytes(subject_enc)) if subject_enc else ""
+            body = decrypt_token(to_bytes(body_enc)) if body_enc else ""
             # Build tuple aligned with job_applications schema
             values.append(
                 (
                     user_uid,            # user_uid
-                    None,                # title
+                    subject,             # title
                     None,                # company_name
-                    None,                # description
+                    body,                # description
                     "staging",           # app_stage
                     provider_source,     # provider_source
                     None,                # recruiter_name
@@ -81,7 +82,7 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
             logging.warning(f"[{trace_id}] No valid rows to insert.")
             return {"status": "no_valid_rows"}
 
-        # 3️⃣ SQL aligned perfectly with schema
+        # SQL aligned with schema
         query = """
         INSERT INTO public.job_applications (
             user_uid,
@@ -112,7 +113,7 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
         ON CONFLICT (provider_message_id) DO NOTHING;
         """
 
-        # 4️⃣ Execute batch insert via shared helper
+        #  Execute batch insert via shared helper
         result = execute_transfer_query(
             trace_id=trace_id,
             query=query,

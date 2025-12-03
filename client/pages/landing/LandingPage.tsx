@@ -3,32 +3,34 @@
 import { useNavigate } from "react-router";
 import { LandingForm } from "@/pages/landing/landing-components/LandingForm";
 import Button from "@/global-components/button";
+import { useBrandImage } from "@/global-services/useBrandImage";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const brandImg = useBrandImage();
 
   return (
     <div
-      className="flex flex-col gap-10 min-h-screen p-[2rem] md:flex-row overflow-auto"
-      style={{ background: "var(--color-bg-alt)" }}
+      className="flex flex-col fixed inset-0 md:flex-row overflow-auto landing-gradient"
     >
+    
       {/* *Top Container */}
       <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
         {/* Inner Container */}
         <div className="flex flex-col items-center gap-5 p-8 justify-center">
           <div className="w-120 h-120">
-            <img src="/JAICE_logo.png" className="fit-cover" />
+            <img src={brandImg} className="fit-cover" />
           </div>
           <div className="text-left">
-            <h1>Job Application Intelligence</h1>
-            <h1>& Career Enhancement</h1>
+            <h1 className="primary-text">Job Application Intelligence</h1>
+            <h1 className="primary-text">& Career Enhancement</h1>
           </div>
-          <h2>Simplify Your Job Hunt</h2>
+          <h2 className="secondary-text">Simplify Your Job Hunt</h2>
         </div>
       </div>
 
       {/* *Form Container */}
-      <div className="flex w-full  px-[2rem] py-[4rem] items-center justify-center">
+      <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
         {/* Inner Container */}
         <div className="flex flex-col w-[30rem]">
           <LandingForm />

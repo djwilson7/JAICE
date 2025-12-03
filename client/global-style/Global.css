@@ -1,8 +1,22 @@
 @import "tailwindcss";
 
-/* Global styles for the application */
+/* 
+################################################################
+  ROOT CONTAINER & FONT SETUP
 
-/* main container */
+  #root establishes the main application wrapper with full-viewport
+  height, centered layout behavior, and a clean overflow baseline.
+  All React-rendered content lives inside this container.
+
+  The @font-face declarations register our primary typefaces
+  (Baskerville and Poppins) for consistent typography across the app.
+  Fonts are loaded with `font-display: swap` to ensure fast rendering
+  and avoid layout jank during fallback → custom font transitions.
+
+  The scrollbar styles are defined as a way to globally style scrollbars
+  across the application for a more cohesive look and feel.
+################################################################
+*/
 #root {
   margin: 0 auto;
   text-align: center;
@@ -11,7 +25,6 @@
   overflow: visible;
 }
 
-/* Font faces */
 @font-face {
   font-family: "Baskerville";
   src: url("/fonts/LibreBaskerville-Regular.ttf") format("truetype");
@@ -28,50 +41,162 @@
   font-display: swap;
 }
 
-/* Base styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-one) var(--page-bg);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--page-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--primary-one);
+  border-radius: 10px;
+  border: 2px solid var(--page-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-four);
+}
+/*
+################################################################
+  THEME VARIABLES (DARK MODE BASE + LIGHT MODE OVERRIDES)
+
+  :root defines the default **dark theme** color system, typography,
+  gradients, shadows, and component surface variables. These values
+  form the foundation for the entire design language.
+
+  All UI elements reference these variables (e.g., --primary-two,
+  --text-primary, --job-card-bg), ensuring consistent styling and
+  automatic theme responsiveness across the app.
+
+  Light mode is applied when html[data-theme="light"] is set.
+  In this mode, only the variables that need to differ are overridden:
+  - background surfaces and gradients
+  - blue palette adjustments for contrast in light environments
+  - column gradients and card surfaces
+  - icon filters and text color variations
+
+  This approach keeps the UI fully theme-driven while allowing both
+  themes to share the same component-level CSS.
+################################################################
+*/
 :root {
-  /* Colors */
-  --color-bg: #1e1c20;
-  --color-bg-rgb: 30, 28, 32;
-  --color-bg-alt: linear-gradient(
-    160deg,
-    var(--color-blue-1),
-    var(--color-blue-2),
-    var(--color-blue-1)
+  /* Main Color Palettes */
+  --page-bg: #1e1c20;
+  --page-bg-highlight: #333035;
+  --page-bg-rgb: 30, 28, 32;
+  --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+
+  --modal-background: black;
+  --modal-background-rgb: 0, 0, 0;
+
+  --glass-bg: rgba(0, 0, 0, 0.5);
+  --glass-bg-hover: rgba(0, 0, 0, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+
+  --shadow-color: #ffffff;
+  --shadow-color-rgb: 255, 255, 255;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #611b13;
+  --purple-color: #8e44ad;
+  --gray-color: #c6c6c6;
+  --orange-color: #da681b;
+  --orange-color-rgb: 218, 104, 27;
+
+  --job-card-background: #1d1b20;
+  --job-card-background-rgb: 29, 27, 32;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
+
+  /* Primary Colors */
+  --primary-one: #192836; /* Dark Blue (Sidebar Background) */
+  --primary-two: #053d57; /* Medium Dark Blue (Selected Button) */
+  --primary-three: #006884; /* Medium Blue (Not Currently Used) */
+  --primary-four: #97bcc7; /* Light Blue (Text/Icons on Button) */
+  --primary-five: #f2f1ef; /* Very Light Blue (Main Text) */
+
+  --primary-one-rgb: 25, 40, 54; /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 5, 61, 87; /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 0, 104, 132; /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 151, 188, 199; /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+
+  /* Gradients */
+  --page-gradient: linear-gradient(
+    180deg,
+    var(--page-bg),
+    var(--page-bg-highlight),
+    var(--page-bg)
   );
 
-  /* Blues */
-  --color-blue-1: #192836; /* Dark Blue (Sidebar Background) */
-  --color-blue-2: #053d57; /* Medium Dark Blue (Selected Button) */
-  --color-blue-3: #006884; /* Medium Blue (Not Currently Used) */
-  --color-blue-4: #97bcc7; /* Light Blue (Text/Icons on Button) */
-  --color-blue-5: #f2f1ef; /* Very Light Blue (Main Text) */
-
-  /* Blues - RGB ----                 EX: rgba(var(--color-blue-1-rgb), 0.5) <- alpha adjustments*/
-  --color-blue-1-rgb: 25, 40, 54; /* Dark Blue (Sidebar Background) */
-  --color-blue-2-rgb: 5, 61, 87; /* Medium Dark Blue (Selected Button) */
-  --color-blue-3-rgb: 0, 104, 132; /* Medium Blue (Not Currently Used) */
-  --color-blue-4-rgb: 151, 188, 199; /* Light Blue (Text/Icons on Button) */
-  --color-blue-5-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
-  --color-light-purple: #351936; /* Used for Applied Section */
-  --color-teal: #043947; /* Used for Interview Section */
-  --color-dark-purple: #272136; /* Used for Offer Section */
-  --color-blue-gray: #1e2f4d; /* Used for Accepted Section */
-  --color-bright-red: #b3261e; /* alert error */
-  --job-card-bg: #1d1b20;
-  --color-blue-purple: #232842; /* Used for Rejected Section */
+  --applied-color: #4d4d3a;
+  --interview-color: #506d50;
+  --offer-color: #3d643d;
+  --accepted-color: #265726;
+  --rejected-color: #7a3034;
 
-  /* Fonts */
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  /* Fonts and Text*/
+  --text-primary: var(--white-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
+
   --font-title: "Baskerville", serif;
   --font-headline: "Baskerville", serif;
-
   --font-subheading: "Poppins", sans-serif;
   --font-body: "Poppins", sans-serif;
   --font-caption: "Poppins", sans-serif;
 
-  /* Font Sizes */
   --text-scale: 1;
   --fs-title: calc(40px * var(--text-scale));
   --fs-headline: calc(28px * var(--text-scale));
@@ -79,34 +204,492 @@
   --fs-body: calc(16px * var(--text-scale));
   --fs-caption: calc(14px * var(--text-scale));
 
-  --text-color-primary: var(--color-blue-5);
-
+  --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --card-background: linear-gradient(
-    180deg,
-    rgba(var(--color-blue-1-rgb), 0.92) 0%,
-    rgba(var(--color-blue-2-rgb), 0.92) 100%
-  );
-
-  --job-card-background: #2a2730;
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 }
 
-/* Typography */
-/* Title and Headline */
+/* 
+####################################
+
+Light theme overrides 
+
+####################################
+*/
+html[data-theme="light"] {
+  /* Backgrounds */
+  --page-bg: #929090;
+  --page-bg-highlight: #c0bebe;
+  --page-bg-rgb: 190, 190, 190;
+  --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+
+  --modal-background: rgb(0, 0, 0);
+  --modal-background-rgb: 0, 0, 0;
+
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-bg-hover: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-border-hover: rgba(0, 0, 0, 0.2);
+
+  --shadow-color: #000000;
+  --shadow-color-rgb: 0, 0, 0;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #cf4839;
+  --purple-color: #8e44ad;
+  --gray-color: #393636;
+  --orange-color: #d35400;
+  --orange-color-rgb: 211, 84, 0;
+
+  --job-card-background: #d4d4d4;
+  --job-card-background-rgb: 212, 212, 212;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
+
+  /* Primary Colors */
+  --primary-one: #c2ccd6;
+  --primary-two: #a3b8c7;
+  --primary-three: #7fa5bb;
+  --primary-four: #4f7f99;
+  --primary-five: #25303a;
+
+  --primary-one-rgb: 194, 204, 214; /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 163, 184, 199; /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 127, 165, 187; /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 79, 127, 153; /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 37, 48, 58; /* Very Light Blue (Main Text) */
+
+  --primary-dark: #ffffff;
+  --primary-light: #000000;
+  
+  /* Gradients */
+  --page-gradient: linear-gradient(
+    180deg,
+    var(--page-bg),
+    var(--page-bg-highlight),
+    var(--page-bg)
+  );
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-two-rgb), 0.92) 0%,
+    rgba(var(--primary-four-rgb), 0.92) 100%
+  );
+
+  /* Other Colors */
+  --applied-color: #c7c7a5;
+  --interview-color: #a8c3a8;
+  --offer-color: #8fb48f;
+  --accepted-color: #6ea06e;
+  --rejected-color: #caa4a8;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  /* Fonts and Text*/
+  --text-primary: var(--black-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
+
+  --font-title: "Baskerville", serif;
+  --font-headline: "Baskerville", serif;
+  --font-subheading: "Poppins", sans-serif;
+  --font-body: "Poppins", sans-serif;
+  --font-caption: "Poppins", sans-serif;
+
+  --text-scale: 1;
+  --fs-title: calc(40px * var(--text-scale));
+  --fs-headline: calc(28px * var(--text-scale));
+  --fs-subheading: calc(20px * var(--text-scale));
+  --fs-body: calc(16px * var(--text-scale));
+  --fs-caption: calc(14px * var(--text-scale));
+
+  --corner-radius: 20px;
+  --animation-duration: 0.3s;
+  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
+    brightness(90%) contrast(88%);
+}
+
+/* Add additional themes above this line */
+
+/* 
+################################################################
+  ACCESSIBILITY: CONTRAST ADJUSTMENTS
+
+  These overrides activate when html[data-contrast="X"] is present.
+  Each mode adjusts visual intensity, clarity, and edge definition
+  without changing the core layout or typography.
+
+  Available contrast levels:
+    • Low      – Softer shadows, minimal borders, lighter button states
+    • Default  – Standard application contrast (baseline)
+    • High     – Stronger shadows, pronounced borders, higher clarity
+    • BW       – Black/White optimized mode with neutral surfaces and
+                  simplified icon filters for maximum visibility
+
+  Each mode redefines:
+    - shadows and elevation
+    - button backgrounds, borders, hover states, and selected states
+    - (BW mode) icon filter behavior and background gradients
+
+  This system ensures the UI adapts to user accessibility needs while
+  maintaining a consistent structure and predictable behavior.
+################################################################
+*/
+html[data-contrast="low"] {
+  /* Effects */
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
+
+  --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
+
+  --job-card-review-border: none;
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.3);
+  --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 0.3);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 0.7);
+  --icon-opacity: 0.7;
+
+  /* Button at rest */
+  --button-background: rgba(var(--primary-one-rgb), 0.8);
+  --button-border: 1px solid transparent;
+  --button-shadow: 0 0 0 transparent;
+
+  /* Button on Hover */
+  --button-hover-background: none;
+  --button-hover-border: 1px solid transparent;
+  --button-hover-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  --button-hover-scale: 1.01;
+
+  /* Button when selected */
+  --button-selected-background: var(--primary-two);
+  --button-selected-color: none;
+  --button-selected-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+html[data-contrast="default"] {
+  /* Effects */
+  --shadow: 0 0 5px rgba(var(--shadow-color-rgb), 0.3);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.4);
+
+  --job-card-review-border: 1px solid var(--orange-color);
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.5);
+  --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
+
+
+  /* Button at rest */
+  --button-background: var(--primary-one);
+  --button-border: 1px solid transparent;
+  --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
+
+  /* Button on Hover */
+  --button-hover-background: var(--primary-one);
+  --button-hover-border: 1px solid var(--primary-three);
+  --button-hover-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  --button-hover-scale: 1.05;
+
+  /* Button when selected */
+  --button-selected-background: var(--primary-two);
+  --button-selected-border: none;
+  --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+html[data-contrast="high"] {
+  /* Effects */
+  --shadow: 0 0 5px rgba(var(--shadow-color-rgb), 0.7);
+  --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.6);
+
+  --job-card-review-border: 1.2px solid var(--orange-color);
+  --job-card-review-shadow: 0 0 5px 2px rgba(var(--orange-color-rgb), 0.7);
+  --job-card-review-border-header: 1.2px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
+
+  --button-background: var(--primary-one);
+  --button-border: 1px solid transparent;
+  --button-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+
+  /* Button on Hover */
+  --button-hover-background: var(--primary-one);
+  --button-hover-border: 1px solid var(--primary-three);
+  --button-hover-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  --button-hover-scale: 1.05;
+
+  /* Button when selected */
+  --button-selected-background: var(--primary-two);
+  --button-selected-border: none;
+  --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
+}
+
+html[data-contrast="bw"] {
+  /* Effects */
+
+  /* 
+    ###################################################################################
+    Using Dark Mode as the primary palette base for BW mode 
+  */
+  --page-bg: #7a7a7a;
+  --page-bg-highlight: #7a7a7a;
+  --page-bg-rgb: 30, 28, 32;
+  --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+
+  --modal-background: black;
+  --modal-background-rgb: 0, 0, 0;
+
+  --glass-bg: rgba(0, 0, 0, 0.5);
+  --glass-bg-hover: rgba(0, 0, 0, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+
+  --shadow-color: #ffffff;
+  --shadow-color-rgb: 255, 255, 255;
+  --black-color: #000000;
+  --white-color: #ffffff;
+  --red-color: #5f0a00;
+  --purple-color: #8e44ad;
+  --gray-color: #d7d7d7;
+  --orange-color: #da681b;
+  --orange-color-rgb: 218, 104, 27;
+
+  --job-card-background: #484848;
+  --job-card-background-rgb: 72, 72, 72;
+  --job-card-bg: rgba(var(--job-card-background-rgb), 1);
+  --job-card-bg-hover: rgba(var(--job-card-background-rgb), 1);
+
+  /* Primary Colors */
+  --primary-one: #1a1a1a; /* Dark Blue (Sidebar Background) */
+  --primary-two: #595e61; /* Medium Dark Blue (Selected Button) */
+  --primary-three: #c2c2c2; /* Medium Blue (Not Currently Used) */
+  --primary-four: #d3d3d3; /* Light Blue (Text/Icons on Button) */
+  --primary-five: #f2f1ef; /* Very Light Blue (Main Text) */
+
+  --primary-one-rgb: 26, 26, 26; /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 89, 94, 97; /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 194, 194, 194; /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 211, 211, 211; /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+
+  /* Gradients */
+  --page-gradient: linear-gradient(
+    160deg,
+    var(--page-bg-highlight),
+    var(--page-bg),
+    var(--page-bg-highlight)
+  );
+
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
+
+  /* Other Colors */
+  --applied-color: #1a1a1a;
+  --interview-color: #1a1a1a;
+  --offer-color: #1a1a1a;
+  --accepted-color: #1a1a1a;
+  --rejected-color: #1a1a1a;
+
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  /* Fonts and Text*/
+  --text-primary: var(--white-color);
+  --text-secondary: var(--gray-color);
+  --text-red: var(--red-color);
+  --text-orange: var(--orange-color);
+
+  --font-title: "Baskerville", serif;
+  --font-headline: "Baskerville", serif;
+  --font-subheading: "Poppins", sans-serif;
+  --font-body: "Poppins", sans-serif;
+  --font-caption: "Poppins", sans-serif;
+
+  --text-scale: 1;
+  --fs-title: calc(40px * var(--text-scale));
+  --fs-headline: calc(28px * var(--text-scale));
+  --fs-subheading: calc(20px * var(--text-scale));
+  --fs-body: calc(16px * var(--text-scale));
+  --fs-caption: calc(14px * var(--text-scale));
+
+  --animation-duration: 0.3s;
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+
+  --shadow: none;
+  --shadow-hover: none;
+
+  --job-card-review-border: 1.2px solid var(--orange-color);
+  --job-card-review-shadow: none;
+  --job-card-review-border-header: 1.2px solid rgba(var(--orange-color-rgb), 1);
+  --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
+  --icon-opacity: 1;
+
+  --button-background: var(--primary-one);
+  --button-border: 1px solid rgba(var(--primary-five-rgb), 1);
+  --button-shadow: 0 0 5px rgba(0, 0, 0, 0);
+
+  /* Button on Hover */
+  --button-hover-background: black;
+  --button-hover-border: 1px solid var(--primary-three);
+  --button-hover-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  --button-hover-scale: 1.05;
+
+  /* Button when selected */
+  --button-selected-background: var(--primary-two);
+  --button-selected-border: none;
+  --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
+
+  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg)
+    brightness(100%) contrast(100%);
+
+  --color-bg-alt: linear-gradient(160deg, black, white, black);
+
+}
+
+/* Add additional accessibility adjustments above this line */
+
+/* 
+################################################################
+BASE ELEMENT OVERRIDES
+
+These rules define the default look and behavior for the basic HTML
+elements used throughout the app. Every <button>, <input>, <a>, etc.
+automatically starts with these styles unless something more specific
+replaces them.
+
+Example:
+  <button>New Button</button>
+    → gets the global button styling.
+
+  <button className="shadow">New Button</button>
+    → gets the global button styling any overrides from the “shadow” class.
+
+If we want all links across the site to look the same, this is where
+we define that shared appearance.
+
+Example (notice there’s no "." or "#" — we’re styling the tag directly):
+  a {
+    color: var(--primary-one);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+This makes every <a> tag use the same color and removes the default
+underline, while still adding an underline when the user hovers.
+
+Guiding Principles:
+- Base element overrides set the universal foundation so the UI feels
+  consistent everywhere.
+
+- Custom classes are optional add-ons for special cases or unique
+  styling needs. Add them to override or apply additional styles.
+
+- If you find yourself using the same custom style in multiple places,
+  consider moving it here so it becomes a new shared default.
+
+- Anything that should react to Light/Dark mode, contrast settings, or
+  accessibility preferences should rely on our CSS variables (they
+  update automatically for you).
+
+- Order Matters:
+  Base styles come first.
+  Custom classes come after.
+  This lets custom classes safely “layer” on top of the base styling.
+################################################################
+*/
+html,
+body {
+  background: var(--color-bg);
+  margin: 0;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  color: var(--text-primary);
+  overflow: auto;
+}
+
+/* Font Families */
 h1,
 h2 {
   font-family: var(--font-title);
 }
 
-h1 {
-  font-size: var(--fs-title);
-}
-
-h2 {
-  font-size: var(--fs-headline);
-}
-
-/* All other text */
 h3,
 h4,
 h5,
@@ -122,6 +705,14 @@ div {
   font-family: var(--font-body);
 }
 
+/* Font Sizes */
+h1 {
+  font-size: var(--fs-title);
+}
+
+h2 {
+  font-size: var(--fs-headline);
+}
 h3 {
   font-size: var(--fs-subheading);
 }
@@ -143,211 +734,367 @@ small {
   font-size: var(--fs-caption);
 }
 
-/* Button styles */
+/* 
+  #################################################################################
+  Base Button Styles:
+
+  Any declared alterations beyond the ### will inherit from these base styles.
+  This ensures consistency across all button variants unless explicitly changed.
+*/
+/* Base Button Styling */
 button {
-  border-radius: 20px;
-  border: 1px solid transparent;
+  border-radius: var(--corner-radius);
   padding: 0.6em 1.2em;
   font-size: var(--fs-subheading);
   font-weight: 500;
   font-family: var(--font-subheading);
-  background-color: var(--color-blue-1);
   cursor: pointer;
-  color: var(--color-blue-4);
-
-  /* Smooth transition for border color on hover */
-  transition: border-color 0.25s ease;
+  transition: all var(--animation-duration) ease;
+  background: var(--button-background);
+  box-shadow: var(--button-shadow);
+  border: var(--button-border);
+  color: var(--text-primary);
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
+/* Base Button Hover State */
 button:hover {
-  border-color: var(--color-blue-4);
+  background: var(--button-hover-background);
+  border: var(--button-hover-border);
+  box-shadow: var(--button-hover-shadow);
+  transform: scale(var(--button-hover-scale, 1));
 }
 
+/* Base Button Disabled State */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+
+/*
+  ###########################################################################
+  Button Variants Below (These inherit from the base button styles above)
+*/
 button.selected {
-  background-color: var(--color-blue-2);
-  border-color: var(--color-blue-4);
+  background: var(--button-selected-background);
+  box-shadow: var(--button-selected-shadow);
+  border: var(--button-selected-border);
+  color: var(--text-secondary);
 }
 
+button.navButton {
+  padding: 1rem;
+  width: 4rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+}
 
-button.small
-{
-  border-radius: 12px;
-  border: 1px solid transparent;
+button.small {
   padding: 0.25em 0.5em;
   font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  background-color: var(--color-blue-1);
-  cursor: pointer;
-  color: var(--color-blue-4);
-
-  /* Smooth transition for border color on hover */
-  transition: border-color 0.25s ease;
 }
-
-button.small:hover 
-{
-  border-color: var(--color-blue-4);
-}
-
 
 button.red {
-  border-radius: 20px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: var(--fs-subheading);
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  background-color: var(--color-bright-red);
-  cursor: pointer;
-  color: var(--color-blue-5);
-
-  /* Smooth transition for border color on hover */
-  transition: border-color 0.25s ease;
+  background: var(--red-color);
+  color: var(--white-color);
 }
 
 button.red:hover {
-  border-color: var(--color-blue-5);
+  background: var(--white-color);
+  color: var(--red-color);
+  border-color: var(--red-color);
 }
 
-button.reviewed {
-  align-items: center;
-  align-self: start;
-
-  border-radius: 12px;
-  background-color: var(--color-orange-600);
-  border: 1px solid transparent;
-  padding: 0.25em 0.5em;
+button.roundSmall {
+  background: none;
+  box-shadow: none;
+  padding: 0.2rem;
   font-size: 0.875rem;
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  color: var(--color-white);
-
-  transition: border-color 0.25s ease;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border: none;
 }
 
-button.reviewed:hover {
-  border-color: var(--color-white);
+button.ovalSmall {
+  background: none;
+  box-shadow: none;
+  font-size: 0.875rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  border: none;
 }
 
-button.addApplication
-{
+button.cornerFloating {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
+  top: 0;
+  margin-top: 0.5rem;
+  background: none;
+  box-shadow: none;
+  padding: 0.3rem;
+}
+
+button.undoRedo {
+  transition: opacity 160ms ease, transform 160ms ease;
+  border: none;
+  opacity: 1;
   background-color: transparent;
-  border-radius: 20px;
-  border: 1px solid transparent;
-  padding: 0.0em 0.5em;
-  font-size: var(--fs-subheading);
-  font-weight: 500;
-  font-family: var(--font-subheading);
-  cursor: pointer;
-  color: var(--color-blue-5);
-
-  /* Smooth transition for border color on hover */
-  transition: border-color 0.25s ease;
+  box-shadow: none;
+  border-radius: var(--corner-radius);
 }
 
-button.addApplication:hover 
-{
-  transform: scale(2.0);
+button.undoRedo:hover {
+  transform: scale(1.2);
   border-color: transparent;
 }
 
-/* light mode style */
-@media (prefers-color-scheme: light) {
-  :root {
-    --text-color-primary: var(--color-blue-5);
-  }
+
+button.undoRedo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
-/* page layout */
-html,
-body {
-  background: var(--color-bg);
-  margin: 0;
+button.undoRedo:active {
+  transform: scale(1);
+}
+
+/* Add more base elements styles above this line */
+
+/* 
+###############################################################
+CUSTOM CLASSES (UTILITY + THEME-RESPONSIVE)
+
+These classes are optional. They only apply when you manually add them
+to an element (className="example").
+
+  They are intended for:
+  - Utility styling (e.g., shadows, borders, layout helpers)
+  - Dynamic visual variations driven by CSS variables
+  - Theme- and accessibility-responsive behavior
+  - Icon color filters, contextual highlight states, modal surfaces,
+    and component-specific visual treatments
+
+  Since these classes rely on global CSS variables, their appearance
+  automatically adapts to Light/Dark themes, contrast levels, and
+  accessibility settings without requiring additional component logic.
+###############################################################
+*/
+
+.app-header {
+  background: rgba(var(--primary-one-rgb), 1);
+  box-shadow: var(--shadow);
+  position: fixed;
+  top: 0;
   display: flex;
-  width: 100%;
-  height: 100vh;
-  color: var(--text-color-primary);
-  overflow: auto;
+  flex-direction: row;
+  height: 6rem;
+  width: 100vw;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  overflow: hidden;
+  scroll-behavior: none;
+  min-width: 1200px;
 }
 
-/* Icons */
-
-/* makes icons light blue */
-button img {
-  filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%)
-    hue-rotate(170deg) brightness(95%) contrast(85%);
+.app-content {
+  background: var(--page-gradient);
+  display: flex;
+  position: fixed;
+  top: 6rem;
+  bottom: 0;
+  width: 100vw;
 }
 
+.profile-picture {
+  border-radius: 50%;
+  aspect-ratio: 1/1;
+  width: 4rem;
+  min-width: 4rem;
+}
+
+.brandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1/1;
+  height: 6rem;
+}
+
+.modal-backdrop {
+  background: rgba(var(--modal-background-rgb), 0.7);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  z-index: 10000;
+}
+
+.modal {
+  background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  min-width: 400px;
+  z-index: 1001;
+}
+/* Icon Filter and Color Overrides */
 .icon {
-  filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%)
-    hue-rotate(170deg) brightness(95%) contrast(85%);
+  filter: var(--icon-filter);
 }
 
-/* Light theme overrides */
-html[data-theme="light"] {
-  /* Backgrounds */
-  --color-bg: #b0b0b0; /* page background (soft gray-white) */
-  --color-bg-rgb: 245, 247, 250;
-  --color-bg-alt: linear-gradient(160deg, #ffffff, #eaf0f7, #ffffff);
-
-  /* Blues — tuned for clarity and text contrast */
-  --color-blue-1: #d6e3f3; /* side panels / card bg */
-  --color-blue-2: #afcbef; /* hover / selected accent */
-  --color-blue-3: #1d4e89; /* primary accent blue */
-  --color-blue-4: #0e2f56; /* headings & button text (dark navy) */
-  --color-blue-5: #0b172a; /* main body text (very dark slate) */
-
-  --color-blue-1-rgb: 214, 227, 243;
-  --color-blue-2-rgb: 175, 203, 239;
-  --color-blue-3-rgb: 29, 78, 137;
-  --color-blue-4-rgb: 14, 47, 86;
-  --color-blue-5-rgb: 11, 23, 42;
-
-  /* Section / semantic accents */
-  --color-light-purple: #eae2f8; /* applied section */
-  --color-teal: #d4f3ef; /* interview section */
-  --color-dark-purple: #e6e2f3; /* offers */
-  --color-blue-gray: #e3e9f2; /* accepted */
-  --color-bright-red: #c62828; /* errors / alerts */
-
-  --job-card-background: #ededed;
-
-  /* Typography */
-  --text-color-primary: var(--color-blue-5);
+.corner-radius {
+  border-radius: var(--corner-radius);
 }
 
-/* Ensure text is readable */
-html[data-theme="light"] body {
-  background: var(--color-bg);
-  color: var(--text-color-primary);
+
+.redIcon {
+  filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
 }
 
-/* Button overrides for readability */
-html[data-theme="light"] button {
-  background-color: var(--color-blue-1);
-  color: var(--color-blue-4);
-  border-color: rgba(var(--color-blue-1-rgb), 0.2);
+.orangeIcon {
+  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
+    hue-rotate(359deg) brightness(99%) contrast(102%);
+  opacity: var(--icon-opacity);
 }
 
-html[data-theme="light"] button:hover {
-  border-color: rgba(var(--color-blue-4-rgb), 0.4);
+.greenIcon {
+  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
+    brightness(90%) contrast(85%);
 }
 
-html[data-theme="light"] button.selected {
-  background-color: var(--color-blue-2);
-  color: var(--color-blue-5);
-  border-color: rgba(var(--color-blue-4-rgb), 0.2);
+.blueIcon {
+  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%)
+    hue-rotate(170deg) brightness(95%) contrast(90%);
 }
 
-/* Icon filters (slightly darker for visibility) */
-html[data-theme="light"] button img {
-  filter: brightness(0) saturate(100%) invert(12%) sepia(8%) saturate(1250%)
-    hue-rotate(170deg) brightness(90%) contrast(95%);
+.glass {
+  background: var(--glass-bg);
+  border-radius: var(--corner-radius);
+  backdrop-filter: blur(10px);
+  border: var(--glass-border);
+  box-shadow: var(--shadow);
+  transition: all var(--animation-duration) ease;
+  position: fixed;
+  bottom: 1rem;
+  justify-content: center;
+  display: flex;
+  z-index: 50;
+  
 }
 
-html[data-theme="light"] .icon {
-  filter: brightness(0) saturate(100%) invert(12%) sepia(8%) saturate(1250%)
-    hue-rotate(170deg) brightness(90%) contrast(95%);
+.glass:hover {
+  background: var(--glass-bg-hover);
+  border: var(--glass-border-hover);
+  box-shadow: var(--shadow-hover);
 }
+
+.job-card {
+  background: var(--job-card-bg);
+  border-radius: var(--corner-radius);
+  backdrop-filter: blur(10px);
+}
+
+.job-card:hover {
+  background: var(--job-card-bg-hover);
+}
+
+
+
+.review {
+  border: var(--job-card-review-border);
+  box-shadow: var(--job-card-review-shadow);
+}
+
+.review-header {
+  color: var(--job-card-review-header-text);
+  font-weight: 100;
+  border-bottom: var(--job-card-review-border-header);
+}
+
+.shadow {
+  box-shadow: var(--shadow);
+}
+
+.animate-element {
+  transition: all var(--animation-duration) ease;
+}
+
+.highlighted {
+  box-shadow: 0 0 10px 2px var(--primary-four);
+  border-radius: var(--corner-radius);
+}
+
+.primary-color {
+  background: var(--primary-one);
+}
+
+.primary-gradient {
+  background: var(--primary-gradient);
+}
+
+.landing-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 1) 0%,
+    rgba(var(--primary-two-rgb), 1) 100%
+  );
+}
+
+.primary-text {
+  color: var(--text-primary);
+}
+
+.secondary-text {
+  color: var(--text-secondary);
+}
+
+.red-text {
+  color: var(--text-red);
+}
+
+.orange-text {
+  color: var(--text-orange);
+}
+
+.card {
+  background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.header-split {
+  border: 1px solid var(--gray-color);
+  width: 100%;
+  opacity: 0.5;
+}
+
+
+
+/* Add more custom classes above this line */

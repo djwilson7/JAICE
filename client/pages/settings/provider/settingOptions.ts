@@ -1,0 +1,25 @@
+import type { TextScale, Theme, MotionPreference, ContrastLevel } from "./settingsTypes";
+
+export const TEXT_SCALE_OPTIONS: Record<TextScale, { label: string; value: string; title?: string }> = {
+  small:   { label: "Small",   value: "0.85rem", title: "Shrink Text" },
+  default: { label: "Default", value: "1rem", title: "Normal Text" },
+  large:   { label: "Large",   value: "1.15rem", title: "Enlarge Text" },
+};
+
+export const THEME_OPTIONS: Record<Theme, { label: string; title?: string }> = {
+  light: { label: "Light", title: "Set Light Theme" },
+  dark:  { label: "Dark", title: "Set Dark Theme" },
+};
+
+export const MOTION_OPTIONS: Record<MotionPreference, { label: string; value: string; title?: string }> = {
+  slow:    { label: "Slow",    value: "0.4s", title: "Slower Animations" },
+  default: { label: "Default", value: "0.2s", title: "Normal Animations" },
+  fast:    { label: "Fast",    value: "0.1s", title: "Faster Animations" },
+};
+
+export const CONTRAST_OPTIONS: Record<ContrastLevel, { label: string; value?: string; title?: string }> = {
+  low:     { label: "Low", title: "Softer Contrast" },
+  default: { label: "Default", title: "Normal Contrast" },
+  high:    { label: "High", title: "Stronger Contrast" },
+  bw:      { label: "BW", title: "Black & White Contrast" },
+};

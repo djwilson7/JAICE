@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
+import { useBrandImage } from "@/global-services/useBrandImage";
 
 /* Reuseable section wrapper (title + opt. eyebrow + 2-column layout) */
 function Section({
@@ -27,12 +28,12 @@ function Section({
       {(eyebrow || title) && (
         <header className="mb-8">
           {eyebrow && (
-            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm tracking-wide">
+            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm tracking-wide secondary-text">
               {eyebrow}
             </span>
           )}
           {title && (
-            <h2 className="mt-3 text-4xl md:text-6xl font-bold tracking-tight"
+            <h2 className="mt-3 text-4xl md:text-6xl font-bold tracking-tight primary-text"
               style={{ fontSize: "clamp(3rem, 6vw, 7rem)" }}>
               {title}
             </h2>
@@ -46,7 +47,7 @@ function Section({
       ].join(" ")}
       >
         <div className="space-y-6 text-base md:text-lg opacity-90 text-left">
-          {copy.map((p, i) => <p key={i} className="leading-relaxed">{p}</p>)}
+          {copy.map((p, i) => <p key={i} className="leading-relaxed secondary-text">{p}</p>)}
           {children}
         </div >
 
@@ -81,9 +82,8 @@ function TeamGrid({
           const calloutSide = index % 2 === 0 ? "left-4" : "right-4";
 
           return (
-            <button
+            <div
               key={p.id}
-              type="button"
               onMouseEnter={() => setActive(p.id)}
               onMouseLeave={() => setActive(null)}
               onFocus={() => setActive(p.id)}
@@ -95,6 +95,7 @@ function TeamGrid({
                 isActive ? "scale-[1.04]" : active ? "opacity-50" : "",
               ].join(" ")}
               aria-describedby={`${p.id}-meta`}
+              style={{background: "var(--primary-gradient)"}}
             >
               <img
                 src={p.avatar}
@@ -128,23 +129,24 @@ function TeamGrid({
               </div>
 
               <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
-            </button>
+            </div>
           );
         })}
       </div>
 
-      <p className="mt-4 text-center text-sm opacity-70">
+      <small className="flex w-full justify-center my-4 secondary-text">
         Tip: Tab to a teammate and pause to reveal their details.
-      </p>
+      </small>
     </section>
   );
 }
 
 export function AuthAboutPage() {
   const navigate = useNavigate();
-
+  const brandImg = useBrandImage();
+  
   return (
-    <div style={{ background: "var(--color-bg-alt)" }} className="min-h-screen">
+    <div style={{ background: "var(--primary-gradient)" }} className="min-h-screen">
       <main className="relative mx-auto max-w-7xl px-4 md:px-8 min-h-screen overflow-x-hidden">
         {/* *Floating Button Container */}
         <div className="fixed top-0 left-0 m-4">
@@ -154,14 +156,14 @@ export function AuthAboutPage() {
         <section className="relative w-full mt-14 md:pt-20">
           <div className="mx-auto max-w-none px-4 md:px-8 flex flex-wrap items-center justify-start gap-6 md:gap-10">
             <h1
-              className="font-extrabold leading-none tracking-tight whitespace-nowrap"
+              className="font-extrabold leading-none tracking-tight whitespace-nowrap primary-text"
               style={{ fontSize: "clamp(4rem, 8vw, 9rem)" }} // Issue getting font to needed size: This forces the font to be larger.
             >
               ABOUT
             </h1>
 
             <img
-              src="/JAICE_logo.png" // May need to swap with SVG if drop shadow effect is not correct. 
+              src={brandImg} // May need to swap with SVG if drop shadow effect is not correct. 
               alt="JAICE logo"
               className="h-[clamp(220px,22vw,520px)] sm:h-56 md:h-72 lg:h-96 xl:h-[30rem] w-auto select-none"
               draggable={false}
@@ -194,8 +196,8 @@ export function AuthAboutPage() {
         >
 
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold">Our Philosophy</h1>
-            <p className="opacity-90 leading-relaxed">
+            <h1 className="text-2xl md:text-3xl font-semibold primary-text">Our Philosophy</h1>
+            <p className="leading-relaxed secondary-text">
               With JAICE, we believe job seekers deserve tools that simplify the search while offering the power of Artificial Intelligence to maximize opportunities.
             </p>
           </div>
@@ -224,7 +226,7 @@ export function AuthAboutPage() {
             <img
               src="/impact.png"
               alt="Professional reviewing applications at a desk"
-              className="self-start w-full h-auto rounded-3xl shadow-xl max-h-[280px] md:max-h-[450px] object-fill"
+              className="self-start w-full h-auto rounded-3xl shadow-xl max-h-[280px] md:max-h-[450px] object-cover object-bottom"
               loading="eager"
               decoding="async"
             />
@@ -232,26 +234,26 @@ export function AuthAboutPage() {
         >
           <ul className="grid gap-4">
             <li>
-              <p className="font-semibold tracking-wide">SMART APPLICATION SORTING</p>
-              <p className="opacity-90">
+              <p className="font-semibold tracking-wide primary-text">SMART APPLICATION SORTING</p>
+              <p className="secondary-text">
                 Automatically organizes your job applications into stages (Applied, Interview, Offer, etc.) so you can focus on the next step.
               </p>
             </li>
             <li>
-              <p className="font-semibold tracking-wide">AI-POWERED MATCHING</p>
-              <p className="opacity-90">
+              <p className="font-semibold tracking-wide primary-text">AI-POWERED MATCHING</p>
+              <p className="secondary-text">
                 Analyzes your resume and job descriptions to highlight best-fit opportunities and suggest improvements.
               </p>
             </li>
             <li>
-              <p className="font-semibold tracking-wide">PERSONALIZED INSIGHTS</p>
-              <p className="opacity-90">
+              <p className="font-semibold tracking-wide primary-text">PERSONALIZED INSIGHTS</p>
+              <p className="secondary-text">
                 Provides tailored career recommendations based on your skills, experiences, and market trends.
               </p>
             </li>
             <li>
-              <p className="font-semibold tracking-wide">EFFICIENCY & CLARITY</p>
-              <p className="opacity-90">
+              <p className="font-semibold tracking-wide primary-text">EFFICIENCY & CLARITY</p>
+              <p className="secondary-text">
                 Saves time by cutting through clutter and giving you a clear view of your progress and opportunities
               </p>
             </li>

@@ -22,20 +22,16 @@ function useCardStyles(variant: Variant, rounded: boolean) {
         position: "relative",
         borderRadius: rounded ? 22 : 16,
         padding: 20,
-        color: "var(--color-blue-5)",
-        border: "1px solid rgba(var(--color-blue-5-rgb), 0.35)",
+        color: "var(--primary-five)",
+        border: "1px solid rgba(var(--primary-five-rgb), 0.35)",
         boxShadow: "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
         transition: "box-shadow 0.2s ease, transform 0.2s ease",
     };
 
     if (variant === "teal") {
-        base.background = `linear-gradient(
-        180deg,
-        rgba(var(--color-blue-1-rgb), 0.92) 0%,
-        rgba(var(--color-blue-2-rgb), 0.92) 100%
-        )`;
+        base.background = `var(--primary-gradient)`;
     } else {
-        base.background = "rgb(var(--color-blue-1-rgb))";
+        base.background = "rgb(var(--primary-one-rgb))";
     }
 
     return base;
@@ -57,6 +53,7 @@ export function Card({
         <section
             className={className}
             style={{ ...style, display: "flex", flexDirection: "column" }}
+            onClick={expandable ? onExpand : undefined}
             onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
                 (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
@@ -103,7 +100,7 @@ export function Card({
                     justifyContent: "center",
                     position: "relative",
                 }}
-                onClick={expandable ? onExpand : undefined}
+                onClick={(e) => e.stopPropagation()}
                 role={expandable ? "button" : undefined}
                 tabIndex={expandable ? 0 : undefined}
                 onKeyDown={

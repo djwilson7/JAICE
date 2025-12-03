@@ -10,11 +10,11 @@ export function LandingForm() {
   const [newUser, setNewUser] = useState(false);
 
   const formStyle = {
-    border: "2px solid var(--color-blue-3)",
+    border: "2px solid var(--primary-three)",
     borderRadius: "1rem",
     padding: "2rem",
-    background: "rgba(var(--color-blue-5-rgb), 0.1)",
-    boxShadow: "0 0px 10px rgba(var(--color-blue-3-rgb), 0.4)"
+    background: "rgba(var(--primary-five-rgb), 0.1)",
+    boxShadow: "0 0px 10px rgba(var(--primary-three-rgb), 0.4)"
   }
 
   return (
@@ -26,8 +26,9 @@ export function LandingForm() {
         initialValue={true}
       />
       {newUser ? <SignUp /> : <LogIn />}
-      <div className="flex border-b my-8 border-1/2 border-white/20 text-center justify-center">
-        <h3 className="relative top-1/2 transform translate-y-1/2 backdrop-blur-md text-[var(--color-blue-5)] px-4">OR</h3>
+      <div className="flex flex-col justify-center my-4 items-center">
+        <hr className="relative header-split" />
+        <h3 className="relative -translate-y-1/2 w-1/4 backdrop-blur-md secondary-text px-4">OR</h3>
       </div>
       <QuickSignIn />
     </div>

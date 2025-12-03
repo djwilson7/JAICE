@@ -3,6 +3,7 @@
 export type JobCardType = {
   id: string;
   title: string;
+  description?: string;
   column: string;
   companyName?: string;
   date?: string;

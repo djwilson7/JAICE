@@ -1,3 +1,4 @@
+import Button from "@/global-components/button";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -23,7 +24,7 @@ export function Modal({
             document.removeEventListener("keydown", onKey);
             document.body.style.overflow = prev;
         };
-    }, [open, onClose]);
+    }, [open, onClose]); 
 
     if (!open) return null;
 
@@ -32,36 +33,28 @@ export function Modal({
             aria-modal="true"
             role="dialog"
             aria-label={title ?? "Expanded view"}
-            className="fixed inset-0 z-[100] flex items-center justify-center"
+            className="modal-backdrop"
             onMouseDown={(e) => {
                 // click the backgroudn to close (ignores clicks inside the dialog)
                 if (e.target === e.currentTarget) onClose();
             }}
-            style={{ background: "rgba(0,0,0,0.55)" }}
         >
             <div
                 ref={ref}
-                className="rounded-2xl"
+                className="modal"
                 style={{
                     width: maxWidth,
                     height: maxHeight,
                     maxHeight,
-                    padding: 16,
-                    border: "1px solid rgba(255,255,255,0.25)",
-                    background: "linear-gradient(180deg, rgba(var(--color-blue-1-rgb),0.96) 0%, rgba(var(--color-blue-2-rgb),0.96) 100%)",
-                    boxShadow: "0 18px 44px rgba(0,0,0,0.55)",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
             >
                 {title && (
                     <div className="flex items-center justify-between mb-3">
                         <h3 style={{ fontFamily: "var(--font-title)" }}>{title}</h3>
-                        <button onClick={onClose} className="px-3 py-1 rounded border border-white/20">
+                        <Button onClick={onClose}>
                             Close
-                        </button>
+                        </Button>
                     </div>
                 )}
                 <div style={{ position: "relative", width: "100%", height: "calc(100% - 40px)" }}>

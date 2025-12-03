@@ -1,6 +1,6 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import Button from "@/global-components/button";
 import { useNavigate } from "react-router";
@@ -29,9 +29,22 @@ export function SignUp() {
     boolean | null
   >(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [isEnabled, setIsEnabled] = useState(false);
 
+  const handleEnableCheck = () => {
+    if (validEmail && validConfirmEmail && validPassword && validConfirmPassword) {
+      setIsEnabled(true);
+    } else {
+      setIsEnabled(false);
+    }
+  };
+
+  useEffect(() => {
+    handleEnableCheck();
+  }, [validEmail, validConfirmEmail, validPassword, validConfirmPassword]);
+
+  const submitTitle = isEnabled ? "Create Account" : "Fill out all fields correctly to create a new account";
   // The following function handles form submission
-  
 
   // The following functions handle real-time input and validation
   const handleEmailInput = async (value: string) => {
@@ -41,8 +54,7 @@ export function SignUp() {
 
     const isEmailFormatValid = validateEmail(value) && value !== "";
 
-    if(!isEmailFormatValid)
-    {
+    if (!isEmailFormatValid) {
       setValidEmail(false);
       setEmailError("Please enter a valid email address.");
       return;
@@ -55,8 +67,7 @@ export function SignUp() {
       // checks if email is already registered
       const signInMethods = await fetchSignInMethodsForEmail(auth, value);
 
-      if (signInMethods.length > 0) 
-      {
+      if (signInMethods.length > 0) {
         // Email IS already registered
         setValidEmail(false);
         setEmailError("Email already in use. Please use a different email.");
@@ -65,7 +76,6 @@ export function SignUp() {
         setValidEmail(true);
         setEmailError(null);
       }
-
     } catch (error) {
       // If firebase check fails for some reason. Assume email is valid to not block user.
       console.error("Error checking email existence:", error);
@@ -104,8 +114,7 @@ export function SignUp() {
 
       if (!validEmail) {
         setValidEmail(false);
-        if(!emailError)
-        {
+        if (!emailError) {
           setEmailError("Please enter a valid email address.");
         }
         console.log("Email is not valid");
@@ -139,19 +148,16 @@ export function SignUp() {
 
     // If account creation fails, log the error message
     // If it succeeds, log in the user
-    if (!accountCreated) 
-    {
+    if (!accountCreated) {
       console.log("Account creation failed:", accountMessage);
 
       // check if the email is already in use
-      if(accountMessage?.includes("email-already-in-use")) 
-      {
+      if (accountMessage?.includes("email-already-in-use")) {
         setValidEmail(false);
         setEmailError("Email address is already in use.");
       }
       // for other errors
-      else
-      {
+      else {
         setValidEmail(false);
         setEmailError("Failed to create account. Please try again later.");
       }
@@ -203,7 +209,9 @@ export function SignUp() {
           errorTitle="Password Mismatch"
           errorMessage="Passwords do not match."
         />
-        <Button type="submit">Sign Up</Button>
+        <Button type="submit" disabled={!isEnabled} title={submitTitle}>
+          Sign Up
+        </Button>
       </form>
     </div>
   );
