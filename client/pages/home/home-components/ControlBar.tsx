@@ -170,6 +170,7 @@ export function ControlBar({
             <button
               type="button"
               className="icon-button"
+              title="View Trash"
               onClick={() => onOpenTrash?.()}
             >
               <img
@@ -186,6 +187,7 @@ export function ControlBar({
               type="button"
               aria-label="Archive Button"
               className="icon-button"
+              title="View Archive"
               onClick={() => onOpenArchive?.()}
             >
               <img
