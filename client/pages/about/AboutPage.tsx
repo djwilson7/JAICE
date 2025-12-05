@@ -1,6 +1,6 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import * as React from "react"
+import * as React from "react";
 import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
 import { useBrandImage } from "@/global-services/useBrandImage";
@@ -33,27 +33,36 @@ function Section({
             </span>
           )}
           {title && (
-            <h2 className="mt-3 text-4xl md:text-6xl font-bold tracking-tight"
-              style={{ fontSize: "clamp(3rem, 6vw, 7rem)" }}>
+            <h2
+              className="mt-3 text-4xl md:text-6xl font-bold tracking-tight"
+              style={{ fontSize: "clamp(3rem, 6vw, 7rem)" }}
+            >
               {title}
             </h2>
           )}
         </header>
       )}
 
-      <div className={[
-        "grid gap-8 md:grid-cols-2",
-        reverse ? "md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1" : "",
-      ].join(" ")}
+      <div
+        className={[
+          "grid gap-8 md:grid-cols-2",
+          reverse
+            ? "md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1"
+            : "",
+        ].join(" ")}
       >
         <div className="space-y-6 text-base md:text-lg opacity-90 text-left">
-          {copy.map((p, i) => <p key={i} className="leading-relaxed secondary-text">{p}</p>)}
+          {copy.map((p, i) => (
+            <p key={i} className="leading-relaxed secondary-text">
+              {p}
+            </p>
+          ))}
           {children}
-        </div >
+        </div>
 
         {aside && <div>{aside}</div>}
-      </div >
-    </section >
+      </div>
+    </section>
   );
 }
 
@@ -69,8 +78,10 @@ function TeamGrid({
 
   return (
     <section className="py-8 md:py-12">
-      <h2 className="mb-10 text-center text-4xl md:text-6xl font-bold tracking-tight"
-        style={{ fontSize: "clamp(3rem, 6vw, 7rem)" }}>
+      <h2
+        className="mb-10 text-center text-4xl md:text-6xl font-bold tracking-tight"
+        style={{ fontSize: "clamp(3rem, 6vw, 7rem)" }}
+      >
         {title}
       </h2>
 
@@ -95,12 +106,12 @@ function TeamGrid({
                 isActive ? "scale-[1.04]" : active ? "opacity-50" : "",
               ].join(" ")}
               aria-describedby={`${p.id}-meta`}
-              style={{background: "var(--primary-gradient)"}}
+              style={{ background: "var(--primary-gradient)" }}
             >
               <img
                 src={p.avatar}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover opacity-80 mix-blend-luminosity"
+                className="team-photo absolute inset-0 h-full w-full object-cover"
               />
 
               {/* Callout Line + Name/Role */}
@@ -115,12 +126,14 @@ function TeamGrid({
                 <div
                   className={[
                     "flex items-center gap-3",
-                    calloutSide.includes("left") ? "flex-row" : "flex-row-reverse",
+                    calloutSide.includes("left")
+                      ? "flex-row"
+                      : "flex-row-reverse",
                   ].join(" ")}
                 >
-                  <span className="h-[2px] w-16 bg-white/70 block" />
+                  <span className="h-[2px] callout-line w-16 block" />
                   <div className="text-right md:text-base">
-                    <p className="text-lg md:text-xl font-bold drop-shadow-sm">
+                    <p className="text-lg md:text-xl font-bold drop-shadow-md">
                       {p.name}
                     </p>
                     <p className="text-sm opacity-90">{p.role}</p>
@@ -146,11 +159,15 @@ export function AboutPage() {
   const brandImg = useBrandImage();
 
   return (
-    <div style={{ background: "var(--primary-gradient)" }} className="min-h-screen">
+    <div
+      style={{ background: "var(--primary-gradient)" }}
+      className="min-h-screen"
+    >
       <main className="relative mx-auto max-w-7xl px-4 md:px-8 min-h-screen overflow-x-hidden">
         {/* *Floating Button Container */}
         <div className="fixed top-0 left-0 m-4">
-          <Button onClick={() => navigate("/")}>Home</Button> {/* This is a quick navigation to the Landing Page until Authentication Routing is fixed. */}
+          <Button onClick={() => navigate("/")}>Home</Button>{" "}
+          {/* This is a quick navigation to the Landing Page until Authentication Routing is fixed. */}
         </div>
         {/* HERO / ABOUT */}
         <section className="relative w-full mt-14 md:pt-20">
@@ -163,12 +180,11 @@ export function AboutPage() {
             </h1>
 
             <img
-              src={brandImg} // May need to swap with SVG if drop shadow effect is not correct. 
+              src={brandImg} // May need to swap with SVG if drop shadow effect is not correct.
               alt="JAICE logo"
               className="h-[clamp(220px,22vw,520px)] sm:h-56 md:h-72 lg:h-96 xl:h-[30rem] w-auto select-none"
               draggable={false}
             />
-
           </div>
         </section>
 
@@ -177,12 +193,14 @@ export function AboutPage() {
           id="about"
           reverse
           copy={[
-            ["JAICE (Job Application Intelligence & Career Enhancement) is designed to give job seekers more control and confidence throughout their career journey.",
+            [
+              "JAICE (Job Application Intelligence & Career Enhancement) is designed to give job seekers more control and confidence throughout their career journey.",
               "We understand that the hiring process can often feel overwhelming, with countless applications to track, deadlines to meet, and opportunities that can easily slip through the cracks.",
               "That's why JAICE simplifies the search by organizing applications, tracking pipelines, and surfacing AI-powered insights like Grit Score and personalized recommendations.",
               "Our platform doesn't just keep things organized — it  actively empoweres job seekers by identifying strengths, matching them with the right opportunities, and offering real-time guidance to improve success.",
               "By combining data-driven intelligence with a user-friendly experience, we make sure that every applicant has a clearer path forward.",
-              "With JAICE, your job search isn't just about applying — it's about applying smarter, with purpose and confidence."].join(" ")
+              "With JAICE, your job search isn't just about applying — it's about applying smarter, with purpose and confidence.",
+            ].join(" "),
           ]}
           aside={
             <img
@@ -194,11 +212,14 @@ export function AboutPage() {
             />
           }
         >
-
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold primary-text">Our Philosophy</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold primary-text">
+              Our Philosophy
+            </h1>
             <p className="leading-relaxed secondary-text">
-              With JAICE, we believe job seekers deserve tools that simplify the search while offering the power of Artificial Intelligence to maximize opportunities.
+              With JAICE, we believe job seekers deserve tools that simplify the
+              search while offering the power of Artificial Intelligence to
+              maximize opportunities.
             </p>
           </div>
         </Section>
@@ -207,10 +228,30 @@ export function AboutPage() {
         <TeamGrid
           title="MEET THE TEAM"
           people={[
-            { id: "t1", name: "Teammate 1", role: "Developer", avatar: "/user1.png" },
-            { id: "t2", name: "Teammate 2", role: "Developer", avatar: "/user2.png" },
-            { id: "t3", name: "Teammate 3", role: "Developer", avatar: "/user1.png" },
-            { id: "t4", name: "Teammate 4", role: "Developer", avatar: "/user1.png" },
+            {
+              id: "t1",
+              name: "Dontai",
+              role: "Developer",
+              avatar: "/user1.png",
+            },
+            {
+              id: "t2",
+              name: "Maya",
+              role: "Developer",
+              avatar: "/team/MayaPicture.jpg",
+            },
+            {
+              id: "t3",
+              name: "Antonio",
+              role: "Developer",
+              avatar: "/team/antonio.JPG",
+            },
+            {
+              id: "t4",
+              name: "Sephen",
+              role: "Developer",
+              avatar: "/user1.png",
+            },
           ]}
         />
 
@@ -219,8 +260,10 @@ export function AboutPage() {
           id="impact"
           title="OUR IMPACT"
           copy={[
-            ["At JAICE, we are building tools that redefine the way job seekers approach applications and career opportunities.",
-              "Every feature is designed to empower users and simplify their journey."].join(" ")
+            [
+              "At JAICE, we are building tools that redefine the way job seekers approach applications and career opportunities.",
+              "Every feature is designed to empower users and simplify their journey.",
+            ].join(" "),
           ]}
           aside={
             <img
@@ -234,27 +277,40 @@ export function AboutPage() {
         >
           <ul className="grid gap-4">
             <li>
-              <p className="font-semibold tracking-wide primary-text">SMART APPLICATION SORTING</p>
+              <p className="font-semibold tracking-wide primary-text">
+                SMART APPLICATION SORTING
+              </p>
               <p className="secondary-text">
-                Automatically organizes your job applications into stages (Applied, Interview, Offer, etc.) so you can focus on the next step.
+                Automatically organizes your job applications into stages
+                (Applied, Interview, Offer, etc.) so you can focus on the next
+                step.
               </p>
             </li>
             <li>
-              <p className="font-semibold tracking-wide primary-text">AI-POWERED MATCHING</p>
+              <p className="font-semibold tracking-wide primary-text">
+                AI-POWERED MATCHING
+              </p>
               <p className="secondary-text">
-                Analyzes your resume and job descriptions to highlight best-fit opportunities and suggest improvements.
+                Analyzes your resume and job descriptions to highlight best-fit
+                opportunities and suggest improvements.
               </p>
             </li>
             <li>
-              <p className="font-semibold tracking-wide primary-text">PERSONALIZED INSIGHTS</p>
+              <p className="font-semibold tracking-wide primary-text">
+                PERSONALIZED INSIGHTS
+              </p>
               <p className="secondary-text">
-                Provides tailored career recommendations based on your skills, experiences, and market trends.
+                Provides tailored career recommendations based on your skills,
+                experiences, and market trends.
               </p>
             </li>
             <li>
-              <p className="font-semibold tracking-wide primary-text">EFFICIENCY & CLARITY</p>
+              <p className="font-semibold tracking-wide primary-text">
+                EFFICIENCY & CLARITY
+              </p>
               <p className="secondary-text">
-                Saves time by cutting through clutter and giving you a clear view of your progress and opportunities
+                Saves time by cutting through clutter and giving you a clear
+                view of your progress and opportunities
               </p>
             </li>
           </ul>

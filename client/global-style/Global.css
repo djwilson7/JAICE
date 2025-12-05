@@ -63,6 +63,7 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-four);
 }
+
 /*
 ################################################################
   THEME VARIABLES (DARK MODE BASE + LIGHT MODE OVERRIDES)
@@ -118,31 +119,37 @@
   --job-card-bg-hover: rgba(var(--job-card-background-rgb), 0.9);
 
   /* Primary Colors */
-  --primary-one: #192836; /* Dark Blue (Sidebar Background) */
-  --primary-two: #053d57; /* Medium Dark Blue (Selected Button) */
-  --primary-three: #006884; /* Medium Blue (Not Currently Used) */
-  --primary-four: #97bcc7; /* Light Blue (Text/Icons on Button) */
-  --primary-five: #f2f1ef; /* Very Light Blue (Main Text) */
+  --primary-one: #192836;
+  /* Dark Blue (Sidebar Background) */
+  --primary-two: #053d57;
+  /* Medium Dark Blue (Selected Button) */
+  --primary-three: #006884;
+  /* Medium Blue (Not Currently Used) */
+  --primary-four: #97bcc7;
+  /* Light Blue (Text/Icons on Button) */
+  --primary-five: #f2f1ef;
+  /* Very Light Blue (Main Text) */
 
-  --primary-one-rgb: 25, 40, 54; /* Dark Blue (Sidebar Background) */
-  --primary-two-rgb: 5, 61, 87; /* Medium Dark Blue (Selected Button) */
-  --primary-three-rgb: 0, 104, 132; /* Medium Blue (Not Currently Used) */
-  --primary-four-rgb: 151, 188, 199; /* Light Blue (Text/Icons on Button) */
-  --primary-five-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+  --primary-one-rgb: 25, 40, 54;
+  /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 5, 61, 87;
+  /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 0, 104, 132;
+  /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 151, 188, 199;
+  /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 242, 241, 239;
+  /* Very Light Blue (Main Text) */
 
   /* Gradients */
-  --page-gradient: linear-gradient(
-    180deg,
-    var(--page-bg),
-    var(--page-bg-highlight),
-    var(--page-bg)
-  );
+  --page-gradient: linear-gradient(180deg,
+      var(--page-bg),
+      var(--page-bg-highlight),
+      var(--page-bg));
 
-  --primary-gradient: linear-gradient(
-    180deg,
-    rgba(var(--primary-one-rgb), 0.92) 0%,
-    rgba(var(--primary-two-rgb), 0.92) 100%
-  );
+  --primary-gradient: linear-gradient(180deg,
+      rgba(var(--primary-one-rgb), 0.92) 0%,
+      rgba(var(--primary-two-rgb), 0.92) 100%);
 
   /* Other Colors */
   --applied-color: #4d4d3a;
@@ -151,40 +158,30 @@
   --accepted-color: #265726;
   --rejected-color: #7a3034;
 
-  --applied-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--applied-color) 20%,
-    var(--primary-one) 95%
-  );
+  --applied-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--applied-color) 20%,
+      var(--primary-one) 95%);
 
-  --interview-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--interview-color) 20%,
-    var(--primary-one) 95%
-  );
+  --interview-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--interview-color) 20%,
+      var(--primary-one) 95%);
 
-  --offer-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--offer-color) 20%,
-    var(--primary-one) 95%
-  );
+  --offer-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--offer-color) 20%,
+      var(--primary-one) 95%);
 
-  --accepted-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--accepted-color) 20%,
-    var(--primary-one) 95%
-  );
+  --accepted-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--accepted-color) 20%,
+      var(--primary-one) 95%);
 
-  --rejected-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--rejected-color) 20%,
-    var(--primary-one) 95%
-  );
+  --rejected-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--rejected-color) 20%,
+      var(--primary-one) 95%);
 
   /* Fonts and Text*/
   --text-primary: var(--white-color);
@@ -207,8 +204,7 @@
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
-    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 }
 
 /* 
@@ -256,28 +252,29 @@ html[data-theme="light"] {
   --primary-four: #4f7f99;
   --primary-five: #25303a;
 
-  --primary-one-rgb: 194, 204, 214; /* Dark Blue (Sidebar Background) */
-  --primary-two-rgb: 163, 184, 199; /* Medium Dark Blue (Selected Button) */
-  --primary-three-rgb: 127, 165, 187; /* Medium Blue (Not Currently Used) */
-  --primary-four-rgb: 79, 127, 153; /* Light Blue (Text/Icons on Button) */
-  --primary-five-rgb: 37, 48, 58; /* Very Light Blue (Main Text) */
+  --primary-one-rgb: 194, 204, 214;
+  /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 163, 184, 199;
+  /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 127, 165, 187;
+  /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 79, 127, 153;
+  /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 37, 48, 58;
+  /* Very Light Blue (Main Text) */
 
   --primary-dark: #ffffff;
   --primary-light: #000000;
-  
-  /* Gradients */
-  --page-gradient: linear-gradient(
-    180deg,
-    var(--page-bg),
-    var(--page-bg-highlight),
-    var(--page-bg)
-  );
 
-  --primary-gradient: linear-gradient(
-    180deg,
-    rgba(var(--primary-two-rgb), 0.92) 0%,
-    rgba(var(--primary-four-rgb), 0.92) 100%
-  );
+  /* Gradients */
+  --page-gradient: linear-gradient(180deg,
+      var(--page-bg),
+      var(--page-bg-highlight),
+      var(--page-bg));
+
+  --primary-gradient: linear-gradient(180deg,
+      rgba(var(--primary-two-rgb), 0.92) 0%,
+      rgba(var(--primary-four-rgb), 0.92) 100%);
 
   /* Other Colors */
   --applied-color: #c7c7a5;
@@ -286,40 +283,30 @@ html[data-theme="light"] {
   --accepted-color: #6ea06e;
   --rejected-color: #caa4a8;
 
-  --applied-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--applied-color) 20%,
-    var(--primary-one) 95%
-  );
+  --applied-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--applied-color) 20%,
+      var(--primary-one) 95%);
 
-  --interview-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--interview-color) 20%,
-    var(--primary-one) 95%
-  );
+  --interview-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--interview-color) 20%,
+      var(--primary-one) 95%);
 
-  --offer-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--offer-color) 20%,
-    var(--primary-one) 95%
-  );
+  --offer-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--offer-color) 20%,
+      var(--primary-one) 95%);
 
-  --accepted-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--accepted-color) 20%,
-    var(--primary-one) 95%
-  );
+  --accepted-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--accepted-color) 20%,
+      var(--primary-one) 95%);
 
-  --rejected-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--rejected-color) 20%,
-    var(--primary-one) 95%
-  );
+  --rejected-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--rejected-color) 20%,
+      var(--primary-one) 95%);
 
   /* Fonts and Text*/
   --text-primary: var(--black-color);
@@ -342,8 +329,7 @@ html[data-theme="light"] {
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
-    brightness(90%) contrast(88%);
+  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg) brightness(90%) contrast(88%);
 }
 
 /* Add additional themes above this line */
@@ -375,11 +361,9 @@ html[data-theme="light"] {
 html[data-contrast="low"] {
   /* Effects */
 
-  --primary-gradient: linear-gradient(
-    180deg,
-    rgba(var(--primary-one-rgb), 0.92) 0%,
-    rgba(var(--primary-two-rgb), 0.92) 100%
-  );
+  --primary-gradient: linear-gradient(180deg,
+      rgba(var(--primary-one-rgb), 0.92) 0%,
+      rgba(var(--primary-two-rgb), 0.92) 100%);
 
   --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
   --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
@@ -500,31 +484,37 @@ html[data-contrast="bw"] {
   --job-card-bg-hover: rgba(var(--job-card-background-rgb), 1);
 
   /* Primary Colors */
-  --primary-one: #1a1a1a; /* Dark Blue (Sidebar Background) */
-  --primary-two: #595e61; /* Medium Dark Blue (Selected Button) */
-  --primary-three: #c2c2c2; /* Medium Blue (Not Currently Used) */
-  --primary-four: #d3d3d3; /* Light Blue (Text/Icons on Button) */
-  --primary-five: #f2f1ef; /* Very Light Blue (Main Text) */
+  --primary-one: #1a1a1a;
+  /* Dark Blue (Sidebar Background) */
+  --primary-two: #595e61;
+  /* Medium Dark Blue (Selected Button) */
+  --primary-three: #c2c2c2;
+  /* Medium Blue (Not Currently Used) */
+  --primary-four: #d3d3d3;
+  /* Light Blue (Text/Icons on Button) */
+  --primary-five: #f2f1ef;
+  /* Very Light Blue (Main Text) */
 
-  --primary-one-rgb: 26, 26, 26; /* Dark Blue (Sidebar Background) */
-  --primary-two-rgb: 89, 94, 97; /* Medium Dark Blue (Selected Button) */
-  --primary-three-rgb: 194, 194, 194; /* Medium Blue (Not Currently Used) */
-  --primary-four-rgb: 211, 211, 211; /* Light Blue (Text/Icons on Button) */
-  --primary-five-rgb: 242, 241, 239; /* Very Light Blue (Main Text) */
+  --primary-one-rgb: 26, 26, 26;
+  /* Dark Blue (Sidebar Background) */
+  --primary-two-rgb: 89, 94, 97;
+  /* Medium Dark Blue (Selected Button) */
+  --primary-three-rgb: 194, 194, 194;
+  /* Medium Blue (Not Currently Used) */
+  --primary-four-rgb: 211, 211, 211;
+  /* Light Blue (Text/Icons on Button) */
+  --primary-five-rgb: 242, 241, 239;
+  /* Very Light Blue (Main Text) */
 
   /* Gradients */
-  --page-gradient: linear-gradient(
-    160deg,
-    var(--page-bg-highlight),
-    var(--page-bg),
-    var(--page-bg-highlight)
-  );
+  --page-gradient: linear-gradient(160deg,
+      var(--page-bg-highlight),
+      var(--page-bg),
+      var(--page-bg-highlight));
 
-  --primary-gradient: linear-gradient(
-    180deg,
-    rgba(var(--primary-one-rgb), 0.92) 0%,
-    rgba(var(--primary-two-rgb), 0.92) 100%
-  );
+  --primary-gradient: linear-gradient(180deg,
+      rgba(var(--primary-one-rgb), 0.92) 0%,
+      rgba(var(--primary-two-rgb), 0.92) 100%);
 
   /* Other Colors */
   --applied-color: #1a1a1a;
@@ -533,40 +523,30 @@ html[data-contrast="bw"] {
   --accepted-color: #1a1a1a;
   --rejected-color: #1a1a1a;
 
-  --applied-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--applied-color) 20%,
-    var(--primary-one) 95%
-  );
+  --applied-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--applied-color) 20%,
+      var(--primary-one) 95%);
 
-  --interview-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--interview-color) 20%,
-    var(--primary-one) 95%
-  );
+  --interview-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--interview-color) 20%,
+      var(--primary-one) 95%);
 
-  --offer-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--offer-color) 20%,
-    var(--primary-one) 95%
-  );
+  --offer-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--offer-color) 20%,
+      var(--primary-one) 95%);
 
-  --accepted-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--accepted-color) 20%,
-    var(--primary-one) 95%
-  );
+  --accepted-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--accepted-color) 20%,
+      var(--primary-one) 95%);
 
-  --rejected-column-bg: linear-gradient(
-    180deg,
-    var(--primary-one),
-    var(--rejected-color) 20%,
-    var(--primary-one) 95%
-  );
+  --rejected-column-bg: linear-gradient(180deg,
+      var(--primary-one),
+      var(--rejected-color) 20%,
+      var(--primary-one) 95%);
 
   /* Fonts and Text*/
   --text-primary: var(--white-color);
@@ -588,8 +568,7 @@ html[data-contrast="bw"] {
   --fs-caption: calc(14px * var(--text-scale));
 
   --animation-duration: 0.3s;
-  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
-    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 
   --shadow: none;
   --shadow-hover: none;
@@ -615,8 +594,7 @@ html[data-contrast="bw"] {
   --button-selected-border: none;
   --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
 
-  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg)
-    brightness(100%) contrast(100%);
+  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg) brightness(100%) contrast(100%);
 
   --color-bg-alt: linear-gradient(160deg, black, white, black);
 
@@ -716,6 +694,7 @@ h1 {
 h2 {
   font-size: var(--fs-headline);
 }
+
 h3 {
   font-size: var(--fs-subheading);
 }
@@ -910,7 +889,7 @@ button.undoRedo:active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;          
+  padding: 0.5rem;
   cursor: pointer;
   background: transparent;
 }
@@ -1054,19 +1033,16 @@ to an element (className="example").
 }
 
 .orangeIcon {
-  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
-    hue-rotate(359deg) brightness(99%) contrast(102%);
+  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%) hue-rotate(359deg) brightness(99%) contrast(102%);
   opacity: var(--icon-opacity);
 }
 
 .greenIcon {
-  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
-    brightness(90%) contrast(85%);
+  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg) brightness(90%) contrast(85%);
 }
 
 .blueIcon {
-  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%)
-    hue-rotate(170deg) brightness(95%) contrast(90%);
+  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%) hue-rotate(170deg) brightness(95%) contrast(90%);
 }
 
 .glass {
@@ -1081,7 +1057,7 @@ to an element (className="example").
   justify-content: center;
   display: flex;
   z-index: 50;
-  
+
 }
 
 .glass:hover {
@@ -1135,11 +1111,9 @@ to an element (className="example").
 }
 
 .landing-gradient {
-  background: linear-gradient(
-    180deg,
-    rgba(var(--primary-one-rgb), 1) 0%,
-    rgba(var(--primary-two-rgb), 1) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(var(--primary-one-rgb), 1) 0%,
+      rgba(var(--primary-two-rgb), 1) 100%);
 }
 
 .primary-text {
@@ -1204,4 +1178,33 @@ to an element (className="example").
 .text-container .secondary-info {
   font-weight: 400;
 }
+
+/* TEAM PHOTO EFFECTS */
+.team-photo {
+  opacity: 0.8;
+  filter:
+    grayscale(80%) saturate(20%) brightness(0.75) contrast(1.0) hue-rotate(180deg);
+  transition:
+    opacity 300ms ease,
+    filter 300ms ease,
+    transform 300ms ease;
+}
+
+/* Hover or keyboard focus restores full color */
+.group:hover .team-photo,
+.group:focus-within .team-photo {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.02);
+}
+
+/* Callout line used on Team cards */
+.callout-line {
+  background: rgba(var(--primary-five-rgb), 0.9);
+  box-shadow:
+    0 0 6px rgba(0, 0, 0, 0.65),
+    0 0 1px rgba(0, 0, 0, 0.9);
+  border-radius: 999px;
+}
+
 /* Add more custom classes above this line */
