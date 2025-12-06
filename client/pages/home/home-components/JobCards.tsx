@@ -143,7 +143,7 @@ export function JobCard({
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col job-card animate-element ${needsReview}`}
+      className={`w-full flex items-center flex flex-col job-card ${needsReview}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
