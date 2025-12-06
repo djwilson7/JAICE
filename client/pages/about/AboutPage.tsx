@@ -232,7 +232,7 @@ export function AboutPage() {
               id: "t1",
               name: "Dontai",
               role: "Developer",
-              avatar: "/user1.png",
+              avatar: "/team/Dontai.png",
             },
             {
               id: "t2",
