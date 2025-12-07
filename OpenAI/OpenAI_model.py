@@ -143,6 +143,7 @@ def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str
       "strengths": [str, ...],
       "weaknesses": [str, ...],
       "suggestions": str,
+      "checklist": [str, ...],
       "raw": str
     }
     """
@@ -154,6 +155,7 @@ def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str
             "strengths": [],
             "weaknesses": ["Could not extract text from PDF"],
             "suggestions": "Upload a searchable PDF or a plain-text resume.",
+            "checklist": [],
             "raw": "",
         }
 
@@ -174,7 +176,8 @@ def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str
             '  \"score\": <number between 0 and 100>,\n'
             '  \"strengths\": [<string>, ...],\n'
             '  \"weaknesses\": [<string>, ...],\n'
-            '  \"suggestions\": <string>\n'
+            '  \"suggestions\": <string>,\n'
+            '  \"checklist\": [<string>, ...] should contain 3–7 short, actionable tasks the candidate can do next.\n'
             "}\n\n"
             "Resume:\n" + text[:4000]
         ),
@@ -201,6 +204,7 @@ def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str
             "strengths": [],
             "weaknesses": [],
             "suggestions": raw or "Model returned an unexpected format.",
+            "checklist": [],
             "raw": raw,
         }
 
@@ -227,12 +231,19 @@ def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str
         weaknesses = [weaknesses]
     weaknesses = [str(w).strip() for w in weaknesses if str(w).strip()]
 
+
     suggestions = str(parsed.get("suggestions", "")).strip()
+
+    checklist = parsed.get("checklist") or []
+    if isinstance(checklist, str):
+        checklist = [checklist]
+    checklist = [str(c).strip() for c in checklist if str(c).strip()]
 
     return {
         "score": score,
         "strengths": strengths,
         "weaknesses": weaknesses,
         "suggestions": suggestions,
+        "checklist": checklist,
         "raw": raw,
     }

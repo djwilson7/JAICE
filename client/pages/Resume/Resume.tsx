@@ -5,6 +5,7 @@ type PdfFeedback = {
   strengths?: string[];
   weaknesses?: string[];
   suggestions?: string;
+  checklist?: string[]; 
   // keep any extra fields loosely
   [key: string]: any;
 };
@@ -104,30 +105,9 @@ export function Resume() {
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Resume Assistant</h1>
-      <p className="text-sm text-slate-400">
+      {/* <p className="text-sm text-slate-400">
         Paste your resume text below and I&apos;ll generate a clearer, more impactful version.
-      </p>
-
-      {/* TEXT MODE (still here if you want to re-enable later) */}
-      {/* <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block">
-          <span className="block font-medium mb-1">Your resume text</span>
-          <textarea
-            className="w-full min-h-[220px] p-3 rounded-md border border-slate-700 bg-slate-900 text-slate-100 outline-none focus:border-sky-500"
-            placeholder="Paste your resume here..."
-            value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
-          />
-        </label>
-
-        <button
-          type="submit"
-          disabled={loading || !resumeText.trim()}
-          className="px-4 py-2 rounded-md bg-sky-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Improving..." : "Improve Resume"}
-        </button>
-      </form> */}
+      </p> */}
 
       <div className="pt-6 border-t border-slate-800">
         <h2 className="text-xl font-semibold">Upload PDF Resume</h2>
@@ -164,8 +144,29 @@ export function Resume() {
             type="submit"
             disabled={loading || !pdfFile}
             className="inline-flex items-center justify-center px-6 py-2.5 rounded-md bg-sky-600 text-white text-sm font-medium shadow-sm hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-busy={loading}
           >
-            {loading ? "Uploading..." : "Upload & Evaluate PDF"}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span>Uploading</span>
+                <span className="flex gap-1">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-white animate-bounce"
+                    style={{ animationDelay: "0s" }}
+                  />
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-white animate-bounce"
+                    style={{ animationDelay: "0.15s" }}
+                  />
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-white animate-bounce"
+                    style={{ animationDelay: "0.3s" }}
+                  />
+                </span>
+              </span>
+            ) : (
+              "Upload & Evaluate PDF"
+            )}
           </button>
         </form>
 
@@ -229,6 +230,30 @@ export function Resume() {
                 <p className="text-sm text-slate-100 leading-relaxed whitespace-pre-wrap">
                   {cleanSuggestions(pdfResult.suggestions)}
                 </p>
+              </div>
+            )}
+
+
+            {/* Checklist block */}
+            {Array.isArray(pdfResult.checklist) && pdfResult.checklist.length > 0 && (
+              <div className="rounded-lg bg-slate-950/70 border border-slate-800 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+                  Action Checklist
+                </p>
+
+                <ul className="space-y-2 text-sm text-slate-100">
+                  {pdfResult.checklist.map((item, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-500 focus:ring-sky-500"
+                      />
+                      <span className="leading-relaxed">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
