@@ -369,25 +369,30 @@ export function JobCard({
             </motion.button>
           )}
 
-          {/* Mark as Reviewed button */}
-          <motion.button
-            type="button"
-            className={`small w-full ${
-              localReviewNeeded ? "reviewed" : "hidden"
-            }`}
-            onClick={markAsReviewed}
-            style={{ background: "transparent" }}
-            aria-label="Mark as Reviewed"
-            title="Mark this job as reviewed"
-          >
-            <motion.img
-              src={reviewIcon}
-              alt="Review Icon"
-              className={`inline w-4 h-4 orangeIcon`}
-            />
-          </motion.button>
+          {/* Mark as Reviewed button 
+            If review needed show button */}
+          {localReviewNeeded && (
+            <motion.button
+              type="button"
+              className={`small w-full ${
+                localReviewNeeded ? "reviewed" : "hidden"
+              }`}
+              onClick={markAsReviewed}
+              style={{ background: "transparent" }}
+              aria-label="Mark as Reviewed"
+              title="Mark this job as reviewed"
+            >
+              <motion.img
+                src={reviewIcon}
+                alt="Review Icon"
+                className={`inline w-4 h-4 orangeIcon`}
+              />
+            </motion.button>
+          )}
+
+          </motion.div>
         </motion.div>
-      </motion.div>
+        
 
       {/* Delete Confirmation Modal */}
        <ConfirmModal
