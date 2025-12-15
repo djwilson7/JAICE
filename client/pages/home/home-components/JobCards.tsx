@@ -94,7 +94,7 @@ export function JobCard({
     },
   };
 
-  const hoverMessageForReview = localReviewNeeded
+  const messageForReview = localReviewNeeded
     ? "This job requires your review."
     : "";
 
@@ -174,8 +174,8 @@ export function JobCard({
           height: 0,
         }}
         animate={{
-          opacity: localReviewNeeded && isHovered ? 1 : 0,
-          height: localReviewNeeded && isHovered ? "auto" : 0,
+          opacity: localReviewNeeded ? 1 : 0,
+          height: localReviewNeeded ? "auto" : 0,
         }}
         exit={{
           opacity: 0,
@@ -183,10 +183,9 @@ export function JobCard({
         }}
         transition={{ duration: 0.12 }}
         role="tooltip"
-        aria-hidden={!isHovered}
         className="w-full z-50 review-header"
       >
-        {hoverMessageForReview}
+        {messageForReview}
       </motion.small>
 
       {/* Main Card Container Above (wraps all content) */}
