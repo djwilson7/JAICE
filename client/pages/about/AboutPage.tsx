@@ -250,7 +250,7 @@ export function AboutPage() {
               id: "t4",
               name: "Sephen",
               role: "Developer",
-              avatar: "/user1.png",
+              avatar: "/team/Sephen.jpg",
             },
           ]}
         />
