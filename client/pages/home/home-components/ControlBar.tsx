@@ -21,7 +21,6 @@ import viewArchive from "@/assets/icons/folder.svg";
 interface ControlBarProps {
   isMultiSelecting: boolean;
   setIsMultiSelecting: (value: boolean) => void;
-  multiSelectLabel?: string;
 
   options: { value: string; label: string }[];
   isMenuOpen: boolean;
@@ -49,7 +48,6 @@ interface ControlBarProps {
 export function ControlBar({
   isMultiSelecting,
   setIsMultiSelecting,
-  multiSelectLabel,
 
   options,
   isMenuOpen,
@@ -129,7 +127,7 @@ export function ControlBar({
           />
           {/* Mutli Select Toggle */}
           <CheckBoxToggle
-            label={multiSelectLabel}
+            label={"Multi-Select"}
             inactiveIcon={uncheckIcon}
             activeIcon={checkIcon}
             isChecked={isMultiSelecting}

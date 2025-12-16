@@ -1124,7 +1124,6 @@ export function HomePage() {
             <ControlBar // see ControlBar.tsx
               isMultiSelecting={isMultiSelecting}
               setIsMultiSelecting={setIsMultiSelecting}
-              multiSelectLabel={isMultiSelecting ? "Multi Select" : ""}
               options={sortByOptions}
               isMenuOpen={isMenuOpen}
               setMenuOpen={setMenuOpen}

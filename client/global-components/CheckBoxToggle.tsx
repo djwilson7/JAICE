@@ -37,29 +37,15 @@ export function CheckBoxToggle({
   isChecked,
   setIsChecked,
 }: CheckBoxToggleProps) {
-  // Ref for the content div to measure its width
-  const contentRef = useRef<HTMLDivElement>(null);
-  // State to hold the target width for animation
-  const [targetWidth, setTargetWidth] = useState(40);
-  // Effect to update target width based on content and checked state
-  useEffect(() => {
-    if (!isChecked || !contentRef.current) {
-      setTargetWidth(40);
-      return;
-    }
-  // Use requestAnimationFrame to ensure DOM is updated before measuring
-    requestAnimationFrame(() => {
-      setTargetWidth(contentRef.current!.offsetWidth + 16);
-    });
-  }, [isChecked, label]);
+ 
+
 
   return (
     <motion.div
       className="flex relative items-center justify-start p-2 gap-4 rounded cursor-pointer overflow-hidden"
-      animate={{ width: targetWidth }}
       transition={{ type: "spring", stiffness: 300, damping: 30, duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
     >
-      <div ref={contentRef} className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <img
           src={isChecked ? activeIcon : inactiveIcon}
           alt="Toggle Icon"
