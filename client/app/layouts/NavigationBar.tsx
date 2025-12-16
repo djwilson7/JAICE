@@ -1,4 +1,3 @@
-// import { localfiles } from "@/directory/path/to/localimport";
 import { NavButton } from "../nav-components/NavButton";
 import { ThemeToggleButton } from "../nav-components/ThemeToggleButton";
 
