@@ -37,8 +37,9 @@ export function HomePage() {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false); // to track if multi-select mode is active
   const [selectedJobs, setSelectedJobs] = useState<JobCardType[]>([]); // to track the selected job cards
   const [selectedOption, setSelectedOption] = useState("default"); // to track the selected sorting option
-  const [isMenuOpen, setMenuOpen] = useState(false); // to track if the options menu is open
+
   const [isSearching, setIsSearching] = useState(false); // to track if the search bar is active
+
   const [searchQuery, setSearchQuery] = useState(""); // to track the current search query
 
   // trash/archive modal state
@@ -162,11 +163,10 @@ export function HomePage() {
   }, []);
 
   const sortByOptions = [
-    { value: "default", label: "Sort by" },
-    { value: "new", label: "Newest First" },
+    { value: "new", label: "Most Recent" },
     { value: "old", label: "Oldest First" },
-    { value: "az", label: "A - Z" },
-    { value: "za", label: "Z - A" },
+    { value: "az", label: "Ascend (a-z)" },
+    { value: "za", label: "Descend (z-a)" },
   ];
 
   const sortJobs = useCallback(
@@ -1125,8 +1125,6 @@ export function HomePage() {
               isMultiSelecting={isMultiSelecting}
               setIsMultiSelecting={setIsMultiSelecting}
               options={sortByOptions}
-              isMenuOpen={isMenuOpen}
-              setMenuOpen={setMenuOpen}
               selectedOption={selectedOption}
               setSelectedOption={setSelectedOption}
               setIsSearching={setIsSearching}

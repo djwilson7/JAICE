@@ -23,9 +23,7 @@ interface ControlBarProps {
   setIsMultiSelecting: (value: boolean) => void;
 
   options: { value: string; label: string }[];
-  isMenuOpen: boolean;
   selectedOption: string;
-  setMenuOpen: (value: boolean) => void;
   setSelectedOption: (value: string) => void;
 
   setIsSearching: (value: boolean) => void;
@@ -50,8 +48,6 @@ export function ControlBar({
   setIsMultiSelecting,
 
   options,
-  isMenuOpen,
-  setMenuOpen,
   selectedOption,
   setSelectedOption,
 
@@ -119,9 +115,7 @@ export function ControlBar({
           />
           <DropDownMenu
             options={options}
-            isOpen={isMenuOpen}
             selectedOption={selectedOption}
-            setIsOpen={setMenuOpen}
             setSelectedOption={setSelectedOption}
             leftIcon={filterIcon}
           />
