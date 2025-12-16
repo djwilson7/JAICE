@@ -29,7 +29,6 @@ interface ControlBarProps {
   setMenuOpen: (value: boolean) => void;
   setSelectedOption: (value: string) => void;
 
-  isSearching: boolean;
   setIsSearching: (value: boolean) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
@@ -46,33 +45,7 @@ interface ControlBarProps {
   onOpenArchive?: () => void;
 }
 
-/**
- * Control Bar Component
- *
- * A custom home screen component. It includes the following icons: Alert, Search, Filter, Checkbox, and Info Icons.
- * Each icon expands when hovered to reveal its functionality.
- *
- * @param isMultiSelecting    - Boolean indicating if multi-select mode is active
- * @param setIsMultiSelecting - Function to update the multi-select state
- * @param multiSelectLabel    - Optional label to display next to the multi-select checkbox
- * @param options             - Array of option objects with value and label for the menu selector
- * @param isOpen              - Boolean indicating if the menu selector is open
- * @param setIsOpen           - Function to update the open state of the menu selector
- * @param selectedOption      - Currently selected option value in the menu selector
- * @param setSelectedOption   - Function to update the selected option in the menu selector
- * @param isSearching         - Boolean indicating if the search bar is active
- * @param setIsSearching      - Function to update the searching state
- * @param searchQuery         - Current value of the search query
- * @param setSearchQuery      - Function to update the search query
- * @param isAlertOpen         - Boolean indicating if the alert box is visible
- * @param setIsAlertOpen      - Function to update the alert box visibility
- * @param alertMessage        - Optional message to display in the alert box
- * @param infoModalLabel      - Optional label for the info modal toggle
- * @param isInfoModalOpen     - Boolean indicating if the info modal is open
- * @param setIsInfoModalOpen  - Function to update the info modal open state
- *
- * @returns A control bar containing interactive components for user alerts, searching, filtering, multi-select toggling, and information modal access.
- */
+
 export function ControlBar({
   isMultiSelecting,
   setIsMultiSelecting,
@@ -84,7 +57,6 @@ export function ControlBar({
   selectedOption,
   setSelectedOption,
 
-  isSearching,
   setIsSearching,
   searchQuery,
   setSearchQuery,
@@ -143,7 +115,6 @@ export function ControlBar({
         {/* Interactive Functionality Components */}
         <div className="flex gap-4 justify-center items-center">
           <SearchBar
-            isSearching={isSearching}
             setIsSearching={setIsSearching}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}

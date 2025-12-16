@@ -1130,7 +1130,6 @@ export function HomePage() {
               setMenuOpen={setMenuOpen}
               selectedOption={selectedOption}
               setSelectedOption={setSelectedOption}
-              isSearching={isSearching}
               setIsSearching={setIsSearching}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}

@@ -5,7 +5,6 @@ import { useState } from "react";
 import { getCSSVar } from "@/utils/getCSSVar";
 
 interface SearchBarProps {
-  isSearching: boolean;
   setIsSearching: (value: boolean) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
