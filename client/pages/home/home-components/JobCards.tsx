@@ -15,6 +15,7 @@ import reviewIcon from "@/assets/icons/reviewed.svg";
 import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
+import { multiFactor } from "firebase/auth";
 
 export function JobCard({
   job,
@@ -169,14 +170,12 @@ export function JobCard({
       onDragEnd={handleDragEnd}
       variants={variants}
       animate={dimmed ? "dimmed" : "active"}
-      whileHover={{
-        scale: 1.02,
-        cursor: "pointer",
-      }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      // onTap cycles between expanding the card and selecting it based on isMultiSelecting
+      whileHover={!isMultiSelecting ? { scale: 1.02, cursor: "pointer",}: undefined}
+      
+      onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
+      onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
 
+      // onTap cycles between expanding the card and selecting it based on isMultiSelecting
       whileTap={{ cursor: "grabbing" }}
       whileDrag={{
         cursor: "grabbing",
@@ -309,7 +308,7 @@ export function JobCard({
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
           initial={{ opacity: 0, height: 0 }}
-          animate={{
+          animate={!isMultiSelecting && {
             height: isHovered ? "auto" : 0,
             opacity: isHovered ? 1 : 0,
           }}
