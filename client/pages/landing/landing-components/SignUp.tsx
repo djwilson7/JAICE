@@ -1,6 +1,6 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import Button from "@/global-components/button";
 import { useNavigate } from "react-router";

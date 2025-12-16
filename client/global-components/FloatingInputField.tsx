@@ -1,4 +1,3 @@
-// import { localfiles } from "@/directory/path/to/localimport";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -22,10 +21,15 @@ export function FloatingInputField({
   style?: React.CSSProperties;
 }) {
   // State to track if the input is focused (to show tooltip)
-  const [isFocused, setIsFocused] = useState(false);
+  const [showToolTip, setShowToolTip] = useState(false);
 
   // State to track tooltip position
-  const [coords, setCoords] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
+  const [coords, setCoords] = useState({
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+  });
 
   // Ref to the input element to get its position
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +46,7 @@ export function FloatingInputField({
         top: coords.bottom + 8,
         transform: "translateX(-50%)",
       }
-      : {
+    : {
         left: coords.left,
         top: coords.top,
         transform: "translate(-105%, -20%)",
@@ -63,35 +67,13 @@ export function FloatingInputField({
       ? "text-[var(--primary-four)] peer-focus:text-[var(--primary-five)]"
       : "text-red-500 peer-focus:text-red-600";
 
-  // Functions to cycle the focus and blur states, setting coords for tooltip
-  const setFocus = () => {
-    if (!inputRef.current) return;
-    const rect = inputRef.current.getBoundingClientRect();
-    setCoords( isSmall ? {
-      left: rect.left + rect.width / 2,
-      top: rect.bottom + 8,
-      right: rect.right,
-      bottom: rect.bottom + 8,
-    } : {
-      left: rect.left,
-      top: rect.top,
-      right: rect.left + 8,
-      bottom: 0,
-    });
-
-    setIsFocused(true);
-  };
-
-  const setBlur = () => {
-    setIsFocused(false);
-  };
 
   return (
     <div className="relative" style={style}>
       <input
         ref={inputRef}
-        onFocus={setFocus}
-        onBlur={setBlur}
+        onFocus={() => setShowToolTip(true)}
+        onBlur={() => setShowToolTip(false)}
         type={type}
         id={inputID}
         autoComplete={type === "password" ? "current-password" : "email"}
@@ -150,7 +132,7 @@ export function FloatingInputField({
       </label>
       {showModal &&
         !isValid &&
-        isFocused &&
+        showToolTip &&
         createPortal(
           <div
             className="fixed border border-white/20 rounded-xl p-4 backdrop-blur-xl z-50 bg-black/60"
