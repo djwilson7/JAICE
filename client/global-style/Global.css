@@ -142,14 +142,18 @@
   /* Very Light Blue (Main Text) */
 
   /* Gradients */
-  --page-gradient: linear-gradient(180deg,
-      var(--page-bg),
-      var(--page-bg-highlight),
-      var(--page-bg));
+  --page-gradient: linear-gradient(
+    180deg,
+    var(--page-bg),
+    var(--page-bg-highlight),
+    var(--page-bg)
+  );
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 0.92) 0%,
-      rgba(var(--primary-two-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
   --applied-color: #4d4d3a;
@@ -158,30 +162,40 @@
   --accepted-color: #265726;
   --rejected-color: #7a3034;
 
-  --applied-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--applied-color) 20%,
-      var(--primary-one) 95%);
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --interview-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--interview-color) 20%,
-      var(--primary-one) 95%);
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --offer-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--offer-color) 20%,
-      var(--primary-one) 95%);
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --accepted-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--accepted-color) 20%,
-      var(--primary-one) 95%);
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --rejected-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--rejected-color) 20%,
-      var(--primary-one) 95%);
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
 
   /* Fonts and Text*/
   --text-primary: var(--white-color);
@@ -204,7 +218,8 @@
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 }
 
 /* 
@@ -267,14 +282,18 @@ html[data-theme="light"] {
   --primary-light: #000000;
 
   /* Gradients */
-  --page-gradient: linear-gradient(180deg,
-      var(--page-bg),
-      var(--page-bg-highlight),
-      var(--page-bg));
+  --page-gradient: linear-gradient(
+    180deg,
+    var(--page-bg),
+    var(--page-bg-highlight),
+    var(--page-bg)
+  );
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-two-rgb), 0.92) 0%,
-      rgba(var(--primary-four-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-two-rgb), 0.92) 0%,
+    rgba(var(--primary-four-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
   --applied-color: #c7c7a5;
@@ -283,30 +302,40 @@ html[data-theme="light"] {
   --accepted-color: #6ea06e;
   --rejected-color: #caa4a8;
 
-  --applied-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--applied-color) 20%,
-      var(--primary-one) 95%);
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --interview-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--interview-color) 20%,
-      var(--primary-one) 95%);
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --offer-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--offer-color) 20%,
-      var(--primary-one) 95%);
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --accepted-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--accepted-color) 20%,
-      var(--primary-one) 95%);
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --rejected-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--rejected-color) 20%,
-      var(--primary-one) 95%);
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
 
   /* Fonts and Text*/
   --text-primary: var(--black-color);
@@ -329,7 +358,8 @@ html[data-theme="light"] {
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg) brightness(90%) contrast(88%);
+  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
+    brightness(90%) contrast(88%);
 }
 
 /* Add additional themes above this line */
@@ -361,9 +391,11 @@ html[data-theme="light"] {
 html[data-contrast="low"] {
   /* Effects */
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 0.92) 0%,
-      rgba(var(--primary-two-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
   --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
@@ -401,7 +433,6 @@ html[data-contrast="default"] {
   --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 1);
   --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
   --icon-opacity: 1;
-
 
   /* Button at rest */
   --button-background: var(--primary-one);
@@ -507,14 +538,18 @@ html[data-contrast="bw"] {
   /* Very Light Blue (Main Text) */
 
   /* Gradients */
-  --page-gradient: linear-gradient(160deg,
-      var(--page-bg-highlight),
-      var(--page-bg),
-      var(--page-bg-highlight));
+  --page-gradient: linear-gradient(
+    160deg,
+    var(--page-bg-highlight),
+    var(--page-bg),
+    var(--page-bg-highlight)
+  );
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 0.92) 0%,
-      rgba(var(--primary-two-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
   --applied-color: #1a1a1a;
@@ -523,30 +558,40 @@ html[data-contrast="bw"] {
   --accepted-color: #1a1a1a;
   --rejected-color: #1a1a1a;
 
-  --applied-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--applied-color) 20%,
-      var(--primary-one) 95%);
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --interview-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--interview-color) 20%,
-      var(--primary-one) 95%);
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --offer-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--offer-color) 20%,
-      var(--primary-one) 95%);
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --accepted-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--accepted-color) 20%,
-      var(--primary-one) 95%);
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --rejected-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--rejected-color) 20%,
-      var(--primary-one) 95%);
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
 
   /* Fonts and Text*/
   --text-primary: var(--white-color);
@@ -568,7 +613,8 @@ html[data-contrast="bw"] {
   --fs-caption: calc(14px * var(--text-scale));
 
   --animation-duration: 0.3s;
-  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 
   --shadow: none;
   --shadow-hover: none;
@@ -594,10 +640,10 @@ html[data-contrast="bw"] {
   --button-selected-border: none;
   --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
 
-  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg) brightness(100%) contrast(100%);
+  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg)
+    brightness(100%) contrast(100%);
 
   --color-bg-alt: linear-gradient(160deg, black, white, black);
-
 }
 
 /* Add additional accessibility adjustments above this line */
@@ -874,7 +920,6 @@ button.undoRedo:hover {
   border-color: transparent;
 }
 
-
 button.undoRedo:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -898,8 +943,6 @@ button.undoRedo:active {
   background: transparent;
   border-color: transparent;
 }
-
-
 
 /* Add more base elements styles above this line */
 
@@ -1027,22 +1070,24 @@ to an element (className="example").
   border-radius: var(--corner-radius);
 }
 
-
 .redIcon {
   filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
 }
 
 .orangeIcon {
-  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%) hue-rotate(359deg) brightness(99%) contrast(102%);
+  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
+    hue-rotate(359deg) brightness(99%) contrast(102%);
   opacity: var(--icon-opacity);
 }
 
 .greenIcon {
-  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg) brightness(90%) contrast(85%);
+  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
+    brightness(90%) contrast(85%);
 }
 
 .blueIcon {
-  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%) hue-rotate(170deg) brightness(95%) contrast(90%);
+  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%)
+    hue-rotate(170deg) brightness(95%) contrast(90%);
 }
 
 .glass {
@@ -1057,7 +1102,6 @@ to an element (className="example").
   justify-content: center;
   display: flex;
   z-index: 50;
-
 }
 
 .glass:hover {
@@ -1075,8 +1119,6 @@ to an element (className="example").
 .job-card:hover {
   background: var(--job-card-bg-hover);
 }
-
-
 
 .review {
   border: var(--job-card-review-border);
@@ -1111,9 +1153,11 @@ to an element (className="example").
 }
 
 .landing-gradient {
-  background: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 1) 0%,
-      rgba(var(--primary-two-rgb), 1) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 1) 0%,
+    rgba(var(--primary-two-rgb), 1) 100%
+  );
 }
 
 .primary-text {
@@ -1172,7 +1216,7 @@ to an element (className="example").
 
 .text-container .user-name {
   font-weight: 600;
-  font-family: var(--font-headline)
+  font-family: var(--font-headline);
 }
 
 .text-container .secondary-info {
@@ -1182,12 +1226,9 @@ to an element (className="example").
 /* TEAM PHOTO EFFECTS */
 .team-photo {
   opacity: 0.8;
-  filter:
-    grayscale(80%) saturate(20%) brightness(0.75) contrast(1.0) hue-rotate(180deg);
-  transition:
-    opacity 300ms ease,
-    filter 300ms ease,
-    transform 300ms ease;
+  filter: grayscale(80%) saturate(20%) brightness(0.75) contrast(1)
+    hue-rotate(180deg);
+  transition: opacity 300ms ease, filter 300ms ease, transform 300ms ease;
 }
 
 /* Hover or keyboard focus restores full color */
@@ -1201,10 +1242,29 @@ to an element (className="example").
 /* Callout line used on Team cards */
 .callout-line {
   background: rgba(var(--primary-five-rgb), 0.9);
-  box-shadow:
-    0 0 6px rgba(0, 0, 0, 0.65),
-    0 0 1px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.9);
   border-radius: 999px;
 }
 
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--gray-color);
+  background: var(--primary-one);
+}
+
+.search-bar:hover {
+  border: 1px solid white;
+  box-shadow: var(--shadow);
+}
+
+.search-bar:focus-within {
+  border: 1px solid white;
+  box-shadow: var(--shadow);
+}
 /* Add more custom classes above this line */
