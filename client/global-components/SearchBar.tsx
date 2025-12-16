@@ -19,7 +19,7 @@ export function SearchBar({
 
   return (
     <motion.div
-      className="search-bar group"
+      className="control-bar-container group"
       onMouseEnter={() => setIsSearching(true)}
       onMouseLeave={() => {
         if (searchQuery === "" && !isFocused) {
@@ -39,7 +39,7 @@ export function SearchBar({
         className="w-5 h-5 shrink-0 icon"
         title="Search Job Cards"
       />
-      <motion.div key="search-input" className="flex items-center gap-2 ">
+      <motion.div key="search-input" className="flex items-center">
         <input
           type="text"
           placeholder="Search..."
@@ -50,7 +50,7 @@ export function SearchBar({
             setIsFocused(false);
             if (searchQuery === "") setIsSearching(false);
           }}
-          className="w-full h-full p-1 bg-transparent outline-none text-sm"
+          className="outline-none"
           title="Search by job title, company, or dates."
         />
       </motion.div>

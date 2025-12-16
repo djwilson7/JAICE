@@ -42,7 +42,6 @@ interface ControlBarProps {
   onOpenArchive?: () => void;
 }
 
-
 export function ControlBar({
   isMultiSelecting,
   setIsMultiSelecting,
@@ -107,7 +106,7 @@ export function ControlBar({
           </div>
         )}
         {/* Interactive Functionality Components */}
-        <div className="flex gap-4 justify-center items-center">
+        <div className="flex gap-4 h-full justify-center items-center">
           <SearchBar
             setIsSearching={setIsSearching}
             searchQuery={searchQuery}
@@ -127,7 +126,6 @@ export function ControlBar({
             isChecked={isMultiSelecting}
             setIsChecked={setIsMultiSelecting}
           />
-
           {/* Undo Trash Button */}
           <div>
             <button

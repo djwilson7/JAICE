@@ -1246,61 +1246,31 @@ to an element (className="example").
   border-radius: 999px;
 }
 
-.search-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  overflow: hidden;
-  border-radius: var(--corner-radius);
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  border: 1px solid transparent;
+.drop-down-menu {
   background: var(--primary-one);
-}
-
-.search-bar:hover {
-  border: 1px solid white;
-  box-shadow: var(--shadow);
-}
-
-.search-bar:focus-within {
-  border: 1px solid white;
-  box-shadow: var(--shadow);
-}
-
-.drop-down-menu-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: var(--corner-radius);
-  background: var(--primary-one);
-  border: 1px solid transparent;
-}
-
-.drop-down-menu-container:hover {
-  border: 1px solid white;
-  box-shadow: var(--shadow);
-}
-
-.drop-down-menu-container:focus-within {
-  border: 1px solid white;
-  box-shadow: var(--shadow);
-}
-
-.drop-down-menu-option-container {
-  display: flex;
-  flex-direction: column;
   outline: none;
-  width: 100%;
-  height: 100%;
+  border: none;
 }
 
-.drop-down-menu-option {
+.drop-down-menu-options {
+  background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--shadow);
+  padding: 0.5rem;
+}
+
+.control-bar-container {
+  min-height: 100%;
   background: var(--primary-one);
-  cursor: pointer;
-  text-align: left;
+  border-radius: var(--corner-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
 }
 
+.control-bar-container:hover {
+  box-shadow: var(--shadow-hover);
+}
 /* Add more custom classes above this line */

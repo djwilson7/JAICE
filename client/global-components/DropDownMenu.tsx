@@ -1,4 +1,3 @@
-// import { localfiles } from "@/directory/path/to/localimport";
 import circleXIcon from "@/assets/icons/circle-xmark.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
@@ -20,7 +19,7 @@ export function DropDownMenu({
 
   return (
     <motion.div
-      className="drop-down-menu-container gap-2"
+      className="control-bar-container"
       transition={{
         type: "spring",
         stiffness: 300,
@@ -43,12 +42,12 @@ export function DropDownMenu({
         <select
           value={selectedOption}
           onChange={(e) => setSelectedOption(e.target.value)}
-          className="drop-down-menu-option-container p-1"
+          className="drop-down-menu"
         >
           {options.map((option) => (
             <option
               key={option.value}
-              className="drop-down-menu-option"
+              className="drop-down-menu-options"
               value={option.value}
               onClick={() => setSelectedOption(option.value)}
             >
