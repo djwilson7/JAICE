@@ -331,13 +331,13 @@ export function AccountPage() {
                 action={handleLastNameInput}
                 isValid={true}
               />
-              <FloatingInputField
+              {/* <FloatingInputField
                 label="Phone Number"
                 type="text"
                 value={phoneNumberField}
                 action={handlePhoneNumberInput}
                 isValid={true}
-              />
+              /> */}
               <div className="flex w-full justify-between items-center gap-4">
                 <Button
                   onClick={() => handleSaveProfile()}
@@ -383,7 +383,7 @@ export function AccountPage() {
               </RowItem>
             </Row>
 
-            <Row rowError={passwordError || ""}>
+            {/* <Row rowError={passwordError || ""}>
               <RowItem>
                 <FloatingInputField
                   label="Reset Password"
@@ -402,10 +402,10 @@ export function AccountPage() {
                   Change
                 </Button>
               </RowItem>
-            </Row>
+            </Row> */}
 
             {/* 2FA */}
-            <Row rowError={twoFAError || ""}>
+            {/* <Row rowError={twoFAError || ""}>
               <RowItem>
                 <div className="flex flex-col w-3/4">
                   <h3 className="text-lg text-left font-medium mt-4">
@@ -435,7 +435,7 @@ export function AccountPage() {
                   </label>
                 </div>
               </RowItem>
-            </Row>
+            </Row> */}
             {/* Delete Account */}
             <Row rowError={deleteAccountError || ""}>
               <RowItem>
