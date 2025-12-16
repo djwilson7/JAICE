@@ -32,8 +32,8 @@ export function AccountPage() {
 
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [twoFAError, setTwoFAError] = useState<string | null>(null);
+  // const [passwordError, setPasswordError] = useState<string | null>(null);
+  // const [twoFAError, setTwoFAError] = useState<string | null>(null);
   const [saveProfileError, setSaveProfileError] = useState<string | null>(null);
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
     null
@@ -49,8 +49,6 @@ export function AccountPage() {
   const [gmailBusy, setGmailBusy] = useState(false);
   const [showDaysToSync, setShowDaysToSync] = useState(false);
   const [showUnlinkGmailModal, setShowUnlinkGmailModal] = useState(false);
-
-  const [daysToSync, setDaysToSync] = useState<number | null>(null);
 
   const daysToSyncOptions = [3, 7, 14, 45];
 
@@ -129,7 +127,6 @@ export function AccountPage() {
 
   // Handle the user's selection of days to sync from Gmail
   async function handleDaysSelection(days: number) {
-    setDaysToSync(days);
     await handleGmailLinking(days);
   }
 
