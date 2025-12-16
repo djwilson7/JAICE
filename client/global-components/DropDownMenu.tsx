@@ -15,8 +15,6 @@ export function DropDownMenu({
   setSelectedOption,
   leftIcon,
 }: DropDownMenuProps) {
-
-
   return (
     <motion.div
       className="control-bar-container"
@@ -50,6 +48,7 @@ export function DropDownMenu({
               className="drop-down-menu-options"
               value={option.value}
               onClick={() => setSelectedOption(option.value)}
+              selected={selectedOption === option.value}
             >
               {option.label}
             </option>
@@ -61,10 +60,10 @@ export function DropDownMenu({
         alt="Clear Order Icon"
         className={`w-4 h-4 shrink-0 icon`}
         onClick={() => setSelectedOption("new")}
-        title="Clear Search"
+        title="Set to Most Recent (Default)"
         style={{
           cursor: selectedOption !== "new" ? "pointer" : "default",
-          visibility: selectedOption !== "new" ? "visible" : "hidden",
+          opacity: selectedOption !== "new" ? 1 : 0,
         }}
         animate={{opacity: selectedOption !== "new" ? 1 : 0}}
       />

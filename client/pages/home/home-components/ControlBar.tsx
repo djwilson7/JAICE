@@ -26,7 +26,6 @@ interface ControlBarProps {
   selectedOption: string;
   setSelectedOption: (value: string) => void;
 
-  setIsSearching: (value: boolean) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
 
@@ -50,7 +49,6 @@ export function ControlBar({
   selectedOption,
   setSelectedOption,
 
-  setIsSearching,
   searchQuery,
   setSearchQuery,
 
@@ -108,7 +106,6 @@ export function ControlBar({
         {/* Interactive Functionality Components */}
         <div className="flex gap-4 h-full justify-center items-center">
           <SearchBar
-            setIsSearching={setIsSearching}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />

@@ -1268,6 +1268,7 @@ to an element (className="example").
   justify-content: center;
   gap: 0.5rem;
   padding: 0.6rem 1rem;
+  cursor: pointer;
 }
 
 .control-bar-container:hover {

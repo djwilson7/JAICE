@@ -1,5 +1,3 @@
-// import { localfiles } from "@/directory/path/to/localimport";
-
 import {
   useCallback,
   useEffect,
@@ -36,9 +34,7 @@ export function HomePage() {
   // State Variables
   const [isMultiSelecting, setIsMultiSelecting] = useState(false); // to track if multi-select mode is active
   const [selectedJobs, setSelectedJobs] = useState<JobCardType[]>([]); // to track the selected job cards
-  const [selectedOption, setSelectedOption] = useState("default"); // to track the selected sorting option
-
-  const [isSearching, setIsSearching] = useState(false); // to track if the search bar is active
+  const [selectedOption, setSelectedOption] = useState("new"); // to track the selected sorting option
 
   const [searchQuery, setSearchQuery] = useState(""); // to track the current search query
 
@@ -51,7 +47,6 @@ export function HomePage() {
 
   const [isLoadingTrash, setIsLoadingTrash] = useState(false);
   const [isLoadingArchive, setIsLoadingArchive] = useState(false);
-  
 
   const [isAlertOpen, setIsAlertOpen] = useState(false); // to track if the alert box is open
   const [newJobsCount, setNewJobsCount] = useState(0); // to track the count of new jobs
@@ -263,8 +258,7 @@ export function HomePage() {
   }
 
   // Load Trash and Archive Modal Items
-  async function loadTrash() 
-  {
+  async function loadTrash() {
     if (isLoadingTrash) return;
 
     setIsLoadingTrash(true);
@@ -272,8 +266,7 @@ export function HomePage() {
     try {
       const res = await api("/api/jobs/trash");
 
-      if (res.status === "success" && Array.isArray(res.jobs)) 
-      {
+      if (res.status === "success" && Array.isArray(res.jobs)) {
         setTrashItems(convertToJobCardArray(res.jobs));
       } else {
         setTrashItems([]);
@@ -285,8 +278,7 @@ export function HomePage() {
     }
   }
 
-  async function loadArchive()
-  {
+  async function loadArchive() {
     if (isLoadingArchive) return;
 
     setIsLoadingArchive(true);
@@ -294,8 +286,7 @@ export function HomePage() {
     try {
       const res = await api("/api/jobs/archive");
 
-      if (res.status === "success" && Array.isArray(res.jobs))
-      {
+      if (res.status === "success" && Array.isArray(res.jobs)) {
         setArchiveItems(convertToJobCardArray(res.jobs));
       } else {
         setArchiveItems([]);
@@ -316,7 +307,6 @@ export function HomePage() {
     setIsArchiveOpen(true);
     await loadArchive();
   };
-
 
   // Mint rls jwt token for realtime subscription (30 min expiry)
   useEffect(() => {
@@ -1127,7 +1117,6 @@ export function HomePage() {
               options={sortByOptions}
               selectedOption={selectedOption}
               setSelectedOption={setSelectedOption}
-              setIsSearching={setIsSearching}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               isAlertOpen={isAlertOpen}
@@ -1258,34 +1247,34 @@ export function HomePage() {
               if (!ids || ids.length === 0) return;
 
               try {
-                if (action === "undelete") 
-                {
-                  // toggle deleted state 
+                if (action === "undelete") {
+                  // toggle deleted state
                   await api("/api/jobs/set-delete", {
                     method: "POST",
                     body: JSON.stringify({ provider_message_ids: ids }),
                   });
 
                   // remove from modal list locally
-                  setTrashItems((prev) => prev.filter((j) => !ids.includes(j.id)));
+                  setTrashItems((prev) =>
+                    prev.filter((j) => !ids.includes(j.id))
+                  );
 
                   // refresh main jobs list so restored items appear
                   await loadEmails(true);
-
                 } else if (action === "delete_permanently") {
-
                   // permanently delete
                   await api("/api/jobs/permanently-delete", {
                     method: "POST",
-                    body: JSON.stringify({ 
-                      provider_message_ids: ids, 
-                      confirm: true 
+                    body: JSON.stringify({
+                      provider_message_ids: ids,
+                      confirm: true,
                     }),
                   });
 
-                  setTrashItems((prev) => prev.filter((j) => !ids.includes(j.id)));
+                  setTrashItems((prev) =>
+                    prev.filter((j) => !ids.includes(j.id))
+                  );
                 }
-
               } catch (err) {
                 console.error("Trash action failed:", err);
 
@@ -1300,12 +1289,10 @@ export function HomePage() {
             mode="archive"
             items={archiveItems}
             onAction={async (action, ids) => {
-
               if (!ids || ids.length === 0) return;
 
               try {
-                if (action === "unarchive") 
-                {
+                if (action === "unarchive") {
                   // toggle archived state on server
                   await api("/api/jobs/set-archive", {
                     method: "POST",
@@ -1313,12 +1300,13 @@ export function HomePage() {
                   });
 
                   // remove from archive list locally
-                  setArchiveItems((prev) => prev.filter((j) => !ids.includes(j.id)));
+                  setArchiveItems((prev) =>
+                    prev.filter((j) => !ids.includes(j.id))
+                  );
 
                   // refresh main jobs list so unarchived items show
                   await loadEmails(true);
                 }
-
               } catch (err) {
                 console.error("Archive action failed:", err);
                 await loadArchive();

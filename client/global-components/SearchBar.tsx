@@ -1,31 +1,20 @@
 import searchIcon from "@/assets/icons/search.svg";
 import circleXIcon from "@/assets/icons/circle-xmark.svg";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { getCSSVar } from "@/utils/getCSSVar";
 
 interface SearchBarProps {
-  setIsSearching: (value: boolean) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
 }
 
 export function SearchBar({
-  setIsSearching,
   searchQuery,
   setSearchQuery,
 }: SearchBarProps) {
-  const [isFocused, setIsFocused] = useState(false);
-
   return (
     <motion.div
       className="control-bar-container group"
-      onMouseEnter={() => setIsSearching(true)}
-      onMouseLeave={() => {
-        if (searchQuery === "" && !isFocused) {
-          setIsSearching(false);
-        }
-      }}
       transition={{
         type: "spring",
         stiffness: 300,
@@ -45,23 +34,19 @@ export function SearchBar({
           placeholder="Search..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            setIsFocused(false);
-            if (searchQuery === "") setIsSearching(false);
-          }}
           className="outline-none"
           title="Search by job title, company, or dates."
         />
       </motion.div>
-      <img
+      <motion.img
         src={circleXIcon}
         alt="Clear Search Icon"
         className={`w-4 h-4 shrink-0 icon`}
         style={{
-          cursor: "pointer",
-          visibility: searchQuery !== "" ? "visible" : "hidden",
+          cursor: searchQuery !== "" ? "pointer" : "default",
+          opacity: searchQuery !== "" ? 1 : 0,
         }}
+        animate={{opacity: searchQuery !== "" ? 1 : 0}}
         onClick={() => setSearchQuery("")}
         title="Clear Search"
       />

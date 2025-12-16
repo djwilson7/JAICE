@@ -18,7 +18,7 @@ export function CheckBoxToggle({
 }: CheckBoxToggleProps) {
   return (
     <motion.div
-      className="control-bar-container bg-black"
+      className="control-bar-container"
       transition={{
         type: "spring",
         stiffness: 300,
@@ -35,11 +35,11 @@ export function CheckBoxToggle({
       <input
         type="checkbox"
         checked={isChecked}
-        className="hidden cursor-pointer bg-black"
+        className="hidden cursor-pointer"
         title="Toggle Multi-Select"
         onChange={() => console.log("Checked Box")}
       />
-      {label}
+      <span className="cursor-pointer select-none">{label}</span>
     </motion.div>
   );
 }
