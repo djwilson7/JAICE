@@ -14,6 +14,7 @@ import viewIcon from "@/assets/icons/view.svg";
 import reviewIcon from "@/assets/icons/reviewed.svg";
 import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
+import archiveIcon from "@/assets/icons/folder.svg";
 
 export function JobCard({
   job,
@@ -49,6 +50,7 @@ export function JobCard({
   const [editHovered, setEditHovered] = useState(false);
   const [viewHovered, setViewHovered] = useState(false);
   const [deleteHovered, setDeleteHovered] = useState(false);
+  const [archiveHovered, setArchiveHovered] = useState(false);
 
   // If multi-select mode is turned off, clear selection state
   if (!isMultiSelecting && isSelected) {
@@ -138,6 +140,24 @@ export function JobCard({
     setShowDeleteConfirm(false);
     setIsDeleting(false);
   }
+  
+  const onArchiveClicked = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: [job.id],
+        }),
+      });
+      setIsHovered(false);
+
+    } catch (error) {
+      console.error("Failed to archive job:", error);
+    }
+  };
   
   return (
     <motion.div
@@ -339,6 +359,32 @@ export function JobCard({
               alt="Trash Icon"
               className={`inline w-4 h-4 icon ${
                 deleteHovered ? "redIcon" : ""
+              }`}
+            />
+          </motion.button>
+
+          {/* Archive button */}
+          <motion.button
+            onClick={(e) => {
+              e.preventDefault();
+              // archive job logic here
+              onArchiveClicked(e);
+            }}
+            type="button"
+            className="small w-full"
+            style={{ background: "transparent" }}
+
+            onMouseEnter={() => setArchiveHovered(true)}
+            onMouseLeave={() => setArchiveHovered(false)}
+
+            aria-label="Archive Job"
+            title="Archive this job"
+          >
+            <motion.img
+              src={archiveIcon}
+              alt="Archive Icon"
+              className={`inline w-4 h-4 icon ${
+                archiveHovered ? "blueIcon" : ""
               }`}
             />
           </motion.button>
