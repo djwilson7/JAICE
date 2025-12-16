@@ -44,7 +44,7 @@ export function AccessibilityPage() {
   const navigationOptions = NAVIGATION_BEHAVIOR_OPTIONS;
 
   return (
-    <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4">
+    <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4 overflow-y-auto">
       <CardSection>
         <SettingCard>
           <SettingHeader
@@ -77,6 +77,23 @@ export function AccessibilityPage() {
                 label={option.label}
                 onClick={() => setTheme(key as Theme)}
                 isSelected={theme === key}
+                title={option.title}
+              />
+            ))}
+          </ButtonRow>
+        </SettingCard>
+        <SettingCard>
+          <SettingHeader
+            title="Navigation Bar Behavior"
+            description="Customize how the navigation bar behaves."
+          />
+          <ButtonRow>
+            {Object.entries(navigationOptions).map(([key, option]) => (
+              <SettingButton
+                key={key}
+                label={option.label}
+                onClick={() => setNavigationBehavior(key as NavigationBehavior)}
+                isSelected={navigationBehavior === key}
                 title={option.title}
               />
             ))}
@@ -116,25 +133,6 @@ export function AccessibilityPage() {
                 label={option.label}
                 onClick={() => setContrast(key as ContrastLevel)}
                 isSelected={contrast === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-        </SettingCard>
-      </CardSection>
-      <CardSection >
-        <SettingCard>
-          <SettingHeader
-            title="Navigation Bar Behavior"
-            description="Customize how the navigation bar behaves."
-          />
-          <ButtonRow>
-            {Object.entries(navigationOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                onClick={() => setNavigationBehavior(key as NavigationBehavior)}
-                isSelected={navigationBehavior === key}
                 title={option.title}
               />
             ))}
