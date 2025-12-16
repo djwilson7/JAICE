@@ -1,7 +1,6 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 import { NavButton } from "../nav-components/NavButton";
 import { ThemeToggleButton } from "../nav-components/ThemeToggleButton";
-import { MenuToggleButton } from "../nav-components/MenuToggleButton";
 
 import { MainHeader } from "@/app/nav-components/MainHeader";
 
@@ -23,6 +22,8 @@ import resumeIcon from "@/assets/icons/resume.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
+import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
@@ -76,9 +77,8 @@ export function NavigationBar() {
 
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
 
-  const [hoverMode, setHoverMode] = useState<
-    "hover" | "locked-open" | "locked-closed"
-  >("hover");
+
+  const hoverMode = useSettings().navigationBehavior as NavigationBehavior;
 
   useEffect(() => {
     // Update selected button based on current path
@@ -112,15 +112,15 @@ export function NavigationBar() {
   };
 
   const restWidthMap = {
-    "locked-closed": "6rem",
-    hover: "6rem",
-    "locked-open": "15rem",
+    "closed": "6rem",
+    "hover": "6rem",
+    "open": "15rem",
   };
 
   const hoverWidthMap = {
-    "locked-closed": "6rem",
-    hover: "15rem",
-    "locked-open": "15rem",
+    "closed": "6rem",
+    "hover": "15rem",
+    "open": "15rem",
   };
 
   return (
@@ -180,12 +180,12 @@ export function NavigationBar() {
                   <li key="theme-toggle">
                     <ThemeToggleButton hoverMode={hoverMode} />
                   </li>
-                  <li key="menu-expand">
+                  {/* <li key="menu-expand">
                     <MenuToggleButton
                       hoverMode={hoverMode}
                       setHoverMode={setHoverMode}
                     />
-                  </li>
+                  </li> This no longer exists, now we react to state instead*/}
                   {Object.entries(settingsOptions).map(([key, option]) => (
                     <li key={key}>
                       <NavButton

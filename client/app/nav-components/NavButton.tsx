@@ -1,4 +1,5 @@
 import Button from "@/global-components/button";
+import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
 import { motion } from "framer-motion";
 
 export const NavButton = ({
@@ -13,19 +14,19 @@ export const NavButton = ({
   label: string;
   onClick: () => void;
   isSelected: boolean;
-  hoverMode: "hover" | "locked-open" | "locked-closed";
+  hoverMode: NavigationBehavior;
   title?: string;
 }) => {
   const hoverModeRestMap = {
-    "locked-closed": false,
-    hover: false,
-    "locked-open": true,
+    "closed": false,
+    "hover": false,
+    "open": true,
   };
 
   const hoverModeLabelOpacityMap = {
-    "locked-closed": 0,
-    hover: 1,
-    "locked-open": 1,
+    "closed": 0,
+    "hover": 1,
+    "open": 1,
   };
 
   return (

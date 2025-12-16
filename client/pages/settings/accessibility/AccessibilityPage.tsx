@@ -12,6 +12,7 @@ import {
   THEME_OPTIONS,
   MOTION_OPTIONS,
   CONTRAST_OPTIONS,
+  NAVIGATION_BEHAVIOR_OPTIONS,
 } from "@/pages/settings/provider/settingOptions";
 
 import type {
@@ -19,6 +20,7 @@ import type {
   TextScale,
   MotionPreference,
   ContrastLevel,
+  NavigationBehavior,
 } from "@/pages/settings/provider/settingsTypes";
 
 export function AccessibilityPage() {
@@ -31,12 +33,15 @@ export function AccessibilityPage() {
     setMotion,
     contrast,
     setContrast,
+    navigationBehavior,
+    setNavigationBehavior,
   } = useSettings();
 
   const textScaleOptions = TEXT_SCALE_OPTIONS;
   const themeOptions = THEME_OPTIONS;
   const motionOptions = MOTION_OPTIONS;
   const contrastOptions = CONTRAST_OPTIONS;
+  const navigationOptions = NAVIGATION_BEHAVIOR_OPTIONS;
 
   return (
     <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4">
@@ -111,6 +116,25 @@ export function AccessibilityPage() {
                 label={option.label}
                 onClick={() => setContrast(key as ContrastLevel)}
                 isSelected={contrast === key}
+                title={option.title}
+              />
+            ))}
+          </ButtonRow>
+        </SettingCard>
+      </CardSection>
+      <CardSection >
+        <SettingCard>
+          <SettingHeader
+            title="Navigation Bar Behavior"
+            description="Customize how the navigation bar behaves."
+          />
+          <ButtonRow>
+            {Object.entries(navigationOptions).map(([key, option]) => (
+              <SettingButton
+                key={key}
+                label={option.label}
+                onClick={() => setNavigationBehavior(key as NavigationBehavior)}
+                isSelected={navigationBehavior === key}
                 title={option.title}
               />
             ))}

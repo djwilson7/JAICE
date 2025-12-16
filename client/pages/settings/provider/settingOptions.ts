@@ -23,3 +23,9 @@ export const CONTRAST_OPTIONS: Record<ContrastLevel, { label: string; value?: st
   high:    { label: "High", title: "Stronger Contrast" },
   bw:      { label: "BW", title: "Black & White Contrast" },
 };
+
+export const NAVIGATION_BEHAVIOR_OPTIONS: Record<string, { label: string; title?: string }> = {
+  open:   { label: "Open", title: "Keep the navigation bar visible" },
+  hover: { label: "Hover", title: "Show the navigation bar on hover" },
+  closed: { label: "Closed", title: "Keep the navigation bar hidden" },
+};

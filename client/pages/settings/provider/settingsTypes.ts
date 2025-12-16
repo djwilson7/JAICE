@@ -2,6 +2,7 @@ export type TextScale = "small" | "default" | "large";
 export type Theme = "light" | "dark";
 export type MotionPreference = "slow" | "default" | "fast";
 export type ContrastLevel = "low" | "default" | "high" | "bw";
+export type NavigationBehavior = "open" | "hover" | "closed";
 
 export interface SettingsContextValue {
   theme: Theme;
@@ -15,4 +16,7 @@ export interface SettingsContextValue {
 
   contrast: ContrastLevel;
   setContrast: (c: ContrastLevel) => void;
+
+  navigationBehavior: NavigationBehavior;
+  setNavigationBehavior: (b: NavigationBehavior) => void;
 }

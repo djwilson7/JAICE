@@ -1,10 +1,11 @@
+import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
 import { NavButton } from "./NavButton";
 import { getThemeData } from "@/utils/getThemeData";
 
 export const ThemeToggleButton = ({
   hoverMode,
 }: {
-  hoverMode: "hover" | "locked-open" | "locked-closed";
+  hoverMode: NavigationBehavior;
 }) => {
   const theme = getThemeData();
   const handleThemeToggle = () => {

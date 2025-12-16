@@ -7,6 +7,7 @@ import type {
   MotionPreference,
   ContrastLevel,
   SettingsContextValue,
+  NavigationBehavior,
 } from "./settingsTypes";
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -90,6 +91,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("appearancechange", syncFromDom);
   }, [theme, contrast]);
 
+  // THEME
+  const [navigationBehavior, setNavigationBehavior] = useState<NavigationBehavior>(
+    () =>
+      (localStorage.getItem(SETTINGS_KEYS.NAVIGATION_BEHAVIOR) as NavigationBehavior) || "hover"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-navigation-behavior", navigationBehavior);
+    localStorage.setItem(SETTINGS_KEYS.NAVIGATION_BEHAVIOR, navigationBehavior);
+    window.dispatchEvent(new Event("navigationbehaviorchange"));
+  }, [navigationBehavior]);
+
   const value: SettingsContextValue = {
     theme,
     setTheme,
@@ -99,6 +112,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setMotion,
     contrast,
     setContrast,
+    navigationBehavior,
+    setNavigationBehavior,
   };
 
   return (
