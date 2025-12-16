@@ -111,7 +111,7 @@ export function HoverIconButton({
       <img
         src={getIcon()}
         alt={alt}
-        className={`icon animate-element ${state === "hover" ? hoverClassName : ""}`}
+        className={`icon ${state === "hover" ? hoverClassName : ""}`}
       />
     </Button>
   );
