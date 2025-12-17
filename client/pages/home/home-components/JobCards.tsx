@@ -139,8 +139,8 @@ export function JobCard({
   const closeDelete = () => {
     setShowDeleteConfirm(false);
     setIsDeleting(false);
-  }
-  
+  };
+
   const onArchiveClicked = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -153,12 +153,11 @@ export function JobCard({
         }),
       });
       setIsHovered(false);
-
     } catch (error) {
       console.error("Failed to archive job:", error);
     }
   };
-  
+
   return (
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
@@ -373,10 +372,8 @@ export function JobCard({
             type="button"
             className="small w-full"
             style={{ background: "transparent" }}
-
             onMouseEnter={() => setArchiveHovered(true)}
             onMouseLeave={() => setArchiveHovered(false)}
-
             aria-label="Archive Job"
             title="Archive this job"
           >
@@ -434,31 +431,28 @@ export function JobCard({
               />
             </motion.button>
           )}
-
-          </motion.div>
         </motion.div>
-        
+      </motion.div>
 
       {/* Delete Confirmation Modal */}
-       <ConfirmModal
-              isOpen={showDeleteConfirm}
-              title="Confirm Deletion"
-              message="Are you sure you want to delete the selected item/s? You can undo this action from the Trash however it will be permanently deleted after 30 days."
-              confirmLabel="Delete"
-              isProcessing={isProcessingDelete}
-              onCancel={closeDelete}
-              onConfirm={async () => {
-                setIsProcessingDelete(true);
-      
-                try {
-                  if (onDelete) await onDelete(job.id);
-      
-                } finally {
-                  setIsProcessingDelete(false);
-                  closeDelete();
-                }
-              }}
-            />
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete the selected item/s? You can undo this action from the Trash however it will be permanently deleted after 30 days."
+        confirmLabel="Delete"
+        isProcessing={isProcessingDelete}
+        onCancel={closeDelete}
+        onConfirm={async () => {
+          setIsProcessingDelete(true);
+
+          try {
+            if (onDelete) await onDelete(job.id);
+          } finally {
+            setIsProcessingDelete(false);
+            closeDelete();
+          }
+        }}
+      />
     </motion.div>
   );
 }
