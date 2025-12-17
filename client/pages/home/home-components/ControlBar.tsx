@@ -17,6 +17,7 @@ import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
 import undoTrash from "@/assets/icons/trash-undo.svg";
 import viewArchive from "@/assets/icons/folder.svg";
+import { ControlBarButton } from "@/pages/home/home-components/ControlBarButton";
 
 interface ControlBarProps {
   isMultiSelecting: boolean;
@@ -123,38 +124,20 @@ export function ControlBar({
             isChecked={isMultiSelecting}
             setIsChecked={setIsMultiSelecting}
           />
-          {/* Undo Trash Button */}
-          <div>
-            <button
-              type="button"
-              className="icon-button"
-              title="View Trash"
-              onClick={() => onOpenTrash?.()}
-            >
-              <img
-                src={undoTrash}
-                alt="Undo Trash Icon"
-                className="w-5 h-5 icon"
-              />
-            </button>
-          </div>
 
-          {/* View Archive Button */}
-          <div>
-            <button
-              type="button"
-              aria-label="Archive Button"
-              className="icon-button"
-              title="View Archive"
-              onClick={() => onOpenArchive?.()}
-            >
-              <img
-                src={viewArchive}
-                alt="View Archive Icon"
-                className="w-5 h-5 icon"
-              />
-            </button>
-          </div>
+          <ControlBarButton
+            onClick={() => onOpenArchive?.()}
+            icon={viewArchive}
+            iconHoverColor={"orangeIcon"}
+            label="Archive"
+          />
+
+          <ControlBarButton
+            onClick={() => onOpenTrash?.()}
+            icon={undoTrash}
+            iconHoverColor={"redIcon"}
+            label="Trash"
+          />
 
           {/* Info Modal Toggle */}
           {/* <CheckBoxToggle
