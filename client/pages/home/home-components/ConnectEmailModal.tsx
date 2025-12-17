@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Button from "@/global-components/button";
 import { ModalHeader } from "@/global-components/ModalHeader";
 import linkIcon from "@/assets/icons/link.svg";
+import unlinkIcon from "@/assets/icons/unlink.svg";
+import { useEffect, useState } from "react";
+import { checkGmailStatus } from "../utils/checkGmailStatus";
 
 export default function ConnectEmailModal({
   isOpen,
@@ -13,16 +16,31 @@ export default function ConnectEmailModal({
 }) {
   if (!isOpen) return null;
   const navigate = useNavigate();
+  
+  const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
+  const [gmailError, setGmailError] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkGmailStatus({ setGmailConnected, setGmailError });
+  }, []);
+
+  const connectEmailIcon = gmailConnected ? unlinkIcon : linkIcon;
+  const connectEmailLabel = gmailConnected
+    ? "Disconnect Email"
+    : "Link Email";
+  const connectButtonIconColor = gmailConnected ? "redIcon" : "greenIcon";
+  const connectButtonColor = gmailConnected ? "red" : "green";
+  const [buttonHovered, setButtonHovered] = useState<boolean>(false);
 
   return createPortal(
     <div className="modal-backdrop" role="dialog" aria-modal="true">
       <div className="modal w-lg">
-        <ModalHeader title="Link Your Email" onClose={onClose} />
+        <ModalHeader title="Email Connection Status" onClose={onClose} />
         <div className="flex w-full items-center justify-center">
           <div className="flex flex-col items-center justify-center">
             <div className="flex w-full justify-center">
               <small className="text-left w-7/8 text-sm primary-text">
-                In order to get the most out of JAICE, please link your email.
+                In order to get the most out of JAICE, your email should be linked.
                 JAICE relies on email syncing to track job applications and
                 updates automatically. Without it, some functionality is
                 limited.
@@ -55,14 +73,16 @@ export default function ConnectEmailModal({
             <div className="flex w-7/8">
               <Button
                 onClick={() => navigate("/settings/account")}
-                className="green"
+                className={connectButtonColor}
+                onMouseEnter={() => setButtonHovered(true)}
+                onMouseLeave={() => setButtonHovered(false)}
               >
                 <img
-                  src={linkIcon}
+                  src={connectEmailIcon}
                   alt="Link Icon"
-                  className="w-5 h-5 icon mr-2"
+                  className={`w-5 h-5 icon mr-2 ${buttonHovered ? connectButtonIconColor : ""}`}
                 />
-                <div className="ml-2 whitespace-nowrap">Link Email</div>
+                <div className="ml-2 whitespace-nowrap">{connectEmailLabel}</div>
               </Button>
             </div>
           </div>

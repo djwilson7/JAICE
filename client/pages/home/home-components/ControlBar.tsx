@@ -8,6 +8,7 @@ import filterIcon from "@/assets/icons/filter.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import unlinkIcon from "@/assets/icons/unlink.svg";
+import linkIcon from "@/assets/icons/link.svg";
 import { AlertBox } from "@/pages/home/home-components/AlertBox";
 // import { InfoModal } from "@/global-components/InfoModal";
 // import { motion, AnimatePresence } from "framer-motion";
@@ -67,11 +68,15 @@ export function ControlBar({
 }: ControlBarProps) {
   const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
   const [gmailError, setGmailError] = useState<string | null>(null);
-  
+
   useEffect(() => {
     checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
-  
+
+  const connectEmailIcon = gmailConnected ? linkIcon : unlinkIcon;
+  const connectEmailLabel = gmailConnected ? "Connected" : "Disconnected";
+  const connectEmailHoverColor = gmailConnected ? "greenIcon" : "redIcon";
+
   return (
     <div className="w-full h-[50px] justify-start">
       {/* Control Bar Container */}
@@ -90,15 +95,13 @@ export function ControlBar({
 
         {/* Interactive Functionality Components */}
         <div className="flex relative gap-4 h-full justify-center items-center">
-          {!gmailConnected && (
-            <ControlBarButton
-              onClick={() => setConnectEmailOpen(true)}
-              icon={unlinkIcon}
-              iconHoverColor={"redIcon"}
-              label="Connect Email"
-              prominent={true}
-            />
-          )}
+          <ControlBarButton
+            onClick={() => setConnectEmailOpen(true)}
+            icon={connectEmailIcon}
+            iconHoverColor={connectEmailHoverColor}
+            label={connectEmailLabel}
+            prominent={gmailConnected ? false : true}
+          />
 
           <SearchBar
             searchQuery={searchQuery}
