@@ -28,6 +28,8 @@ import NewApplication from "@/pages/home/home-components/ApplicationModal";
 import undo from "@/assets/icons/undo-alt.svg";
 import redo from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
+import ConnectEmailModal from "./home-components/ConnectEmailModal";
+
 // import { fetchJobById } from "@/global-services/database";
 
 export function HomePage() {
@@ -41,6 +43,7 @@ export function HomePage() {
   // trash/archive modal state
   const [isTrashOpen, setIsTrashOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isConnectEmailOpen, setIsConnectEmailOpen] = useState(false);
 
   const [trashItems, setTrashItems] = useState<JobCardType[]>([]);
   const [archiveItems, setArchiveItems] = useState<JobCardType[]>([]);
@@ -1122,6 +1125,7 @@ export function HomePage() {
               isAlertOpen={isAlertOpen}
               setIsAlertOpen={setIsAlertOpen}
               alertMessage={alertMessage}
+              setConnectEmailOpen={setIsConnectEmailOpen}
               // infoModalLabel={isInfoModalOpen ? "Info" : ""}
               // isInfoModalOpen={isInfoModalOpen}
               // setInfoModalOpen={setInfoModalOpen}
@@ -1313,7 +1317,14 @@ export function HomePage() {
               }
             }}
           />
+
+          <ConnectEmailModal
+            isOpen={isConnectEmailOpen}
+            onClose={() => setIsConnectEmailOpen(false)}
+          />
+          
         </motion.div>
+        
       )}
     </AnimatePresence>
   );

@@ -6,6 +6,7 @@ interface ControlBarButtonProps {
   icon: string;
   iconHoverColor: string;
   label?: string;
+  prominent?: boolean;
 }
 
 export function ControlBarButton({
@@ -13,11 +14,13 @@ export function ControlBarButton({
   icon,
   iconHoverColor,
   label,
+  prominent,
 }: ControlBarButtonProps) {
+  
   const [mouseEnter, setMouseEnter] = useState<boolean>(false);
   return (
     <motion.div
-      className="control-bar-container"
+      className={"control-bar-container" + ` ${prominent ? "control-bar-container-red" : ""}`}
       onMouseEnter={() => setMouseEnter(true)}
       onMouseLeave={() => setMouseEnter(false)}
       onClick={onClick}

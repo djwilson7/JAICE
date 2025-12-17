@@ -1271,7 +1271,25 @@ to an element (className="example").
   cursor: pointer;
 }
 
+.control-bar-container-red {
+  background: var(--red-color);
+  color: var(--white-color);
+}
+
 .control-bar-container:hover {
   box-shadow: var(--shadow-hover);
+}
+
+.control-bar-container-red:hover {
+  background: var(--white-color);
+  color: var(--red-color);
+}
+
+.connect-email-container {
+  border: 1px solid var(--primary-four);
+  border-radius: var(--corner-radius);
+  padding: 1rem;
+  background: var(--primary-gradient);
+  box-shadow: var(--shadow);
 }
 /* Add more custom classes above this line */
