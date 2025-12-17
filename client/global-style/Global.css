@@ -1189,6 +1189,11 @@ to an element (className="example").
   opacity: 0.5;
 }
 
+.vertical-divider {
+  border-left: 2px solid var(--gray-color);
+  height: 100%;
+}
+
 .brand-block {
   display: flex;
   width: 100%;
@@ -1292,4 +1297,22 @@ to an element (className="example").
   background: var(--primary-gradient);
   box-shadow: var(--shadow);
 }
+
+.drop-area {
+  border-top: 2px dashed var(--primary-three);
+  background: var(--glass-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--animation-duration) ease;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+.drop-area-shadow {
+  box-shadow: var(--shadow-hover);
+}
+
 /* Add more custom classes above this line */

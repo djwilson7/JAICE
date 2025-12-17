@@ -21,7 +21,7 @@ import loadingAnimationDark from "@/assets/loaders/CircleVenn.json";
 import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
 import TrashArchiveModal from "./home-components/TrashArchiveModal";
 import loadingAnimationBW from "@/assets/loaders/CircleVennBW.json";
-
+import { DropArea } from "./home-components/DropArea";
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
@@ -29,6 +29,7 @@ import undo from "@/assets/icons/undo-alt.svg";
 import redo from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
 import ConnectEmailModal from "./home-components/ConnectEmailModal";
+import { it } from "node:test";
 
 // import { fetchJobById } from "@/global-services/database";
 
@@ -57,7 +58,7 @@ export function HomePage() {
   const alertMessage =
     newJobsCount > 0 ? `You have ${newJobsCount} new jobs` : "No Alerts"; // to hold the current alert message
 
-  const [isInfoModalOpen, setInfoModalOpen] = useState(false); // to track if the info modal is open
+  // const [isInfoModalOpen, setInfoModalOpen] = useState(false); // to track if the info modal is open
   const [jobs, setJobs] = useState<JobCardType[]>([]); // to hold the list of job cards (initially set to mock data)
   const itemDraggedRef = useRef<JobCardType | null>(null); // to track the item being dragged
   const isOverRef = useRef<string | null>(null); // to track which column is being hovered over during drag-and-drop
@@ -99,7 +100,7 @@ export function HomePage() {
     const hasRedoUndo = undoStack.length > 0 || redoStack.length > 0; // If either stack has items
     const userIsSearching = searchQuery.trim().length > 0; // If the user is actively searching
     const userIsMultiSelecting = isMultiSelecting; // If the user is multi selecting jobs
-    const userHasInfoModalOpen = isInfoModalOpen; // If the user has the info modal open
+    // const userHasInfoModalOpen = isInfoModalOpen; // If the user has the info modal open
     const userIsDragging = isDragging; // If the user is not currently dragging an item
     const userIsDeleting = isDeleting;
     const userHasNewAppOpen = isJobAppModalOpen;
@@ -107,7 +108,7 @@ export function HomePage() {
       hasRedoUndo &&
       !userIsSearching &&
       !userIsMultiSelecting &&
-      !userHasInfoModalOpen &&
+      // !userHasInfoModalOpen &&
       !userIsDragging &&
       !userHasNewAppOpen &&
       !userIsDeleting;
@@ -117,7 +118,7 @@ export function HomePage() {
     redoStack,
     isMultiSelecting,
     searchQuery,
-    isInfoModalOpen,
+    // isInfoModalOpen,
     isDragging,
     isDeleting,
     isJobAppModalOpen,
@@ -432,23 +433,45 @@ export function HomePage() {
     itemDraggedRef.current = JobCard;
   };
 
-  const handleDragEnterColumn = (columnId: string) => {
-    isOverRef.current = columnId;
+  const handleDragEnterColumn = (containerId: string) => {
+    isOverRef.current = containerId;
   };
 
   const handleDragLeaveColumn = () => {
     isOverRef.current = null;
   };
-
+  // ############################################################################################
   const handleDragEnd = async () => {
     // If an item was dragged and is over a different column, update its column
     setIsDragging(false);
     const itemDragged = itemDraggedRef.current;
     const isOver = isOverRef.current;
 
-    if (itemDragged && isOver && itemDragged.column !== isOver) {
+    //if the isOverRef == archive or delete handle accordingly
+    if (isOver === "archive") {
+      console.log(`Archiving item ${itemDragged?.id}`);
+      //copied from the job card archive logic (we could elevate this to a singular function that both points import)
+      try {
+        await api("/api/jobs/set-archive", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: [itemDragged?.id],
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to archive job:", error);
+      }
+    } else if (isOver === "delete") {
+      console.log(`Deleting item ${itemDragged?.id}`);
+      //logic to delete goes here (copied from the delete method below)
+      try {
+        handleDelete(itemDragged?.id || "");
+      } catch (error) {
+        console.error("Failed to delete job:", error);
+      }
+    } else if (itemDragged && isOver && itemDragged.column !== isOver) {
       console.log(`Dropped item ${itemDragged.id} into column ${isOver}`);
-
+      //logic to shift into a new column is here
       const prevColumn = itemDragged.column;
       const updatedCard = { ...itemDragged, column: isOver };
 
@@ -490,6 +513,7 @@ export function HomePage() {
     itemDraggedRef.current = null;
     isOverRef.current = null;
   };
+
   const [columnHeights, setColumnHeights] = useState<Record<string, number>>(
     {}
   );
@@ -1109,7 +1133,7 @@ export function HomePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="w-full h-full flex items-center justify-center flex-col"
+          className="w-full h-full flex items-center justify-center flex-col relative"
         >
           {/* ^ Page Container ^ */}
           <div className="w-full h-full flex flex-col items-center gap-4 p-4 overflow-y-auto">
@@ -1218,10 +1242,12 @@ export function HomePage() {
             </div>
           )}
 
-          <div
-            className="relative bottom-0 w-full bg-transparent z-1"
-            style={{ boxShadow: "var(--page-shadow)" }}
-          ></div>
+          {!isDragging && (
+            <div
+              className="relative bottom-0 w-full bg-transparent z-1"
+              style={{ boxShadow: "var(--page-shadow)" }}
+            ></div>
+          )}
 
           <NewApplication
             isOpen={isJobAppModalOpen}
@@ -1322,9 +1348,14 @@ export function HomePage() {
             isOpen={isConnectEmailOpen}
             onClose={() => setIsConnectEmailOpen(false)}
           />
-          
+
+          {isDragging && (
+            <DropArea
+              onDragEnter={handleDragEnterColumn} // pass down drag enter handler
+              onDragLeave={handleDragLeaveColumn}
+            />
+          )}
         </motion.div>
-        
       )}
     </AnimatePresence>
   );
