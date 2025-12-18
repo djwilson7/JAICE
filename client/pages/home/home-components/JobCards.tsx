@@ -15,12 +15,12 @@ import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
 import { useContext } from "react";
 import { MultiSelectContext } from "../contexts/MultiSelectContext";
+import { useSelectedJobs } from "../hooks/useSelectedJobs";
 
 export function JobCard({
   job,
   onDragStart,
   onDragEnd,
-  handleMultiSelectClick,
   dimmed,
   onDelete,
   isDeleting,
@@ -30,7 +30,6 @@ export function JobCard({
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
   onDragEnd: () => void;
-  handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
   onDelete?: (id: string) => Promise<boolean>;
   isDeleting: boolean;
@@ -38,6 +37,7 @@ export function JobCard({
   openJobAppModal: (job: JobCardType) => void;
 }) {
   const { isMultiSelecting } = useContext(MultiSelectContext);
+  const { toggleJobSelection } = useSelectedJobs();
 
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
@@ -168,11 +168,11 @@ export function JobCard({
       onDragEnd={handleDragEnd}
       variants={variants}
       animate={dimmed ? "dimmed" : "active"}
-      whileHover={!isMultiSelecting ? { scale: 1.02, cursor: "pointer",}: undefined}
-      
+      whileHover={
+        !isMultiSelecting ? { scale: 1.02, cursor: "pointer" } : undefined
+      }
       onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
       onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
-
       // onTap cycles between expanding the card and selecting it based on isMultiSelecting
       whileTap={{ cursor: "grabbing" }}
       whileDrag={{
@@ -210,10 +210,9 @@ export function JobCard({
       <motion.div
         className="flex justify-between w-full items-center text-left"
         onTap={() => {
-          handleMultiSelectClick(job);
           if (isMultiSelecting) {
+            toggleJobSelection(job);
             setIsSelected(!isSelected);
-            return;
           } else {
             setIsOpen(!isOpen);
           }
@@ -276,7 +275,6 @@ export function JobCard({
       >
         <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
-
           <small className="secondary-text font-semibold">
             {job.companyName ?? "Unknown Company"}
           </small>
@@ -311,10 +309,12 @@ export function JobCard({
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
           initial={{ opacity: 0, height: 0 }}
-          animate={!isMultiSelecting && {
-            height: isHovered ? "auto" : 0,
-            opacity: isHovered ? 1 : 0,
-          }}
+          animate={
+            !isMultiSelecting && {
+              height: isHovered ? "auto" : 0,
+              opacity: isHovered ? 1 : 0,
+            }
+          }
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.12 }}
         >

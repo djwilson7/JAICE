@@ -10,30 +10,27 @@ import replaceIcon from "@/assets/icons/replace.svg";
 import upIcon from "@/assets/icons/angle-small-up.svg";
 import Button, { HoverIconButton } from "@/global-components/button";
 import { useEffect, useState } from "react";
-import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { AnimatePresence, motion } from "framer-motion";
-import { useContext } from "react";
-import { MultiSelectContext } from "../contexts/MultiSelectContext";
+import { useIsMultiSelecting } from "../hooks/useIsMultiSelecting";
+import { useSelectedJobs } from "../hooks/useSelectedJobs";
 
 export function MultiSelectBar({
-  selectedJobs,
-  setSelectedJobs,
   onDelete,
   onArchive,
   onMove,
   className,
   setIsHighlighted,
 }: {
-  selectedJobs: JobCardType[];
-  setSelectedJobs: (jobs: JobCardType[]) => void;
   onDelete: (ids: string[]) => Promise<boolean>;
   onArchive: (ids: string[]) => Promise<boolean>;
   onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
   setIsHighlighted: (stage: string | null) => void;
 }) {
-  const { isMultiSelecting, setIsMultiSelecting } = useContext(MultiSelectContext);
+  const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
+  const { selectedJobs, setSelectedJobs } = useSelectedJobs();
+
   if (!isMultiSelecting) return null;
   
   const [hoverAction, setHoverAction] = useState<
