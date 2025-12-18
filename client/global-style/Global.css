@@ -1309,6 +1309,7 @@ to an element (className="example").
   bottom: 0;
   width: 100%;
   box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
 }
 
 .drop-area-shadow {
