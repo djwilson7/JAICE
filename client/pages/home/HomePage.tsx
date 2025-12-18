@@ -17,10 +17,8 @@ import { applyJobChange } from "@/pages/home/utils/applyJobChange";
 import { getCurrentUserInfo } from "@/global-services/auth";
 import { MultiSelectBar } from "@/pages/home/home-components/MultiSelectBar";
 import Fuse from "fuse.js";
-import loadingAnimationDark from "@/assets/loaders/CircleVenn.json";
-import loadingAnimationLight from "@/assets/loaders/CircleVennLight.json";
+
 import TrashArchiveModal from "./home-components/TrashArchiveModal";
-import loadingAnimationBW from "@/assets/loaders/CircleVennBW.json";
 import { DropArea } from "./home-components/DropArea";
 import Lottie from "lottie-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -29,12 +27,18 @@ import undo from "@/assets/icons/undo-alt.svg";
 import redo from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
 import ConnectEmailModal from "./home-components/ConnectEmailModal";
+import { sortJobs } from "./hooks/sortJobs";
+import { getThemeData } from "@/utils/getThemeData";
+import { useIsMultiSelecting } from "./hooks/useIsMultiSelecting";
+import { MultiSelectProvider } from "./providers/MultiSelectProvider";
 
-// import { fetchJobById } from "@/global-services/database";
+import type { UndoAction } from "@/types/undoAction";
 
 export function HomePage() {
+  const themeData = getThemeData();
+  const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
+
   // State Variables
-  const [isMultiSelecting, setIsMultiSelecting] = useState(false); // to track if multi-select mode is active
   const [selectedJobs, setSelectedJobs] = useState<JobCardType[]>([]); // to track the selected job cards
   const [selectedOption, setSelectedOption] = useState("new"); // to track the selected sorting option
 
@@ -75,14 +79,6 @@ export function HomePage() {
     () => window.innerHeight
   );
 
-  // undo action for last change (delete or move)
-  type UndoAction =
-    | { type: "delete"; job: JobCardType }
-    | { type: "move"; id: string; from: string; to: string; job?: JobCardType }
-    | { type: "deleteMultiple"; jobs: JobCardType[] }
-    | { type: "moveMultiple"; jobs: JobCardType[]; to: string }
-    | { type: "archiveMultiple"; jobs: JobCardType[] };
-
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
   const [redoStack, setRedoStack] = useState<UndoAction[]>([]);
 
@@ -95,6 +91,7 @@ export function HomePage() {
   const [showRedoUndo, setShowRedoUndo] = useState(
     undoStack.length > 0 || redoStack.length > 0
   );
+
   useEffect(() => {
     const hasRedoUndo = undoStack.length > 0 || redoStack.length > 0; // If either stack has items
     const userIsSearching = searchQuery.trim().length > 0; // If the user is actively searching
@@ -123,75 +120,11 @@ export function HomePage() {
     isJobAppModalOpen,
   ]);
 
-  const isBWMode =
-    document.documentElement.getAttribute("data-contrast") === "bw";
-  const initialTheme =
-    document.documentElement.getAttribute("data-theme") === "light";
-  const [loadingAnimation, setLoadingAnimation] = useState<any>(
-    isBWMode
-      ? loadingAnimationBW
-      : initialTheme
-      ? loadingAnimationLight
-      : loadingAnimationDark
-  );
-
-  useEffect(() => {
-    const updateLoadingSpinner = () => {
-      const htmlTheme = document.documentElement.getAttribute("data-theme");
-      const htmlContrast =
-        document.documentElement.getAttribute("data-contrast");
-      if (htmlContrast === "bw") {
-        setLoadingAnimation(loadingAnimationBW);
-        return;
-      }
-      setLoadingAnimation(
-        htmlTheme === "light" ? loadingAnimationLight : loadingAnimationDark
-      );
-    };
-    updateLoadingSpinner();
-    window.addEventListener("themechange", updateLoadingSpinner);
-    return () =>
-      window.removeEventListener("themechange", updateLoadingSpinner);
-  }, []);
-
   useEffect(() => {
     const handleResize = () => setViewportHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const sortByOptions = [
-    { value: "new", label: "Most Recent" },
-    { value: "old", label: "Oldest First" },
-    { value: "az", label: "Ascend (a-z)" },
-    { value: "za", label: "Descend (z-a)" },
-  ];
-
-  const sortJobs = useCallback(
-    (list: JobCardType[]) => {
-      switch (selectedOption) {
-        case "new":
-          return [...list].sort(
-            (a, b) =>
-              new Date(b.date ?? "").getTime() -
-              new Date(a.date ?? "").getTime()
-          );
-        case "old":
-          return [...list].sort(
-            (a, b) =>
-              new Date(a.date ?? "").getTime() -
-              new Date(b.date ?? "").getTime()
-          );
-        case "az":
-          return [...list].sort((a, b) => a.title.localeCompare(b.title));
-        case "za":
-          return [...list].sort((a, b) => b.title.localeCompare(a.title));
-        default:
-          return list;
-      }
-    },
-    [selectedOption]
-  );
 
   const fuse = useMemo(() => {
     return new Fuse<JobCardType>(jobs, {
@@ -204,7 +137,7 @@ export function HomePage() {
   }, [jobs]);
 
   useEffect(() => {
-    const sorted = sortJobs(jobs);
+    const sorted = sortJobs(selectedOption, jobs);
 
     if (!searchQuery.trim()) {
       setSortedJobs(sorted);
@@ -1072,7 +1005,6 @@ export function HomePage() {
           job={job}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          isMultiSelecting={isMultiSelecting}
           handleMultiSelectClick={handleJobCardClick}
           dimmed={!!searchQuery && !matchOrderMap.has(job.id)}
           onDelete={handleDelete}
@@ -1105,7 +1037,7 @@ export function HomePage() {
           className="w-full h-full flex items-center justify-center"
         >
           <Lottie
-            animationData={loadingAnimation}
+            animationData={themeData.loadingAnimation}
             loop
             className="flex w-150 h-150"
           />
@@ -1119,223 +1051,220 @@ export function HomePage() {
           className="w-full h-full flex items-center justify-center flex-col relative"
         >
           {/* ^ Page Container ^ */}
-          <div className="w-full h-full flex flex-col items-center gap-4 p-4 overflow-y-auto">
-            {/* ^ Content Container ^ */}
-            <ControlBar // see ControlBar.tsx
-              isMultiSelecting={isMultiSelecting}
-              setIsMultiSelecting={setIsMultiSelecting}
-              options={sortByOptions}
-              selectedOption={selectedOption}
-              setSelectedOption={setSelectedOption}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              isAlertOpen={isAlertOpen}
-              setIsAlertOpen={setIsAlertOpen}
-              alertMessage={alertMessage}
-              setConnectEmailOpen={setIsConnectEmailOpen}
-              // infoModalLabel={isInfoModalOpen ? "Info" : ""}
-              // isInfoModalOpen={isInfoModalOpen}
-              // setInfoModalOpen={setInfoModalOpen}
-              onOpenTrash={openTrash}
-              onOpenArchive={openArchive}
-            />
-            {/* Kan Ban Columns */}
-            <div className="flex align-items:stretch gap-4 w-full">
-              {columnConfig.map(
-                (
-                  column // iterate over each column in the config
-                ) => (
-                  <Column
-                    key={column.id} // unique key for React
-                    id={column.id} // column id
-                    title={column.title} // column title
-                    bg={column.bg} // column background color
-                    count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
-                    onDragEnter={handleDragEnterColumn} // pass down drag enter handler
-                    onDragLeave={handleDragLeaveColumn} // pass down drag leave handler
-                    viewportHeight={viewportHeight}
-                    showToggleRejectButton={
-                      column.id === "accepted" || column.id === "rejected"
-                    }
-                    onToggleReject={toggleAcceptedToRejected}
-                    isHighlighted={isHighlighted}
-                    openJobAppModal={openJobAppModal}
-                  >
-                    {jobsByColumn[column.id]}
-                    {/* render the JobCards associated with the columns id */}
-                  </Column>
-                )
-              )}
+          <MultiSelectProvider>
+            <div className="w-full h-full flex flex-col items-center gap-4 p-4 overflow-y-auto">
+              {/* ^ Content Container ^ */}
+              <ControlBar // see ControlBar.tsx
+                selectedOption={selectedOption}
+                setSelectedOption={setSelectedOption}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                isAlertOpen={isAlertOpen}
+                setIsAlertOpen={setIsAlertOpen}
+                alertMessage={alertMessage}
+                setConnectEmailOpen={setIsConnectEmailOpen}
+                // infoModalLabel={isInfoModalOpen ? "Info" : ""}
+                // isInfoModalOpen={isInfoModalOpen}
+                // setInfoModalOpen={setInfoModalOpen}
+                onOpenTrash={openTrash}
+                onOpenArchive={openArchive}
+              />
+              {/* Kan Ban Columns */}
+              <div className="flex align-items:stretch gap-4 w-full">
+                {columnConfig.map(
+                  (
+                    column // iterate over each column in the config
+                  ) => (
+                    <Column
+                      key={column.id} // unique key for React
+                      id={column.id} // column id
+                      title={column.title} // column title
+                      bg={column.bg} // column background color
+                      count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
+                      onDragEnter={handleDragEnterColumn} // pass down drag enter handler
+                      onDragLeave={handleDragLeaveColumn} // pass down drag leave handler
+                      viewportHeight={viewportHeight}
+                      showToggleRejectButton={
+                        column.id === "accepted" || column.id === "rejected"
+                      }
+                      onToggleReject={toggleAcceptedToRejected}
+                      isHighlighted={isHighlighted}
+                      openJobAppModal={openJobAppModal}
+                    >
+                      {jobsByColumn[column.id]}
+                      {/* render the JobCards associated with the columns id */}
+                    </Column>
+                  )
+                )}
+              </div>
             </div>
-          </div>
-          {isMultiSelecting && (
             <MultiSelectBar
               selectedJobs={selectedJobs}
               setSelectedJobs={setSelectedJobs}
-              setIsMultiSelecting={setIsMultiSelecting}
               onDelete={handleDeleteMultiple}
               onMove={handleMoveMultiple}
               onArchive={handleArchiveMultiple}
               setIsHighlighted={setIsHighlighted}
             />
-          )}
+            {/* Multi-Select Action Bar */}
 
-          {/* Undo bar (stay until refresh or all undos performed) */}
-          {showRedoUndo && !isMultiSelecting && (
-            <div className="glass" role="status" aria-live="polite">
-              <span
-                title={
-                  undoStack.length === 0
-                    ? "No actions to undo"
-                    : "Undo (Ctrl+Z)"
-                }
-                className="rounded"
-              >
-                <Button
-                  type="button"
-                  onClick={performUndo}
-                  aria-label="Undo last action"
-                  disabled={undoStack.length === 0}
-                  className={`undoRedo`}
+            {/* Undo bar (stay until refresh or all undos performed) */}
+            {showRedoUndo && !isMultiSelecting && (
+              <div className="glass" role="status" aria-live="polite">
+                <span
+                  title={
+                    undoStack.length === 0
+                      ? "No actions to undo"
+                      : "Undo (Ctrl+Z)"
+                  }
+                  className="rounded"
                 >
-                  <img src={undo} alt="Undo" className="w-5 h-5 icon" />
-                </Button>
-              </span>
+                  <Button
+                    type="button"
+                    onClick={performUndo}
+                    aria-label="Undo last action"
+                    disabled={undoStack.length === 0}
+                    className={`undoRedo`}
+                  >
+                    <img src={undo} alt="Undo" className="w-5 h-5 icon" />
+                  </Button>
+                </span>
 
-              <span
-                title={
-                  redoStack.length === 0
-                    ? "No actions to redo"
-                    : "Redo (Ctrl+Y)"
-                }
-                className="rounded"
-              >
-                <button
-                  type="button"
-                  onClick={performRedo}
-                  aria-label="Redo last action"
-                  disabled={redoStack.length === 0}
-                  className={`undoRedo`}
+                <span
+                  title={
+                    redoStack.length === 0
+                      ? "No actions to redo"
+                      : "Redo (Ctrl+Y)"
+                  }
+                  className="rounded"
                 >
-                  <img src={redo} alt="Redo" className="w-5 h-5 icon" />
-                </button>
-              </span>
-            </div>
-          )}
+                  <button
+                    type="button"
+                    onClick={performRedo}
+                    aria-label="Redo last action"
+                    disabled={redoStack.length === 0}
+                    className={`undoRedo`}
+                  >
+                    <img src={redo} alt="Redo" className="w-5 h-5 icon" />
+                  </button>
+                </span>
+              </div>
+            )}
 
-          {!isDragging && (
-            <div
-              className="relative bottom-0 w-full bg-transparent z-1"
-              style={{ boxShadow: "var(--page-shadow)" }}
-            ></div>
-          )}
+            {!isDragging && (
+              <div
+                className="relative bottom-0 w-full bg-transparent z-1"
+                style={{ boxShadow: "var(--page-shadow)" }}
+              ></div>
+            )}
 
-          <NewApplication
-            isOpen={isJobAppModalOpen}
-            setIsOpen={setIsJobAppModalOpen}
-            payload={jobAppModalPayload}
-            onSave={(updated: Partial<JobCardType> & { id?: string }) => {
-              // merge updated job into local state
-              if (updated?.id) {
-                setJobs((prev) =>
-                  prev.map((j) =>
-                    j.id === updated.id ? (updated as JobCardType) : j
-                  )
-                );
-              } else {
-                // if backend returns no id try to update by some fallback
-                setJobs((prev) => [updated as JobCardType, ...prev]);
-              }
-            }}
-          />
-
-          <TrashArchiveModal
-            isOpen={isTrashOpen}
-            onClose={() => setIsTrashOpen(false)}
-            mode="trash"
-            items={trashItems}
-            onAction={async (action, ids) => {
-              if (!ids || ids.length === 0) return;
-
-              try {
-                if (action === "undelete") {
-                  // toggle deleted state
-                  await api("/api/jobs/set-delete", {
-                    method: "POST",
-                    body: JSON.stringify({ provider_message_ids: ids }),
-                  });
-
-                  // remove from modal list locally
-                  setTrashItems((prev) =>
-                    prev.filter((j) => !ids.includes(j.id))
+            <NewApplication
+              isOpen={isJobAppModalOpen}
+              setIsOpen={setIsJobAppModalOpen}
+              payload={jobAppModalPayload}
+              onSave={(updated: Partial<JobCardType> & { id?: string }) => {
+                // merge updated job into local state
+                if (updated?.id) {
+                  setJobs((prev) =>
+                    prev.map((j) =>
+                      j.id === updated.id ? (updated as JobCardType) : j
+                    )
                   );
-
-                  // refresh main jobs list so restored items appear
-                  await loadEmails(true);
-                } else if (action === "delete_permanently") {
-                  // permanently delete
-                  await api("/api/jobs/permanently-delete", {
-                    method: "POST",
-                    body: JSON.stringify({
-                      provider_message_ids: ids,
-                      confirm: true,
-                    }),
-                  });
-
-                  setTrashItems((prev) =>
-                    prev.filter((j) => !ids.includes(j.id))
-                  );
+                } else {
+                  // if backend returns no id try to update by some fallback
+                  setJobs((prev) => [updated as JobCardType, ...prev]);
                 }
-              } catch (err) {
-                console.error("Trash action failed:", err);
-
-                await loadTrash();
-              }
-            }}
-          />
-
-          <TrashArchiveModal
-            isOpen={isArchiveOpen}
-            onClose={() => setIsArchiveOpen(false)}
-            mode="archive"
-            items={archiveItems}
-            onAction={async (action, ids) => {
-              if (!ids || ids.length === 0) return;
-
-              try {
-                if (action === "unarchive") {
-                  // toggle archived state on server
-                  await api("/api/jobs/set-archive", {
-                    method: "POST",
-                    body: JSON.stringify({ provider_message_ids: ids }),
-                  });
-
-                  // remove from archive list locally
-                  setArchiveItems((prev) =>
-                    prev.filter((j) => !ids.includes(j.id))
-                  );
-
-                  // refresh main jobs list so unarchived items show
-                  await loadEmails(true);
-                }
-              } catch (err) {
-                console.error("Archive action failed:", err);
-                await loadArchive();
-              }
-            }}
-          />
-
-          <ConnectEmailModal
-            isOpen={isConnectEmailOpen}
-            onClose={() => setIsConnectEmailOpen(false)}
-          />
-
-          {isDragging && (
-            <DropArea
-              onDragEnter={handleDragEnterColumn} // pass down drag enter handler
-              onDragLeave={handleDragLeaveColumn}
+              }}
             />
-          )}
+
+            <TrashArchiveModal
+              isOpen={isTrashOpen}
+              onClose={() => setIsTrashOpen(false)}
+              mode="trash"
+              items={trashItems}
+              onAction={async (action, ids) => {
+                if (!ids || ids.length === 0) return;
+
+                try {
+                  if (action === "undelete") {
+                    // toggle deleted state
+                    await api("/api/jobs/set-delete", {
+                      method: "POST",
+                      body: JSON.stringify({ provider_message_ids: ids }),
+                    });
+
+                    // remove from modal list locally
+                    setTrashItems((prev) =>
+                      prev.filter((j) => !ids.includes(j.id))
+                    );
+
+                    // refresh main jobs list so restored items appear
+                    await loadEmails(true);
+                  } else if (action === "delete_permanently") {
+                    // permanently delete
+                    await api("/api/jobs/permanently-delete", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        provider_message_ids: ids,
+                        confirm: true,
+                      }),
+                    });
+
+                    setTrashItems((prev) =>
+                      prev.filter((j) => !ids.includes(j.id))
+                    );
+                  }
+                } catch (err) {
+                  console.error("Trash action failed:", err);
+
+                  await loadTrash();
+                }
+              }}
+            />
+
+            <TrashArchiveModal
+              isOpen={isArchiveOpen}
+              onClose={() => setIsArchiveOpen(false)}
+              mode="archive"
+              items={archiveItems}
+              onAction={async (action, ids) => {
+                if (!ids || ids.length === 0) return;
+
+                try {
+                  if (action === "unarchive") {
+                    // toggle archived state on server
+                    await api("/api/jobs/set-archive", {
+                      method: "POST",
+                      body: JSON.stringify({ provider_message_ids: ids }),
+                    });
+
+                    // remove from archive list locally
+                    setArchiveItems((prev) =>
+                      prev.filter((j) => !ids.includes(j.id))
+                    );
+
+                    // refresh main jobs list so unarchived items show
+                    await loadEmails(true);
+                  }
+                } catch (err) {
+                  console.error("Archive action failed:", err);
+                  await loadArchive();
+                }
+              }}
+            />
+
+            <ConnectEmailModal
+              isOpen={isConnectEmailOpen}
+              onClose={() => setIsConnectEmailOpen(false)}
+            />
+
+            {isDragging && (
+              <DropArea
+                onDragEnter={handleDragEnterColumn}
+                onDragLeave={handleDragLeaveColumn}
+              />
+            )}
+          </MultiSelectProvider>
         </motion.div>
       )}
     </AnimatePresence>

@@ -20,10 +20,7 @@ import { useEffect, useState } from "react";
 import { checkGmailStatus } from "../utils/checkGmailStatus";
 
 interface ControlBarProps {
-  isMultiSelecting: boolean;
-  setIsMultiSelecting: (value: boolean) => void;
 
-  options: { value: string; label: string }[];
   selectedOption: string;
   setSelectedOption: (value: string) => void;
 
@@ -44,10 +41,7 @@ interface ControlBarProps {
 }
 
 export function ControlBar({
-  isMultiSelecting,
-  setIsMultiSelecting,
 
-  options,
   selectedOption,
   setSelectedOption,
 
@@ -126,12 +120,9 @@ export function ControlBar({
             label={"Multi-Select"}
             inactiveIcon={uncheckIcon}
             activeIcon={checkIcon}
-            isChecked={isMultiSelecting}
-            setIsChecked={setIsMultiSelecting}
           />
 
           <DropDownMenu
-            options={options}
             selectedOption={selectedOption}
             setSelectedOption={setSelectedOption}
             leftIcon={filterIcon}

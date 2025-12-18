@@ -1,5 +1,3 @@
-// import { localfiles } from "@/directory/path/to/localimport";
-
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
@@ -15,12 +13,13 @@ import reviewIcon from "@/assets/icons/reviewed.svg";
 import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
+import { useContext } from "react";
+import { MultiSelectContext } from "../contexts/MultiSelectContext";
 
 export function JobCard({
   job,
   onDragStart,
   onDragEnd,
-  isMultiSelecting,
   handleMultiSelectClick,
   dimmed,
   onDelete,
@@ -31,7 +30,6 @@ export function JobCard({
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
   onDragEnd: () => void;
-  isMultiSelecting: boolean;
   handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
   onDelete?: (id: string) => Promise<boolean>;
@@ -39,6 +37,8 @@ export function JobCard({
   setIsDeleting: (isDeleting: boolean) => void;
   openJobAppModal: (job: JobCardType) => void;
 }) {
+  const { isMultiSelecting } = useContext(MultiSelectContext);
+
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
   const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(

@@ -8,7 +8,10 @@ interface DropAreaProps {
   onDragLeave: () => void;
 }
 
-export function DropArea({ onDragEnter, onDragLeave }: DropAreaProps) {
+export function DropArea({
+  onDragEnter,
+  onDragLeave,
+}: DropAreaProps) {
   const dropAreaClass = "flex w-1/2 p-4 justify-center items-center gap-2";
 
   const [hoveredArea, setHoveredArea] = useState<string | null>(null);

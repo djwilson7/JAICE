@@ -13,11 +13,12 @@ import { useEffect, useState } from "react";
 import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { AnimatePresence, motion } from "framer-motion";
+import { useContext } from "react";
+import { MultiSelectContext } from "../contexts/MultiSelectContext";
 
 export function MultiSelectBar({
   selectedJobs,
   setSelectedJobs,
-  setIsMultiSelecting,
   onDelete,
   onArchive,
   onMove,
@@ -26,13 +27,15 @@ export function MultiSelectBar({
 }: {
   selectedJobs: JobCardType[];
   setSelectedJobs: (jobs: JobCardType[]) => void;
-  setIsMultiSelecting: (isMultiSelecting: boolean) => void;
   onDelete: (ids: string[]) => Promise<boolean>;
   onArchive: (ids: string[]) => Promise<boolean>;
   onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
   setIsHighlighted: (stage: string | null) => void;
 }) {
+  const { isMultiSelecting, setIsMultiSelecting } = useContext(MultiSelectContext);
+  if (!isMultiSelecting) return null;
+  
   const [hoverAction, setHoverAction] = useState<
     | "move"
     | "archive"
