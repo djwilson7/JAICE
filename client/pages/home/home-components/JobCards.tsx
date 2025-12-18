@@ -168,14 +168,12 @@ export function JobCard({
       onDragEnd={handleDragEnd}
       variants={variants}
       animate={dimmed ? "dimmed" : "active"}
-      whileHover={{
-        scale: 1.02,
-        cursor: "pointer",
-      }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      // onTap cycles between expanding the card and selecting it based on isMultiSelecting
+      whileHover={!isMultiSelecting ? { scale: 1.02, cursor: "pointer",}: undefined}
+      
+      onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
+      onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
 
+      // onTap cycles between expanding the card and selecting it based on isMultiSelecting
       whileTap={{ cursor: "grabbing" }}
       whileDrag={{
         cursor: "grabbing",
@@ -278,8 +276,13 @@ export function JobCard({
       >
         <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
+
           <small className="secondary-text font-semibold">
             {job.companyName ?? "Unknown Company"}
+          </small>
+
+          <small className="secondary-text font-semibold">
+            {"Salary: " + (job.salary ?? "Unknown Salary")}
           </small>
 
           <p className="primary-text">
@@ -308,7 +311,7 @@ export function JobCard({
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
           initial={{ opacity: 0, height: 0 }}
-          animate={{
+          animate={!isMultiSelecting && {
             height: isHovered ? "auto" : 0,
             opacity: isHovered ? 1 : 0,
           }}

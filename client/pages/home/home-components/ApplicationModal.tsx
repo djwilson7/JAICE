@@ -58,6 +58,7 @@ interface ModalData {
   job_title: string;
   received_at: string;
   company_name: string;
+  salary: string;
   notes: string;
   providerMessageID?: string; // optional, only for editing existing applications links to database
 }
@@ -71,6 +72,7 @@ const extractDataIntoStandardFormat = (
       job_title: "",
       received_at: new Date().toISOString(),
       company_name: "",
+      salary: "",
       notes: "",
       providerMessageID: undefined,
     };
@@ -80,6 +82,7 @@ const extractDataIntoStandardFormat = (
       job_title: payload.title || "",
       received_at: (payload.date as string) ?? new Date().toISOString(),
       company_name: payload.companyName || "",
+      salary: payload.salary || "",
       notes: payload.notes || "",
       providerMessageID: payload.id, // for editing existing applications
     };
@@ -90,6 +93,7 @@ const extractDataIntoStandardFormat = (
       job_title: "",
       received_at: new Date().toISOString(),
       company_name: "",
+      salary: "",
       notes: "",
       providerMessageID: undefined,
     };
@@ -117,6 +121,7 @@ export default function NewApplication({
   const [jobTitle, setJobTitle] = useState(data.job_title);
   const [receivedAt, setReceivedAt] = useState<string>(data.received_at);
   const [companyName, setCompanyName] = useState(data.company_name);
+  const [salary, setSalary] = useState<string>(data.salary) || "";
   const [notes, setNotes] = useState(data.notes);
 
   // Keep the key functionality to close on escape and prevent background scroll
@@ -145,6 +150,7 @@ export default function NewApplication({
       job_title: jobTitle,
       received_at: receivedAt,
       company_name: companyName,
+      salary: salary,
       notes: notes,
     };
   }
@@ -193,6 +199,7 @@ export default function NewApplication({
               id: providerMessageID,
               job_title: jobTitle,
               company_name: companyName,
+              salary_amount: salary,
               app_stage: stage,
               date: receivedAt,
               received_at: receivedAt,
@@ -243,18 +250,33 @@ export default function NewApplication({
               required
             />
           </label>
+
           {/* Company Name input field */}
           <label className="block">
-            <span className="primary-text">Company</span>
+            <span className="primary-text">Company (optional)</span>
             <input
               className="mt-1 block w-full border rounded px-2 py-1"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              required
             />
           </label>
-          {/* Notes field is optional*/}
 
+          {/* Salary input field */}
+          <label className="block">
+            <span className="primary-text">Salary (optional)</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              step={1}
+              min="0"
+              className="mt-1 block w-full border rounded px-2 py-1"
+              value={salary}
+              onChange={(e) => setSalary(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </label>
+
+          {/* Notes field is optional*/}
           <label className="block">
             <span className="primary-text">Notes (optional)</span>
             <textarea
@@ -264,6 +286,7 @@ export default function NewApplication({
               onChange={(e) => setNotes(e.target.value)}
             />
           </label>
+
         </div>
         <div className="flex w-full mt-4 justify-end">
           {/* Save button to submit the form */}

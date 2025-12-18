@@ -7,6 +7,7 @@ export type JobCardType = {
   column: string;
   companyName?: string;
   date?: string;
+  salary?: string;
   receivedAtRaw?: string | null;
   isArchived?: boolean;
   isDeleted?: boolean;

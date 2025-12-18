@@ -18,6 +18,7 @@ async def update_job_application(payload: dict = Body(...), user: dict = Depends
         - job_title (string)
         - company_name (string)
         - app_stage (string)
+        - salary (string to numeric)
         - received_at (YYYY-MM-DD)
         - notes (string)
     """
@@ -33,6 +34,7 @@ async def update_job_application(payload: dict = Body(...), user: dict = Depends
     job_title = payload.get("title") or payload.get("job_title")
     company_name = payload.get("company_name") or payload.get("company")
     app_stage = payload.get("app_stage")
+    salary = payload.get("salary")
     received_at = payload.get("received_at") or payload.get("date")
     notes = payload.get("note") or payload.get("notes")
 
@@ -52,6 +54,10 @@ async def update_job_application(payload: dict = Body(...), user: dict = Depends
     if app_stage is not None:
         set_clauses.append(f"app_stage = ${inex}")
         params.append(app_stage.capitalize())
+        inex += 1
+    if salary is not None:
+        set_clauses.append(f"salary = ${inex}")
+        params.append(float(salary))
         inex += 1
     if received_at is not None:
         set_clauses.append(f"received_at = ${inex}")
@@ -97,8 +103,9 @@ async def create_job_application(payload: dict = Body(...), user: dict = Depends
 
     Expected payload:
         - job_title / title (string)           required
-        - company_name (string)        required
+        - company_name (string)        optional
         - app_stage (string)           optional
+        - salary (string to numeric)   optional
         - received_at (YYYY-MM-DD)     optional, defaults to today if not provided
         - notes (string)               optional
         
@@ -115,19 +122,19 @@ async def create_job_application(payload: dict = Body(...), user: dict = Depends
     job_title = payload.get("title") or payload.get("job_title")
     company_name = payload.get("company_name") or payload.get("company")
     app_stage = payload.get("app_stage") or "Applied"
+    salary = payload.get("salary")
     received_at = payload.get("received_at") or payload.get("date")
     notes = payload.get("note") or payload.get("notes") or None
 
     if not job_title:
         raise HTTPException(status_code=400, detail="Job title is required")
-    if not company_name:
-        raise HTTPException(status_code=400, detail="Company name is required")
     if not received_at:
         # if not provided, default to today
         received_at = datetime.date.today().isoformat()
 
     # normalize state
     stage = app_stage.capitalize()
+    salary = float(salary) if salary else None
 
     provider_message_id = str(uuid.uuid4())
     provider_source = payload.get("provider_source", "manual_entry")
@@ -138,12 +145,13 @@ async def create_job_application(payload: dict = Body(...), user: dict = Depends
             title,
             company_name,
             app_stage,
+            salary,
             received_at,
             note,
             provider_message_id,
             provider_source,
             updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
         RETURNING *
     """
 
@@ -155,6 +163,7 @@ async def create_job_application(payload: dict = Body(...), user: dict = Depends
                 job_title,
                 company_name,
                 stage,
+                salary,
                 received_at,
                 notes,
                 provider_message_id,
@@ -450,3 +459,4 @@ async def permanent_delete_jobs(payload: dict = Body(...), user: dict = Depends(
         logging.error(f"[{trace_id}] Error permanently deleting job applications: {e}")
 
         raise HTTPException(status_code=500, detail=str(e))
+    

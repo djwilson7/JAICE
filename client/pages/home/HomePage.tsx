@@ -360,9 +360,17 @@ export function HomePage() {
   }, [selectedJobs]);
 
   const handleDragStart = (JobCard: JobCardType) => {
-    setIsMultiSelecting(false);
-    setIsDragging(true);
-    itemDraggedRef.current = JobCard;
+    
+    if (isMultiSelecting) 
+    {
+      setIsDragging(false);
+      return;
+    }
+    else 
+    { 
+      setIsDragging(true); 
+      itemDraggedRef.current = JobCard;
+    }
   };
 
   const handleDragEnterColumn = (containerId: string) => {
