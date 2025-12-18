@@ -1299,7 +1299,6 @@ to an element (className="example").
 }
 
 .drop-area {
-  border-top: 2px dashed var(--primary-three);
   background: var(--glass-bg);
   display: flex;
   flex-direction: column;
@@ -1309,6 +1308,7 @@ to an element (className="example").
   position: absolute;
   bottom: 0;
   width: 100%;
+  box-shadow: var(--shadow);
 }
 
 .drop-area-shadow {
