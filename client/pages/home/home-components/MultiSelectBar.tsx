@@ -7,6 +7,8 @@ import folderXIcon from "@/assets/icons/folder-x.svg";
 import folderCheckIcon from "@/assets/icons/folder-check.svg";
 import folderAddIcon from "@/assets/icons/folder-add.svg";
 import replaceIcon from "@/assets/icons/replace.svg";
+import reviewIcon from "@/assets/icons/review.svg";
+import reviewIconHover from "@/assets/icons/review_hover.svg";
 import upIcon from "@/assets/icons/angle-small-up.svg";
 import Button, { HoverIconButton } from "@/global-components/button";
 import { useEffect, useState } from "react";
@@ -20,6 +22,7 @@ export function MultiSelectBar({
   setIsMultiSelecting,
   onDelete,
   onArchive,
+  onReview,
   onMove,
   className,
   setIsHighlighted,
@@ -29,6 +32,7 @@ export function MultiSelectBar({
   setIsMultiSelecting: (isMultiSelecting: boolean) => void;
   onDelete: (ids: string[]) => Promise<boolean>;
   onArchive: (ids: string[]) => Promise<boolean>;
+  onReview: (ids: string[]) => Promise<boolean>;
   onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
   setIsHighlighted: (stage: string | null) => void;
@@ -140,6 +144,34 @@ export function MultiSelectBar({
     }
   };
 
+  const onReviewClicked = async () => {
+    try {
+      const jobIds = selectedJobs.map((j) => j.id);
+
+      if (onReview) 
+      {
+        await onReview(jobIds);
+
+      } else {
+        await api("/api/jobs/set-review-needed", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: jobIds,
+            needs_review: false,
+          }),
+        });
+      }
+      console.log("Marked selected jobs as reviewed successfully.");
+      setSelectedJobs([]);
+      setIsMultiSelecting(false);
+      return true;
+      
+    } catch (error) {
+      console.error("Failed to set selected jobs as reviewed:", error);
+      return false;
+    }
+  };
+
   const onDeleteClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
@@ -224,6 +256,27 @@ export function MultiSelectBar({
                     style={{ background: "transparent" }}
                     hoverClassName="orangeIcon"
                     title="Mark selected jobs as archived"
+                  />
+                </div>
+
+                {/* Mark As Reviewed */}
+                <div
+                  onMouseEnter={() => setHoverAction(null)}
+                  onMouseLeave={() => setHoverAction(null)}
+                  className={dim}
+                >
+                  <HoverIconButton
+                    baseIcon={reviewIcon}
+                    hoverIcon={reviewIconHover}
+                    successIcon={reviewIcon}
+                    failureIcon={reviewIcon}
+                    alt="Mark As Reviewed"
+                    onClick={onReviewClicked}
+                    disabled={!isEnabled}
+                    className="roundSmall"
+                    style={{ background: "transparent" }}
+                    hoverClassName="orangeIcon"
+                    title="Mark selected jobs as reviewed"
                   />
                 </div>
 

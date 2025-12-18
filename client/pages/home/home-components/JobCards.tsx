@@ -41,11 +41,11 @@ export function JobCard({
 }) {
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
-  const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(
-    !!job.reviewNeeded
-  );
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
+
+  const reviewClass = job.reviewNeeded ? "review" : "shadow";
 
   const [editHovered, setEditHovered] = useState(false);
   const [viewHovered, setViewHovered] = useState(false);
@@ -96,14 +96,13 @@ export function JobCard({
     },
   };
 
-  const messageForReview = localReviewNeeded
+  const messageForReview = job.reviewNeeded
     ? "This job requires your review."
     : "";
 
   const markAsReviewed = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    setLocalReviewNeeded(false);
 
     // mark job as reviewed
     try {
@@ -117,7 +116,6 @@ export function JobCard({
       setIsHovered(false);
     } catch (error) {
       console.error("Failed to mark job as reviewed:", error);
-      setLocalReviewNeeded(true); // keep the review needed state if API call fails
     }
   };
 
@@ -134,7 +132,7 @@ export function JobCard({
     return () => window.removeEventListener("keydown", onKey);
   }, [showDeleteConfirm]);
 
-  const needsReview = localReviewNeeded ? "review" : "shadow";
+  //const needsReview = localReviewNeeded ? "review" : "shadow";
 
   const closeDelete = () => {
     setShowDeleteConfirm(false);
@@ -162,7 +160,7 @@ export function JobCard({
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col job-card ${needsReview}`}
+      className={`w-full flex items-center flex flex-col job-card ${reviewClass}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -191,8 +189,8 @@ export function JobCard({
           height: 0,
         }}
         animate={{
-          opacity: localReviewNeeded ? 1 : 0,
-          height: localReviewNeeded ? "auto" : 0,
+          opacity: job.reviewNeeded ? 1 : 0,
+          height: job.reviewNeeded ? "auto" : 0,
         }}
         exit={{
           opacity: 0,
@@ -416,11 +414,11 @@ export function JobCard({
 
           {/* Mark as Reviewed button 
             If review needed show button */}
-          {localReviewNeeded && (
+          {job.reviewNeeded && (
             <motion.button
               type="button"
               className={`small w-full ${
-                localReviewNeeded ? "reviewed" : "hidden"
+                job.reviewNeeded ? "reviewed" : "hidden"
               }`}
               onClick={markAsReviewed}
               style={{ background: "transparent" }}
