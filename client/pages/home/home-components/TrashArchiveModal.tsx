@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import type { JobCardType } from "@/types/jobCardType";
 import ConfirmModal from "@/global-components/ConfirmModal";
@@ -110,10 +110,6 @@ export default function TrashArchiveModal({
     }
   }
 
-  function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (e.target === e.currentTarget) onClose();
-  }
-
   const title = mode === "trash" ? "Trash" : "Archive";
   const emptyMessage =
     mode === "trash" ? "No items in Trash" : "No items in Archive";
@@ -132,12 +128,7 @@ export default function TrashArchiveModal({
       : "Select All";
 
   return createPortal(
-    <div
-      className="modal-backdrop"
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-    >
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
       <div className="modal w-lg">
         <ModalHeader title={title} onClose={onClose} />
 
@@ -187,7 +178,7 @@ export default function TrashArchiveModal({
         <div className="flex justify-end gap-3">
           <button
             disabled={list.length === 0} // If there is nothing to select or clear disable the button
-            onClick={handleSelectAll}    // Select or Clear all items
+            onClick={handleSelectAll} // Select or Clear all items
             className=""
           >
             {selectAllLabel}
@@ -196,7 +187,7 @@ export default function TrashArchiveModal({
           {mode === "trash" ? (
             <>
               <button
-                disabled={list.length === 0 && selected.size === 0}  // If there is nothing to restore disable the button
+                disabled={list.length === 0 && selected.size === 0} // If there is nothing to restore disable the button
                 onClick={() => runAction("undelete")}
                 className="green"
               >
@@ -204,7 +195,7 @@ export default function TrashArchiveModal({
               </button>
 
               <button
-                disabled={list.length === 0 && selected.size === 0}  // If there is nothing to delete disable the button
+                disabled={list.length === 0 && selected.size === 0} // If there is nothing to delete disable the button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="red"
               >
@@ -214,7 +205,7 @@ export default function TrashArchiveModal({
           ) : (
             <>
               <button
-                disabled={list.length === 0 && selected.size === 0}  // If there is nothing to unarchive disable the button
+                disabled={list.length === 0 && selected.size === 0} // If there is nothing to unarchive disable the button
                 onClick={() => runAction("unarchive")}
                 className="green"
               >

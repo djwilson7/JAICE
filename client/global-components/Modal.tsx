@@ -10,12 +10,9 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, children, modalTitle }: ModalProps) {
   if (!isOpen) return null;
-  function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (e.target === e.currentTarget) onClose();
-  }
 
   return createPortal(
-    <div className="modal-backdrop" onClick={handleOverlayClick}>
+    <div className="modal-backdrop" >
       <div className="modal w-lg">
         <ModalHeader title={modalTitle} onClose={onClose} />
         <hr className="header-split" />

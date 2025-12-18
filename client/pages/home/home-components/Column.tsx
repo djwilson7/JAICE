@@ -1,11 +1,9 @@
-// import { localfiles } from "@/directory/path/to/localimport";
-
-import React, { useRef, useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import { motion } from "framer-motion";
-import RejectedIcon from "@/assets/icons/refresh.svg";
 import plusIcon from "@/assets/icons/plus.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
 import Button from "@/global-components/button";
+import { ColumnTitle } from "./ColumnTitle";
 
 interface ColumnProps {
   id: string;
@@ -15,8 +13,6 @@ interface ColumnProps {
   count: number;
   onDragEnter: (columnId: string) => void;
   onDragLeave: () => void;
-  reportHeight: (columnId: string, height: number) => void;
-  sharedHeight: number;
   viewportHeight: number;
   showToggleRejectButton?: boolean;
   onToggleReject?: () => void;
@@ -32,40 +28,23 @@ export function Column({
   count,
   onDragEnter,
   onDragLeave,
-  reportHeight,
-  sharedHeight,
   viewportHeight,
   showToggleRejectButton,
   onToggleReject,
   isHighlighted,
   openJobAppModal,
 }: ColumnProps) {
-  const columnRef = useRef<HTMLDivElement>(null); // Ref to the column div
+  const columnRef = useRef<HTMLDivElement>(null);
   const hasChildren = count > 0;
-
-  useEffect(() => {
-    const el = columnRef.current;
-    if (!el) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        reportHeight(id, entry.contentRect.height);
-      }
-    });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [id, reportHeight]);
 
   const columnStyle = {
     background: bg,
     width: "100%",
-    minWidth: "15rem",
-    minHeight: `${Math.max(sharedHeight, viewportHeight)}px`,
+    minWidth: "20rem",
+    minHeight: `${viewportHeight}px`,
     height: "auto",
   };
 
-  // useCallback is used to memoize the drag handlers to prevent unnecessary re-renders
   const handlePointerEnter = useCallback(() => {
     onDragEnter(id);
   }, [onDragEnter, id]);
@@ -74,12 +53,8 @@ export function Column({
     onDragLeave();
   }, [onDragLeave]);
 
-  // onPointerEnter and onPointerLeave are used to send the column id up to the parent for drag and drop handling
-  // layout is used for smooth animations when removing or adding job cards (drag and drop)
-  // React.Children.count(children) is the safe way to count the number of cards a columns has
   const highlightColumn = isHighlighted === id || isHighlighted === "all";
-  const [addButtonStyle, setAddButtonStyle] = useState("w-5 h-5");
-  const [hoverButtonStyle, setHoverButtonStyle] = useState("w-5 h-5");
+  const [addButtonStyle, setAddButtonStyle] = useState("w-3 h-3");
 
   function handleMouseOverAddButton() {
     setAddButtonStyle("w-7 h-7");
@@ -88,16 +63,6 @@ export function Column({
   function handleMouseOutAddButton() {
     setAddButtonStyle("w-5 h-5");
   }
-
-  function handleMouseOverCycleButton() {
-    setHoverButtonStyle("w-7 h-7");
-  }
-
-  function handleMouseOutCycleButton() {
-    setHoverButtonStyle("w-5 h-5");
-  }
-
-  // You can add any hover effect logic here if needed
 
   return (
     <>
@@ -110,8 +75,8 @@ export function Column({
         className={`flex flex-col m-2 p-2 animate-element corner-radius shadow ${
           highlightColumn ? "highlighted" : ""
         }`}
-        layout
         transition={{ type: "spring", stiffness: 120, damping: 18 }}
+        layout
       >
         <div className="flex relative items-center justify-between w-full h-[4rem] select-none">
           <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center">
@@ -131,31 +96,17 @@ export function Column({
               />
             </Button>
           </div>
-          <div className="flex w-full h-full items-center justify-center">
-            <h3>{title}</h3>
-          </div>
+
+          <ColumnTitle
+            title={title}
+            index={0}
+            onToggle={onToggleReject}
+            canToggle={showToggleRejectButton}
+          />
+
           <div className="flex absolute right-2 mx-2 h-full items-center justify-center ">
             <h3>{count}</h3>
           </div>
-          {showToggleRejectButton && onToggleReject && (
-            <div className="absolute right-[2em] mx-2 w-8 h-8 justify-center items-center">
-              <Button
-                type="button"
-                onClick={onToggleReject}
-                className="group roundSmall"
-                aria-label="Switch to Accepted/Rejected"
-                title="Switch to Accepted/Rejected"
-                onMouseEnter={handleMouseOverCycleButton}
-                onMouseLeave={handleMouseOutCycleButton}
-              >
-                <img
-                  src={RejectedIcon}
-                  alt="Switch toAccepted/Rejected"
-                  className={`${hoverButtonStyle} icon animate-element group-hover:rotate-180`}
-                />
-              </Button>
-            </div>
-          )}
         </div>
         <div className="flex border-b mx-4 mb-2" />
         <div className="flex flex-col items-center p-2 gap-4">

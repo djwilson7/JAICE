@@ -1189,6 +1189,11 @@ to an element (className="example").
   opacity: 0.5;
 }
 
+.vertical-divider {
+  border-left: 2px solid var(--gray-color);
+  height: 100%;
+}
+
 .brand-block {
   display: flex;
   width: 100%;
@@ -1271,7 +1276,44 @@ to an element (className="example").
   cursor: pointer;
 }
 
+.control-bar-container-red {
+  background: var(--red-color);
+  color: var(--white-color);
+}
+
 .control-bar-container:hover {
   box-shadow: var(--shadow-hover);
 }
+
+.control-bar-container-red:hover {
+  background: var(--white-color);
+  color: var(--red-color);
+}
+
+.connect-email-container {
+  border: 1px solid var(--primary-four);
+  border-radius: var(--corner-radius);
+  padding: 1rem;
+  background: var(--primary-gradient);
+  box-shadow: var(--shadow);
+}
+
+.drop-area {
+  background: var(--glass-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--animation-duration) ease;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.drop-area-shadow {
+  box-shadow: var(--shadow-hover);
+}
+
 /* Add more custom classes above this line */

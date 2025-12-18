@@ -18,7 +18,8 @@ import {
   RowItem,
   Row
 } from "./account-components/AccountSections";
-
+import linkIcon from "@/assets/icons/link.svg";
+import unlinkIcon from "@/assets/icons/unlink.svg";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -206,6 +207,9 @@ export function AccountPage() {
     ? "Unlink Gmail"
     : "Link Gmail";
 
+  const gmailButtonIcon = gmailConnected ? unlinkIcon : linkIcon;
+  const gmailButtonColor = gmailConnected ? "red" : "green";
+
   async function handleDelete() {
     setShowDeleteModal(true);
     return;
@@ -338,7 +342,12 @@ export function AccountPage() {
                 </div>
               </RowItem>
               <RowItem>
-                <Button onClick={handleShowModal} style={{ minWidth: "100%" }}>
+                <Button onClick={handleShowModal} className={`${gmailButtonColor}`} >
+                  <img 
+                    src={gmailButtonIcon}
+                    alt="Gmail Link Icon"
+                    className="w-5 h-5 icon mr-2"
+                  />
                   {gmailButtonText}
                 </Button>
               </RowItem>

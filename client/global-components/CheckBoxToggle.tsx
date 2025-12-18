@@ -39,7 +39,7 @@ export function CheckBoxToggle({
         title="Toggle Multi-Select"
         onChange={() => console.log("Checked Box")}
       />
-      <span className="cursor-pointer select-none">{label}</span>
+      <span className="cursor-pointer select-none whitespace-nowrap">{label}</span>
     </motion.div>
   );
 }

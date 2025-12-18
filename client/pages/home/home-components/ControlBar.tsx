@@ -7,16 +7,17 @@ import filterIcon from "@/assets/icons/filter.svg";
 // import infoIcon from "@/assets/icons/info.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
+import unlinkIcon from "@/assets/icons/unlink.svg";
+import linkIcon from "@/assets/icons/link.svg";
 import { AlertBox } from "@/pages/home/home-components/AlertBox";
 // import { InfoModal } from "@/global-components/InfoModal";
 // import { motion, AnimatePresence } from "framer-motion";
 // import { HomeInfoContent } from "@/pages/home/home-components/HomePageInfo";
-import { useEffect, useState } from "react";
-import { checkGmailStatus } from "../utils/checkGmailStatus";
-import { useNavigate } from "react-router";
-import Button from "@/global-components/button";
 import undoTrash from "@/assets/icons/trash-undo.svg";
 import viewArchive from "@/assets/icons/folder.svg";
+import { ControlBarButton } from "@/pages/home/home-components/ControlBarButton";
+import { useEffect, useState } from "react";
+import { checkGmailStatus } from "../utils/checkGmailStatus";
 
 interface ControlBarProps {
   isMultiSelecting: boolean;
@@ -33,6 +34,7 @@ interface ControlBarProps {
   setIsAlertOpen: (value: boolean) => void;
   alertMessage?: string;
 
+  setConnectEmailOpen: (value: boolean) => void;
   // infoModalLabel?: string;
   // isInfoModalOpen: boolean;
   // setInfoModalOpen: (value: boolean) => void;
@@ -56,6 +58,7 @@ export function ControlBar({
   setIsAlertOpen,
   alertMessage,
 
+  setConnectEmailOpen,
   // infoModalLabel,
   // isInfoModalOpen,
   // setInfoModalOpen,
@@ -63,13 +66,16 @@ export function ControlBar({
   onOpenTrash,
   onOpenArchive,
 }: ControlBarProps) {
-  const navigate = useNavigate();
-  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
   const [gmailError, setGmailError] = useState<string | null>(null);
 
   useEffect(() => {
     checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
+
+  const connectEmailIcon = gmailConnected ? linkIcon : unlinkIcon;
+  const connectEmailLabel = gmailConnected ? "Connected" : "Disconnected";
+  const connectEmailHoverColor = gmailConnected ? "greenIcon" : "redIcon";
 
   return (
     <div className="w-full h-[50px] justify-start">
@@ -86,36 +92,36 @@ export function ControlBar({
             alertMessage={alertMessage}
           />
         </div>
-        {!gmailConnected && (
-          <div className="flex flex-row items-center justify-center">
-            <div className="flex w-full p-2 items-center justify-evenly gap-4">
-              <div className="flex flex-col">
-                <h4 className="flex ">Your email isn't connected!</h4>
-                <small className="flex">
-                  To get the most out of JAICE, connect your email.
-                </small>
-              </div>
-              <div className="flex">
-                <Button onClick={() => navigate("/settings/account")}>
-                  Settings
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+
         {/* Interactive Functionality Components */}
-        <div className="flex gap-4 h-full justify-center items-center">
+        <div className="flex relative gap-4 h-full justify-center items-center">
+          <ControlBarButton
+            onClick={() => setConnectEmailOpen(true)}
+            icon={connectEmailIcon}
+            iconHoverColor={connectEmailHoverColor}
+            label={connectEmailLabel}
+            prominent={gmailConnected ? false : true}
+          />
+
           <SearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
-          <DropDownMenu
-            options={options}
-            selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
-            leftIcon={filterIcon}
+
+          <ControlBarButton
+            onClick={() => onOpenArchive?.()}
+            icon={viewArchive}
+            iconHoverColor={"orangeIcon"}
+            label="Archive"
           />
-          {/* Mutli Select Toggle */}
+
+          <ControlBarButton
+            onClick={() => onOpenTrash?.()}
+            icon={undoTrash}
+            iconHoverColor={"redIcon"}
+            label="Trash"
+          />
+
           <CheckBoxToggle
             label={"Multi-Select"}
             inactiveIcon={uncheckIcon}
@@ -123,40 +129,14 @@ export function ControlBar({
             isChecked={isMultiSelecting}
             setIsChecked={setIsMultiSelecting}
           />
-          {/* Undo Trash Button */}
-          <div>
-            <button
-              type="button"
-              className="icon-button"
-              title="View Trash"
-              onClick={() => onOpenTrash?.()}
-            >
-              <img
-                src={undoTrash}
-                alt="Undo Trash Icon"
-                className="w-5 h-5 icon"
-              />
-            </button>
-          </div>
 
-          {/* View Archive Button */}
-          <div>
-            <button
-              type="button"
-              aria-label="Archive Button"
-              className="icon-button"
-              title="View Archive"
-              onClick={() => onOpenArchive?.()}
-            >
-              <img
-                src={viewArchive}
-                alt="View Archive Icon"
-                className="w-5 h-5 icon"
-              />
-            </button>
-          </div>
+          <DropDownMenu
+            options={options}
+            selectedOption={selectedOption}
+            setSelectedOption={setSelectedOption}
+            leftIcon={filterIcon}
+          />
 
-          {/* Info Modal Toggle */}
           {/* <CheckBoxToggle
             label={infoModalLabel}
             inactiveIcon={infoIcon}
