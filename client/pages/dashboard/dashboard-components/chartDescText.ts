@@ -47,5 +47,12 @@ export const chartDescText: Record<string, {
         calculation: "Based on weekly application volume, follow-up actions, and consistency of activity over the rolling 90-day period.",
         interpretation: "Higher scores indicate stronger job search momentum. Aim to maintain or improve your score through regular activity.",
         notes: "Score tiers: Trailblazer (85+), Go-Getter (70-84), Fresh Starter (50-69), Rising Talent (<50)."
-    }
+    },
+
+     activityHeatmap: {
+        summary: "Visualizes your daily job application activity over the past 12 weeks in a calendar-style heatmap.",
+        calculation: "Each cell represents one day, with color intensity showing the number of applications submitted that day.",
+        interpretation: "Identify patterns in your job search consistency. Darker colors indicate higher activity. Use this to spot gaps, maintain momentum, and establish consistent application habits.",
+        notes: "Hover over any day to see the exact application count. Empty cells indicate days with no applications."
+     }
 };
