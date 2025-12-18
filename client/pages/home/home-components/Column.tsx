@@ -78,23 +78,23 @@ export function Column({
   // layout is used for smooth animations when removing or adding job cards (drag and drop)
   // React.Children.count(children) is the safe way to count the number of cards a columns has
   const highlightColumn = isHighlighted === id || isHighlighted === "all";
-  const [addButtonStyle, setAddButtonStyle] = useState("w-3 h-3");
-  const [hoverButtonStyle, setHoverButtonStyle] = useState("w-3 h-3");
+  const [addButtonStyle, setAddButtonStyle] = useState("w-5 h-5");
+  const [hoverButtonStyle, setHoverButtonStyle] = useState("w-5 h-5");
 
   function handleMouseOverAddButton() {
-    setAddButtonStyle("w-5 h-5");
+    setAddButtonStyle("w-7 h-7");
   }
 
   function handleMouseOutAddButton() {
-    setAddButtonStyle("w-3 h-3");
+    setAddButtonStyle("w-5 h-5");
   }
 
   function handleMouseOverCycleButton() {
-    setHoverButtonStyle("w-5 h-5");
+    setHoverButtonStyle("w-7 h-7");
   }
 
   function handleMouseOutCycleButton() {
-    setHoverButtonStyle("w-3 h-3");
+    setHoverButtonStyle("w-5 h-5");
   }
 
   // You can add any hover effect logic here if needed

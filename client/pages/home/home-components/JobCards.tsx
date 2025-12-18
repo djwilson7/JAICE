@@ -15,7 +15,6 @@ import reviewIcon from "@/assets/icons/reviewed.svg";
 import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
-import { multiFactor } from "firebase/auth";
 
 export function JobCard({
   job,
@@ -278,8 +277,13 @@ export function JobCard({
       >
         <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
+
           <small className="secondary-text font-semibold">
             {job.companyName ?? "Unknown Company"}
+          </small>
+
+          <small className="secondary-text font-semibold">
+            {"Salary: " + (job.salary ?? "Unknown Salary")}
           </small>
 
           <p className="primary-text">
