@@ -5,6 +5,7 @@ import { Card, ChartHost } from "./Card";
 import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
+import { chartDescText } from "./chartDescText";
 
 export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
@@ -18,7 +19,7 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
     async function fetchData() {
       try {
         const res = await api("/api/dashboard/avg-apps-per-week");
-        const data = res.data ?? res; 
+        const data = res.data ?? res;
 
         setLabels(data.labels ?? []);
         setValues(data.values ?? []);
@@ -58,36 +59,36 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
         pointRadius: 3,
         pointHoverRadius: 6,
         tension: 0.35,
-        fill: "start"
-      }
-    ]
+        fill: "start",
+      },
+    ],
   };
 
   const options: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "bottom", labels: { color: "#fff" }},
+      legend: { position: "bottom", labels: { color: "#fff" } },
       tooltip: {
         backgroundColor: "rgba(15,20,30,.95)",
         titleColor: "#fff",
         bodyColor: "#fff",
         borderColor: "rgba(255,255,255,.2)",
         borderWidth: 1,
-      }
+      },
     },
     scales: {
       x: {
         grid: { color: "rgba(255,255,255,.12)" },
-        ticks: { color: "rgba(255,255,255,.85)" }
+        ticks: { color: "rgba(255,255,255,.85)" },
       },
       y: {
         beginAtZero: true,
         suggestedMax: maxValue + 1,
         grid: { color: "rgba(255,255,255,.12)" },
-        ticks: { color: "rgba(255,255,255,.85)" }
-      }
-    }
+        ticks: { color: "rgba(255,255,255,.85)" },
+      },
+    },
   };
 
   return (
@@ -104,10 +105,15 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
         </ChartHost>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Avg Apps per Week">
-        <ChartHost>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Avg Apps per Week"
+        description={chartDescText.avgAppsPerWeek}
+      >
+        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
           <Line data={data} options={options} />
-        </ChartHost>
+        </div>
       </Modal>
     </>
   );

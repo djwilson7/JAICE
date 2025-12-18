@@ -3,6 +3,7 @@ import { Card, ChartHost } from "./Card";
 import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
+import { chartDescText } from "./chartDescText";
 
 type AvgStageAges = {
   applied: number;
@@ -169,11 +170,11 @@ export function AvgTimeInStageCard({
                 style={
                   isModal
                     ? {
-                        fontSize: "5.25rem", // ~text-5xl+
+                        fontSize: "5.25rem",
                         lineHeight: 1.05,
                       }
                     : {
-                        fontSize: "1.0rem", // ~text-2xl
+                        fontSize: "1.0rem",
                         lineHeight: 1.2,
                       }
                 }
@@ -208,8 +209,15 @@ export function AvgTimeInStageCard({
         <ChartHost>{renderSquares("card")}</ChartHost>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Avg Time in Stage">
-        <ChartHost>{renderSquares("modal")}</ChartHost>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Avg Time in Stage"
+        description={chartDescText.avgTimeInStage}
+      >
+        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
+          {renderSquares("modal")}
+        </div>
       </Modal>
     </>
   );

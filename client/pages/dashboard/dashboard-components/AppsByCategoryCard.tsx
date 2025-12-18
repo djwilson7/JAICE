@@ -6,6 +6,7 @@ import { Modal } from "./Modal";
 import { makeDarkOptions } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
+import { chartDescText } from "./chartDescText";
 
 type CategoryDatum = {
     category: string;
@@ -41,7 +42,6 @@ export function AppsByCategoryCard({
                 setLoading(true);
                 setError(null);
 
-                // ✅ USE THE JAICE API CLIENT (handles base URL + RLS + auth)
                 const res = await api("/api/dashboard/apps-by-category", {
                     method: "GET",
                 });
@@ -74,7 +74,7 @@ export function AppsByCategoryCard({
 
     const colors = {
         // Per-bar colors cycling through the stage palette
-        barFill: labels.map((_, i) => `${stagePalette[i % stagePalette.length]}88`), // 88 = slight transparency
+        barFill: labels.map((_, i) => `${stagePalette[i % stagePalette.length]}88`),
         barBorder: labels.map((_, i) => stagePalette[i % stagePalette.length]),
 
         grid: "rgba(148,163,184,0.18)",
@@ -83,7 +83,6 @@ export function AppsByCategoryCard({
         axis: "rgba(203,213,225,0.35)",
         tooltipBg: "rgba(17,24,39,0.95)",
     };
-
 
     const maxValue = values.length ? Math.max(...values) : 0;
 
@@ -179,8 +178,15 @@ export function AppsByCategoryCard({
                 <ChartHost>{content()}</ChartHost>
             </Card>
 
-            <Modal open={open} onClose={() => setOpen(false)} title="Apps by Category">
-                <ChartHost>{content()}</ChartHost>
+            <Modal
+                open={open}
+                onClose={() => setOpen(false)}
+                title="Apps by Category"
+                description={chartDescText.applicationsByCategory}
+            >
+                <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
+                    {content()}
+                </div>
             </Modal>
         </>
     );

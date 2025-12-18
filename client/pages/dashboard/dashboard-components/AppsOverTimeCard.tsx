@@ -5,6 +5,7 @@ import { applyChartDefaults } from "./chartSetup";
 import { Modal } from "./Modal";
 import { api } from "@/global-services/api";
 import Button from "@/global-components/button";
+import { chartDescText } from "./chartDescText";
 
 type RangeOptions = 3 | 7 | 14 | 30 | 45 | 90;
 const RANGES: RangeOptions[] = [3, 7, 14, 30, 45, 90];
@@ -72,7 +73,7 @@ export function AppsOverTimeCard({
         setOffer(d.offer ?? []);
         setAccepted(d.accepted ?? []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data",);
+        setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
         if (alive) setLoading(false);
       }
@@ -188,13 +189,20 @@ export function AppsOverTimeCard({
         </ChartHost>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Stages Over Time">
-        <div className="px-4 pt-2">
-          <RangeSelector range={range} onChange={setRange} />
-        </div>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Stages Over Time"
+        description={chartDescText.stagesOverTime}
+      >
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "0 1rem" }}>
+          <div style={{ flexShrink: 0, paddingTop: "0.5rem" }}>
+            <RangeSelector range={range} onChange={setRange} />
+          </div>
 
-        <div className="h-[60vh] px-4 pb-4">
-          <Line data={data} options={options} />
+          <div style={{ flex: 1, minHeight: 0, paddingBottom: "1rem" }}>
+            <Line data={data} options={options} />
+          </div>
         </div>
       </Modal>
     </>
