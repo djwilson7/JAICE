@@ -29,7 +29,6 @@ import undo from "@/assets/icons/undo-alt.svg";
 import redo from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
 import ConnectEmailModal from "./home-components/ConnectEmailModal";
-import { it } from "node:test";
 
 // import { fetchJobById } from "@/global-services/database";
 
