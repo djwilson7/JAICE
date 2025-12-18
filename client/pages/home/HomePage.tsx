@@ -513,22 +513,6 @@ export function HomePage() {
     isOverRef.current = null;
   };
 
-  const [columnHeights, setColumnHeights] = useState<Record<string, number>>(
-    {}
-  );
-
-  const sharedHeight = useMemo(
-    () => Math.max(0, ...Object.values(columnHeights)),
-    [columnHeights]
-  );
-
-  const handleReportHeight = useCallback((columnId: string, height: number) => {
-    setColumnHeights((prev) => {
-      if (prev[columnId] === height) return prev;
-      return { ...prev, [columnId]: height };
-    });
-  }, []);
-
   // track whether the Accepted column has been switched to Rejected
   const [acceptedSwitchedToRejected, setAcceptedSwitchedToRejected] =
     useState(true);
@@ -1156,7 +1140,7 @@ export function HomePage() {
               onOpenArchive={openArchive}
             />
             {/* Kan Ban Columns */}
-            <div className="flex gap-4 w-full">
+            <div className="flex align-items:stretch gap-4 w-full">
               {columnConfig.map(
                 (
                   column // iterate over each column in the config
@@ -1169,8 +1153,6 @@ export function HomePage() {
                     count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
                     onDragEnter={handleDragEnterColumn} // pass down drag enter handler
                     onDragLeave={handleDragLeaveColumn} // pass down drag leave handler
-                    sharedHeight={sharedHeight}
-                    reportHeight={handleReportHeight}
                     viewportHeight={viewportHeight}
                     showToggleRejectButton={
                       column.id === "accepted" || column.id === "rejected"
@@ -1179,7 +1161,7 @@ export function HomePage() {
                     isHighlighted={isHighlighted}
                     openJobAppModal={openJobAppModal}
                   >
-                    {jobsByColumn[column.id]}{" "}
+                    {jobsByColumn[column.id]}
                     {/* render the JobCards associated with the columns id */}
                   </Column>
                 )
