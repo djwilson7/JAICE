@@ -4,6 +4,7 @@ import undoIcon from "@/assets/icons/undo-alt.svg";
 import redoIcon from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
 import type { JobCardType } from "@/types/jobCardType";
+import { api } from "@/global-services/api";
 
 export function UndoRedo() {
   const { hasUndo, hasRedo, undo, redo } = useUndoRedo();
@@ -15,16 +16,33 @@ export function UndoRedo() {
   }
 
   const handleSnapshot = async (snapshot: JobCardType[]) => {
-    await fetch("/api/jobs/snapshot-update", {
+    console.log("Applying snapshot with", snapshot.length, "jobs");
+
+    const mappedJobs = snapshot.map((j) => ({
+      title: j.title ?? "Title",
+      company_name: j.companyName ?? "Company",
+      app_stage: j.applicationStage ?? "Applied",
+      salary: j.salary ? parseFloat(j.salary) : 0,
+      received_at: j.receivedAtRaw ?? new Date().toISOString(),
+      note: j.notes ?? "",
+      is_deleted: j.isDeleted ?? false,
+      is_archived: j.isArchived ?? false,
+      needs_review: j.reviewNeeded ?? false,
+      provider_message_id: j.id,
+    }));
+
+    const res = await api("/api/jobs/snapshot-update", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ jobs: snapshot }),
+      body: JSON.stringify({ jobs: mappedJobs }),
     });
+
+    if (!(res && res.status === "success")) {
+      console.error("Snapshot update failed", res);
+    }
   };
 
   const handleUndo = async () => {
+    console.log("Undo action triggered");
     const snapshot = undo();
     if (!snapshot) return;
     try {
@@ -35,6 +53,7 @@ export function UndoRedo() {
   };
 
   const handleRedo = async () => {
+    console.log("Redo action triggered");
     const snapshot = redo();
     if (!snapshot) return;
     try {
