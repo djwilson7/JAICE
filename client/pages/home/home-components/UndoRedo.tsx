@@ -3,15 +3,46 @@ import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
 import undoIcon from "@/assets/icons/undo-alt.svg";
 import redoIcon from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
+import type { JobCardType } from "@/types/jobCardType";
 
 export function UndoRedo() {
-  const { hasUndo, hasRedo, performUndo, performRedo } = useUndoRedo();
+  const { hasUndo, hasRedo, undo, redo } = useUndoRedo();
   const { isMultiSelecting } = useIsMultiSelecting();
   const showUndoRedo = hasUndo || hasRedo;
 
   if (!showUndoRedo || isMultiSelecting) {
     return null;
   }
+
+  const handleSnapshot = async (snapshot: JobCardType[]) => {
+    await fetch("/api/jobs/snapshot-update", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ jobs: snapshot }),
+    });
+  };
+
+  const handleUndo = async () => {
+    const snapshot = undo();
+    if (!snapshot) return;
+    try {
+      await handleSnapshot(snapshot.before);
+    } catch (err) {
+      console.error("Undo failed", err);
+    }
+  };
+
+  const handleRedo = async () => {
+    const snapshot = redo();
+    if (!snapshot) return;
+    try {
+      await handleSnapshot(snapshot.after);
+    } catch (err) {
+      console.error("Redo failed", err);
+    }
+  };
 
   return (
     <div className="glass" role="status" aria-live="polite">
@@ -21,7 +52,7 @@ export function UndoRedo() {
       >
         <Button
           type="button"
-          onClick={performUndo}
+          onClick={handleUndo}
           aria-label="Undo last action"
           disabled={!hasUndo}
           className="undoRedo"
@@ -36,7 +67,7 @@ export function UndoRedo() {
       >
         <Button
           type="button"
-          onClick={performRedo}
+          onClick={handleRedo}
           aria-label="Redo last action"
           disabled={!hasRedo}
           className="undoRedo"
