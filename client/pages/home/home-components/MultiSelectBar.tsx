@@ -17,15 +17,9 @@ import { useSelectedJobs } from "../hooks/useSelectedJobs";
 import { useUndoRedo } from "../hooks/useUndoRedo";
 
 export function MultiSelectBar({
-  onDelete,
-  onArchive,
-  onMove,
   className,
   setIsHighlighted,
 }: {
-  onDelete: (ids: string[]) => Promise<boolean>;
-  onArchive: (ids: string[]) => Promise<boolean>;
-  onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
   setIsHighlighted: (stage: string | null) => void;
 }) {
@@ -58,18 +52,19 @@ export function MultiSelectBar({
         app_stage: targetStage,
       })); // Capture state after move
 
-      if (onMove) {
-        await onMove(jobIds, targetStage);
-      } else {
-        await api("/api/jobs/update-stage", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-            app_stage: targetStage,
-          }),
-        });
-      }
-      pushUndo({ label: "moveMultiple", before: beforeJobState, after: afterActionJobState });
+      await api("/api/jobs/update-stage", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+          app_stage: targetStage,
+        }),
+      });
+
+      pushUndo({
+        label: "moveMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
       console.log(`Moved ${selectedCount} jobs to ${targetStage}.`);
       setSelectedJobs([]);
       setShowMoveOptions(false);
@@ -134,17 +129,20 @@ export function MultiSelectBar({
         ...job,
         isArchived: true,
       })); // Capture state after archive
-      if (onArchive) {
-        await onArchive(jobIds);
-        pushUndo({ label: "archiveMultiple", before: beforeJobState, after: afterActionJobState });
-      } else {
-        await api("/api/jobs/set-archive", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-          }),
-        });
-      }
+
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+        }),
+      });
+
+      pushUndo({
+        label: "archiveMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
+
       console.log("Archived selected jobs successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
@@ -162,18 +160,21 @@ export function MultiSelectBar({
       const afterActionJobState = selectedJobs.map((job) => ({
         ...job,
         isDeleted: true,
-      })); 
-      if (onDelete) {
-        await onDelete(jobIds);
-        pushUndo({ label: "deleteMultiple", before: beforeJobState, after: afterActionJobState }); // Push undo action here
-      } else {
-        await api("/api/jobs/set-delete", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-          }),
-        });
-      }
+      }));
+
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+        }),
+      });
+
+      pushUndo({
+        label: "deleteMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
+
       console.log("Deleted selected jobs successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
