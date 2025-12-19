@@ -489,13 +489,18 @@ async def permanent_delete_jobs(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post(
-    "/snapshot-update", summary="Perfoms a batch update for snapshot undo/redo"
-)
+@router.post("/snapshot-update", summary="Batch update jobs for undo/redo")
 async def snapshot_update_jobs(
     payload: dict = Body(...),
     user: dict = Depends(get_current_user),
 ):
+    """
+    Expected payload:
+        - jobs: list of job snapshots
+          Each job should include:
+          provider_message_id, title, company_name, app_stage,
+          salary, received_at, note, is_deleted, is_archived, needs_review
+    """
     trace_id = str(uuid.uuid4())
     uid = user.get("uid")
     jobs = payload.get("jobs")
@@ -503,70 +508,60 @@ async def snapshot_update_jobs(
     if not jobs or not isinstance(jobs, list):
         raise HTTPException(status_code=400, detail="jobs[] is required")
 
-    provider_ids = [j.get("provider_message_id") for j in jobs]
-    if any(not pid for pid in provider_ids):
-        raise HTTPException(status_code=400, detail="Missing provider_message_id")
-
-    # Build a temp table style update using UNNEST
-    query = """
-    UPDATE public.job_applications AS ja
-    SET
-        title = src.title,
-        company_name = src.company_name,
-        app_stage = src.app_stage,
-        salary = src.salary,
-        received_at = src.received_at,
-        note = src.note,
-        is_deleted = src.is_deleted,
-        is_archived = src.is_archived,
-        needs_review = src.needs_review,
-        updated_at = now()
-    FROM (
-        SELECT
-            UNNEST($1::text[])  AS provider_message_id,
-            UNNEST($2::text[])  AS title,
-            UNNEST($3::text[])  AS company_name,
-            UNNEST($4::text[])  AS app_stage,
-            UNNEST($5::numeric[]) AS salary,
-            UNNEST($6::date[])  AS received_at,
-            UNNEST($7::text[])  AS note,
-            UNNEST($8::boolean[]) AS is_deleted,
-            UNNEST($9::boolean[]) AS is_archived,
-            UNNEST($10::boolean[]) AS needs_review
-    ) AS src
-    WHERE ja.provider_message_id = src.provider_message_id
-      AND ja.user_uid = $11
-    RETURNING ja.*;
-    """
-
-    def col(name, default=None):
-        return [j.get(name, default) for j in jobs]
-
+    updated_rows = []
     try:
         async with get_connection() as conn:
-            rows = await conn.fetch(
-                query,
-                col("provider_message_id"),
-                col("title"),
-                col("company_name"),
-                col("app_stage"),
-                col("salary"),
-                col("received_at"),
-                col("note"),
-                col("is_deleted", False),
-                col("is_archived", False),
-                col("needs_review", False),
-                uid,
-            )
+            for job in jobs:
+                logging.info("Updating job snapshot:", job)
+                pid = job.get("provider_message_id")
+                if not pid:
+                    raise HTTPException(
+                        status_code=400, detail="Missing provider_message_id"
+                    )
 
-        logging.info(f"[{trace_id}] Bulk overwrote {len(rows)} job(s) for user {uid}")
+                query = """
+                    UPDATE public.job_applications
+                    SET
+                        title = $1,
+                        company_name = $2,
+                        app_stage = $3,
+                        salary = $4,
+                        received_at = $5,
+                        note = $6,
+                        is_deleted = $7,
+                        is_archived = $8,
+                        needs_review = $9,
+                        updated_at = now()
+                    WHERE provider_message_id = $10
+                      AND user_uid = $11
+                    RETURNING *;
+                """
+
+                row = await conn.fetchrow(
+                    query,
+                    job.get("title"),
+                    job.get("company_name"),
+                    job.get("app_stage"),
+                    job.get("salary"),
+                    job.get("received_at"),
+                    job.get("note"),
+                    job.get("is_deleted", False),
+                    job.get("is_archived", False),
+                    job.get("needs_review", False),
+                    pid,
+                    uid,
+                )
+                if row:
+                    updated_rows.append(dict(row))
+
+        logging.info(f"[{trace_id}] Updated {len(updated_rows)} job(s) for user {uid}")
 
         return {
             "status": "success",
-            "count": len(rows),
-            "updated": [dict(r) for r in rows],
+            "count": len(updated_rows),
+            "updated": updated_rows,
         }
 
     except Exception as e:
-        logging.error(f"[{trace_id}] Bulk overwrite failed: {e}")
+        logging.error(f"[{trace_id}] Snapshot update failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
