@@ -1,4 +1,4 @@
-import { useContext, useCallback } from "react";
+import { useContext } from "react";
 import {
   UndoRedoContext,
   type UndoRedoContextType,
@@ -11,28 +11,5 @@ export function useUndoRedo(): UndoRedoContextType {
     throw new Error("useUndoRedo must be used within an UndoRedoProvider");
   }
 
-  const {
-    undoStack,
-    redoStack,
-    pushUndo,
-    performUndo,
-    performRedo,
-    isUndoRedoAvailable,
-    hasUndo,
-    hasRedo,
-  } = context;
-
-  const undo = useCallback(() => performUndo(), [performUndo]);
-  const redo = useCallback(() => performRedo(), [performRedo]);
-
-  return {
-    undoStack,
-    redoStack,
-    pushUndo,
-    performUndo: undo,
-    performRedo: redo,
-    isUndoRedoAvailable,
-    hasRedo,
-    hasUndo,
-  };
+  return context;
 }
