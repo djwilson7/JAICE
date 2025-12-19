@@ -6,3 +6,9 @@ export type UndoAction =
   | { type: "deleteMultiple"; jobs: JobCardType[] }
   | { type: "moveMultiple"; jobs: JobCardType[]; to: string }
   | { type: "archiveMultiple"; jobs: JobCardType[] };
+
+export type SnapShotAction = {
+  before: JobCardType[];
+  after: JobCardType[];
+  label?: string;
+};
