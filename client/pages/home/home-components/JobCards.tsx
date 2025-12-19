@@ -17,29 +17,28 @@ import { useContext } from "react";
 import { MultiSelectContext } from "../contexts/MultiSelectContext";
 import { useSelectedJobs } from "../hooks/useSelectedJobs";
 import { useDeleteByJobId } from "../hooks/useDeleteByJobId";
+import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
 
 export function JobCard({
   job,
   onDragStart,
   onDragEnd,
   dimmed,
-  isDeleting,
-  setIsDeleting,
   openJobAppModal,
 }: {
   job: JobCardType;
   onDragStart: (job: JobCardType) => void;
   onDragEnd: () => void;
   dimmed: boolean;
-  isDeleting: boolean;
-  setIsDeleting: (isDeleting: boolean) => void;
   openJobAppModal: (job: JobCardType) => void;
 }) {
   const { isMultiSelecting } = useContext(MultiSelectContext);
   const { toggleJobSelection } = useSelectedJobs();
   const { deleteJob } = useDeleteByJobId();
+  const { pushUndo } = useUndoRedo();
 
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
   const [localReviewNeeded, setLocalReviewNeeded] = useState<boolean>(
     !!job.reviewNeeded
@@ -146,6 +145,8 @@ export function JobCard({
     e.stopPropagation();
 
     try {
+      const beforeJobState = [job];
+      const afterJobState =   [ { ...job, isArchived: true } ];
       await api("/api/jobs/set-archive", {
         method: "POST",
         body: JSON.stringify({
@@ -153,6 +154,7 @@ export function JobCard({
         }),
       });
       setIsHovered(false);
+      pushUndo({ label: "Archive", before: beforeJobState, after: afterJobState });
     } catch (error) {
       console.error("Failed to archive job:", error);
     }
