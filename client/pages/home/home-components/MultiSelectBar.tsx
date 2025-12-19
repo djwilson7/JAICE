@@ -14,6 +14,7 @@ import { api } from "@/global-services/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { useIsMultiSelecting } from "../hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "../hooks/useSelectedJobs";
+import { useUndoRedo } from "../hooks/useUndoRedo";
 
 export function MultiSelectBar({
   onDelete,
@@ -30,9 +31,10 @@ export function MultiSelectBar({
 }) {
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
+  const { pushUndo } = useUndoRedo();
 
   if (!isMultiSelecting) return null;
-  
+
   const [hoverAction, setHoverAction] = useState<
     | "move"
     | "archive"
@@ -50,6 +52,12 @@ export function MultiSelectBar({
   const handleMove = async (targetStage: string) => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
+      const beforeJobState = [...selectedJobs]; // Capture state before move
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        app_stage: targetStage,
+      })); // Capture state after move
+
       if (onMove) {
         await onMove(jobIds, targetStage);
       } else {
@@ -61,6 +69,7 @@ export function MultiSelectBar({
           }),
         });
       }
+      pushUndo({ label: "moveMultiple", before: beforeJobState, after: afterActionJobState });
       console.log(`Moved ${selectedCount} jobs to ${targetStage}.`);
       setSelectedJobs([]);
       setShowMoveOptions(false);
@@ -120,8 +129,14 @@ export function MultiSelectBar({
   const onArchiveClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
+      const beforeJobState = [...selectedJobs]; // Capture state before archive
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        isArchived: true,
+      })); // Capture state after archive
       if (onArchive) {
         await onArchive(jobIds);
+        pushUndo({ label: "archiveMultiple", before: beforeJobState, after: afterActionJobState });
       } else {
         await api("/api/jobs/set-archive", {
           method: "POST",
@@ -143,9 +158,14 @@ export function MultiSelectBar({
   const onDeleteClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-
+      const beforeJobState = [...selectedJobs];
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        isDeleted: true,
+      })); 
       if (onDelete) {
         await onDelete(jobIds);
+        pushUndo({ label: "deleteMultiple", before: beforeJobState, after: afterActionJobState }); // Push undo action here
       } else {
         await api("/api/jobs/set-delete", {
           method: "POST",
@@ -258,36 +278,35 @@ export function MultiSelectBar({
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
               >
-                {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map((stage) => (
-                  <div
-                    onMouseEnter={() =>
-                      setHoverAction(`${stage}`.toLowerCase() as any)
-                    }
-                    onMouseLeave={() => setHoverAction(null)}
-                    className={`${labelDim} ${
-                      hoverAction === `${stage}`.toLowerCase()
-                        ? "highlighted"
-                        : ""
-                    }`}
-                  >
-                    <Button
-                      key={stage}
-                      onClick={() => handleMove(stage)}
-                      className={`ovalSmall`}
-                      style={{ background: "transparent" }}
+                {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map(
+                  (stage) => (
+                    <div
+                      onMouseEnter={() =>
+                        setHoverAction(`${stage}`.toLowerCase() as any)
+                      }
+                      onMouseLeave={() => setHoverAction(null)}
+                      className={`${labelDim} ${
+                        hoverAction === `${stage}`.toLowerCase()
+                          ? "highlighted"
+                          : ""
+                      }`}
                     >
-                      <p className="animate-element primary-text">
-                        {stage}
-                      </p>
-                    </Button>
-                  </div>
-                ))}
+                      <Button
+                        key={stage}
+                        onClick={() => handleMove(stage)}
+                        className={`ovalSmall`}
+                        style={{ background: "transparent" }}
+                      >
+                        <p className="animate-element primary-text">{stage}</p>
+                      </Button>
+                    </div>
+                  )
+                )}
                 <div className={dim}>
                   <Button
                     onClick={() => setShowMoveOptions(false)}
                     className="roundSmall"
                     style={{ background: "transparent" }}
-                    
                   >
                     <img
                       src={upIcon}
