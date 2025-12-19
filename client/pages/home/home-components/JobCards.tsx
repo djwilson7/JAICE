@@ -16,13 +16,13 @@ import archiveIcon from "@/assets/icons/folder.svg";
 import { useContext } from "react";
 import { MultiSelectContext } from "../contexts/MultiSelectContext";
 import { useSelectedJobs } from "../hooks/useSelectedJobs";
+import { useDeleteByJobId } from "../hooks/useDeleteByJobId";
 
 export function JobCard({
   job,
   onDragStart,
   onDragEnd,
   dimmed,
-  onDelete,
   isDeleting,
   setIsDeleting,
   openJobAppModal,
@@ -31,13 +31,13 @@ export function JobCard({
   onDragStart: (job: JobCardType) => void;
   onDragEnd: () => void;
   dimmed: boolean;
-  onDelete?: (id: string) => Promise<boolean>;
   isDeleting: boolean;
   setIsDeleting: (isDeleting: boolean) => void;
   openJobAppModal: (job: JobCardType) => void;
 }) {
   const { isMultiSelecting } = useContext(MultiSelectContext);
   const { toggleJobSelection } = useSelectedJobs();
+  const { deleteJob } = useDeleteByJobId();
 
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
@@ -449,7 +449,7 @@ export function JobCard({
           setIsProcessingDelete(true);
 
           try {
-            if (onDelete) await onDelete(job.id);
+            await deleteJob(job);
           } finally {
             setIsProcessingDelete(false);
             closeDelete();
