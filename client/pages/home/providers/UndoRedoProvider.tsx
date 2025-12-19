@@ -4,97 +4,79 @@ import {
   UndoRedoContext,
   type UndoRedoContextType,
 } from "@/pages/home/contexts/UndoRedoContext";
-import type { UndoAction } from "@/types/undoAction";
+import type { SnapShotAction } from "@/types/undoAction";
 
 type UndoRedoProviderProps = {
   children: React.ReactNode;
 };
 
 export function UndoRedoProvider({ children }: UndoRedoProviderProps) {
-  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
-  const [redoStack, setRedoStack] = useState<UndoAction[]>([]);
+  const [undoStack, setUndoStack] = useState<SnapShotAction[]>([]);
+  const [redoStack, setRedoStack] = useState<SnapShotAction[]>([]);
 
-  const undoRef = useRef<UndoAction[]>([]);
-  const redoRef = useRef<UndoAction[]>([]);
+  const undoRef = useRef<SnapShotAction[]>([]);
+  const redoRef = useRef<SnapShotAction[]>([]);
 
-  const isUndoRedoAvailable = undoStack.length > 0 || redoStack.length > 0;
-  
-  const hasUndo = undoRef.current.length > 0;
-  const hasRedo = redoRef.current.length > 0;
-
-  const pushUndo = useCallback((action: UndoAction) => {
-    console.log("Pushing undo action:", action);
+  const pushUndo = useCallback((action: SnapShotAction) => {
     setUndoStack((prev) => {
       const next = [...prev, action];
       undoRef.current = next;
-      console.log("Updated undo stack:", next.length);
       return next;
     });
 
+    // Clear redo on new action
     setRedoStack([]);
     redoRef.current = [];
   }, []);
 
-  const popUndo = useCallback((): UndoAction | undefined => {
-    const prevStack = undoRef.current;
-    if (!prevStack.length) return undefined;
+  const undo = useCallback((): SnapShotAction | undefined => {
+    const stack = undoRef.current;
+    if (!stack.length) return;
 
-    const action = prevStack[prevStack.length - 1];
-    const nextStack = prevStack.slice(0, prevStack.length - 1);
+    const action = stack[stack.length - 1];
+    const next = stack.slice(0, -1);
 
-    undoRef.current = nextStack;
-    setUndoStack(nextStack);
-
-    return action;
-  }, []);
-
-  const popRedo = useCallback((): UndoAction | undefined => {
-    const prevStack = redoRef.current;
-    if (!prevStack.length) return undefined;
-
-    const action = prevStack[prevStack.length - 1];
-    const nextStack = prevStack.slice(0, prevStack.length - 1);
-
-    redoRef.current = nextStack;
-    setRedoStack(nextStack);
-
-    return action;
-  }, []);
-
-  const performUndo = useCallback(() => {
-    const action = popUndo();
-    if (!action) return;
+    undoRef.current = next;
+    setUndoStack(next);
 
     setRedoStack((prev) => {
-      console.log("Pushing redo action:", action);
-      const next = [...prev, action];
-      redoRef.current = next;
-      return next;
+      const redoNext = [...prev, action];
+      redoRef.current = redoNext;
+      return redoNext;
     });
 
-  }, [popUndo]);
+    return action;
+  }, []);
 
-  const performRedo = useCallback(() => {
-    const action = popRedo();
-    if (!action) return;
+  const redo = useCallback((): SnapShotAction | undefined => {
+    const stack = redoRef.current;
+    if (!stack.length) return;
+
+    const action = stack[stack.length - 1];
+    const next = stack.slice(0, -1);
+
+    redoRef.current = next;
+    setRedoStack(next);
 
     setUndoStack((prev) => {
-      const next = [...prev, action];
-      undoRef.current = next;
-      return next;
+      const undoNext = [...prev, action];
+      undoRef.current = undoNext;
+      return undoNext;
     });
 
-  }, [popRedo]);
+    return action;
+  }, []);
 
   const value: UndoRedoContextType = {
-    undoStack,
-    redoStack,
     pushUndo,
-    performUndo,
-    performRedo,
-    isUndoRedoAvailable,
-    hasUndo,
-    hasRedo
+    undo,
+    redo,
+    get hasUndo() {
+      return undoRef.current.length > 0;
+    },
+    get hasRedo() {
+      return redoRef.current.length > 0;
+    },
   };
 
   return (
