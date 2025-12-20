@@ -26,7 +26,7 @@ import { useRealtimeJobs } from "./hooks/useRealTimeJobs";
 import { useKanbanColumns } from "./hooks/useKanbanColumns";
 import { useKanbanJobs } from "@/pages/home/hooks/useKanbanJobs";
 import { useJobActions } from "./hooks/useJobAction";
-import { HomePageContent } from "./home-components/HomePageContent";
+import { HomePageContentProviders } from "./home-components/HomePageContentProviders";
 import TrashArchiveModal from "@/pages/home/home-components/TrashArchiveModal";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
 import ConnectEmailModal from "./home-components/ConnectEmailModal";
@@ -104,7 +104,7 @@ export function HomePage() {
       {isLoading ? (
         <LoadingAnimation />
       ) : (
-        <HomePageContent>
+        <HomePageContentProviders>
           {/* ^ Page Container ^ */}
           <PageContent>
             {/* Control Bar */}
@@ -192,7 +192,7 @@ export function HomePage() {
             items={archive.items}
             onAction={archive.handleAction}
           />
-        </HomePageContent>
+        </HomePageContentProviders>
       )}
     </AnimatePresence>
   );

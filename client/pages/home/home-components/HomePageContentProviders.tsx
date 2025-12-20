@@ -4,7 +4,11 @@ import { UndoRedoProvider } from "@/pages/home/providers/UndoRedoProvider";
 import { DragProvider } from "@/pages/home/providers/DragProvider";
 import { SelectedJobsProvider } from "../providers/SelectedJobsProvider";
 
-export function HomePageContent({ children }: { children: React.ReactNode }) {
+export function HomePageContentProviders({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <motion.div
       key="content"
@@ -16,9 +20,7 @@ export function HomePageContent({ children }: { children: React.ReactNode }) {
       <MultiSelectProvider>
         <UndoRedoProvider>
           <DragProvider>
-            <SelectedJobsProvider>
-                {children}
-            </SelectedJobsProvider>
+            <SelectedJobsProvider>{children}</SelectedJobsProvider>
           </DragProvider>
         </UndoRedoProvider>
       </MultiSelectProvider>
