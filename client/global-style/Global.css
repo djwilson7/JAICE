@@ -1061,6 +1061,63 @@ to an element (className="example").
   margin: 1rem;
 }
 
+.modal-description-toggle {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(var(--primary-five-rgb), 0.05);
+  border: 1px solid rgba(var(--primary-five-rgb), 0.15);
+  border-radius: 8px;
+  color: var(--primary-five);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--animation-duration) ease;
+  display: flex;
+  align-items: center;
+}
+
+.modal-description-toggle:hover {
+  background: rgba(var(--primary-five-rgb), 0.08);
+  border-color: rgba(var(--primary-five-rgb), 0.25);
+}
+
+.modal-description {
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(var(--primary-five-rgb), 0.03);
+  border: 1px solid rgba(var(--primary-five-rgb), 0.12);
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+.modal-description-summary {
+  color: var(--primary-five);
+  margin-bottom: 0.75rem;
+  opacity: 0.95;
+}
+
+.modal-description-detail {
+  color: var(--primary-five);
+  font-size: calc(var(--fs-caption) * 0.95);
+  margin-bottom: 0.65rem;
+  opacity: 0.85;
+}
+
+.modal-description-label {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.modal-description-note {
+  color: var(--primary-five);
+  font-size: calc(var(--fs-caption) * 0.9);
+  font-style: italic;
+  opacity: 0.7;
+}
+
 /* Icon Filter and Color Overrides */
 .icon {
   filter: var(--icon-filter);

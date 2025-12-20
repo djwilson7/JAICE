@@ -6,6 +6,7 @@ type Size = "sm" | "md" | "lg";
 export type CardProps = {
     title?: string;
     subtitle?: string;
+    titleIcon?: React.ReactNode;
     className?: string;
     children: React.ReactNode;
     footer?: React.ReactNode;
@@ -38,7 +39,7 @@ function useCardStyles(variant: Variant, rounded: boolean) {
 }
 
 export function Card({
-    title, subtitle, className = "", children, footer,
+    title, subtitle, titleIcon, className = "", children, footer,
     variant = "teal", size = "md", height, rounded = true,
     expandable, onExpand }: CardProps) {
     const style = useCardStyles(variant, rounded);
@@ -66,15 +67,18 @@ export function Card({
             {(title || subtitle) && (
                 <header style={{ marginBottom: 10, textAlign: "center" }}>
                     {title && (
-                        <h2 style={{
-                            fontFamily: "var(--font-title)",
-                            fontSize: "var(--fs-headline)",
-                            letterSpacing: "0.5px",
-                            margin: "2px 0 6px",
-                        }}
-                        >
-                            {title}
-                        </h2>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                            <h2 style={{
+                                fontFamily: "var(--font-title)",
+                                fontSize: "var(--fs-headline)",
+                                letterSpacing: "0.5px",
+                                margin: "2px 0 6px",
+                            }}
+                            >
+                                {title}
+                            </h2>
+                            {titleIcon && <div style={{ display: "flex", alignItems: "center" }}>{titleIcon}</div>}
+                        </div>
                     )}
                     {subtitle && (
                         <div style={{

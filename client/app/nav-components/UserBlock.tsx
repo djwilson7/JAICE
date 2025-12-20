@@ -1,9 +1,11 @@
 import { useAuth } from "@/global-components/AuthProvider";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useGritScore } from "@/utils/useGritScore";
 
-export function UserBlock({}) {
+export function UserBlock() {
   const { user } = useAuth();
+  const { tier, tierColor, loading } = useGritScore();
   const profilePic = user?.photoURL;
   const firstName = user?.displayName?.split(" ")[0] || null;
   const lastName = user?.displayName?.split(" ").slice(1).join(" ") || null;
@@ -52,8 +54,9 @@ export function UserBlock({}) {
           whileHover={{ cursor: "pointer", scale: 1.04 }}
           title="Check out your dashboard."
           onClick={() => navigate("/dashboard")}
+          style={{ color: tierColor, fontWeight: 600 }}
         >
-          Fresh Starter
+          {loading ? "Loading..." : tier}
         </motion.div>
       </div>
     </div>
