@@ -1,9 +1,11 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import plusIcon from "@/assets/icons/plus.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
 import Button from "@/global-components/button";
-import { ColumnTitle } from "./ColumnTitle";
+import { ColumnTitle } from "@/pages/home/home-components/ColumnTitle";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+import type { DragTarget } from "@/types/dragTarget";
 
 interface ColumnProps {
   id: string;
@@ -11,8 +13,6 @@ interface ColumnProps {
   children: React.ReactNode;
   bg: string;
   count: number;
-  onDragEnter: (columnId: string) => void;
-  onDragLeave: () => void;
   viewportHeight: number;
   showToggleRejectButton?: boolean;
   onToggleReject?: () => void;
@@ -26,15 +26,13 @@ export function Column({
   children,
   bg,
   count,
-  onDragEnter,
-  onDragLeave,
   viewportHeight,
   showToggleRejectButton,
   onToggleReject,
   isHighlighted,
   openJobAppModal,
 }: ColumnProps) {
-  const columnRef = useRef<HTMLDivElement>(null);
+  const { setDragTarget } = useDrag();
   const hasChildren = count > 0;
 
   const columnStyle = {
@@ -45,14 +43,6 @@ export function Column({
     height: "auto",
     flex: 1,
   };
-
-  const handlePointerEnter = useCallback(() => {
-    onDragEnter(id);
-  }, [onDragEnter, id]);
-
-  const handlePointerLeave = useCallback(() => {
-    onDragLeave();
-  }, [onDragLeave]);
 
   const highlightColumn = isHighlighted === id || isHighlighted === "all";
   const [addButtonStyle, setAddButtonStyle] = useState("w-5 h-5");
@@ -68,10 +58,9 @@ export function Column({
   return (
     <motion.div
       id={id}
-      ref={columnRef}
       style={columnStyle}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
+      onPointerEnter={() => setDragTarget(id as DragTarget)}
+      onPointerLeave={() => setDragTarget(null)}
       className={`flex flex-col m-2 p-2 animate-element corner-radius shadow ${
         highlightColumn ? "highlighted" : ""
       }`}

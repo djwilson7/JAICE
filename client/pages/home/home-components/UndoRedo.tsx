@@ -5,13 +5,15 @@ import redoIcon from "@/assets/icons/redo-alt.svg";
 import Button from "@/global-components/button";
 import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
+import { useDrag } from "@/pages/home/hooks/useDrag";
 
 export function UndoRedo() {
-  const { hasUndo, hasRedo, undo, redo } = useUndoRedo();
+  const { isDragging } = useDrag();
   const { isMultiSelecting } = useIsMultiSelecting();
+  const { hasUndo, hasRedo, undo, redo } = useUndoRedo();
   const showUndoRedo = hasUndo || hasRedo;
 
-  if (!showUndoRedo || isMultiSelecting) {
+  if (isDragging || isMultiSelecting || !showUndoRedo) {
     return null;
   }
 

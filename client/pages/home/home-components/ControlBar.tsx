@@ -20,7 +20,6 @@ import { useEffect, useState } from "react";
 import { checkGmailStatus } from "../utils/checkGmailStatus";
 
 interface ControlBarProps {
-
   selectedOption: string;
   setSelectedOption: (value: string) => void;
 

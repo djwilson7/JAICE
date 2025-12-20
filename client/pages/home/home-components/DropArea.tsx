@@ -1,36 +1,28 @@
 import { motion } from "framer-motion";
-import archiveIcon from "../../../assets/icons/folder.svg";
-import trashIcon from "../../../assets/icons/trash.svg";
-import { useCallback, useState } from "react";
+import archiveIcon from "@/assets/icons/folder.svg";
+import trashIcon from "@/assets/icons/trash.svg";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+import type { DragTarget } from "@/types/dragTarget";
 
-interface DropAreaProps {
-  onDragEnter: (id: string) => void;
-  onDragLeave: () => void;
-}
+export function DropArea() {
+  const { setDragTarget, isDragging, dragTarget } = useDrag();
 
-export function DropArea({
-  onDragEnter,
-  onDragLeave,
-}: DropAreaProps) {
+  if (!isDragging) {
+    return null;
+  }
+
   const dropAreaClass = "flex w-1/2 p-4 justify-center items-center gap-2";
 
-  const [hoveredArea, setHoveredArea] = useState<string | null>(null);
+  const archiveIconColor = dragTarget === "archive" ? "orangeIcon" : "icon";
+  const trashIconColor = dragTarget === "delete" ? "redIcon" : "icon";
 
-  const archiveIconColor = hoveredArea === "archive" ? "orangeIcon" : "icon";
-  const trashIconColor = hoveredArea === "delete" ? "redIcon" : "icon";
+  const handleDragOver = ({ id }: { id: string }) => {
+    setDragTarget(id as DragTarget);
+  };
 
-  const handlePointerEnter = useCallback(
-    (id: string) => {
-      setHoveredArea(id);
-      onDragEnter(id);
-    },
-    [onDragEnter]
-  );
-
-  const handlePointerLeave = useCallback(() => {
-    setHoveredArea(null);
-    onDragLeave();
-  }, [onDragLeave]);
+  const handleDragLeave = () => {
+    setDragTarget(null);
+  };
 
   return (
     <div className="drop-area">
@@ -43,18 +35,18 @@ export function DropArea({
             style={{
               boxShadow: "inset 0px -15px 14px 0px rgba(255, 140, 0, 0.7)",
             }}
-            onPointerEnter={() => handlePointerEnter("archive")}
-            onPointerLeave={handlePointerLeave}
+            onPointerEnter={() => handleDragOver({ id: "archive" })}
+            onPointerLeave={handleDragLeave}
             animate={{
               background:
-                hoveredArea === "archive"
+                dragTarget === "archive"
                   ? "rgba(255, 140, 0, 0.1)"
                   : "transparent",
             }}
           >
             <motion.div
               className="flex items-center justify-center"
-              animate={{ x: hoveredArea === "archive" ? -100 : 0 }}
+              animate={{ x: dragTarget === "archive" ? -100 : 0 }}
             >
               <img
                 src={archiveIcon}
@@ -70,18 +62,18 @@ export function DropArea({
             style={{
               boxShadow: "inset 0px -15px 14px 0px rgba(255, 0, 0, 0.7)",
             }}
-            onPointerEnter={() => handlePointerEnter("delete")}
-            onPointerLeave={handlePointerLeave}
+            onPointerEnter={() => handleDragOver({ id: "delete" })}
+            onPointerLeave={handleDragLeave}
             animate={{
               background:
-                hoveredArea === "delete"
+                dragTarget === "delete"
                   ? "rgba(255, 0, 0, 0.1)"
                   : "transparent",
             }}
           >
             <motion.div
               className="flex items-center justify-center"
-              animate={{ x: hoveredArea === "delete" ? 100 : 0 }}
+              animate={{ x: dragTarget === "delete" ? 100 : 0 }}
             >
               <img
                 src={trashIcon}

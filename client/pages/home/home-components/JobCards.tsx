@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
@@ -14,21 +14,19 @@ import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
 import { useContext } from "react";
-import { MultiSelectContext } from "../contexts/MultiSelectContext";
-import { useSelectedJobs } from "../hooks/useSelectedJobs";
-import { useDeleteByJobId } from "../hooks/useDeleteByJobId";
+import { MultiSelectContext } from "@/pages/home/contexts/MultiSelectContext";
+import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { useDeleteByJobId } from "@/pages/home/hooks/useDeleteByJobId";
 import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+import { useDragEndHandler } from "@/pages/home/hooks/useOnDragEnd";
 
 export function JobCard({
   job,
-  onDragStart,
-  onDragEnd,
   dimmed,
   openJobAppModal,
 }: {
   job: JobCardType;
-  onDragStart: (job: JobCardType) => void;
-  onDragEnd: () => void;
   dimmed: boolean;
   openJobAppModal: (job: JobCardType) => void;
 }) {
@@ -36,6 +34,11 @@ export function JobCard({
   const { toggleJobSelection } = useSelectedJobs();
   const { deleteJob } = useDeleteByJobId();
   const { pushUndo } = useUndoRedo();
+  const { setIsDragging, setDraggedId, dragTarget } = useDrag();
+  const { processDragEnd } = useDragEndHandler({
+    job: job,
+    onDelete: deleteJob,
+  });
 
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isDeleting, setIsDeleting] = useState(false);
@@ -48,6 +51,7 @@ export function JobCard({
 
   const [editHovered, setEditHovered] = useState(false);
   const [viewHovered, setViewHovered] = useState(false);
+
   const [deleteHovered, setDeleteHovered] = useState(false);
   const [archiveHovered, setArchiveHovered] = useState(false);
 
@@ -58,15 +62,34 @@ export function JobCard({
   }
 
   // Handlers for drag events
-  const handleDragStart = useCallback(() => {
-    // Notify parent component that drag has started with this jobs data
-    onDragStart(job);
-  }, [onDragStart, job]);
+  const handleDragStart = () => {
+    setIsDragging(true);
+    setDraggedId(job.id);
+  };
 
-  const handleDragEnd = useCallback(() => {
-    // Notify parent component that drag has ended (clears job data from parent)
-    onDragEnd();
-  }, [onDragEnd]);
+  const handleDragEnd = () => {
+    const beforeJobState = [job];
+    let afterJobState: JobCardType[];
+
+    switch (dragTarget) {
+      case "archive":
+        afterJobState = [{ ...job, isArchived: true }];
+        break;
+      case "delete":
+        afterJobState = [{ ...job, isDeleted: true }];
+        break;
+      default:
+        afterJobState = [{ ...job, applicationStage: dragTarget! }];
+    }
+
+    pushUndo({
+      label: "Drag & Drop",
+      before: beforeJobState,
+      after: afterJobState,
+    });
+
+    processDragEnd();
+  };
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -146,7 +169,7 @@ export function JobCard({
 
     try {
       const beforeJobState = [job];
-      const afterJobState =   [ { ...job, isArchived: true } ];
+      const afterJobState = [{ ...job, isArchived: true }];
       await api("/api/jobs/set-archive", {
         method: "POST",
         body: JSON.stringify({
@@ -154,7 +177,11 @@ export function JobCard({
         }),
       });
       setIsHovered(false);
-      pushUndo({ label: "Archive", before: beforeJobState, after: afterJobState });
+      pushUndo({
+        label: "Archive",
+        before: beforeJobState,
+        after: afterJobState,
+      });
     } catch (error) {
       console.error("Failed to archive job:", error);
     }
