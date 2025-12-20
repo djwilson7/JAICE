@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useIsMultiSelecting } from "../hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "../hooks/useSelectedJobs";
 import { useUndoRedo } from "../hooks/useUndoRedo";
+import ConfirmModal from "@/global-components/ConfirmModal";
 
 export function MultiSelectBar({
   className,
@@ -45,7 +46,10 @@ export function MultiSelectBar({
     | "back"
     | null
   >(null);
+
   const [showMoveOptions, setShowMoveOptions] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isProcessingDelete, setIsProcessingDelete] = useState(false);
 
   const handleMove = async (targetStage: string) => {
     try {
@@ -185,166 +189,143 @@ export function MultiSelectBar({
     }
   };
 
-  const onDeleteClicked = async () => {
-    try {
-      const jobIds = selectedJobs.map((j) => j.id);
-      const beforeJobState = [...selectedJobs];
-      const afterActionJobState = selectedJobs.map((job) => ({
-        ...job,
-        isDeleted: true,
-      }));
+  const onDeleteClicked = () => {
+    setShowDeleteConfirm(true);
+  };
 
-      await api("/api/jobs/set-delete", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-        }),
-      });
-
-      pushUndo({
-        label: "deleteMultiple",
-        before: beforeJobState,
-        after: afterActionJobState,
-      });
-
-      console.log("Deleted selected jobs successfully.");
-      setSelectedJobs([]);
-      setIsMultiSelecting(false);
-      return true;
-    } catch (error) {
-      console.error("Failed to set selected jobs as deleted:", error);
-      return false;
-    }
+  const closeDelete = () => {
+    setShowDeleteConfirm(false);
   };
   
   const dim = "w-[35px] h-[35px]";
   const labelDim = "w-[90px] h-[50px]";
 
   return (
-    <div className={className || "glass min-w-[500px]"}>
-      <div className="w-full p-2 flex flex-col">
-        <div className="w-full text-center">
-          <p className="secondary-text animate-element">{getStatusText()}</p>
-        </div>
-        <hr className="header-split my-2" />
-        {/* Button area */}
-        <div className="w-full overflow-hidden ">
-          <AnimatePresence mode="wait">
-            {!showMoveOptions ? (
-              // Default actions
-              <motion.div
-                key="default"
-                initial={{ y: 0, rotateX: 0, opacity: 1 }}
-                exit={{ y: -40, opacity: 0, rotateX: 90 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="flex w-full gap-4 py-2 items-center justify-evenly"
-              >
-                {/* Move */}
-                <div className={dim}>
-                  <Button
-                    onClick={() => setShowMoveOptions(true)}
-                    className="group roundSmall"
-                    onMouseEnter={() => setHoverAction("move")}
-                    onMouseLeave={() => setHoverAction(null)}
-                    disabled={!isEnabled}
-                    style={{ background: "transparent" }}
-                    title="Move selected jobs to a different column"
-                  >
-                    <img
-                      src={replaceIcon}
-                      alt="Move to new column"
-                      className={`flex w-full h-full icon animate-element group-hover:-rotate-90 ${
-                        hoverAction === "move" ? "greenIcon" : ""
-                      }`}
-                    />
-                  </Button>
-                </div>
-
-                {/* Archive */}
-                <div
-                  onMouseEnter={() => setHoverAction("archive")}
-                  onMouseLeave={() => setHoverAction(null)}
-                  className={dim}
+    <>
+      <div className={className || "glass min-w-[500px]"}>
+        <div className="w-full p-2 flex flex-col">
+          <div className="w-full text-center">
+            <p className="secondary-text animate-element">{getStatusText()}</p>
+          </div>
+          <hr className="header-split my-2" />
+          {/* Button area */}
+          <div className="w-full overflow-hidden ">
+            <AnimatePresence mode="wait">
+              {!showMoveOptions ? (
+                // Default actions
+                <motion.div
+                  key="default"
+                  initial={{ y: 0, rotateX: 0, opacity: 1 }}
+                  exit={{ y: -40, opacity: 0, rotateX: 90 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="flex w-full gap-4 py-2 items-center justify-evenly"
                 >
-                  <HoverIconButton
-                    baseIcon={folderIcon}
-                    hoverIcon={folderAddIcon}
-                    successIcon={folderCheckIcon}
-                    failureIcon={folderXIcon}
-                    alt="Archive"
-                    onClick={onArchiveClicked}
-                    disabled={!isEnabled}
-                    className="roundSmall"
-                    style={{ background: "transparent" }}
-                    hoverClassName="orangeIcon"
-                    title="Mark selected jobs as archived"
-                  />
-                </div>
-
-                {/* Mark As Reviewed */}
-                <div
-                  onMouseEnter={() => setHoverAction(null)}
-                  onMouseLeave={() => setHoverAction(null)}
-                  className={dim}
-                >
-                  <HoverIconButton
-                    baseIcon={reviewIcon}
-                    hoverIcon={reviewIconHover}
-                    successIcon={reviewIcon}
-                    failureIcon={reviewIcon}
-                    alt="Mark As Reviewed"
-                    onClick={onReviewClicked}
-                    disabled={!isEnabled}
-                    className="roundSmall"
-                    style={{ background: "transparent" }}
-                    hoverClassName="orangeIcon"
-                    title="Mark selected jobs as reviewed"
-                  />
-                </div>
-
-                {/* Delete */}
-                <div
-                  onMouseEnter={() => setHoverAction("delete")}
-                  onMouseLeave={() => setHoverAction(null)}
-                  className={dim}
-                >
-                  <HoverIconButton
-                    baseIcon={trashIcon}
-                    hoverIcon={trashAddIcon}
-                    successIcon={trashCheckIcon}
-                    failureIcon={trashXIcon}
-                    alt="Delete"
-                    onClick={onDeleteClicked}
-                    disabled={!isEnabled}
-                    className="roundSmall"
-                    style={{ background: "transparent" }}
-                    hoverClassName="redIcon"
-                    title="Delete selected jobs"
-                  />
-                </div>
-              </motion.div>
-            ) : (
-              // Move options
-              <motion.div
-                key="move"
-                initial={{ y: 40, opacity: 0, rotateX: -90 }}
-                animate={{ y: 0, opacity: 1, rotateX: 0 }}
-                exit={{ y: 40, opacity: 0, rotateX: 90 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
-              >
-                {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map(
-                  (stage) => (
-                    <div
-                      onMouseEnter={() =>
-                        setHoverAction(`${stage}`.toLowerCase() as any)
-                      }
+                  {/* Move */}
+                  <div className={dim}>
+                    <Button
+                      onClick={() => setShowMoveOptions(true)}
+                      className="group roundSmall"
+                      onMouseEnter={() => setHoverAction("move")}
                       onMouseLeave={() => setHoverAction(null)}
-                      className={`${labelDim} ${
-                        hoverAction === `${stage}`.toLowerCase()
-                          ? "highlighted"
-                          : ""
-                      }`}
+                      disabled={!isEnabled}
+                      style={{ background: "transparent" }}
+                      title="Move selected jobs to a different column"
+                    >
+                      <img
+                        src={replaceIcon}
+                        alt="Move to new column"
+                        className={`flex w-full h-full icon animate-element group-hover:-rotate-90 ${
+                          hoverAction === "move" ? "greenIcon" : ""
+                        }`}
+                      />
+                    </Button>
+                  </div>
+
+                  {/* Archive */}
+                  <div
+                    onMouseEnter={() => setHoverAction("archive")}
+                    onMouseLeave={() => setHoverAction(null)}
+                    className={dim}
+                  >
+                    <HoverIconButton
+                      baseIcon={folderIcon}
+                      hoverIcon={folderAddIcon}
+                      successIcon={folderCheckIcon}
+                      failureIcon={folderXIcon}
+                      alt="Archive"
+                      onClick={onArchiveClicked}
+                      disabled={!isEnabled}
+                      className="roundSmall"
+                      style={{ background: "transparent" }}
+                      hoverClassName="orangeIcon"
+                      title="Mark selected jobs as archived"
+                    />
+                  </div>
+
+                  {/* Mark As Reviewed */}
+                  <div
+                    onMouseEnter={() => setHoverAction(null)}
+                    onMouseLeave={() => setHoverAction(null)}
+                    className={dim}
+                  >
+                    <HoverIconButton
+                      baseIcon={reviewIcon}
+                      hoverIcon={reviewIconHover}
+                      successIcon={reviewIcon}
+                      failureIcon={reviewIcon}
+                      alt="Mark As Reviewed"
+                      onClick={onReviewClicked}
+                      disabled={!isEnabled}
+                      className="roundSmall"
+                      style={{ background: "transparent" }}
+                      hoverClassName="orangeIcon"
+                      title="Mark selected jobs as reviewed"
+                    />
+                  </div>
+
+                  {/* Delete */}
+                  <div
+                    onMouseEnter={() => setHoverAction("delete")}
+                    onMouseLeave={() => setHoverAction(null)}
+                    className={dim}
+                  >
+                    <HoverIconButton
+                      baseIcon={trashIcon}
+                      hoverIcon={trashAddIcon}
+                      successIcon={trashCheckIcon}
+                      failureIcon={trashXIcon}
+                      alt="Delete"
+                      onClick={onDeleteClicked}
+                      disabled={!isEnabled}
+                      className="roundSmall"
+                      style={{ background: "transparent" }}
+                      hoverClassName="redIcon"
+                      title="Delete selected jobs"
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                // Move options
+                <motion.div
+                  key="move"
+                  initial={{ y: 40, opacity: 0, rotateX: -90 }}
+                  animate={{ y: 0, opacity: 1, rotateX: 0 }}
+                  exit={{ y: 40, opacity: 0, rotateX: 90 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
+                >
+                  {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map(
+                    (stage) => (
+                      <div
+                        onMouseEnter={() =>
+                          setHoverAction(`${stage}`.toLowerCase() as any)
+                        }
+                        onMouseLeave={() => setHoverAction(null)}
+                        className={`${labelDim} ${
+                          hoverAction === `${stage}`.toLowerCase()
+                            ? "highlighted"
+                            : ""
+                        }`}
                     >
                       <Button
                         key={stage}
@@ -357,26 +338,69 @@ export function MultiSelectBar({
                     </div>
                   )
                 )}
-                <div className={dim}>
-                  <Button
-                    onClick={() => setShowMoveOptions(false)}
-                    className="roundSmall"
-                    style={{ background: "transparent" }}
-                  >
-                    <img
-                      src={upIcon}
-                      alt="Move to new column"
-                      className="icon transition-transform duration-300 ease-in-out group-hover:-rotate-90"
-                    />
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  <div className={dim}>
+                    <Button
+                      onClick={() => setShowMoveOptions(false)}
+                      className="roundSmall"
+                      style={{ background: "transparent" }}
+                    >
+                      <img
+                        src={upIcon}
+                        alt="Move to new column"
+                        className="icon transition-transform duration-300 ease-in-out group-hover:-rotate-90"
+                      />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-        {/* Status text */}
+          {/* Status text */}
+        </div>
       </div>
-    </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete the selected item/s? You can undo this action from the Trash however it will be permanently deleted after 30 days."
+        confirmLabel="Delete"
+        isProcessing={isProcessingDelete}
+        onCancel={closeDelete}
+        onConfirm={async () => {
+          setIsProcessingDelete(true);
+
+          try {
+            const jobIds = selectedJobs.map((j) => j.id);
+            const beforeJobState = [...selectedJobs];
+            const afterActionJobState = selectedJobs.map((job) => ({
+              ...job,
+              isDeleted: true,
+            }));
+
+            await api("/api/jobs/set-delete", {
+              method: "POST",
+              body: JSON.stringify({
+                provider_message_ids: jobIds,
+              }),
+            });
+
+            pushUndo({
+              label: "deleteMultiple",
+              before: beforeJobState,
+              after: afterActionJobState,
+            });
+
+            console.log("Deleted selected jobs successfully.");
+            setSelectedJobs([]);
+            setIsMultiSelecting(false);
+          } finally {
+            setIsProcessingDelete(false);
+            closeDelete();
+          }
+        }}
+      />
+    </>
   );
 }
