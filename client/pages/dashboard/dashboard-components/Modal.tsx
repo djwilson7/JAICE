@@ -75,11 +75,18 @@ export function Modal({
                     {/* Header */}
                     {title && (
                         <div
-                            className="flex items-center justify-between"
-                            style={{ marginBottom: "1rem", flexShrink: 0 }}
+                            style={{
+                                marginBottom: "1rem",
+                                flexShrink: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between"
+                            }}
                         >
                             <h3 style={{ fontFamily: "var(--font-title)" }}>{title}</h3>
-                            <Button onClick={onClose}>Close</Button>
+                            <div style={{ flexShrink: 0 }}>
+                                <Button onClick={onClose}>Close</Button>
+                            </div>
                         </div>
                     )}
 
