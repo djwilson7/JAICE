@@ -6,6 +6,7 @@ import { Modal } from "./Modal";
 import { makeDarkOptions } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
+import { chartDescText } from "./chartDescText";
 
 type StageArrays = {
   applied: number[];
@@ -56,7 +57,6 @@ export function SplitByStageCard({
         setLoading(true);
         setError(null);
 
-        // ✅ mirror AppsOverTimeCard: same endpoint + shape
         const res = await api("/api/dashboard/apps-over-time/", {
           method: "GET",
         });
@@ -130,7 +130,7 @@ export function SplitByStageCard({
       {
         label: "Applied",
         data: applied,
-        backgroundColor: `${colors.applied}66`, // light fill
+        backgroundColor: `${colors.applied}66`,
         borderColor: colors.applied,
         ...common,
       },
@@ -187,7 +187,6 @@ export function SplitByStageCard({
     maintainAspectRatio: false,
   });
 
-
   const content = () => {
     if (loading) {
       return (
@@ -229,8 +228,15 @@ export function SplitByStageCard({
         <ChartHost>{content()}</ChartHost>
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Split by Stage">
-        <ChartHost>{content()}</ChartHost>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Split by Stage"
+        description={chartDescText.splitByStage}
+      >
+        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
+          {content()}
+        </div>
       </Modal>
     </>
   );

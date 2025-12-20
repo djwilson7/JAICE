@@ -9,3 +9,4 @@ export { default as AppsByStageCard }     from "./AppsByStageCard";
 export { default as SplitByStageCard }    from "./SplitByStageCard";
 export { default as AvgTimeInStageCard }  from "./AvgTimeInStageCard";
 export { default as AvgAppsPerWeekCard }  from "./AvgAppsPerWeekCard";
+export { default as ActivityHeatmap } from "./ActivityHeatmapCard";
