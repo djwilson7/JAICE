@@ -3,14 +3,19 @@ import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
 
 interface DropDownMenuProps {
-  options: { value: string; label: string }[];
   selectedOption: string;
   setSelectedOption: (value: string) => void;
   leftIcon: string;
 }
 
+const sortByOptions = [
+  { value: "new", label: "Most Recent" },
+  { value: "old", label: "Oldest First" },
+  { value: "az", label: "Ascend (a-z)" },
+  { value: "za", label: "Descend (z-a)" },
+];
+
 export function DropDownMenu({
-  options,
   selectedOption,
   setSelectedOption,
   leftIcon,
@@ -42,7 +47,7 @@ export function DropDownMenu({
           onChange={(e) => setSelectedOption(e.target.value)}
           className="drop-down-menu"
         >
-          {options.map((option) => (
+          {sortByOptions.map((option) => (
             <option
               key={option.value}
               className="drop-down-menu-options"
@@ -65,7 +70,7 @@ export function DropDownMenu({
           cursor: selectedOption !== "new" ? "pointer" : "default",
           opacity: selectedOption !== "new" ? 1 : 0,
         }}
-        animate={{opacity: selectedOption !== "new" ? 1 : 0}}
+        animate={{ opacity: selectedOption !== "new" ? 1 : 0 }}
       />
     </motion.div>
   );

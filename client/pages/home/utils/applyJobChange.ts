@@ -1,7 +1,7 @@
 import type { JobCardType } from "@/types/jobCardType";
 import { convertBroadcastToJobCard } from "@/pages/home/utils/convertToJobCard";
 
-// Mapping function to handle the event types 
+// Mapping function to handle the event types
 export function applyJobChange(prev: JobCardType[], event: any): JobCardType[] {
   switch (event.event) {
     case "INSERT":
@@ -33,17 +33,18 @@ function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
   const updatedCard = convertBroadcastToJobCard(event);
   if (!updatedCard) return prev;
 
-  const exists = prev.some((c) => String(c.id) === String(updatedCard.id));
-  if (!exists) {
-    console.warn(`Update: no existing card with id ${updatedCard.id}`);
-    return prev;
-  }
-
   if (updatedCard.isArchived || updatedCard.isDeleted) {
     console.log(
       `Update: card ${updatedCard.id} marked archived/deleted, removing from view.`
     );
     return prev.filter((c) => String(c.id) !== String(updatedCard.id));
+  }
+
+  const exists = prev.some((c) => String(c.id) === String(updatedCard.id));
+
+  if (!exists) {
+    console.log(`Update: card ${updatedCard.id} does not exist, inserting.`);
+    return handleInsert(prev, event);
   }
 
   console.log(`Update: replaced card with id ${updatedCard.id}`, updatedCard);

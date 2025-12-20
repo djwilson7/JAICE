@@ -12,31 +12,27 @@ import reviewIconHover from "@/assets/icons/review_hover.svg";
 import upIcon from "@/assets/icons/angle-small-up.svg";
 import Button, { HoverIconButton } from "@/global-components/button";
 import { useEffect, useState } from "react";
-import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { AnimatePresence, motion } from "framer-motion";
+import { useIsMultiSelecting } from "../hooks/useIsMultiSelecting";
+import { useSelectedJobs } from "../hooks/useSelectedJobs";
+import { useUndoRedo } from "../hooks/useUndoRedo";
 
 export function MultiSelectBar({
-  selectedJobs,
-  setSelectedJobs,
-  setIsMultiSelecting,
-  onDelete,
-  onArchive,
-  onReview,
-  onMove,
   className,
   setIsHighlighted,
+  onReview,
 }: {
-  selectedJobs: JobCardType[];
-  setSelectedJobs: (jobs: JobCardType[]) => void;
-  setIsMultiSelecting: (isMultiSelecting: boolean) => void;
-  onDelete: (ids: string[]) => Promise<boolean>;
-  onArchive: (ids: string[]) => Promise<boolean>;
-  onReview: (ids: string[]) => Promise<boolean>;
-  onMove: (ids: string[], targetStage: string) => Promise<boolean>;
   className?: string;
   setIsHighlighted: (stage: string | null) => void;
+  onReview: (ids: string[]) => Promise<boolean>;
 }) {
+  const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
+  const { selectedJobs, setSelectedJobs } = useSelectedJobs();
+  const { pushUndo } = useUndoRedo();
+
+  if (!isMultiSelecting) return null;
+
   const [hoverAction, setHoverAction] = useState<
     | "move"
     | "archive"
@@ -54,17 +50,25 @@ export function MultiSelectBar({
   const handleMove = async (targetStage: string) => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-      if (onMove) {
-        await onMove(jobIds, targetStage);
-      } else {
-        await api("/api/jobs/update-stage", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-            app_stage: targetStage,
-          }),
-        });
-      }
+      const beforeJobState = [...selectedJobs]; // Capture state before move
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        app_stage: targetStage,
+      })); // Capture state after move
+
+      await api("/api/jobs/update-stage", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+          app_stage: targetStage,
+        }),
+      });
+
+      pushUndo({
+        label: "moveMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
       console.log(`Moved ${selectedCount} jobs to ${targetStage}.`);
       setSelectedJobs([]);
       setShowMoveOptions(false);
@@ -124,16 +128,25 @@ export function MultiSelectBar({
   const onArchiveClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
-      if (onArchive) {
-        await onArchive(jobIds);
-      } else {
-        await api("/api/jobs/set-archive", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-          }),
-        });
-      }
+      const beforeJobState = [...selectedJobs]; // Capture state before archive
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        isArchived: true,
+      })); // Capture state after archive
+
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+        }),
+      });
+
+      pushUndo({
+        label: "archiveMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
+
       console.log("Archived selected jobs successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
@@ -175,17 +188,25 @@ export function MultiSelectBar({
   const onDeleteClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
+      const beforeJobState = [...selectedJobs];
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        isDeleted: true,
+      }));
 
-      if (onDelete) {
-        await onDelete(jobIds);
-      } else {
-        await api("/api/jobs/set-delete", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-          }),
-        });
-      }
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+        }),
+      });
+
+      pushUndo({
+        label: "deleteMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
+
       console.log("Deleted selected jobs successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
@@ -195,6 +216,7 @@ export function MultiSelectBar({
       return false;
     }
   };
+  
   const dim = "w-[35px] h-[35px]";
   const labelDim = "w-[90px] h-[50px]";
 
@@ -311,36 +333,35 @@ export function MultiSelectBar({
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
               >
-                {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map((stage) => (
-                  <div
-                    onMouseEnter={() =>
-                      setHoverAction(`${stage}`.toLowerCase() as any)
-                    }
-                    onMouseLeave={() => setHoverAction(null)}
-                    className={`${labelDim} ${
-                      hoverAction === `${stage}`.toLowerCase()
-                        ? "highlighted"
-                        : ""
-                    }`}
-                  >
-                    <Button
-                      key={stage}
-                      onClick={() => handleMove(stage)}
-                      className={`ovalSmall`}
-                      style={{ background: "transparent" }}
+                {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map(
+                  (stage) => (
+                    <div
+                      onMouseEnter={() =>
+                        setHoverAction(`${stage}`.toLowerCase() as any)
+                      }
+                      onMouseLeave={() => setHoverAction(null)}
+                      className={`${labelDim} ${
+                        hoverAction === `${stage}`.toLowerCase()
+                          ? "highlighted"
+                          : ""
+                      }`}
                     >
-                      <p className="animate-element primary-text">
-                        {stage}
-                      </p>
-                    </Button>
-                  </div>
-                ))}
+                      <Button
+                        key={stage}
+                        onClick={() => handleMove(stage)}
+                        className={`ovalSmall`}
+                        style={{ background: "transparent" }}
+                      >
+                        <p className="animate-element primary-text">{stage}</p>
+                      </Button>
+                    </div>
+                  )
+                )}
                 <div className={dim}>
                   <Button
                     onClick={() => setShowMoveOptions(false)}
                     className="roundSmall"
                     style={{ background: "transparent" }}
-                    
                   >
                     <img
                       src={upIcon}

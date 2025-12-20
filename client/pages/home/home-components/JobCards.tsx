@@ -1,7 +1,5 @@
-// import { localfiles } from "@/directory/path/to/localimport";
-
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
@@ -15,31 +13,35 @@ import reviewIcon from "@/assets/icons/reviewed.svg";
 import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
+import { useContext } from "react";
+import { MultiSelectContext } from "@/pages/home/contexts/MultiSelectContext";
+import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { useDeleteByJobId } from "@/pages/home/hooks/useDeleteByJobId";
+import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+import { useDragEndHandler } from "@/pages/home/hooks/useOnDragEnd";
 
 export function JobCard({
   job,
-  onDragStart,
-  onDragEnd,
-  isMultiSelecting,
-  handleMultiSelectClick,
   dimmed,
-  onDelete,
-  isDeleting,
-  setIsDeleting,
   openJobAppModal,
 }: {
   job: JobCardType;
-  onDragStart: (job: JobCardType) => void;
-  onDragEnd: () => void;
-  isMultiSelecting: boolean;
-  handleMultiSelectClick: (job: JobCardType) => void;
   dimmed: boolean;
-  onDelete?: (id: string) => Promise<boolean>;
-  isDeleting: boolean;
-  setIsDeleting: (isDeleting: boolean) => void;
   openJobAppModal: (job: JobCardType) => void;
 }) {
+  const { isMultiSelecting } = useContext(MultiSelectContext);
+  const { toggleJobSelection } = useSelectedJobs();
+  const { deleteJob } = useDeleteByJobId();
+  const { pushUndo } = useUndoRedo();
+  const { setIsDragging, setDraggedId, dragTarget } = useDrag();
+  const { processDragEnd } = useDragEndHandler({
+    job: job,
+    onDelete: deleteJob,
+  });
+
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -49,6 +51,7 @@ export function JobCard({
 
   const [editHovered, setEditHovered] = useState(false);
   const [viewHovered, setViewHovered] = useState(false);
+
   const [deleteHovered, setDeleteHovered] = useState(false);
   const [archiveHovered, setArchiveHovered] = useState(false);
 
@@ -59,15 +62,34 @@ export function JobCard({
   }
 
   // Handlers for drag events
-  const handleDragStart = useCallback(() => {
-    // Notify parent component that drag has started with this jobs data
-    onDragStart(job);
-  }, [onDragStart, job]);
+  const handleDragStart = () => {
+    setIsDragging(true);
+    setDraggedId(job.id);
+  };
 
-  const handleDragEnd = useCallback(() => {
-    // Notify parent component that drag has ended (clears job data from parent)
-    onDragEnd();
-  }, [onDragEnd]);
+  const handleDragEnd = () => {
+    const beforeJobState = [job];
+    let afterJobState: JobCardType[];
+
+    switch (dragTarget) {
+      case "archive":
+        afterJobState = [{ ...job, isArchived: true }];
+        break;
+      case "delete":
+        afterJobState = [{ ...job, isDeleted: true }];
+        break;
+      default:
+        afterJobState = [{ ...job, applicationStage: dragTarget! }];
+    }
+
+    pushUndo({
+      label: "Drag & Drop",
+      before: beforeJobState,
+      after: afterJobState,
+    });
+
+    processDragEnd();
+  };
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -144,6 +166,8 @@ export function JobCard({
     e.stopPropagation();
 
     try {
+      const beforeJobState = [job];
+      const afterJobState = [{ ...job, isArchived: true }];
       await api("/api/jobs/set-archive", {
         method: "POST",
         body: JSON.stringify({
@@ -151,6 +175,11 @@ export function JobCard({
         }),
       });
       setIsHovered(false);
+      pushUndo({
+        label: "Archive",
+        before: beforeJobState,
+        after: afterJobState,
+      });
     } catch (error) {
       console.error("Failed to archive job:", error);
     }
@@ -166,11 +195,11 @@ export function JobCard({
       onDragEnd={handleDragEnd}
       variants={variants}
       animate={dimmed ? "dimmed" : "active"}
-      whileHover={!isMultiSelecting ? { scale: 1.02, cursor: "pointer",}: undefined}
-      
+      whileHover={
+        !isMultiSelecting ? { scale: 1.02, cursor: "pointer" } : undefined
+      }
       onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
       onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
-
       // onTap cycles between expanding the card and selecting it based on isMultiSelecting
       whileTap={{ cursor: "grabbing" }}
       whileDrag={{
@@ -208,10 +237,9 @@ export function JobCard({
       <motion.div
         className="flex justify-between w-full items-center text-left"
         onTap={() => {
-          handleMultiSelectClick(job);
           if (isMultiSelecting) {
+            toggleJobSelection(job);
             setIsSelected(!isSelected);
-            return;
           } else {
             setIsOpen(!isOpen);
           }
@@ -274,7 +302,6 @@ export function JobCard({
       >
         <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
-
           <small className="secondary-text font-semibold">
             {job.companyName ?? "Unknown Company"}
           </small>
@@ -309,10 +336,12 @@ export function JobCard({
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
           initial={{ opacity: 0, height: 0 }}
-          animate={!isMultiSelecting && {
-            height: isHovered ? "auto" : 0,
-            opacity: isHovered ? 1 : 0,
-          }}
+          animate={
+            !isMultiSelecting && {
+              height: isHovered ? "auto" : 0,
+              opacity: isHovered ? 1 : 0,
+            }
+          }
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.12 }}
         >
@@ -447,7 +476,7 @@ export function JobCard({
           setIsProcessingDelete(true);
 
           try {
-            if (onDelete) await onDelete(job.id);
+            await deleteJob(job);
           } finally {
             setIsProcessingDelete(false);
             closeDelete();

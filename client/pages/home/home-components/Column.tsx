@@ -1,9 +1,11 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import plusIcon from "@/assets/icons/plus.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
 import Button from "@/global-components/button";
-import { ColumnTitle } from "./ColumnTitle";
+import { ColumnTitle } from "@/pages/home/home-components/ColumnTitle";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+import type { DragTarget } from "@/types/dragTarget";
 
 interface ColumnProps {
   id: string;
@@ -11,8 +13,6 @@ interface ColumnProps {
   children: React.ReactNode;
   bg: string;
   count: number;
-  onDragEnter: (columnId: string) => void;
-  onDragLeave: () => void;
   viewportHeight: number;
   showToggleRejectButton?: boolean;
   onToggleReject?: () => void;
@@ -26,15 +26,13 @@ export function Column({
   children,
   bg,
   count,
-  onDragEnter,
-  onDragLeave,
   viewportHeight,
   showToggleRejectButton,
   onToggleReject,
   isHighlighted,
   openJobAppModal,
 }: ColumnProps) {
-  const columnRef = useRef<HTMLDivElement>(null);
+  const { setDragTarget } = useDrag();
   const hasChildren = count > 0;
 
   const columnStyle = {
@@ -43,15 +41,8 @@ export function Column({
     minWidth: "20rem",
     minHeight: `${viewportHeight}px`,
     height: "auto",
+    flex: 1,
   };
-
-  const handlePointerEnter = useCallback(() => {
-    onDragEnter(id);
-  }, [onDragEnter, id]);
-
-  const handlePointerLeave = useCallback(() => {
-    onDragLeave();
-  }, [onDragLeave]);
 
   const highlightColumn = isHighlighted === id || isHighlighted === "all";
   const [addButtonStyle, setAddButtonStyle] = useState("w-5 h-5");
@@ -65,60 +56,57 @@ export function Column({
   }
 
   return (
-    <>
-      <motion.div
-        id={id}
-        ref={columnRef}
-        style={columnStyle}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-        className={`flex flex-col m-2 p-2 animate-element corner-radius shadow ${
-          highlightColumn ? "highlighted" : ""
-        }`}
-        transition={{ type: "spring", stiffness: 120, damping: 18 }}
-        layout
-      >
-        <div className="flex relative items-center justify-between w-full h-[4rem] select-none">
-          <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center">
-            <Button
-              type="button"
-              className="roundSmall"
-              aria-label={`Add new application to ${title} stage`}
-              title={`Add new application to ${title} stage`}
-              onClick={() => openJobAppModal(id)}
-              onMouseEnter={handleMouseOverAddButton}
-              onMouseLeave={handleMouseOutAddButton}
-            >
-              <img
-                src={plusIcon}
-                alt="Add Application"
-                className={`flex ${addButtonStyle} icon animate-element`}
-              />
-            </Button>
-          </div>
-
-          <ColumnTitle
-            title={title}
-            index={0}
-            onToggle={onToggleReject}
-            canToggle={showToggleRejectButton}
-          />
-
-          <div className="flex absolute right-2 mx-2 h-full items-center justify-center ">
-            <h3>{count}</h3>
-          </div>
+    <motion.div
+      id={id}
+      style={columnStyle}
+      onPointerEnter={() => setDragTarget(id as DragTarget)}
+      onPointerLeave={() => setDragTarget(null)}
+      className={`flex flex-col m-2 p-2 animate-element corner-radius shadow ${
+        highlightColumn ? "highlighted" : ""
+      }`}
+      transition={{ type: "spring", stiffness: 120, damping: 18 }}
+      layout
+    >
+      <div className="flex relative items-center justify-between w-full h-[4rem] select-none">
+        <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center">
+          <Button
+            type="button"
+            className="roundSmall"
+            aria-label={`Add new application to ${title} stage`}
+            title={`Add new application to ${title} stage`}
+            onClick={() => openJobAppModal(id)}
+            onMouseEnter={handleMouseOverAddButton}
+            onMouseLeave={handleMouseOutAddButton}
+          >
+            <img
+              src={plusIcon}
+              alt="Add Application"
+              className={`flex ${addButtonStyle} icon animate-element`}
+            />
+          </Button>
         </div>
-        <div className="flex border-b mx-4 mb-2" />
-        <div className="flex flex-col items-center p-2 gap-4">
-          {hasChildren ? (
-            children
-          ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              {<EmptyColumnPlaceholder title={title} />}
-            </motion.div>
-          )}
+
+        <ColumnTitle
+          title={title}
+          index={0}
+          onToggle={onToggleReject}
+          canToggle={showToggleRejectButton}
+        />
+
+        <div className="flex absolute right-2 mx-2 h-full items-center justify-center ">
+          <h3>{count}</h3>
         </div>
-      </motion.div>
-    </>
+      </div>
+      <div className="flex border-b mx-4 mb-2" />
+      <div className="flex flex-col items-center p-2 gap-4">
+        {hasChildren ? (
+          children
+        ) : (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {<EmptyColumnPlaceholder title={title} />}
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
   );
 }
