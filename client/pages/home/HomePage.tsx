@@ -12,24 +12,24 @@ import { ConnectEmailButton } from "@/pages/home/home-components/ConnectEmailBut
 import { SearchBar } from "@/global-components/SearchBar";
 import { ArchiveModalButton } from "@/pages/home/home-components/ArchiveModalButton";
 import { TrashModalButton } from "@/pages/home/home-components/TrashModalButton";
-import { MultiSelectButton } from "./home-components/MultiSelectButton";
-import { FilterButton } from "./home-components/FilterButton";
-import { AlertBox } from "./home-components/AlertBox";
-import { KanbanContent } from "./home-components/KanbanContent";
-import { useTrashActions } from "./hooks/useTrashActions";
-import { useArchiveActions } from "./hooks/useArchiveActions";
-import { LoadingAnimation } from "./home-components/LoadingAnimation";
-import { PageContent } from "./home-components/PageContent";
-import { useJobsLoader } from "./hooks/useJobsLoader";
-import { useJobSearchAndSort } from "./hooks/useJobSearchAndSort";
-import { useRealtimeJobs } from "./hooks/useRealTimeJobs";
-import { useKanbanColumns } from "./hooks/useKanbanColumns";
+import { MultiSelectButton } from "@/pages/home/home-components/MultiSelectButton";
+import { FilterButton } from "@/pages/home/home-components/FilterButton";
+import { AlertBox } from "@/pages/home/home-components/AlertBox";
+import { KanbanContent } from "@/pages/home/home-components/KanbanContent";
+import { useTrashActions } from "@/pages/home/hooks/useTrashActions";
+import { useArchiveActions } from "@/pages/home/hooks/useArchiveActions";
+import { LoadingAnimation } from "@/pages/home/home-components/LoadingAnimation";
+import { PageContent } from "@/pages/home/home-components/PageContent";
+import { useJobsLoader } from "@/pages/home/hooks/useJobsLoader";
+import { useJobSearchAndSort } from "@/pages/home/hooks/useJobSearchAndSort";
+import { useRealtimeJobs } from "@/pages/home/hooks/useRealTimeJobs";
+import { useKanbanColumns } from "@/pages/home/hooks/useKanbanColumns";
 import { useKanbanJobs } from "@/pages/home/hooks/useKanbanJobs";
-import { useJobActions } from "./hooks/useJobAction";
-import { HomePageContentProviders } from "./home-components/HomePageContentProviders";
+import { useJobActions } from "@/pages/home/hooks/useJobAction";
+import { HomePageContentProviders } from "@/pages/home/home-components/HomePageContentProviders";
 import TrashArchiveModal from "@/pages/home/home-components/TrashArchiveModal";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
-import ConnectEmailModal from "./home-components/ConnectEmailModal";
+import ConnectEmailModal from "@/pages/home/home-components/ConnectEmailModal";
 
 export function HomePage() {
   const [jobAppModalPayload, setJobAppModalPayload] = useState<
