@@ -43,10 +43,10 @@ export const chartDescText: Record<string, {
     },
 
     gritScore: {
-        summary: "A composite score (0-100) measuring your job search activity, consistency, and follow-through.",
-        calculation: "Based on weekly application volume, follow-up actions, and consistency of activity over the rolling 90-day period.",
-        interpretation: "Higher scores indicate stronger job search momentum. Aim to maintain or improve your score through regular activity.",
-        notes: "Score tiers: Trailblazer (85+), Go-Getter (70-84), Fresh Starter (50-69), Rising Talent (<50)."
+        summary: "Your Grit Score (0-100) measures how actively and consistently you're pursuing your job search over the past 90 days.",
+        calculation: "The score is calculated from three key metrics: (1) Weekly Applications - how many jobs you apply to each week, (2) Follow-ups - how often you follow up with employers or take action on applications, and (3) Consistency - how many consecutive days you've been active in your job search. Each component is weighted and combined into a single score out of 100.",
+        interpretation: "A higher score means you're staying active, following up regularly, and maintaining momentum in your search. Scores of 80+ (Trailblazer) indicate exceptional job search habits. Scores of 60-79 (Go-Getter) show strong effort. To improve your score, focus on applying to more positions weekly, following up on existing applications, and maintaining daily activity.",
+        notes: "The score updates based on your last 90 days of activity. Rankings: Trailblazer (80-100), Go-Getter (60-79), Fresh Starter (40-59), Rising Talent (20-39), Newcomer (0-19)."
     },
 
      activityHeatmap: {
