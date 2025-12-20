@@ -29,7 +29,7 @@ import { useJobSearchAndSort } from "./hooks/useJobSearchAndSort";
 import { useRealtimeJobs } from "./hooks/useRealTimeJobs";
 import { useKanbanColumns } from "./hooks/useKanbanColumns";
 import { useKanbanJobs } from "@/pages/home/hooks/useKanbanJobs";
-
+import { useJobActions } from "./hooks/useJobAction";
 import TrashArchiveModal from "@/pages/home/home-components/TrashArchiveModal";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
 import ConnectEmailModal from "./home-components/ConnectEmailModal";
@@ -40,6 +40,7 @@ export function HomePage() {
   >(null);
 
   const { jobs, setJobs, reloadJobs, isLoading } = useJobsLoader();
+  const { saveJob } = useJobActions(setJobs);
 
   const trash = useTrashActions({
     onRestore: () => reloadJobs(),
@@ -101,7 +102,6 @@ export function HomePage() {
     if (isAlertOpen) resetNewJobsCount();
   }, [isAlertOpen]);
 
-  // show loading state while emails are being fetched
   return (
     <AnimatePresence mode="wait">
       {isLoading ? (
@@ -188,21 +188,7 @@ export function HomePage() {
                     isOpen={isJobAppModalOpen}
                     setIsOpen={setIsJobAppModalOpen}
                     payload={jobAppModalPayload}
-                    onSave={(
-                      updated: Partial<JobCardType> & { id?: string }
-                    ) => {
-                      // merge updated job into local state
-                      if (updated?.id) {
-                        setJobs((prev) =>
-                          prev.map((j) =>
-                            j.id === updated.id ? (updated as JobCardType) : j
-                          )
-                        );
-                      } else {
-                        // if backend returns no id try to update by some fallback
-                        setJobs((prev) => [updated as JobCardType, ...prev]);
-                      }
-                    }}
+                    onSave={saveJob}
                   />
 
                   <TrashArchiveModal
