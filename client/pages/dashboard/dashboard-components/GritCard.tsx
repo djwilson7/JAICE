@@ -1,27 +1,17 @@
 import { useEffect, useState } from "react";
 import { Card } from "./Card";
-import { api } from "@/global-services/api";
 import infoIcon from "@/assets/icons/info.svg";
+import { useGritScore } from "@/utils/useGritScore";
 
-type GritData = {
-  score: number;
-  weekly_apps: number;
-  followups: number;
-  consistency: number;
-};
-
-const RANK_TIERS = [
+// Export RANK_TIERS for use in the progress bar
+// eslint-disable-next-line react-refresh/only-export-components
+export const RANK_TIERS = [
   { min: 0, max: 19, name: "Newcomer", color: "#64748B" },
   { min: 20, max: 39, name: "Rising Talent", color: "#8B5CF6" },
   { min: 40, max: 59, name: "Fresh Starter", color: "#3B82F6" },
   { min: 60, max: 79, name: "Go-Getter", color: "#10B981" },
   { min: 80, max: 100, name: "Trailblazer", color: "#F59E0B" },
 ];
-
-function getJaiceTier(score: number) {
-  const tier = RANK_TIERS.find((t) => score >= t.min && score <= t.max);
-  return tier || RANK_TIERS[0];
-}
 
 export function GritCard({
   className = "",
@@ -30,37 +20,21 @@ export function GritCard({
   className?: string;
   height?: number | string;
 }) {
-  const [data, setData] = useState<GritData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { score, weeklyApps, followups, consistency, tier, tierColor, loading } = useGritScore();
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Progress bar animation - starts at 0 and animates to actual score
   const [animatedScore, setAnimatedScore] = useState(0);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await api("/api/dashboard/grit-score");
-        const payload = res.data ?? res;
-        setData(payload.data ?? payload);
-      } catch (err) {
-        console.error("Error fetching grit score", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
   // Trigger bar animation once data loads - delay for visual effect
   useEffect(() => {
-    if (data?.score !== undefined) {
+    if (score !== undefined && score > 0) {
       // Small delay before starting animation so user sees it fill up
-      setTimeout(() => setAnimatedScore(data.score), 150);
+      setTimeout(() => setAnimatedScore(score), 150);
     }
-  }, [data]);
+  }, [score]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <Card
         title="Grit Score"
@@ -74,10 +48,6 @@ export function GritCard({
       </Card>
     );
   }
-
-  const score = data.score;
-  const tierInfo = getJaiceTier(score);
-  const tier = tierInfo.name;
 
   // Info icon component
   const infoIconElement = (
@@ -110,7 +80,7 @@ export function GritCard({
       {/* Tooltip */}
       {showTooltip && (
         <div
-          className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-120 max-w-[90vw] bg-gray-900 text-white text-sm rounded-lg shadow-xl p-4"
+          className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-96 max-w-[95vw] bg-gray-900 text-white text-sm rounded-lg shadow-xl p-4"
           style={{
             top: "100%",
             border: "1px solid rgba(255,255,255,0.1)",
@@ -181,7 +151,7 @@ export function GritCard({
                 fontWeight: 600,
                 fontSize: "clamp(1.25rem, 3.2vw, 3.5rem)",
                 letterSpacing: "0.01em",
-                color: tierInfo.color,
+                color: tierColor,
               }}
             >
               {tier}
@@ -281,21 +251,21 @@ export function GritCard({
             <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-center">
               <div className="text-xs sm:text-sm opacity-80">Weekly Apps</div>
               <div className="mt-1 text-lg sm:text-xl font-medium">
-                {data.weekly_apps}
+                {weeklyApps}
               </div>
             </div>
 
             <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-center">
               <div className="text-xs sm:text-sm opacity-80">Follow-ups</div>
               <div className="mt-1 text-lg sm:text-xl font-medium">
-                {data.followups}
+                {followups}
               </div>
             </div>
 
             <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-center">
               <div className="text-xs sm:text-sm opacity-80">Consistency</div>
               <div className="mt-1 text-lg sm:text-xl font-medium">
-                {data.consistency} days
+                {consistency} days
               </div>
             </div>
           </div>
