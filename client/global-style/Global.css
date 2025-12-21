@@ -1137,6 +1137,12 @@ to an element (className="example").
   opacity: var(--icon-opacity);
 }
 
+.purpleIcon {
+  filter: brightness(0) saturate(100%) invert(33%) sepia(83%) saturate(5000%)
+    hue-rotate(250deg) brightness(95%) contrast(105%);
+  opacity: var(--icon-opacity);
+}
+
 .greenIcon {
   filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
     brightness(90%) contrast(85%);
