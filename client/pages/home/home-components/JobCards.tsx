@@ -34,7 +34,8 @@ export function JobCard({
   const { toggleJobSelection } = useSelectedJobs();
   const { deleteJob } = useDeleteByJobId();
   const { pushUndo } = useUndoRedo();
-  const { setIsDragging, setDraggedId, dragTarget, dragStart, setDragStart } = useDrag();
+  const { setIsDragging, setDraggedId, dragTarget, dragStart, setDragStart } =
+    useDrag();
   const { processDragEnd } = useDragEndHandler({
     job: job,
     onDelete: deleteJob,
@@ -86,6 +87,9 @@ export function JobCard({
     const addToUndo = dragTarget !== dragStart && dragTarget !== null;
 
     if (addToUndo) {
+      if (isSelected) {
+        toggleJobSelection(job);
+      }
       pushUndo({
         label: "Drag & Drop",
         before: beforeJobState,
