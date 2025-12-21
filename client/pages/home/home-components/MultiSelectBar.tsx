@@ -22,11 +22,9 @@ import ConfirmModal from "@/global-components/ConfirmModal";
 export function MultiSelectBar({
   className,
   setIsHighlighted,
-  onReview,
 }: {
   className?: string;
   setIsHighlighted: (stage: string | null) => void;
-  onReview: (ids: string[]) => Promise<boolean>;
 }) {
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
@@ -43,6 +41,7 @@ export function MultiSelectBar({
     | "offer"
     | "accepted"
     | "rejected"
+    | "review"
     | "back"
     | null
   >(null);
@@ -120,6 +119,9 @@ export function MultiSelectBar({
       case "rejected":
         setIsHighlighted("rejected");
         return `Move ${selectedCount} ${plural} to rejected?`;
+      case "review":
+        setIsHighlighted(null);
+        return `Mark ${selectedCount} ${plural} as reviewed?`;
       case "back":
         setIsHighlighted(null);
         return `Back to main actions.`;
@@ -164,25 +166,30 @@ export function MultiSelectBar({
   const onReviewClicked = async () => {
     try {
       const jobIds = selectedJobs.map((j) => j.id);
+      const beforeJobState = [...selectedJobs]; // Capture state before review
+      const afterActionJobState = selectedJobs.map((job) => ({
+        ...job,
+        needsReview: false,
+      })); // Capture state after review
 
-      if (onReview) 
-      {
-        await onReview(jobIds);
+      await api("/api/jobs/set-review-needed", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: jobIds,
+          needs_review: false,
+        }),
+      });
 
-      } else {
-        await api("/api/jobs/set-review-needed", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: jobIds,
-            needs_review: false,
-          }),
-        });
-      }
+      pushUndo({
+        label: "reviewMultiple",
+        before: beforeJobState,
+        after: afterActionJobState,
+      });
+
       console.log("Marked selected jobs as reviewed successfully.");
       setSelectedJobs([]);
       setIsMultiSelecting(false);
       return true;
-      
     } catch (error) {
       console.error("Failed to set selected jobs as reviewed:", error);
       return false;
@@ -196,7 +203,7 @@ export function MultiSelectBar({
   const closeDelete = () => {
     setShowDeleteConfirm(false);
   };
-  
+
   const dim = "w-[35px] h-[35px]";
   const labelDim = "w-[90px] h-[50px]";
 
@@ -257,14 +264,14 @@ export function MultiSelectBar({
                       disabled={!isEnabled}
                       className="roundSmall"
                       style={{ background: "transparent" }}
-                      hoverClassName="orangeIcon"
+                      hoverClassName="purpleIcon"
                       title="Mark selected jobs as archived"
                     />
                   </div>
 
                   {/* Mark As Reviewed */}
                   <div
-                    onMouseEnter={() => setHoverAction(null)}
+                    onMouseEnter={() => setHoverAction("review")}
                     onMouseLeave={() => setHoverAction(null)}
                     className={dim}
                   >
@@ -275,7 +282,9 @@ export function MultiSelectBar({
                       failureIcon={reviewIcon}
                       alt="Mark As Reviewed"
                       onClick={onReviewClicked}
-                      disabled={!isEnabled}
+                      disabled={
+                        !isEnabled || selectedJobs.every((j) => !j.reviewNeeded)
+                      }
                       className="roundSmall"
                       style={{ background: "transparent" }}
                       hoverClassName="orangeIcon"
@@ -314,18 +323,23 @@ export function MultiSelectBar({
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
                   className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
                 >
-                  {["Applied", "Interview", "Offer", "Accepted", "Rejected"].map(
-                    (stage) => (
-                      <div
-                        onMouseEnter={() =>
-                          setHoverAction(`${stage}`.toLowerCase() as any)
-                        }
-                        onMouseLeave={() => setHoverAction(null)}
-                        className={`${labelDim} ${
-                          hoverAction === `${stage}`.toLowerCase()
-                            ? "highlighted"
-                            : ""
-                        }`}
+                  {[
+                    "Applied",
+                    "Interview",
+                    "Offer",
+                    "Accepted",
+                    "Rejected",
+                  ].map((stage) => (
+                    <div
+                      onMouseEnter={() =>
+                        setHoverAction(`${stage}`.toLowerCase() as any)
+                      }
+                      onMouseLeave={() => setHoverAction(null)}
+                      className={`${labelDim} ${
+                        hoverAction === `${stage}`.toLowerCase()
+                          ? "highlighted"
+                          : ""
+                      }`}
                     >
                       <Button
                         key={stage}
@@ -336,8 +350,7 @@ export function MultiSelectBar({
                         <p className="animate-element primary-text">{stage}</p>
                       </Button>
                     </div>
-                  )
-                )}
+                  ))}
                   <div className={dim}>
                     <Button
                       onClick={() => setShowMoveOptions(false)}
