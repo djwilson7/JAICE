@@ -8,6 +8,9 @@ export interface UndoRedoContextType {
   redo: () => SnapShotAction | undefined;
   hasUndo: boolean;
   hasRedo: boolean;
+  clear: () => void;
+  undoCount: number;
+  redoCount: number;
 }
 
 export const UndoRedoContext = createContext<UndoRedoContextType>({
@@ -23,7 +26,11 @@ export const UndoRedoContext = createContext<UndoRedoContextType>({
     console.warn("redo called outside UndoRedoProvider");
     return undefined;
   },
-
   hasUndo: false,
   hasRedo: false,
+  clear: () => {
+    console.warn("clear called outside UndoRedoProvider");
+  },
+  undoCount: 0,
+  redoCount: 0,
 });
