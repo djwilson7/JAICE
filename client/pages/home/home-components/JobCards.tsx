@@ -192,11 +192,17 @@ export function JobCard({
     }
   };
 
+  const cardClass = !isMultiSelecting
+    ? ""
+    : isSelected
+    ? "selectedJobCard"
+    : "unselectedJobCard";
+
   return (
     <motion.div
       key={`${job.id}-${job.applicationStage}`}
       id={job.id}
-      className={`w-full flex items-center flex flex-col job-card ${reviewClass}`}
+      className={`w-full flex items-center flex flex-col job-card ${reviewClass} ${cardClass}`}
       drag
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -263,7 +269,9 @@ export function JobCard({
           <motion.img
             src={isSelected ? checkIcon : uncheckIcon}
             alt={isSelected ? "Check Icon" : "Uncheck Icon"}
-            className="w-4 h-4 opacity-50 icon"
+            className={`w-4 h-4 opacity-50 icon ${
+              isSelected ? "goldIcon" : ""
+            }`}
             initial={{ opacity: 0, width: 0 }}
             animate={{
               opacity: isMultiSelecting ? 1 : 0,

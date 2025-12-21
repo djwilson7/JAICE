@@ -112,7 +112,7 @@
   --gray-color: #c6c6c6;
   --orange-color: #da681b;
   --orange-color-rgb: 218, 104, 27;
-
+  --gold-rgb: 255, 215, 0;
   --job-card-background: #1d1b20;
   --job-card-background-rgb: 29, 27, 32;
   --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
@@ -1143,6 +1143,12 @@ to an element (className="example").
   opacity: var(--icon-opacity);
 }
 
+.goldIcon {
+  filter: brightness(0) saturate(100%) invert(91%) sepia(61%) saturate(579%) 
+    hue-rotate(1deg) brightness(96%) contrast(92%);
+  opacity: 0.8; /* adjust alpha if needed */
+}
+
 .greenIcon {
   filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
     brightness(90%) contrast(85%);
@@ -1378,5 +1384,23 @@ to an element (className="example").
 .drop-area-shadow {
   box-shadow: var(--shadow-hover);
 }
+
+.unselectedJobCard {
+  scale: 0.9; /* smaller difference to avoid jarring jump */
+  transition: all 0.2s ease;
+}
+
+.unselectedJobCard:hover {
+  scale: 0.95; /* small hover growth */
+  box-shadow: 0 2px 6px rgba(var(--gold-rgb), 0.5); /* soft gold glow on hover */
+  border: 1px solid rgba(var(--gold-rgb), 0.5); /* subtle gold border on hover */
+}
+
+.selectedJobCard {
+  scale: 1; /* full scale for selected */
+  box-shadow: 0 2px 8px rgba(var(--gold-rgb), 0.8); /* soft, larger gold glow */
+  border: 1px solid rgba(var(--gold-rgb), 0.8); /* more prominent gold border */
+}
+
 
 /* Add more custom classes above this line */

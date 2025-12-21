@@ -17,7 +17,7 @@ export function CheckBoxToggle({
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { setSelectedJobs } = useSelectedJobs();
 
-  const handleToggle =  () => {
+  const handleToggle = () => {
     setIsMultiSelecting(!isMultiSelecting);
     if (isMultiSelecting) {
       setSelectedJobs([]); // Clear selected jobs when turning off multi-select
@@ -38,7 +38,9 @@ export function CheckBoxToggle({
       <img
         src={isMultiSelecting ? activeIcon : inactiveIcon}
         alt="Toggle Icon"
-        className="w-5 h-5 shrink-0 icon"
+        className={`w-5 h-5 shrink-0 icon ${
+          isMultiSelecting ? "goldIcon" : ""
+        }`}
       />
       <input
         type="checkbox"
