@@ -10,7 +10,7 @@ export function DragProvider({ children }: DragProviderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragTarget, setDragTarget] = useState<DragTarget>(null);
-
+  const [dragStart, setDragStart] = useState<string | null>(null);
   return (
     <DragContext.Provider
       value={{
@@ -20,6 +20,8 @@ export function DragProvider({ children }: DragProviderProps) {
         setIsDragging,
         setDraggedId,
         setDragTarget,
+        dragStart,
+        setDragStart,
       }}
     >
       {children}
