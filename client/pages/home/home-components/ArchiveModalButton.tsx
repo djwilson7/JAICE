@@ -10,7 +10,7 @@ export function ArchiveModalButton({ setIsOpen }: ArchiveModalButtonProps) {
     <ControlBarButton
       onClick={() => setIsOpen(true)}
       icon={archiveIcon}
-      iconHoverColor={"orangeIcon"}
+      iconHoverColor={"purpleIcon"}
       label="Archive"
     />
   );
