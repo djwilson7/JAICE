@@ -25,6 +25,7 @@ function handleInsert(prev: JobCardType[], event: any): JobCardType[] {
   if (exists) {
     return prev.map((c) => (c.id === newCard.id ? newCard : c));
   }
+  console.log(`Insert: Added new card to view.`);
   return [newCard, ...prev];
 }
 
@@ -35,7 +36,7 @@ function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
 
   if (updatedCard.isArchived || updatedCard.isDeleted) {
     console.log(
-      `Update: card ${updatedCard.id} marked archived/deleted, removing from view.`
+      `Update: Card marked as archive/deleted, removing from view.`
     );
     return prev.filter((c) => String(c.id) !== String(updatedCard.id));
   }
@@ -43,11 +44,11 @@ function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
   const exists = prev.some((c) => String(c.id) === String(updatedCard.id));
 
   if (!exists) {
-    console.log(`Update: card ${updatedCard.id} does not exist, inserting.`);
+    console.log(`Update: Card does not exist, inserting.`);
     return handleInsert(prev, event);
   }
 
-  console.log(`Update: replaced card with id ${updatedCard.id}`, updatedCard);
+  console.log(`Update: Updated card in view.`);
   return prev.map((c) =>
     String(c.id) === String(updatedCard.id) ? updatedCard : c
   );
@@ -57,7 +58,7 @@ function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
 function handleDelete(prev: JobCardType[], event: any): JobCardType[] {
   const deletedId = event?.payload?.old?.provider_message_id;
   if (!deletedId) {
-    console.warn("Delete event missing old.id:", event);
+    console.warn("Delete: No ID in event (no change)");
     return prev;
   }
 
@@ -65,6 +66,6 @@ function handleDelete(prev: JobCardType[], event: any): JobCardType[] {
 
   const next = prev.filter((card) => String(card.id) !== String(targetId));
 
-  console.log(`Delete: removed card with id ${targetId}`);
+  console.log(`Delete: Deleted removed card from view`);
   return next;
 }
