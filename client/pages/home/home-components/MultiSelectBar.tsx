@@ -17,6 +17,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useIsMultiSelecting } from "../hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "../hooks/useSelectedJobs";
 import { useUndoRedo } from "../hooks/useUndoRedo";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+
 import ConfirmModal from "@/global-components/ConfirmModal";
 
 export function MultiSelectBar({
@@ -29,8 +31,9 @@ export function MultiSelectBar({
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
   const { pushUndo } = useUndoRedo();
+  const { isDragging } = useDrag();
 
-  if (!isMultiSelecting) return null;
+  if (!isMultiSelecting || isDragging) return null;
 
   const [hoverAction, setHoverAction] = useState<
     | "move"
