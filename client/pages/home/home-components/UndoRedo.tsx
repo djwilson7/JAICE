@@ -6,12 +6,62 @@ import Button from "@/global-components/button";
 import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { useDrag } from "@/pages/home/hooks/useDrag";
+import { useEffect, useRef, useState } from "react";
 
 export function UndoRedo() {
   const { isDragging } = useDrag();
   const { isMultiSelecting } = useIsMultiSelecting();
-  const { hasUndo, hasRedo, undo, redo } = useUndoRedo();
-  const showUndoRedo = hasUndo || hasRedo;
+  const { undoCount, redoCount, undo, redo, clear } = useUndoRedo();
+
+  const UNDO_VISIBLE_MS = 10000;
+  const [visible, setVisible] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (undoCount === 0 && redoCount === 0) {
+      setVisible(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+
+    setVisible(true);
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = window.setTimeout(() => {
+      setVisible(false);
+      clear();
+      timeoutRef.current = null;
+    }, UNDO_VISIBLE_MS);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [undoCount, redoCount, clear]);
+
+  const pauseTimer = () => {
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const resumeTimer = () => {
+    timeoutRef.current = window.setTimeout(() => {
+      setVisible(false);
+      clear();
+    }, UNDO_VISIBLE_MS);
+  };
+
+  const restartTimer = () => {
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => {
+      setVisible(false);
+      clear();
+    }, UNDO_VISIBLE_MS);
+  };
+
+  const showUndoRedo = visible && (undoCount > 0 || redoCount > 0);
 
   if (isDragging || isMultiSelecting || !showUndoRedo) {
     return null;
@@ -52,6 +102,7 @@ export function UndoRedo() {
     } catch (err) {
       console.error("Undo failed", err);
     }
+    restartTimer();
   };
 
   const handleRedo = async () => {
@@ -63,19 +114,26 @@ export function UndoRedo() {
     } catch (err) {
       console.error("Redo failed", err);
     }
+    restartTimer();
   };
 
   return (
-    <div className="glass" role="status" aria-live="polite">
+    <div
+      className="glass"
+      role="status"
+      aria-live="polite"
+      onMouseEnter={pauseTimer}
+      onMouseLeave={resumeTimer}
+    >
       <span
-        title={hasUndo ? "Undo (Ctrl+Z)" : "No actions to undo"}
+        title={undoCount > 0 ? "Undo (Ctrl+Z)" : "No actions to undo"}
         className="rounded"
       >
         <Button
           type="button"
           onClick={handleUndo}
           aria-label="Undo last action"
-          disabled={!hasUndo}
+          disabled={undoCount === 0}
           className="undoRedo"
         >
           <img src={undoIcon} alt="Undo" className="w-5 h-5 icon" />
@@ -83,14 +141,14 @@ export function UndoRedo() {
       </span>
 
       <span
-        title={hasRedo ? "Redo (Ctrl+Y)" : "No actions to redo"}
+        title={redoCount > 0 ? "Redo (Ctrl+Y)" : "No actions to redo"}
         className="rounded"
       >
         <Button
           type="button"
           onClick={handleRedo}
           aria-label="Redo last action"
-          disabled={!hasRedo}
+          disabled={redoCount === 0}
           className="undoRedo"
         >
           <img src={redoIcon} alt="Redo" className="w-5 h-5 icon" />
