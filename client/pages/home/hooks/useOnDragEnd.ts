@@ -10,22 +10,27 @@ interface UseDragEndHandlerArgs {
 
 export function useDragEndHandler({ job, onDelete }: UseDragEndHandlerArgs) {
   const drag = useContext(DragContext);
-  
+
   if (!drag) {
     throw new Error("useDragEndHandler must be used within DragProvider");
   }
 
-  const { draggedId, dragTarget, setIsDragging, setDraggedId, setDragTarget } =
-    drag;
+  const {
+    draggedId,
+    dragTarget,
+    setIsDragging,
+    setDraggedId,
+    setDragTarget,
+    dragStart,
+    setDragStart,
+  } = drag;
 
   const processDragEnd = useCallback(async () => {
     // Not our card? Bail.
     if (!draggedId || draggedId !== job.id) return;
 
-    setIsDragging(false);
-
     // No target or same column → snap back (no-op)
-    if (!dragTarget || dragTarget === job.column) {
+    if (dragTarget === null || dragTarget === dragStart) {
       cleanup();
       return;
     }
@@ -45,9 +50,7 @@ export function useDragEndHandler({ job, onDelete }: UseDragEndHandlerArgs) {
 
       // DELETE
       if (dragTarget === "delete") {
-        if (onDelete) {
-          await onDelete(job);
-        }
+        await onDelete(job);
         cleanup();
         return;
       }
@@ -64,11 +67,13 @@ export function useDragEndHandler({ job, onDelete }: UseDragEndHandlerArgs) {
     } finally {
       cleanup();
     }
-  }, [draggedId, dragTarget, job]);
+  }, [draggedId, dragTarget, dragStart, job]);
 
   const cleanup = () => {
+    setIsDragging(false);
     setDraggedId(null);
     setDragTarget(null);
+    setDragStart(null);
   };
 
   return { processDragEnd };
