@@ -34,7 +34,7 @@ export function JobCard({
   const { toggleJobSelection } = useSelectedJobs();
   const { deleteJob } = useDeleteByJobId();
   const { pushUndo } = useUndoRedo();
-  const { setIsDragging, setDraggedId, dragTarget } = useDrag();
+  const { setIsDragging, setDraggedId, dragTarget, dragStart, setDragStart } = useDrag();
   const { processDragEnd } = useDragEndHandler({
     job: job,
     onDelete: deleteJob,
@@ -65,6 +65,7 @@ export function JobCard({
   const handleDragStart = () => {
     setIsDragging(true);
     setDraggedId(job.id);
+    setDragStart(job.column.toLowerCase());
   };
 
   const handleDragEnd = () => {
@@ -82,12 +83,15 @@ export function JobCard({
         afterJobState = [{ ...job, applicationStage: dragTarget! }];
     }
 
-    pushUndo({
-      label: "Drag & Drop",
-      before: beforeJobState,
-      after: afterJobState,
-    });
+    const addToUndo = dragTarget !== dragStart && dragTarget !== null;
 
+    if (addToUndo) {
+      pushUndo({
+        label: "Drag & Drop",
+        before: beforeJobState,
+        after: afterJobState,
+      });
+    }
     processDragEnd();
   };
 
@@ -124,7 +128,6 @@ export function JobCard({
 
   const markAsReviewed = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-
 
     // mark job as reviewed
     try {
@@ -411,7 +414,7 @@ export function JobCard({
               src={archiveIcon}
               alt="Archive Icon"
               className={`inline w-4 h-4 icon ${
-                archiveHovered ? "blueIcon" : ""
+                archiveHovered ? "purpleIcon" : ""
               }`}
             />
           </motion.button>
