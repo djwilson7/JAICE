@@ -67,15 +67,29 @@ export function UndoRedoProvider({ children }: UndoRedoProviderProps) {
     return action;
   }, []);
 
+  const clear = useCallback(() => {
+    setUndoStack([]);
+    setRedoStack([]);
+    undoRef.current = [];
+    redoRef.current = [];
+  }, []);
+
   const value: UndoRedoContextType = {
     pushUndo,
     undo,
     redo,
     get hasUndo() {
-      return undoRef.current.length > 0;
+      return undoStack.length > 0;
     },
     get hasRedo() {
-      return redoRef.current.length > 0;
+      return redoStack.length > 0;
+    },
+    clear,
+    get undoCount() {
+      return undoStack.length;
+    },
+    get redoCount() {
+      return redoStack.length;
     },
   };
 
