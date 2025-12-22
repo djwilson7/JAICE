@@ -161,7 +161,6 @@ export function JobCard({
     return () => window.removeEventListener("keydown", onKey);
   }, [showDeleteConfirm]);
 
-  //const needsReview = localReviewNeeded ? "review" : "shadow";
 
   const closeDelete = () => {
     setShowDeleteConfirm(false);
@@ -200,7 +199,7 @@ export function JobCard({
 
   return (
     <motion.div
-      key={`${job.id}-${job.applicationStage}`}
+      key={`${job.id}-${job.applicationStage}-${job.reviewNeeded}`}
       id={job.id}
       className={`w-full flex items-center flex flex-col job-card ${reviewClass} ${cardClass}`}
       drag
