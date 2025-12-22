@@ -8,6 +8,7 @@ import type {
   ContrastLevel,
   SettingsContextValue,
   NavigationBehavior,
+  ReviewBehavior,
 } from "./settingsTypes";
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -103,6 +104,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     window.dispatchEvent(new Event("navigationbehaviorchange"));
   }, [navigationBehavior]);
 
+
+  const [reviewBehavior, setReviewBehavior] = useState<ReviewBehavior>(
+    () =>
+      (localStorage.getItem(SETTINGS_KEYS.REVIEW_BEHAVIOR) as ReviewBehavior) || "inline"
+  );
+  useEffect(() => {
+    document.documentElement.setAttribute("data-review-behavior", reviewBehavior);
+    localStorage.setItem(SETTINGS_KEYS.REVIEW_BEHAVIOR, reviewBehavior);
+    window.dispatchEvent(new Event("reviewbehaviorchange"));
+  }, [reviewBehavior]);
+
   const value: SettingsContextValue = {
     theme,
     setTheme,
@@ -114,6 +126,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setContrast,
     navigationBehavior,
     setNavigationBehavior,
+    reviewBehavior,
+    setReviewBehavior,
   };
 
   return (
