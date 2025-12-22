@@ -12,9 +12,7 @@ export type JobCardType = {
   isArchived?: boolean;
   isDeleted?: boolean;
   notes?: string;
-
   providerSource?: string;
-
   reviewNeeded?: boolean;
   applicationStage?: string;
 };

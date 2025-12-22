@@ -6,7 +6,6 @@ import checkIcon from "@/assets/icons/check-icon.svg";
 import type { JobCardType } from "@/types/jobCardType";
 import { auth } from "@/global-services/firebase";
 import { api } from "@/global-services/api";
-import { getCSSVar } from "@/utils/getCSSVar";
 import editIcon from "@/assets/icons/edit.svg";
 import viewIcon from "@/assets/icons/view.svg";
 import reviewIcon from "@/assets/icons/reviewed.svg";

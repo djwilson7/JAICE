@@ -30,6 +30,7 @@ import { HomePageContentProviders } from "@/pages/home/home-components/HomePageC
 import TrashArchiveModal from "@/pages/home/home-components/TrashArchiveModal";
 import NewApplication from "@/pages/home/home-components/ApplicationModal";
 import ConnectEmailModal from "@/pages/home/home-components/ConnectEmailModal";
+import { ExpandCollapseButton } from "@/pages/home/home-components/ExpandCollapseButton";
 
 export function HomePage() {
   const [jobAppModalPayload, setJobAppModalPayload] = useState<
@@ -109,22 +110,25 @@ export function HomePage() {
           <PageContent>
             {/* Control Bar */}
             <ControlBar>
-              <div className="">
-                <AlertBox
-                  isOpen={isAlertOpen}
-                  setIsOpen={setIsAlertOpen}
-                  alertMessage={alertMessage}
-                />
-              </div>
-              <div className="flex relative gap-4 h-full justify-center items-center">
+              <AlertBox
+                isOpen={isAlertOpen}
+                setIsOpen={setIsAlertOpen}
+                alertMessage={alertMessage}
+              />
+              <div className="flex relative gap-4 w-full h-full justify-end items-center">
                 <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} />
+                <ArchiveModalButton setIsOpen={archive.open} />
+                <TrashModalButton setIsOpen={trash.open} />
+                <MultiSelectButton />
+              </div>
+            </ControlBar>
+            <ControlBar>
+              <ExpandCollapseButton />
+              <div className="flex relative gap-4 w-full h-full justify-end items-center">
                 <SearchBar
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
                 />
-                <ArchiveModalButton setIsOpen={archive.open} />
-                <TrashModalButton setIsOpen={trash.open} />
-                <MultiSelectButton />
                 <FilterButton
                   selectedOption={sortOption}
                   setSelectedOption={setSortOption}
