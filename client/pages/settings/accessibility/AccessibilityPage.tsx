@@ -1,4 +1,6 @@
 import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { DemoReview } from "@/pages/settings/accessibility/accessibility-components/DemoReview";
+
 import {
   CardSection,
   SettingCard,
@@ -13,6 +15,7 @@ import {
   MOTION_OPTIONS,
   CONTRAST_OPTIONS,
   NAVIGATION_BEHAVIOR_OPTIONS,
+  REVIEW_BEHAVIOR_OPTIONS,
 } from "@/pages/settings/provider/settingOptions";
 
 import type {
@@ -21,6 +24,7 @@ import type {
   MotionPreference,
   ContrastLevel,
   NavigationBehavior,
+  ReviewBehavior,
 } from "@/pages/settings/provider/settingsTypes";
 
 export function AccessibilityPage() {
@@ -35,6 +39,8 @@ export function AccessibilityPage() {
     setContrast,
     navigationBehavior,
     setNavigationBehavior,
+    reviewBehavior,
+    setReviewBehavior,
   } = useSettings();
 
   const textScaleOptions = TEXT_SCALE_OPTIONS;
@@ -42,6 +48,7 @@ export function AccessibilityPage() {
   const motionOptions = MOTION_OPTIONS;
   const contrastOptions = CONTRAST_OPTIONS;
   const navigationOptions = NAVIGATION_BEHAVIOR_OPTIONS;
+  const reviewOptions = REVIEW_BEHAVIOR_OPTIONS;
 
   return (
     <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4 overflow-y-auto">
@@ -137,6 +144,24 @@ export function AccessibilityPage() {
               />
             ))}
           </ButtonRow>
+        </SettingCard>
+        <SettingCard>
+          <SettingHeader
+            title="Review Behavior"
+            description="When our AI is uncertain, job cards are flagged for your review."
+          />
+          <ButtonRow>
+            {Object.entries(reviewOptions).map(([key, option]) => (
+              <SettingButton
+                key={key}
+                label={option.label}
+                onClick={() => setReviewBehavior(key as ReviewBehavior)}
+                isSelected={reviewBehavior === key}
+                title={option.title}
+              />
+            ))}
+          </ButtonRow>
+          <DemoReview />
         </SettingCard>
       </CardSection>
     </main>
