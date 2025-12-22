@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import type { JobCardType } from "@/types/jobCardType";
 import ConfirmModal from "@/global-components/ConfirmModal";
-import JobCardView from "./JobCardView";
+import JobCardView from "@/pages/home/home-components/job-card/JobCardView";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import { ModalHeader } from "@/global-components/ModalHeader";

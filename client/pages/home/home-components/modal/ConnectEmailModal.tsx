@@ -5,7 +5,7 @@ import { ModalHeader } from "@/global-components/ModalHeader";
 import linkIcon from "@/assets/icons/link.svg";
 import unlinkIcon from "@/assets/icons/unlink.svg";
 import { useEffect, useState } from "react";
-import { checkGmailStatus } from "../utils/checkGmailStatus";
+import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 
 export default function ConnectEmailModal({
   isOpen,

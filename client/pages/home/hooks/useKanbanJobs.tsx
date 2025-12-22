@@ -1,5 +1,5 @@
 import { type JSX } from "react";
-import { JobCard } from "@/pages/home/home-components/JobCards";
+import { JobCard } from "@/pages/home/home-components/job-card/JobCards";
 import type { JobCardType } from "@/types/jobCardType";
 import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 

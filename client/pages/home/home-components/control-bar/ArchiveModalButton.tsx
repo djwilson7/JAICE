@@ -1,4 +1,4 @@
-import { ControlBarButton } from "@/pages/home/home-components/ControlBarButton";
+import { ControlBarButton } from "@/pages/home/home-components/control-bar/ControlBarButton";
 import archiveIcon from "@/assets/icons/folder.svg";
 
 interface ArchiveModalButtonProps {

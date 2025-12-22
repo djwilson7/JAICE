@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { MultiSelectProvider } from "@/pages/home/providers/MultiSelectProvider";
 import { UndoRedoProvider } from "@/pages/home/providers/UndoRedoProvider";
 import { DragProvider } from "@/pages/home/providers/DragProvider";
-import { SelectedJobsProvider } from "../providers/SelectedJobsProvider";
+import { SelectedJobsProvider } from "../../providers/SelectedJobsProvider";
 import { JobCardProvider } from "@/pages/home/providers/JobCardProvider";
 
 export function HomePageContentProviders({

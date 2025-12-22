@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import plusIcon from "@/assets/icons/plus.svg";
-import { EmptyColumnPlaceholder } from "@/pages/home/home-components/EmptyColumnPlaceholder";
+import { EmptyColumnPlaceholder } from "@/pages/home/home-components/column/EmptyColumnPlaceholder";
 import Button from "@/global-components/button";
-import { ColumnTitle } from "@/pages/home/home-components/ColumnTitle";
+import { ColumnTitle } from "@/pages/home/home-components/column/ColumnTitle";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 import type { DragTarget } from "@/types/dragTarget";
 

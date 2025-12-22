@@ -1,8 +1,8 @@
-import { ControlBarButton } from "@/pages/home/home-components/ControlBarButton";
+import { ControlBarButton } from "@/pages/home/home-components/control-bar/ControlBarButton";
 import unlinkIcon from "@/assets/icons/unlink.svg";
 import linkIcon from "@/assets/icons/link.svg";
 import { useEffect, useState } from "react";
-import { checkGmailStatus } from "../utils/checkGmailStatus";
+import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 
 interface ConnectEmailButtonProps {
   setIsOpen: (value: boolean) => void;

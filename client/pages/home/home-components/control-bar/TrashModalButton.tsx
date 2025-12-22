@@ -1,4 +1,4 @@
-import { ControlBarButton } from "@/pages/home/home-components/ControlBarButton";
+import { ControlBarButton } from "@/pages/home/home-components/control-bar/ControlBarButton";
 import trashIcon from "@/assets/icons/trash-undo.svg";
 
 interface TrashModalButtonProps {

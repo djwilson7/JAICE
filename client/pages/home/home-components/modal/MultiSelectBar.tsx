@@ -14,9 +14,9 @@ import Button, { HoverIconButton } from "@/global-components/button";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import { AnimatePresence, motion } from "framer-motion";
-import { useIsMultiSelecting } from "../hooks/useIsMultiSelecting";
-import { useSelectedJobs } from "../hooks/useSelectedJobs";
-import { useUndoRedo } from "../hooks/useUndoRedo";
+import { useIsMultiSelecting } from "../../hooks/useIsMultiSelecting";
+import { useSelectedJobs } from "../../hooks/useSelectedJobs";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 
 import ConfirmModal from "@/global-components/ConfirmModal";
