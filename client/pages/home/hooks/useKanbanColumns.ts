@@ -28,7 +28,7 @@ export function useKanbanColumns(jobs: JobCardType[]) {
       base.push({
         id: "staging",
         title: "Processing",
-        bg: "var(--color-light-gray)",
+        bg: "var(--processing-column-bg)",
       });
     }
 

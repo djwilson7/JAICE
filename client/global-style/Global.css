@@ -161,6 +161,7 @@
   --offer-color: #3d643d;
   --accepted-color: #265726;
   --rejected-color: #7a3034;
+  --processing-color: #ab693ebb;
 
   --applied-column-bg: linear-gradient(
     180deg,
@@ -194,6 +195,13 @@
     180deg,
     var(--primary-one),
     var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --processing-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--processing-color) 20%,
     var(--primary-one) 95%
   );
 
@@ -301,6 +309,7 @@ html[data-theme="light"] {
   --offer-color: #8fb48f;
   --accepted-color: #6ea06e;
   --rejected-color: #caa4a8;
+  --processing-color: #ab693ebb;
 
   --applied-column-bg: linear-gradient(
     180deg,
@@ -334,6 +343,13 @@ html[data-theme="light"] {
     180deg,
     var(--primary-one),
     var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --processing-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--processing-color) 20%,
     var(--primary-one) 95%
   );
 
