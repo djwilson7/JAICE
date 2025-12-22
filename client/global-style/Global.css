@@ -1452,4 +1452,36 @@ to an element (className="example").
   overflow: hidden;
 }
 
+.demo-content-container {
+  display: flex;
+  flex: stretch;
+  width: 100%;
+  gap: 1rem;
+  border-radius: var(--corner-radius);
+  padding: 1rem;
+}
+
+.demo-column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.5rem;
+  gap: 1rem;
+  background: var(--primary-one);
+  border-radius: var(--corner-radius);
+}
+
+.demo-column-card {
+  border-radius: var(--corner-radius);
+  padding: 0.7rem;
+}
+
+.demo-column-card-review {
+  border: var(--job-card-review-border);
+  background: var(--orange-color);
+  border-radius: var(--corner-radius);
+  padding: 0.7rem;
+  box-shadow: var(--job-card-review-shadow);
+}
+
 /* Add more custom classes above this line */
