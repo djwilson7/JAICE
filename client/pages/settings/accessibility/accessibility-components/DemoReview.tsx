@@ -19,14 +19,13 @@ export function DemoReview() {
         {inline ? (
           <div className="text-center mb-2">
             <em>
-              The model will display review cards inline with content cards.
+              The model will display review cards inline with content cards based on the stage it believes they belong to.
             </em>
           </div>
         ) : (
           <div className="text-center mb-2">
             <em>
-              Cards flagged for review are displayed in a dedicated review
-              column.
+              Cards flagged for review are displayed in a dedicated review column allowing you to manage them separately.
             </em>
           </div>
         )}
