@@ -19,6 +19,7 @@ import { useDeleteByJobId } from "@/pages/home/hooks/useDeleteByJobId";
 import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 import { useDragEndHandler } from "@/pages/home/hooks/useOnDragEnd";
+import { useJobCard } from "../hooks/useJobCard";
 
 export function JobCard({
   job,
@@ -45,10 +46,21 @@ export function JobCard({
     job: job,
     onDelete: deleteJob,
   });
+  const { expandAll, commandId } = useJobCard();
+  const [localOpen, setLocalOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setLocalOpen(null);
+  }, [commandId]);
+
+  const isOpen = localOpen ?? expandAll;
+
+  const toggle = () => {
+    setLocalOpen((prev) => !(prev ?? expandAll));
+  };
 
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
@@ -259,7 +271,7 @@ export function JobCard({
             toggleJobSelection(job);
             setIsSelected(!isSelected);
           } else {
-            setIsOpen(!isOpen);
+            toggle();
           }
         }}
       >
