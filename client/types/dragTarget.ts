@@ -1,6 +1,6 @@
 export type DragTarget =
   | "applied"
-  | "Interview"
+  | "interview"
   | "offer"
   | "accepted"
   | "rejected"

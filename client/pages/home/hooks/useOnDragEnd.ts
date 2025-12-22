@@ -1,14 +1,14 @@
 import { useCallback, useContext } from "react";
 import { DragContext } from "@/pages/home/contexts/DragContext";
-import { api } from "@/global-services/api";
+import { writeJobsToDB } from "@/global-services/writeJobsToDB";
 import type { JobCardType } from "@/types/jobCardType";
+import { ValidColumns } from "@/types/validColumns";
 
 interface UseDragEndHandlerArgs {
   job: JobCardType;
-  onDelete: (job: JobCardType) => Promise<boolean>;
 }
 
-export function useDragEndHandler({ job, onDelete }: UseDragEndHandlerArgs) {
+export function useDragEndHandler({ job }: UseDragEndHandlerArgs) {
   const drag = useContext(DragContext);
 
   if (!drag) {
@@ -26,42 +26,32 @@ export function useDragEndHandler({ job, onDelete }: UseDragEndHandlerArgs) {
   } = drag;
 
   const processDragEnd = useCallback(async () => {
-    // Not our card? Bail.
     if (!draggedId || draggedId !== job.id) return;
 
-    // No target or same column → snap back (no-op)
-    if (dragTarget === null || dragTarget === dragStart) {
+    if (
+      dragTarget === null ||
+      dragTarget === dragStart ||
+      !ValidColumns.includes(dragTarget)
+    ) {
       cleanup();
       return;
     }
 
+    //Make a copy of the job card and update its properties based on drag target
+    const updatedJob: JobCardType = { ...job };
+    updatedJob.reviewNeeded =
+      job.reviewNeeded && dragTarget !== dragStart ? false : job.reviewNeeded;
+    updatedJob.column =
+      dragTarget !== "archive" && dragTarget !== "delete"
+        ? dragTarget
+        : job.column;
+    updatedJob.isArchived =
+      dragTarget === "archive" ? !job.isArchived : job.isArchived;
+    updatedJob.isDeleted =
+      dragTarget === "delete" ? !job.isDeleted : job.isDeleted;
+
     try {
-      // ARCHIVE
-      if (dragTarget === "archive") {
-        await api("/api/jobs/set-archive", {
-          method: "POST",
-          body: JSON.stringify({
-            provider_message_ids: [job.id],
-          }),
-        });
-        cleanup();
-        return;
-      }
-
-      // DELETE
-      if (dragTarget === "delete") {
-        await onDelete(job);
-        cleanup();
-        return;
-      }
-
-      await api("/api/jobs/update-stage", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: [job.id],
-          app_stage: dragTarget,
-        }),
-      });
+      await writeJobsToDB({ jobs_to_update: [updatedJob] });
     } catch (err) {
       console.error("Drag end operation failed:", err);
     } finally {

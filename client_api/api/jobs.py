@@ -565,3 +565,78 @@ async def snapshot_update_jobs(
     except Exception as e:
         logging.error(f"[{trace_id}] Snapshot update failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/write-jobs-to-db", summary="Bulk update job cards from client")
+async def write_jobs_to_db(
+    payload: dict = Body(...),
+    user: dict = Depends(get_current_user),
+):
+    """
+    Bulk update jobs in the database.
+
+    Expected payload:
+        {
+            "jobs_to_update": [JobCardType, ...]
+        }
+
+    Each job should have an `id` (maps to provider_message_id).
+    UID is derived from the authenticated user.
+    """
+    trace_id = str(uuid.uuid4())
+    uid = user.get("uid")
+    jobs = payload.get("jobs_to_update")
+
+    if not isinstance(jobs, list):
+        raise HTTPException(status_code=400, detail="jobs_to_update must be a list")
+
+    if not jobs:
+        logging.info(f"[{trace_id}] No jobs to update for user {uid}")
+        return {"status": "success", "count": 0}
+
+    try:
+        async with get_connection() as conn:
+            for job in jobs:
+                pid = job.get("id")
+                if not pid:
+                    logging.warning(f"[{trace_id}] Skipping job with missing id: {job}")
+                    continue
+
+                query = """
+                    UPDATE public.job_applications
+                    SET
+                        title = $1,
+                        company_name = $2,
+                        app_stage = $3,
+                        salary = $4,
+                        received_at = $5,
+                        note = $6,
+                        is_deleted = $7,
+                        is_archived = $8,
+                        needs_review = $9,
+                        updated_at = now()
+                    WHERE provider_message_id = $10
+                    AND user_uid = $11
+                """
+
+                await conn.execute(
+                    query,
+                    job.get("title"),
+                    job.get("companyName"),
+                    job.get("column"),
+                    job.get("salary"),
+                    job.get("date"),
+                    job.get("notes"),
+                    job.get("isDeleted", False),
+                    job.get("isArchived", False),
+                    job.get("reviewNeeded", False),
+                    pid,
+                    uid
+                )
+
+        logging.info(f"[{trace_id}] Successfully wrote {len(jobs)} job(s) to DB for user {uid}")
+        return {"status": "success", "count": len(jobs)}
+
+    except Exception as e:
+        logging.error(f"[{trace_id}] Error writing jobs to DB: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -20,6 +20,7 @@ import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 import { useDragEndHandler } from "@/pages/home/hooks/useOnDragEnd";
 import { useJobCard } from "../hooks/useJobCard";
+import { ValidColumns } from "@/types/validColumns";
 
 export function JobCard({
   job,
@@ -43,10 +44,7 @@ export function JobCard({
     isDragging,
   } = useDrag();
 
-  const { processDragEnd } = useDragEndHandler({
-    job: job,
-    onDelete: deleteJob,
-  });
+  const { processDragEnd } = useDragEndHandler({ job: job });
 
   const { expandAll, commandId, registerOpen, registerClose } = useJobCard();
 
@@ -94,7 +92,7 @@ export function JobCard({
   const handleDragStart = () => {
     setIsDragging(true);
     setDraggedId(job.id);
-    setDragStart(job.column.toLowerCase());
+    setDragStart(job.reviewNeeded ? "review" : job.column.toLowerCase());
   };
 
   const handleDragEnd = () => {
@@ -112,7 +110,7 @@ export function JobCard({
         afterJobState = [{ ...job, applicationStage: dragTarget! }];
     }
 
-    const addToUndo = dragTarget !== dragStart && dragTarget !== null;
+    const addToUndo = dragTarget !== dragStart && dragTarget !== null && ValidColumns.includes(dragTarget);
 
     if (addToUndo) {
       if (isSelected) {
@@ -124,6 +122,7 @@ export function JobCard({
         after: afterJobState,
       });
     }
+
     processDragEnd();
   };
 
