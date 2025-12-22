@@ -1,5 +1,10 @@
 import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 import { DemoReview } from "@/pages/settings/accessibility/accessibility-components/DemoReview";
+import { ContrastDetails } from "@/pages/settings/accessibility/accessibility-components/ContrastDetails";
+import { MotionDetails } from "@/pages/settings/accessibility/accessibility-components/MotionDetails";
+import { NavigationDetails } from "@/pages/settings/accessibility/accessibility-components/NavigationDetails";
+import { ThemeDetails } from "@/pages/settings/accessibility/accessibility-components/ThemeDetails";
+import { TextSizeDetails } from "@/pages/settings/accessibility/accessibility-components/TextSizeDetails";
 
 import {
   CardSection,
@@ -70,6 +75,7 @@ export function AccessibilityPage() {
               />
             ))}
           </ButtonRow>
+          <TextSizeDetails />
         </SettingCard>
 
         <SettingCard>
@@ -88,6 +94,7 @@ export function AccessibilityPage() {
               />
             ))}
           </ButtonRow>
+          <ThemeDetails />
         </SettingCard>
         <SettingCard>
           <SettingHeader
@@ -105,6 +112,7 @@ export function AccessibilityPage() {
               />
             ))}
           </ButtonRow>
+          <NavigationDetails />
         </SettingCard>
       </CardSection>
 
@@ -126,6 +134,7 @@ export function AccessibilityPage() {
               />
             ))}
           </ButtonRow>
+          <MotionDetails />
         </SettingCard>
 
         <SettingCard>
@@ -144,6 +153,7 @@ export function AccessibilityPage() {
               />
             ))}
           </ButtonRow>
+          <ContrastDetails />
         </SettingCard>
         <SettingCard>
           <SettingHeader
