@@ -1402,5 +1402,13 @@ to an element (className="example").
   border: 1px solid rgba(var(--gold-rgb), 0.8); /* more prominent gold border */
 }
 
-
+.job-card-button-row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  z-index: 50;
+  border-radius: 0px 0px var(--corner-radius) var(--corner-radius);
+  background: rgba(var(--primary-five-rgb), 0.1);
+  overflow: hidden;
+}
 /* Add more custom classes above this line */

@@ -34,8 +34,14 @@ export function JobCard({
   const { toggleJobSelection } = useSelectedJobs();
   const { deleteJob } = useDeleteByJobId();
   const { pushUndo } = useUndoRedo();
-  const { setIsDragging, setDraggedId, dragTarget, dragStart, setDragStart } =
-    useDrag();
+  const {
+    setIsDragging,
+    setDraggedId,
+    dragTarget,
+    dragStart,
+    setDragStart,
+    isDragging,
+  } = useDrag();
   const { processDragEnd } = useDragEndHandler({
     job: job,
     onDelete: deleteJob,
@@ -238,7 +244,7 @@ export function JobCard({
           opacity: 0,
           height: 0,
         }}
-        transition={{ duration: 0.12 }}
+        transition={{ duration: 0.15 }}
         role="tooltip"
         className="w-full z-50 review-header"
       >
@@ -299,7 +305,7 @@ export function JobCard({
               type: "spring",
               stiffness: 300,
               damping: 20,
-              duration: parseFloat(getCSSVar("--animation-duration")),
+              duration: 0.15,
             }}
           />
         </motion.div>
@@ -313,7 +319,12 @@ export function JobCard({
           opacity: isOpen ? 1 : 0,
         }}
         initial={false}
-        transition={{ type: "spring", stiffness: 200, damping: 24 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 24,
+          duration: 0.15,
+        }}
       >
         <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
@@ -338,27 +349,26 @@ export function JobCard({
       <motion.div
         initial={{ opacity: 0, height: 0 }}
         animate={{
-          height: isHovered ? "auto" : 0,
-          opacity: isHovered ? 1 : 0,
+          height: !isDragging && isHovered ? "auto" : 0,
+          opacity: !isDragging && isHovered ? 1 : 0,
         }}
         exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.12 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 24,
+          duration: 0.15,
+        }}
         role="tooltip"
         aria-hidden={!isHovered}
-        className="w-full z-50"
+        className="job-card-button-row"
       >
-        <hr className="header-split" />
+        <motion.hr className="header-split" />
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
-          initial={{ opacity: 0, height: 0 }}
-          animate={
-            !isMultiSelecting && {
-              height: isHovered ? "auto" : 0,
-              opacity: isHovered ? 1 : 0,
-            }
-          }
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.12 }}
+          initial={{ opacity: 0, height: "auto" }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
         >
           {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
           <motion.button

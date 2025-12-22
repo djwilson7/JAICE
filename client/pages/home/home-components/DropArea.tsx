@@ -13,7 +13,7 @@ export function DropArea() {
 
   const dropAreaClass = "flex w-1/2 p-4 justify-center items-center gap-2";
 
-  const archiveIconColor = dragTarget === "archive" ? "orangeIcon" : "icon";
+  const archiveIconColor = dragTarget === "archive" ? "purpleIcon" : "icon";
   const trashIconColor = dragTarget === "delete" ? "redIcon" : "icon";
 
   const handleDragOver = ({ id }: { id: string }) => {
@@ -33,14 +33,14 @@ export function DropArea() {
           <motion.div
             className={`${dropAreaClass}`}
             style={{
-              boxShadow: "inset 0px -15px 14px 0px rgba(255, 140, 0, 0.7)",
+              boxShadow: "inset 0px -15px 14px 0px rgba(138, 43, 226, 0.7)",
             }}
             onPointerEnter={() => handleDragOver({ id: "archive" })}
             onPointerLeave={handleDragLeave}
             animate={{
               background:
                 dragTarget === "archive"
-                  ? "rgba(255, 140, 0, 0.1)"
+                  ? "rgba(138, 43, 226, 0.1)"
                   : "transparent",
             }}
           >
