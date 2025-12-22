@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
@@ -42,18 +42,29 @@ export function JobCard({
     setDragStart,
     isDragging,
   } = useDrag();
+
   const { processDragEnd } = useDragEndHandler({
     job: job,
     onDelete: deleteJob,
   });
-  const { expandAll, commandId } = useJobCard();
+
+  const { expandAll, commandId, registerOpen, registerClose } = useJobCard();
+
   const [localOpen, setLocalOpen] = useState<boolean | null>(null);
+  const prevOpenRef = useRef(false);
 
   useEffect(() => {
     setLocalOpen(null);
   }, [commandId]);
 
   const isOpen = localOpen ?? expandAll;
+
+  useEffect(() => {
+    if (isOpen !== prevOpenRef.current) {
+      isOpen ? registerOpen() : registerClose();
+      prevOpenRef.current = isOpen;
+    }
+  }, [isOpen, registerOpen, registerClose]);
 
   const toggle = () => {
     setLocalOpen((prev) => !(prev ?? expandAll));
