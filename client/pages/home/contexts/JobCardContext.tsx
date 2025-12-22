@@ -5,6 +5,7 @@ type JobCardContext = {
   commandId: number;
   expandAllCards: () => void;
   collapseAllCards: () => void;
+  isExpanded: boolean;
 };
 
 export const JobCardContext = createContext<JobCardContext | null>(null);
