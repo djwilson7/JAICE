@@ -167,6 +167,13 @@ export function SplitByStageCard({
           boxWidth: 10,
         },
       },
+      tooltip: {
+        backgroundColor: "rgba(15,20,30,0.95)",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        borderColor: "rgba(255,255,255,0.2)",
+        borderWidth: 1,
+      }
     },
     scales: {
       x: {
