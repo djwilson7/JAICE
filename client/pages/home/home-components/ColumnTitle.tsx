@@ -15,6 +15,7 @@ const columnDescriptions = {
   Accepted: "Offers you’ve chosen to accept.",
   Rejected: "Applications that weren’t selected.",
   Processing: "Fresh emails that are being processed.",
+  Review: "These applications need your review.",
 };
 
 export function ColumnTitle({
