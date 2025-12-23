@@ -1,29 +1,62 @@
+import type { JobCardType } from "@/types/jobCardType";
+import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useRef } from "react";
 import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
 import { motion } from "framer-motion";
+import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { useJobCard } from "@/pages/home/hooks/useJobCard";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
-import type { JobCardType } from "@/types/jobCardType";
 
 interface JobCardTitleProps {
   isSelected: boolean;
-  handleTap: () => void;
+  setIsSelected: (selected: boolean) => void;
   isOpen: boolean;
+  setLocalOpen: Dispatch<SetStateAction<boolean | null>>;
   job: JobCardType;
 }
 
 export function JobCardTitle({
   isSelected,
-  handleTap,
+  setIsSelected,
   isOpen,
+  setLocalOpen,
   job,
 }: JobCardTitleProps) {
   const { isMultiSelecting } = useIsMultiSelecting();
+  const { toggleJobSelection } = useSelectedJobs();
+  const { expandAll, commandId, registerOpen, registerClose } = useJobCard();
+  const prevOpenRef = useRef(false);
+
+  const toggle = () => {
+    setLocalOpen((prev) => !(prev ?? expandAll));
+  };
+
+  const handleOnTap = () => {
+    if (isMultiSelecting) {
+      toggleJobSelection(job);
+      setIsSelected(!isSelected);
+    } else {
+      toggle();
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen !== prevOpenRef.current) {
+      isOpen ? registerOpen() : registerClose();
+      prevOpenRef.current = isOpen;
+    }
+  }, [isOpen, registerOpen, registerClose]);
+
+  useEffect(() => {
+    setLocalOpen(null);
+  }, [commandId]);
 
   return (
     <motion.div
       className="flex justify-between w-full items-center text-left"
-      onTap={handleTap}
+      onTap={handleOnTap}
     >
       {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
 
