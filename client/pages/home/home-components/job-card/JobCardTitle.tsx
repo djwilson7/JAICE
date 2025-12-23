@@ -85,8 +85,8 @@ export function JobCardTitle({
         onTap={handleTitleTap}
       >
         <motion.div className="flex flex-col flex-1 min-w-0">
-          <p className="primary-text">{job.title}</p>
-          {job.date && <small className="secondary-text">{job.date}</small>}
+          <p className="primary-text whitespace-nowrap text-ellipsis overflow-hidden">{job.title}</p>
+          {job.date && <small className="secondary-text whitespace-nowrap text-ellipsis overflow-hidden">{job.date}</small>}
         </motion.div>
       </motion.div>
 

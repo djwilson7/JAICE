@@ -56,7 +56,7 @@ export function JobCardContainer({
       <motion.div
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
-        className={`w-full flex items-center flex flex-col job-card ${reviewClass} ${cardClass}`}
+        className={`w-full flex items-center flex flex-col job-card z-500 min-h-[2rem] overflow-hidden ${reviewClass} ${cardClass}`}
         drag
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}

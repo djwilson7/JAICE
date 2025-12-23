@@ -58,7 +58,7 @@ export function HomePage() {
     hasSearch,
   } = useJobSearchAndSort(jobs);
 
-  const { columns, toggleAcceptedRejected } = useKanbanColumns(jobs);
+  const { columns } = useKanbanColumns(jobs);
 
   const openJobAppModal = (payload: string | JobCardType | null) => {
     setJobAppModalPayload(payload);
@@ -142,16 +142,10 @@ export function HomePage() {
                   column // iterate over each column in the config
                 ) => (
                   <Column
+                    column={column}
                     key={column.id} // unique key for React
-                    id={column.id} // column id
-                    title={column.title} // column title
-                    bg={column.bg} // column background color
                     count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
                     viewportHeight={viewportHeight}
-                    showToggleRejectButton={
-                      column.id === "accepted" || column.id === "rejected"
-                    }
-                    onToggleReject={toggleAcceptedRejected}
                     isHighlighted={isHighlighted}
                     openJobAppModal={openJobAppModal}
                   >

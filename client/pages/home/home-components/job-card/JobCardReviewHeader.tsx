@@ -24,7 +24,7 @@ export function JobCardReviewHeader({ isVisible }: JobCardReviewHeaderProps) {
       }}
       transition={{ duration: 0.15 }}
       role="tooltip"
-      className="w-full z-50 review-header"
+      className="w-full z-50 review-header whitespace-nowrap text-ellipsis overflow-hidden"
     >
       {message}
     </motion.small>

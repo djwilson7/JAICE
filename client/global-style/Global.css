@@ -1487,6 +1487,18 @@ to an element (className="example").
   gap: 1rem;
   background: var(--primary-one);
   border-radius: var(--corner-radius);
+  border: 3px solid transparent;
+}
+
+.demo-column-dynamic {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.5rem;
+  gap: 1rem;
+  background: var(--primary-one);
+  border-radius: var(--corner-radius);
+  border: 3px dashed var(--primary-four);
 }
 
 .demo-column-card {

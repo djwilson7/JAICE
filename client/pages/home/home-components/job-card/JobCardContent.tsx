@@ -17,23 +17,23 @@ export function JobCardContent({ isOpen, job }: JobCardContentProps) {
       }}
       exit={{ height: 0, opacity: 0 }}
     >
-      <div className="justify-center items-center w-[80%]">
+      <div className="justify-center items-center w-[80%] whitespace-nowrap text-ellipsis overflow-hidden">
         <hr className="header-split" />
       </div>
       <div className="flex flex-col text-left w-[80%] gap-2 py-4">
-        <small className="secondary-text font-semibold">
+        <small className="secondary-text font-semibold whitespace-nowrap text-ellipsis overflow-hidden">
           {job.companyName ?? "Unknown Company"}
         </small>
 
-        <small className="secondary-text font-semibold">
+        <small className="secondary-text font-semibold whitespace-nowrap text-ellipsis overflow-hidden">
           {"Salary: " + (job.salary ?? "Unknown Salary")}
         </small>
 
-        <p className="primary-text">
+        <p className="primary-text whitespace-pre-wrap">
           {job.description ?? "No description provided for this job."}
         </p>
 
-        <small className="secondary-text">
+        <small className="secondary-text whitespace-pre-wrap">
           {job.notes ?? "No additional notes."}
         </small>
       </div>

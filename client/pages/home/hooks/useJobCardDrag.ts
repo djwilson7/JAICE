@@ -1,6 +1,7 @@
 import type { JobCardType } from "@/types/jobCardType";
 import { useJobMutation } from "@/pages/home/hooks/useJobMutation";
 import { useDrag } from "@/pages/home/hooks/useDrag";
+import { ValidColumns } from "@/types/validColumns";
 
 export function useJobCardDrag(
   job: JobCardType,
@@ -17,7 +18,7 @@ export function useJobCardDrag(
 
   const onDragEnd = async () => {
     setIsDragging(false);
-    if (!dragTarget) return cleanup();
+    if (!dragTarget || !ValidColumns.includes(dragTarget)) return cleanup();
 
     if (dragTarget === "delete" && confirmDelete) {
       const proceed = await confirmDelete();

@@ -53,4 +53,5 @@ export const REVIEW_BEHAVIOR_OPTIONS: Record<
 > = {
   inline: { label: "Inline", title: "Show reviews inline" },
   column: { label: "Column", title: "Show reviews in a separate column" },
+  dynamic: { label: "Dynamic", title: "Show reviews when relevant" },
 };

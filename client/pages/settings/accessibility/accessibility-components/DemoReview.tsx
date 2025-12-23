@@ -2,8 +2,6 @@ import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 
 export function DemoReview() {
   const { reviewBehavior } = useSettings();
-  const inline = reviewBehavior === "inline";
-
   const columnTitleClass = "font-bold whitespace-nowrap";
 
   const standardColumns = {
@@ -13,19 +11,27 @@ export function DemoReview() {
 
   const reviewColumn = { title: "Review" };
 
+  const dynamicClass = reviewBehavior === "dynamic" ? "demo-column-dynamic" : "demo-column";
+
   return (
     <div>
       <div className="flex flex-col w-full gap-4">
-        {inline ? (
+        {reviewBehavior === "inline" ? (
           <div className="text-center mb-2">
             <em>
-              The model will display review cards inline with content cards based on the stage it believes they belong to.
+              Review cards will be shown within each standard column.
+            </em>
+          </div>
+        ) : reviewBehavior === "column" ? (
+          <div className="text-center mb-2">
+            <em>
+              Always display a dedicated review column alongside other columns.
             </em>
           </div>
         ) : (
           <div className="text-center mb-2">
             <em>
-              Cards flagged for review are displayed in a dedicated review column allowing you to manage them separately.
+              Only display a dedicated review column when there are cards that need reviewed.
             </em>
           </div>
         )}
@@ -35,7 +41,7 @@ export function DemoReview() {
           <div key={col.title} className="demo-column">
             <div className={`${columnTitleClass} mt-2`}>{col.title}</div>
             <hr className="header-split" />
-            {inline ? (
+            {reviewBehavior === "inline" ? (
               <div className="flex flex-col gap-2">
                 <div className="demo-column-card-review">
                   <em>Review</em>
@@ -49,8 +55,8 @@ export function DemoReview() {
             )}
           </div>
         ))}
-        {!inline && (
-          <div className="demo-column">
+        {reviewBehavior !== "inline" && (
+          <div className={dynamicClass}>
             <div className={`${columnTitleClass} mt-2`}>
               {reviewColumn.title}
             </div>
