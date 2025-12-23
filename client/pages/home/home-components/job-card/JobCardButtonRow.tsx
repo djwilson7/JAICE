@@ -29,10 +29,10 @@ export function JobCardButtonRow({
       role="tooltip"
       aria-hidden={!isHovered}
       className="job-card-button-row"
-    >
+    > 
       <motion.hr className="header-split" />
       <motion.div
-        className="flex flex-row gap-2 p-2 w-full"
+        className="flex flex-row gap-2 py-2 w-[80%]"
         initial={{ opacity: 0, height: "auto" }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.15 }}

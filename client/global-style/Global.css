@@ -1466,6 +1466,8 @@ to an element (className="example").
   border-radius: 0px 0px var(--corner-radius) var(--corner-radius);
   background: rgba(var(--primary-five-rgb), 0.1);
   overflow: hidden;
+  align-items: center;
+  justify-content: center;
 }
 
 .demo-content-container {

@@ -33,7 +33,7 @@ export function JobCardTitle({
     setLocalOpen((prev) => !(prev ?? expandAll));
   };
 
-  const handleOnTap = () => {
+  const handleTitleTap = () => {
     if (isMultiSelecting) {
       toggleJobSelection(job);
       setIsSelected(!isSelected);
@@ -55,22 +55,21 @@ export function JobCardTitle({
 
   return (
     <motion.div
-      className="flex justify-between w-full items-center text-left"
-      onTap={handleOnTap}
-    >
-      {/* This Motion Div (above) is to wrap the title and the checkbox so we get smooth animation without affecting the open/close chevron*/}
-
+      className="flex justify-center w-full items-center"
+    > 
       <motion.div
-        className="flex items-center gap-2 p-2 w-7/8"
+        className="flex items-center justify-center h-full w-[10%]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isMultiSelecting ? 1 : 0 }}
+        exit={{ opacity: 0 }}
         layout
-        title="Click to open, close, or select this job card"
+        onTap={handleTitleTap}
       >
-        {/* This animates in the checkbox when we are in multi-select mode */}
         <motion.img
           src={isSelected ? checkIcon : uncheckIcon}
           alt={isSelected ? "Check Icon" : "Uncheck Icon"}
-          className={`w-4 h-4 opacity-50 icon ${isSelected ? "goldIcon" : ""}`}
-          initial={{ opacity: 0, width: 0 }}
+          className={`w-4 h-4 icon ${isSelected ? "goldIcon" : ""}`}
+          initial={{ opacity: 0 }}
           animate={{
             opacity: isMultiSelecting ? 1 : 0,
             width: isMultiSelecting ? "auto" : 0,
@@ -78,16 +77,24 @@ export function JobCardTitle({
           exit={{ opacity: 0, width: 0 }}
           layout
         />
-
-        {/* Job Title and date*/}
+      </motion.div>
+      <motion.div
+        className="flex items-center gap-2 py-4  w-[80%] text-left"
+        layout
+        title="Click to open, close, or select this job card"
+        onTap={handleTitleTap}
+      >
         <motion.div className="flex flex-col flex-1 min-w-0">
           <p className="primary-text">{job.title}</p>
           {job.date && <small className="secondary-text">{job.date}</small>}
         </motion.div>
       </motion.div>
 
-      {/* Chevron to expand/collapse job card details rotates via it's style argument */}
-      <motion.div className="flex w-1/8 mr-2 justify-end">
+      <motion.div
+        className="flex w-[10%] h-full justify-center items-center"
+        layout
+        onTap={toggle}
+      >
         <motion.img
           src={downChevron}
           alt="Show Content Handle"
