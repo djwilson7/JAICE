@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import type { JobCardType } from "@/types/jobCardType";
+import { getCSSVar } from "@/utils/getCSSVar";
 
 interface JobCardContentProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export function JobCardContent({ isOpen, job }: JobCardContentProps) {
         height: isOpen ? "auto" : 0,
         opacity: isOpen ? 1 : 0,
       }}
+      transition={{ duration: parseFloat(getCSSVar("--animation-duration")) }}
       exit={{ height: 0, opacity: 0 }}
     >
       <div className="justify-center items-center w-[80%] whitespace-nowrap text-ellipsis overflow-hidden">

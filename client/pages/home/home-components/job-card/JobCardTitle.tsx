@@ -8,6 +8,7 @@ import { useJobCard } from "@/pages/home/hooks/useJobCard";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
+import { getCSSVar } from "@/utils/getCSSVar";
 
 interface JobCardTitleProps {
   isSelected: boolean;
@@ -54,14 +55,13 @@ export function JobCardTitle({
   }, [commandId]);
 
   return (
-    <motion.div
-      className="flex justify-center w-full items-center"
-    > 
+    <motion.div className="flex justify-center w-full items-center">
       <motion.div
         className="flex items-center justify-center h-full w-[10%]"
         initial={{ opacity: 0 }}
         animate={{ opacity: isMultiSelecting ? 1 : 0 }}
         exit={{ opacity: 0 }}
+        
         layout
         onTap={handleTitleTap}
       >
@@ -85,8 +85,14 @@ export function JobCardTitle({
         onTap={handleTitleTap}
       >
         <motion.div className="flex flex-col flex-1 min-w-0">
-          <p className="primary-text whitespace-nowrap text-ellipsis overflow-hidden">{job.title}</p>
-          {job.date && <small className="secondary-text whitespace-nowrap text-ellipsis overflow-hidden">{job.date}</small>}
+          <p className="primary-text ">
+            {job.title}
+          </p>
+          {job.date && (
+            <small className="secondary-text whitespace-nowrap text-ellipsis overflow-hidden">
+              {job.date}
+            </small>
+          )}
         </motion.div>
       </motion.div>
 
@@ -101,10 +107,7 @@ export function JobCardTitle({
           className="w-5 h-5 icon"
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 20,
-            duration: 0.15,
+            duration: parseFloat(getCSSVar("--animation-duration")),
           }}
         />
       </motion.div>
