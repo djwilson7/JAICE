@@ -12,6 +12,7 @@ export function ArchiveModalButton({ setIsOpen }: ArchiveModalButtonProps) {
       icon={archiveIcon}
       iconHoverColor={"purpleIcon"}
       label="Archive"
+      alt="Archive Icon"
     />
   );
 }

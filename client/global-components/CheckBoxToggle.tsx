@@ -2,20 +2,24 @@ import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
 import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { useState } from "react";
 
 interface CheckBoxToggleProps {
   label?: string;
   inactiveIcon?: string;
   activeIcon?: string;
+  hoverIconColor: string;
 }
 
 export function CheckBoxToggle({
   label,
   inactiveIcon,
   activeIcon,
+  hoverIconColor,
 }: CheckBoxToggleProps) {
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { setSelectedJobs } = useSelectedJobs();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleToggle = () => {
     setIsMultiSelecting(!isMultiSelecting);
@@ -23,6 +27,7 @@ export function CheckBoxToggle({
       setSelectedJobs([]); // Clear selected jobs when turning off multi-select
     }
   };
+  const iconClass = isHovered || isMultiSelecting ? hoverIconColor : "icon";
 
   return (
     <motion.div
@@ -34,13 +39,13 @@ export function CheckBoxToggle({
         duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
       }}
       onClick={handleToggle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <img
         src={isMultiSelecting ? activeIcon : inactiveIcon}
         alt="Toggle Icon"
-        className={`w-5 h-5 shrink-0 icon ${
-          isMultiSelecting ? "goldIcon" : ""
-        }`}
+        className={`w-5 h-5 shrink-0 ${iconClass}`}
       />
       <input
         type="checkbox"

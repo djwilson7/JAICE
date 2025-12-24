@@ -35,39 +35,57 @@ export function JobCardContainer({
   });
 
   const variants = {
-    active: { opacity: 1, scale: 1, filter: "none" },
     dimmed: {
       opacity: 0.35,
       scale: 0.98,
       filter: "grayscale(40%) brightness(80%)",
     },
+    normal: { opacity: 1, scale: 1, filter: "none" },
+    selected: {
+      scale: 1,
+      boxShadow: "0 2px 8px rgba(var(--gold-rgb), 0.8)",
+      border: "1px solid rgba(var(--gold-rgb), 0.8)",
+    },
+
+    unselected: {
+      scale: 0.9,
+    },
+
+    hoverUnselected: {
+      scale: 0.95,
+      boxShadow: "0 2px 6px rgba(var(--gold-rgb), 0.5)",
+      border: "1px solid rgba(var(--gold-rgb), 0.5)",
+      cursor: "pointer",
+    },
   };
 
-  const reviewClass = job.reviewNeeded ? "review" : "shadow";
-
-  const cardClass = !isMultiSelecting
-    ? ""
+  const cardState = !isMultiSelecting
+    ? "normal"
     : isSelected
-    ? "selectedJobCard"
-    : "unselectedJobCard";
+    ? "selected"
+    : "unselected";
+
+  const reviewClass = job.reviewNeeded ? "review" : "shadow";
 
   return (
     <>
       <motion.div
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
-        className={`w-full flex items-center flex flex-col job-card z-500 min-h-[2rem] overflow-hidden ${reviewClass} ${cardClass}`}
+        className={`w-full flex items-center flex flex-col job-card min-h-[2rem] overflow-hidden ${reviewClass}`}
         drag
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         variants={variants}
-        animate={dimmed ? "dimmed" : "active"}
+        animate={dimmed ? "dimmed" : cardState}
         whileHover={
-          !isMultiSelecting ? { scale: 1.02, cursor: "pointer" } : undefined
+          isMultiSelecting && !isSelected
+            ? "hoverUnselected"
+            : { scale: 1.02, cursor: "pointer" }
         }
         onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
         onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
-        // onTap cycles between expanding the card and selecting it based on isMultiSelecting
+        
         whileTap={{ cursor: "grabbing" }}
         whileDrag={{
           cursor: "grabbing",

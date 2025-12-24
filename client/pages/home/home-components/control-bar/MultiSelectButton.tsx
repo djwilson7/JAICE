@@ -8,6 +8,7 @@ export function MultiSelectButton() {
       label={"Multi-Select"}
       inactiveIcon={uncheckIcon}
       activeIcon={checkIcon}
+      hoverIconColor={"goldIcon"}
     />
   );
 }

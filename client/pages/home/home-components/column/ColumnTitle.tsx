@@ -13,17 +13,15 @@ const columnDescriptions = {
 };
 
 export function ColumnTitle({ title }: ColumnTitleProps) {
-  const headerClass = "flex w-full items-center justify-center";
+  const headerClass = "flex w-full items-center justify-center whitespace-nowrap text-ellipsis";
 
   return (
-    <div className="flex flex-col w-full items-center justify-center">
+    <div className="flex flex-col w-full items-center justify-center overflow-hidden">
       <div className={headerClass}>
-        <div className="flex w-full items-center justify-center">
-          <h2>{title}</h2>
-        </div>
+        <h2 className="w-full whitespace-nowraptext-ellipsis">{title}</h2>
       </div>
       <div className="flex w-full items-center justify-center">
-        <small className="text-center secondary-text">
+        <small className="w-full text-center secondary-text whitespace-nowrap text-ellipsis">
           {columnDescriptions[title as keyof typeof columnDescriptions]}
         </small>
       </div>

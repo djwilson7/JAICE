@@ -13,6 +13,7 @@ export function TrashModalButton({ setIsOpen }: TrashModalButtonProps) {
       icon={trashIcon}
       iconHoverColor={"redIcon"}
       label="Trash"
+      alt="Undo Trash Icon"
     />
   );
 }

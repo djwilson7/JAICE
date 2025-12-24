@@ -41,7 +41,7 @@ export function Column({
     <motion.div
       className="flex"
       style={{
-        minWidth: 0,
+        minWidth: column.visible ? "15rem" : "0rem",
       }}
       animate={{
         flexGrow: column.visible ? 1 : 0,
@@ -66,7 +66,7 @@ export function Column({
       >
         {/* Header */}
         <div className="flex relative items-center justify-between w-full h-[4rem] select-none">
-          <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center">
+          <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center hidden 2xl:flex">
             {!shouldHideAddButton && (
               <Button
                 type="button"
@@ -88,7 +88,7 @@ export function Column({
 
           <ColumnTitle title={column.title} />
 
-          <div className="flex absolute right-2 mx-2 h-full items-center justify-center">
+          <div className="flex absolute right-2 mx-2 h-full items-center justify-center hidden 2xl:flex">
             <h3>{count}</h3>
           </div>
         </div>

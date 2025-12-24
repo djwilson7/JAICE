@@ -22,7 +22,7 @@ export function useJobCardDrag(
 
     if (dragTarget === "delete" && confirmDelete) {
       const proceed = await confirmDelete();
-      if (!proceed) return cleanup(); // user cancelled
+      if (!proceed) return cleanup();
     }
 
     switch (dragTarget) {

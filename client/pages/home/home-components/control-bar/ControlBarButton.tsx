@@ -7,6 +7,7 @@ interface ControlBarButtonProps {
   iconHoverColor: string;
   label?: string;
   prominent?: boolean;
+  alt: string;
 }
 
 export function ControlBarButton({
@@ -15,22 +16,26 @@ export function ControlBarButton({
   iconHoverColor,
   label,
   prominent,
+  alt,
 }: ControlBarButtonProps) {
   
   const [mouseEnter, setMouseEnter] = useState<boolean>(false);
+  const buttonClass = prominent ? "control-bar-container control-bar-container-red" : "control-bar-container";
+  const iconClass = mouseEnter ? iconHoverColor : "icon";
+
   return (
     <motion.div
-      className={"control-bar-container" + ` ${prominent ? "control-bar-container-red" : ""}`}
+      className={`no-select ${buttonClass}`}
       onMouseEnter={() => setMouseEnter(true)}
       onMouseLeave={() => setMouseEnter(false)}
       onClick={onClick}
     >
       <motion.img
         src={icon}
-        alt="Undo Trash Icon"
-        className={`w-5 h-5 icon ${mouseEnter ? iconHoverColor : ""}`}
+        alt={alt}
+        className={`w-5 h-5 ${iconClass}`}
       />
-      <p className="flex whitespace-nowrap">
+      <p className="whitespace-nowrap no-select">
         {label}
       </p>
     </motion.div>

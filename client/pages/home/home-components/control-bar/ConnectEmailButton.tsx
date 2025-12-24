@@ -27,6 +27,7 @@ export function ConnectEmailButton({ setIsOpen }: ConnectEmailButtonProps) {
       iconHoverColor={connectEmailHoverColor}
       label={connectEmailLabel}
       prominent={gmailConnected ? false : true}
+      alt="Connect Email Icon"
     />
   );
 }
