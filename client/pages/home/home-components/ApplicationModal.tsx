@@ -230,7 +230,6 @@ export default function NewApplication({
               value={stage}
               onChange={(e) => setStage(e.target.value)}
             >
-              {stage ? <option value={stage}>{stage}</option> : null}
               <option value="Applied">Applied</option>
               <option value="Interview">Interview</option>
               <option value="Offer">Offer</option>
