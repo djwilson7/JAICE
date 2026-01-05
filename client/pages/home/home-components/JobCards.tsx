@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import uncheckIcon from "@/assets/icons/uncheck-icon.svg";
 import checkIcon from "@/assets/icons/check-icon.svg";
 import type { JobCardType } from "@/types/jobCardType";
 import { auth } from "@/global-services/firebase";
 import { api } from "@/global-services/api";
-import { getCSSVar } from "@/utils/getCSSVar";
 import editIcon from "@/assets/icons/edit.svg";
 import viewIcon from "@/assets/icons/view.svg";
 import reviewIcon from "@/assets/icons/reviewed.svg";
@@ -20,6 +19,8 @@ import { useDeleteByJobId } from "@/pages/home/hooks/useDeleteByJobId";
 import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 import { useDragEndHandler } from "@/pages/home/hooks/useOnDragEnd";
+import { useJobCard } from "../hooks/useJobCard";
+import { ValidColumns } from "@/types/validColumns";
 
 export function JobCard({
   job,
@@ -34,16 +35,41 @@ export function JobCard({
   const { toggleJobSelection } = useSelectedJobs();
   const { deleteJob } = useDeleteByJobId();
   const { pushUndo } = useUndoRedo();
-  const { setIsDragging, setDraggedId, dragTarget, dragStart, setDragStart } =
-    useDrag();
-  const { processDragEnd } = useDragEndHandler({
-    job: job,
-    onDelete: deleteJob,
-  });
+  const {
+    setIsDragging,
+    setDraggedId,
+    dragTarget,
+    dragStart,
+    setDragStart,
+    isDragging,
+  } = useDrag();
+
+  const { processDragEnd } = useDragEndHandler({ job: job });
+
+  const { expandAll, commandId, registerOpen, registerClose } = useJobCard();
+
+  const [localOpen, setLocalOpen] = useState<boolean | null>(null);
+  const prevOpenRef = useRef(false);
+
+  useEffect(() => {
+    setLocalOpen(null);
+  }, [commandId]);
+
+  const isOpen = localOpen ?? expandAll;
+
+  useEffect(() => {
+    if (isOpen !== prevOpenRef.current) {
+      isOpen ? registerOpen() : registerClose();
+      prevOpenRef.current = isOpen;
+    }
+  }, [isOpen, registerOpen, registerClose]);
+
+  const toggle = () => {
+    setLocalOpen((prev) => !(prev ?? expandAll));
+  };
 
   const [isSelected, setIsSelected] = useState(false); // Placeholder for selection state
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false); // State to manage expanded/collapsed view
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
@@ -66,7 +92,7 @@ export function JobCard({
   const handleDragStart = () => {
     setIsDragging(true);
     setDraggedId(job.id);
-    setDragStart(job.column.toLowerCase());
+    setDragStart(job.reviewNeeded ? "review" : job.column.toLowerCase());
   };
 
   const handleDragEnd = () => {
@@ -84,7 +110,7 @@ export function JobCard({
         afterJobState = [{ ...job, applicationStage: dragTarget! }];
     }
 
-    const addToUndo = dragTarget !== dragStart && dragTarget !== null;
+    const addToUndo = dragTarget !== dragStart && dragTarget !== null && ValidColumns.includes(dragTarget);
 
     if (addToUndo) {
       if (isSelected) {
@@ -96,6 +122,7 @@ export function JobCard({
         after: afterJobState,
       });
     }
+
     processDragEnd();
   };
 
@@ -237,7 +264,7 @@ export function JobCard({
           opacity: 0,
           height: 0,
         }}
-        transition={{ duration: 0.12 }}
+        transition={{ duration: 0.15 }}
         role="tooltip"
         className="w-full z-50 review-header"
       >
@@ -253,7 +280,7 @@ export function JobCard({
             toggleJobSelection(job);
             setIsSelected(!isSelected);
           } else {
-            setIsOpen(!isOpen);
+            toggle();
           }
         }}
       >
@@ -298,7 +325,7 @@ export function JobCard({
               type: "spring",
               stiffness: 300,
               damping: 20,
-              duration: parseFloat(getCSSVar("--animation-duration")),
+              duration: 0.15,
             }}
           />
         </motion.div>
@@ -312,7 +339,12 @@ export function JobCard({
           opacity: isOpen ? 1 : 0,
         }}
         initial={false}
-        transition={{ type: "spring", stiffness: 200, damping: 24 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 24,
+          duration: 0.15,
+        }}
       >
         <hr className="header-split" />
         <div className="flex flex-col text-left w-full gap-2 py-4">
@@ -337,27 +369,26 @@ export function JobCard({
       <motion.div
         initial={{ opacity: 0, height: 0 }}
         animate={{
-          height: isHovered ? "auto" : 0,
-          opacity: isHovered ? 1 : 0,
+          height: !isDragging && isHovered ? "auto" : 0,
+          opacity: !isDragging && isHovered ? 1 : 0,
         }}
         exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.12 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 24,
+          duration: 0.15,
+        }}
         role="tooltip"
         aria-hidden={!isHovered}
-        className="w-full z-50"
+        className="job-card-button-row"
       >
-        <hr className="header-split" />
+        <motion.hr className="header-split" />
         <motion.div
           className="flex flex-row gap-2 p-2 w-full"
-          initial={{ opacity: 0, height: 0 }}
-          animate={
-            !isMultiSelecting && {
-              height: isHovered ? "auto" : 0,
-              opacity: isHovered ? 1 : 0,
-            }
-          }
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.12 }}
+          initial={{ opacity: 0, height: "auto" }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
         >
           {/*TODO: make this open edit application modal that is almost the same as add application but different*/}
           <motion.button

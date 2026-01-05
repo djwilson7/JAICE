@@ -3,6 +3,7 @@ export type Theme = "light" | "dark";
 export type MotionPreference = "slow" | "default" | "fast";
 export type ContrastLevel = "low" | "default" | "high" | "bw";
 export type NavigationBehavior = "open" | "hover" | "closed";
+export type ReviewBehavior = "inline" | "column";
 
 export interface SettingsContextValue {
   theme: Theme;
@@ -19,4 +20,7 @@ export interface SettingsContextValue {
 
   navigationBehavior: NavigationBehavior;
   setNavigationBehavior: (b: NavigationBehavior) => void;
+
+  reviewBehavior: ReviewBehavior;
+  setReviewBehavior: (r: ReviewBehavior) => void;
 }

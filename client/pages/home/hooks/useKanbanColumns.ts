@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import type { JobCardType } from "@/types/jobCardType";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 
 export function useKanbanColumns(jobs: JobCardType[]) {
+  const { reviewBehavior } = useSettings();
+
   const [acceptedRejected, setAcceptedRejected] = useState<
     "accepted" | "rejected"
   >("accepted");
@@ -24,21 +27,28 @@ export function useKanbanColumns(jobs: JobCardType[]) {
           },
     ];
 
+    if (reviewBehavior === "column") {
+      base.push({
+        id: "review",
+        title: "Review",
+        bg: "var(--review-column-bg)",
+      });
+    }
+
     if (jobs.some((j) => j.column?.toLowerCase() === "staging")) {
       base.push({
         id: "staging",
         title: "Processing",
-        bg: "var(--color-light-gray)",
+        bg: "var(--processing-column-bg)",
       });
     }
 
     return base;
-  }, [jobs, acceptedRejected]);
+  }, [jobs, acceptedRejected, reviewBehavior]);
 
   return {
     columns,
     toggleAcceptedRejected,
-    showRejectToggle:
-      acceptedRejected === "accepted" || acceptedRejected === "rejected",
+    showRejectToggle: true,
   };
 }

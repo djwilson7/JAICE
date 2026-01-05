@@ -54,6 +54,8 @@ export function Column({
   function handleMouseOutAddButton() {
     setAddButtonStyle("w-5 h-5");
   }
+  const shouldHideAddButton = title === "Processing" || title === "Review";
+  const isHidden = shouldHideAddButton ? "invisible" : "";
 
   return (
     <motion.div
@@ -71,7 +73,7 @@ export function Column({
         <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center">
           <Button
             type="button"
-            className="roundSmall"
+            className={`roundSmall ${isHidden}`}
             aria-label={`Add new application to ${title} stage`}
             title={`Add new application to ${title} stage`}
             onClick={() => openJobAppModal(id)}

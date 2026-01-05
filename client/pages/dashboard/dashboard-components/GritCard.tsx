@@ -80,7 +80,7 @@ export function GritCard({
       {/* Tooltip */}
       {showTooltip && (
         <div
-          className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-96 max-w-[95vw] bg-gray-900 text-white text-sm rounded-lg shadow-xl p-4"
+          className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-120 max-w-[95vw] bg-gray-900 text-white text-sm rounded-lg shadow-xl p-4"
           style={{
             top: "100%",
             border: "1px solid rgba(255,255,255,0.1)",
