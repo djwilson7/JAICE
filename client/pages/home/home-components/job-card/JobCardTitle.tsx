@@ -16,6 +16,7 @@ interface JobCardTitleProps {
   isOpen: boolean;
   setLocalOpen: Dispatch<SetStateAction<boolean | null>>;
   job: JobCardType;
+  sortOption: string;
 }
 
 export function JobCardTitle({
@@ -24,6 +25,7 @@ export function JobCardTitle({
   isOpen,
   setLocalOpen,
   job,
+  sortOption,
 }: JobCardTitleProps) {
   const { isMultiSelecting } = useIsMultiSelecting();
   const { toggleJobSelection } = useSelectedJobs();
@@ -93,6 +95,15 @@ export function JobCardTitle({
               {job.date}
             </small>
           )}
+
+          {/* Show salary if sorting by salary */}
+          {sortOption === "salary high to low" && job.salary !== undefined && (
+            <small 
+              className="secondary-text whitespace-nowrap text-ellipsis overflow-hidden">
+              Salary: ${job.salary.toLocaleString()}
+            </small>
+          )}
+
         </motion.div>
       </motion.div>
 

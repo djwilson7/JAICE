@@ -9,12 +9,15 @@ export function useKanbanJobs({
   matchOrderMap,
   hasSearch,
   openJobAppModal,
+  sortOption,
 }: {
   jobs: JobCardType[];
   columns: { id: string; title: string; bg: string }[];
   matchOrderMap: Map<string, number>;
   hasSearch: boolean;
   openJobAppModal: (payload: string | JobCardType | null) => void;
+  sortOption: string;
+
 }): Record<string, JSX.Element[]> {
   return columns.reduce((acc, column) => {
     const { reviewBehavior } = useSettings();
@@ -53,6 +56,7 @@ export function useKanbanJobs({
         job={job}
         dimmed={hasSearch && !matchOrderMap.has(job.id)}
         openJobAppModal={openJobAppModal}
+        sortOption={sortOption}
       />
     ));
 
