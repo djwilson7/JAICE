@@ -41,19 +41,19 @@ export function PrimaryColumnDetails() {
 
   return (
     <div>
-      <div className="flex flex-col w-full gap-4">
+      <div className="detail-text">
         {isSeparate ? (
-          <div className="text-center mb-2">
+          <small>
             <em>
               Keep Accepted and Rejected columns separate from each other.
             </em>
-          </div>
+          </small>
         ) : (
-          <div className="text-center mb-2">
+          <small>
             <em>
               Cycle between Accepted and Rejected by tapping the column title.
             </em>
-          </div>
+          </small>
         )}
       </div>
       <div className="demo-content-container">

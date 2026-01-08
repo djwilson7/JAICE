@@ -18,7 +18,7 @@ export function TextSizeDetails() {
   }
 
   return (
-    <div className="p-4 rounded">
+    <div className="detail-text">
       <small className="">{descriptionText}</small>
     </div>
   );

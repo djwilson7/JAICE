@@ -11,31 +11,33 @@ export function DemoReview() {
 
   const reviewColumn = { title: "Review" };
   const columnClass = (title: string) =>
-    title !== "Review" && reviewBehavior !== "inline" ? "passive-column demo-column" : "demo-column";
+    title !== "Review" && reviewBehavior !== "inline"
+      ? "passive-column demo-column"
+      : "demo-column";
 
-  const dynamicClass = reviewBehavior === "dynamic" ? "demo-column-dynamic" : "demo-column";
- 
+  const dynamicClass =
+    reviewBehavior === "dynamic" ? "demo-column-dynamic" : "demo-column";
+
   return (
     <div>
-      <div className="flex flex-col w-full gap-4">
+      <div className="detail-text">
         {reviewBehavior === "inline" ? (
-          <div className="text-center mb-2">
-            <em>
-              Review cards will be shown within each standard column.
-            </em>
-          </div>
+          <small>
+            <em>Review cards will be shown within each standard column.</em>
+          </small>
         ) : reviewBehavior === "column" ? (
-          <div className="text-center mb-2">
+          <small>
             <em>
               Always display a dedicated review column alongside other columns.
             </em>
-          </div>
+          </small>
         ) : (
-          <div className="text-center mb-2">
+          <small>
             <em>
-              Display a dedicated review column when there are cards that need reviewed.
+              Display a dedicated review column when there are cards that need
+              reviewed.
             </em>
-          </div>
+          </small>
         )}
       </div>
       <div className="demo-content-container">

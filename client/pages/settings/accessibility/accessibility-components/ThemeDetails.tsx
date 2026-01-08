@@ -15,8 +15,8 @@ export function ThemeDetails() {
   }
 
   return (
-    <div className="p-4 rounded">
-      <small className="">{descriptionText}</small>
+    <div className="detail-text">
+      <small>{descriptionText}</small>
     </div>
   );
 }

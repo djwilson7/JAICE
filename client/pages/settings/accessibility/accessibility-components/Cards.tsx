@@ -18,7 +18,7 @@ export function SettingCard({ children }: { children: React.ReactNode }) {
 
 export function ButtonRow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col md:flex-row w-full justify-between px-4 gap-4 lg:gap-8">
+    <div className="flex flex-col lg:flex-row w-full justify-evenly px-1 gap-1 lg:gap-4">
       {children}
     </div>
   );

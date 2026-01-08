@@ -63,144 +63,173 @@ export function AccessibilityPage() {
   const primaryColumnOptions = PRIMARY_COLUMN_BEHAVIOR_OPTIONS;
 
   return (
-    <main className="flex flex-col w-full md:flex-row overflow-y-auto">
-      <CardSection>
-        <SettingCard>
-          <SettingHeader
-            title="Text Size"
-            description="Adjust the text size used throughout the application."
-          />
-          <ButtonRow>
-            {Object.entries(textScaleOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                style={{ fontSize: option.value }}
-                onClick={() => setTextScale(key as TextScale)}
-                isSelected={textScale === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <TextSizeDetails />
-        </SettingCard>
+    <div className="flex flex-col xl:flex-row w-full overflow-y-auto">
+      <div className="w-full h-full flex flex-col">
+        <div className="flex w-full items-center justify-center p-4 mt-4">
+          <h1>Accessibility Settings</h1>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            width: "100%",
+            height: "fit-content",
+            gap: "2rem",
+            padding: "24px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(500px, 1fr))",
+          }}
+        >
+          <SettingCard>
+            <SettingHeader
+              title="Text Size"
+              description="Adjust the text size used throughout the application."
+            />
+            <ButtonRow>
+              {Object.entries(textScaleOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  style={{ fontSize: option.value }}
+                  onClick={() => setTextScale(key as TextScale)}
+                  isSelected={textScale === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <TextSizeDetails />
+          </SettingCard>
 
-        <SettingCard>
-          <SettingHeader
-            title="Theme"
-            description="Light or dark theme for the application."
-          />
-          <ButtonRow>
-            {Object.entries(themeOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                onClick={() => setTheme(key as Theme)}
-                isSelected={theme === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <ThemeDetails />
-        </SettingCard>
+          <SettingCard>
+            <SettingHeader
+              title="Theme"
+              description="Light or dark theme for the application."
+            />
+            <ButtonRow>
+              {Object.entries(themeOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  onClick={() => setTheme(key as Theme)}
+                  isSelected={theme === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <ThemeDetails />
+          </SettingCard>
 
-        <SettingCard>
-          <SettingHeader
-            title="Navigation Bar Behavior"
-            description="Customize how the navigation bar behaves."
-          />
-          <ButtonRow>
-            {Object.entries(navigationOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                onClick={() => setNavigationBehavior(key as NavigationBehavior)}
-                isSelected={navigationBehavior === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <NavigationDetails />
-        </SettingCard>
+          <SettingCard>
+            <SettingHeader
+              title="Motion Speed"
+              description="Adjust the speed of animations and motion effects."
+            />
+            <ButtonRow>
+              {Object.entries(motionOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  style={{ fontSize: option.value }}
+                  onClick={() => setMotion(key as MotionPreference)}
+                  isSelected={motion === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <MotionDetails />
+          </SettingCard>
 
-        <SettingCard>
-          <SettingHeader
-            title="Primary Column Behavior"
-            description="Set your layout preference for the primary columns."
-          />
-          <ButtonRow>
-            {Object.entries(primaryColumnOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                onClick={() => setPrimaryColumnBehavior(key as PrimaryColumnBehavior)}
-                isSelected={primaryColumnBehavior === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <PrimaryColumnDetails />
-        </SettingCard>
-      </CardSection>
-
-      <CardSection>
-        <SettingCard>
-          <SettingHeader
-            title="Motion Speed"
-            description="Adjust the speed of animations and motion effects."
-          />
-          <ButtonRow>
-            {Object.entries(motionOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                style={{ fontSize: option.value }}
-                onClick={() => setMotion(key as MotionPreference)}
-                isSelected={motion === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <MotionDetails />
-        </SettingCard>
-
-        <SettingCard>
-          <SettingHeader
-            title="Contrast Level"
-            description="Adjust the contrast level for better visibility."
-          />
-          <ButtonRow>
-            {Object.entries(contrastOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                onClick={() => setContrast(key as ContrastLevel)}
-                isSelected={contrast === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <ContrastDetails />
-        </SettingCard>
-        <SettingCard>
-          <SettingHeader
-            title="Review Behavior"
-            description="When our AI is uncertain, job cards are flagged for your review."
-          />
-          <ButtonRow>
-            {Object.entries(reviewOptions).map(([key, option]) => (
-              <SettingButton
-                key={key}
-                label={option.label}
-                onClick={() => setReviewBehavior(key as ReviewBehavior)}
-                isSelected={reviewBehavior === key}
-                title={option.title}
-              />
-            ))}
-          </ButtonRow>
-          <DemoReview />
-        </SettingCard>
-      </CardSection>
-    </main>
+          <SettingCard>
+            <SettingHeader
+              title="Contrast Level"
+              description="Adjust the contrast level for better visibility."
+            />
+            <ButtonRow>
+              {Object.entries(contrastOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  onClick={() => setContrast(key as ContrastLevel)}
+                  isSelected={contrast === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <ContrastDetails />
+          </SettingCard>
+        </div>
+      </div>
+      <div className="w-full h-full flex flex-col">
+        <div className="flex w-full items-center justify-center p-4 mt-4">
+          <h1>Layout Settings</h1>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            width: "100%",
+            gap: "24px",
+            padding: "24px",
+            gridTemplateColumns: "1fr",
+          }}
+        >
+          <SettingCard>
+            <SettingHeader
+              title="Navigation Bar Behavior"
+              description="Customize how the navigation bar behaves."
+            />
+            <ButtonRow>
+              {Object.entries(navigationOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  onClick={() =>
+                    setNavigationBehavior(key as NavigationBehavior)
+                  }
+                  isSelected={navigationBehavior === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <NavigationDetails />
+          </SettingCard>
+          <SettingCard>
+            <SettingHeader
+              title="Primary Column Behavior"
+              description="Set your layout preference for the primary columns."
+            />
+            <ButtonRow>
+              {Object.entries(primaryColumnOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  onClick={() =>
+                    setPrimaryColumnBehavior(key as PrimaryColumnBehavior)
+                  }
+                  isSelected={primaryColumnBehavior === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <PrimaryColumnDetails />
+          </SettingCard>
+          <SettingCard>
+            <SettingHeader
+              title="Review Behavior"
+              description="When our AI is uncertain, job cards are flagged for your review."
+            />
+            <ButtonRow>
+              {Object.entries(reviewOptions).map(([key, option]) => (
+                <SettingButton
+                  key={key}
+                  label={option.label}
+                  onClick={() => setReviewBehavior(key as ReviewBehavior)}
+                  isSelected={reviewBehavior === key}
+                  title={option.title}
+                />
+              ))}
+            </ButtonRow>
+            <DemoReview />
+          </SettingCard>
+        </div>
+      </div>
+    </div>
   );
 }
