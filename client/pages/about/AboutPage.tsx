@@ -28,13 +28,13 @@ function Section({
       {(eyebrow || title) && (
         <header className="mb-8">
           {eyebrow && (
-            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm tracking-wide">
+            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm tracking-wide secondary-text">
               {eyebrow}
             </span>
           )}
           {title && (
             <h2
-              className="mt-3 text-4xl md:text-6xl font-bold tracking-tight"
+              className="mt-3 text-4xl md:text-6xl font-bold tracking-tight primary-text"
               style={{ fontSize: "clamp(3rem, 6vw, 7rem)" }}
             >
               {title}
@@ -160,7 +160,7 @@ export function AboutPage() {
 
   return (
     <div
-      style={{ background: "var(--primary-gradient)" }}
+      style={{ background: "linear-gradient(180deg, rgb(var(--primary-one-rgb)) 0%, rgb(var(--primary-two-rgb)) 100%)" }}
       className="min-h-screen"
     >
       <main className="relative mx-auto max-w-7xl px-4 md:px-8 min-h-screen overflow-x-hidden">

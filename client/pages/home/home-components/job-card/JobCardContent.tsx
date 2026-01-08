@@ -28,7 +28,7 @@ export function JobCardContent({ isOpen, job }: JobCardContentProps) {
         </small>
 
         <small className="secondary-text font-semibold whitespace-nowrap text-ellipsis overflow-hidden">
-          {"Salary: " + (job.salary ?? "Unknown Salary")}
+          {`Salary: $${job.salary?.toLocaleString() ?? "Unknown Salary"}`} 
         </small>
 
         <p className="primary-text whitespace-pre-wrap">

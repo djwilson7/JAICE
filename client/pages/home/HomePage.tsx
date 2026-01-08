@@ -71,6 +71,7 @@ export function HomePage() {
     matchOrderMap,
     hasSearch,
     openJobAppModal,
+    sortOption,
   });
 
   const userInfo = getCurrentUserInfo();

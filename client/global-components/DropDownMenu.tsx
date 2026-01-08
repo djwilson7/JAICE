@@ -13,6 +13,7 @@ const sortByOptions = [
   { value: "old", label: "Oldest First" },
   { value: "az", label: "Ascend (a-z)" },
   { value: "za", label: "Descend (z-a)" },
+  { value: "salary high to low", label: "Salary (High to Low)" },
 ];
 
 export function DropDownMenu({
