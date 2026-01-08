@@ -104,7 +104,6 @@ export function Card({
                     justifyContent: "center",
                     position: "relative",
                 }}
-                onClick={(e) => e.stopPropagation()}
                 role={expandable ? "button" : undefined}
                 tabIndex={expandable ? 0 : undefined}
                 onKeyDown={
@@ -122,7 +121,7 @@ export function Card({
                             opacity: 0.8,
                         }}
                     >
-                        Click to expand
+                        Click anywhere to expand
                     </div>
                 )}
                 {children}
