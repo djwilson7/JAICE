@@ -36,20 +36,16 @@ export function Column({
 
   const shouldHideAddButton =
     column.title === "Processing" || column.title === "Review";
+  
+  if (column.visible === false) {
+    return null;
+  }
 
   return (
     <motion.div
       className="flex"
-      style={{
-        minWidth: column.visible ? "15rem" : "0rem",
-      }}
-      animate={{
-        flexGrow: column.visible ? 1 : 0,
-        flexShrink: 1,
-        flexBasis: column.visible ? "20rem" : "0rem",
-        opacity: column.visible ? 1 : 0,
-      }}
       transition={{ duration: parseFloat(getCSSVar("--animation-duration")), ease: "easeInOut" }}
+      style={{width: "100%"}}
     >
       <motion.div
         style={{
@@ -58,7 +54,7 @@ export function Column({
           minHeight: viewportHeight,
           width: "100%",
         }}
-        className={`flex flex-col p-2 corner-radius shadow ${
+        className={`flex flex-col p-2 corner-radius overflow-hidden shadow ${
           highlightColumn ? "highlighted" : ""
         }`}
         onPointerEnter={() => setDragTarget(column.id as DragTarget)}

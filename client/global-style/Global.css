@@ -1503,4 +1503,8 @@ to an element (className="example").
   -ms-user-select: none;
 }
 
+.passive-column {
+  opacity: 0.7;
+}
+
 /* Add more custom classes above this line */

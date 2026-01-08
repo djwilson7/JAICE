@@ -4,7 +4,8 @@ import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 import { kanBanColumns } from "@/pages/home/home-components/column/KanBanColumn";
 
 export function useKanbanColumns(jobs: JobCardType[]) {
-  const { reviewBehavior } = useSettings();
+  const { reviewBehavior, selectedPrimaryColumn, primaryColumnBehavior } =
+    useSettings();
 
   const columns = useMemo(() => {
     const hasReviewJobs = jobs.some((j) => j.reviewNeeded === true);
@@ -17,13 +18,19 @@ export function useKanbanColumns(jobs: JobCardType[]) {
         case "accepted":
           return {
             ...column,
-            visible: true,
+            visible:
+              primaryColumnBehavior === "separate" ||
+              (primaryColumnBehavior === "unified" &&
+                selectedPrimaryColumn === "accepted"),
           };
 
         case "rejected":
           return {
             ...column,
-            visible: true,
+            visible:
+              primaryColumnBehavior === "separate" ||
+              (primaryColumnBehavior === "unified" &&
+                selectedPrimaryColumn === "rejected"),
           };
 
         case "review":
@@ -47,7 +54,7 @@ export function useKanbanColumns(jobs: JobCardType[]) {
           };
       }
     });
-  }, [jobs, reviewBehavior]);
+  }, [jobs, reviewBehavior, primaryColumnBehavior, selectedPrimaryColumn]);
 
   return {
     columns,
