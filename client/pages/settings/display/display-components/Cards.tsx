@@ -1,11 +1,5 @@
 import Button from "@/global-components/button";
 
-export function CardSection({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col w-full p-4 m-4 lg:w-1/2 gap-4">{children}</div>
-  );
-}
-
 export function SettingCard({ children }: { children: React.ReactNode }) {
   return (
     <div

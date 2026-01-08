@@ -12,7 +12,7 @@ import homeIcon from "@/assets/icons/home.svg";
 import aboutIcon from "@/assets/icons/book-open-cover.svg";
 import dashboardIcon from "@/assets/icons/chart-pie-alt.svg";
 import accountIcon from "@/assets/icons/user.svg";
-import accessibilityIcon from "@/assets/icons/hand-paper.svg";
+import displayIcon from "@/assets/icons/display.svg";
 import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
 
@@ -53,11 +53,11 @@ const settingsOptions = {
     icon: accountIcon,
     title: "Go to Account Settings",
   },
-  accessibility: {
-    route: "/settings/accessibility",
-    label: "Accessibility",
-    icon: accessibilityIcon,
-    title: "Go to Accessibility Settings",
+  display: {
+    route: "/settings/display",
+    label: "Display",
+    icon: displayIcon,
+    title: "Go to Display Settings",
   },
   notification: {
     route: "/settings/notification",
@@ -93,8 +93,8 @@ export function NavigationBar() {
       setSelectedButton("resume");
     } else if (path === "/settings/account") {
       setSelectedButton("account");
-    } else if (path === "/settings/accessibility") {
-      setSelectedButton("accessibility");
+    } else if (path === "/settings/display") {
+      setSelectedButton("display");
     } else if (path === "/settings/notification") {
       setSelectedButton("notification");
     } else setSelectedButton("");

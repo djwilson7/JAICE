@@ -1,18 +1,19 @@
 import { useSettings } from "@/pages/settings/provider/SettingsProvider";
-import { DemoReview } from "@/pages/settings/accessibility/accessibility-components/DemoReview";
-import { ContrastDetails } from "@/pages/settings/accessibility/accessibility-components/ContrastDetails";
-import { MotionDetails } from "@/pages/settings/accessibility/accessibility-components/MotionDetails";
-import { NavigationDetails } from "@/pages/settings/accessibility/accessibility-components/NavigationDetails";
-import { ThemeDetails } from "@/pages/settings/accessibility/accessibility-components/ThemeDetails";
-import { TextSizeDetails } from "@/pages/settings/accessibility/accessibility-components/TextSizeDetails";
+import { DemoReview } from "@/pages/settings/display/display-components/DemoReview";
+import { ContrastDetails } from "@/pages/settings/display/display-components/ContrastDetails";
+import { MotionDetails } from "@/pages/settings/display/display-components/MotionDetails";
+import { NavigationDetails } from "@/pages/settings/display/display-components/NavigationDetails";
+import { ThemeDetails } from "@/pages/settings/display/display-components/ThemeDetails";
+import { TextSizeDetails } from "@/pages/settings/display/display-components/TextSizeDetails";
+import accessibilityIcon from "@/assets/icons/accessibility.svg";
+import layoutIcon from "@/assets/icons/layout.svg";
 
 import {
-  CardSection,
   SettingCard,
   ButtonRow,
   SettingButton,
   SettingHeader,
-} from "@/pages/settings/accessibility/accessibility-components/Cards";
+} from "@/pages/settings/display/display-components/Cards";
 
 import {
   TEXT_SCALE_OPTIONS,
@@ -34,9 +35,9 @@ import type {
   PrimaryColumnBehavior,
 } from "@/pages/settings/provider/settingsTypes";
 
-import { PrimaryColumnDetails } from "./accessibility-components/PrimaryColumnDetails";
+import { PrimaryColumnDetails } from "./display-components/PrimaryColumnDetails";
 
-export function AccessibilityPage() {
+export function DisplayPage() {
   const {
     theme,
     setTheme,
@@ -65,7 +66,14 @@ export function AccessibilityPage() {
   return (
     <div className="flex flex-col xl:flex-row w-full overflow-y-auto">
       <div className="w-full h-full flex flex-col">
-        <div className="flex w-full items-center justify-center p-4 mt-4">
+        <div className="flex w-full items-center justify-center p-4 mt-4 gap-4">
+          <div className="flex items-center">
+            <img
+              src={accessibilityIcon}
+              alt="Accessibility"
+              className="w-10 h-10 flex-shrink-0 icon"
+            />
+          </div>
           <h1>Accessibility Settings</h1>
         </div>
         <div
@@ -158,7 +166,12 @@ export function AccessibilityPage() {
         </div>
       </div>
       <div className="w-full h-full flex flex-col">
-        <div className="flex w-full items-center justify-center p-4 mt-4">
+        <div className="flex w-full items-center justify-center p-4 mt-4 gap-4">
+          <img
+            src={layoutIcon}
+            alt="Layout"
+            className="w-10 h-10 flex-shrink-0 icon"
+          />
           <h1>Layout Settings</h1>
         </div>
         <div
