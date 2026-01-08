@@ -21,6 +21,7 @@ import {
   CONTRAST_OPTIONS,
   NAVIGATION_BEHAVIOR_OPTIONS,
   REVIEW_BEHAVIOR_OPTIONS,
+  PRIMARY_COLUMN_BEHAVIOR_OPTIONS,
 } from "@/pages/settings/provider/settingOptions";
 
 import type {
@@ -30,7 +31,10 @@ import type {
   ContrastLevel,
   NavigationBehavior,
   ReviewBehavior,
+  PrimaryColumnBehavior,
 } from "@/pages/settings/provider/settingsTypes";
+
+import { PrimaryColumnDetails } from "./accessibility-components/PrimaryColumnDetails";
 
 export function AccessibilityPage() {
   const {
@@ -46,6 +50,8 @@ export function AccessibilityPage() {
     setNavigationBehavior,
     reviewBehavior,
     setReviewBehavior,
+    primaryColumnBehavior,
+    setPrimaryColumnBehavior,
   } = useSettings();
 
   const textScaleOptions = TEXT_SCALE_OPTIONS;
@@ -54,9 +60,10 @@ export function AccessibilityPage() {
   const contrastOptions = CONTRAST_OPTIONS;
   const navigationOptions = NAVIGATION_BEHAVIOR_OPTIONS;
   const reviewOptions = REVIEW_BEHAVIOR_OPTIONS;
+  const primaryColumnOptions = PRIMARY_COLUMN_BEHAVIOR_OPTIONS;
 
   return (
-    <main className="flex flex-col w-full h-full md:flex-row p-4 gap-4 overflow-y-auto">
+    <main className="flex flex-col w-full md:flex-row overflow-y-auto">
       <CardSection>
         <SettingCard>
           <SettingHeader
@@ -96,6 +103,7 @@ export function AccessibilityPage() {
           </ButtonRow>
           <ThemeDetails />
         </SettingCard>
+
         <SettingCard>
           <SettingHeader
             title="Navigation Bar Behavior"
@@ -113,6 +121,25 @@ export function AccessibilityPage() {
             ))}
           </ButtonRow>
           <NavigationDetails />
+        </SettingCard>
+
+        <SettingCard>
+          <SettingHeader
+            title="Primary Column Behavior"
+            description="Set your layout preference for the primary columns."
+          />
+          <ButtonRow>
+            {Object.entries(primaryColumnOptions).map(([key, option]) => (
+              <SettingButton
+                key={key}
+                label={option.label}
+                onClick={() => setPrimaryColumnBehavior(key as PrimaryColumnBehavior)}
+                isSelected={primaryColumnBehavior === key}
+                title={option.title}
+              />
+            ))}
+          </ButtonRow>
+          <PrimaryColumnDetails />
         </SettingCard>
       </CardSection>
 

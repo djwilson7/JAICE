@@ -10,9 +10,11 @@ export function DemoReview() {
   };
 
   const reviewColumn = { title: "Review" };
+  const columnClass = (title: string) =>
+    title !== "Review" && reviewBehavior !== "inline" ? "passive-column demo-column" : "demo-column";
 
   const dynamicClass = reviewBehavior === "dynamic" ? "demo-column-dynamic" : "demo-column";
-
+ 
   return (
     <div>
       <div className="flex flex-col w-full gap-4">
@@ -31,14 +33,14 @@ export function DemoReview() {
         ) : (
           <div className="text-center mb-2">
             <em>
-              Only display a dedicated review column when there are cards that need reviewed.
+              Display a dedicated review column when there are cards that need reviewed.
             </em>
           </div>
         )}
       </div>
       <div className="demo-content-container">
         {Object.values(standardColumns).map((col) => (
-          <div key={col.title} className="demo-column">
+          <div key={col.title} className={columnClass(col.title)}>
             <div className={`${columnTitleClass} mt-2`}>{col.title}</div>
             <hr className="header-split" />
             {reviewBehavior === "inline" ? (

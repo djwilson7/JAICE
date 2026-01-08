@@ -55,3 +55,17 @@ export const REVIEW_BEHAVIOR_OPTIONS: Record<
   column: { label: "Column", title: "Show reviews in a separate column" },
   dynamic: { label: "Dynamic", title: "Show reviews when relevant" },
 };
+
+export const PRIMARY_COLUMN_BEHAVIOR_OPTIONS: Record<
+  string,
+  { label: string; title?: string }
+> = {
+  separate: {
+    label: "Separated",
+    title: "Keep accepted & rejected columns separated",
+  },
+  unified: {
+    label: "Unified",
+    title: "Combine accepted & rejected columns into one",
+  },
+};

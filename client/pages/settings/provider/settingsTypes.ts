@@ -4,6 +4,8 @@ export type MotionPreference = "slow" | "default" | "fast";
 export type ContrastLevel = "low" | "default" | "high" | "bw";
 export type NavigationBehavior = "open" | "hover" | "closed";
 export type ReviewBehavior = "inline" | "column" | "dynamic";
+export type PrimaryColumnBehavior = "separate" | "unified";
+export type SelectedPrimaryColumn = "accepted" | "rejected";
 
 export interface SettingsContextValue {
   theme: Theme;
@@ -23,4 +25,10 @@ export interface SettingsContextValue {
 
   reviewBehavior: ReviewBehavior;
   setReviewBehavior: (reviewBehavior: ReviewBehavior) => void;
+
+  primaryColumnBehavior: PrimaryColumnBehavior;
+  setPrimaryColumnBehavior: (primaryColumnBehavior: PrimaryColumnBehavior) => void;
+
+  selectedPrimaryColumn: SelectedPrimaryColumn;
+  setSelectedPrimaryColumn: (column: SelectedPrimaryColumn) => void;
 }
