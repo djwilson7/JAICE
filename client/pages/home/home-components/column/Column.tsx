@@ -54,7 +54,7 @@ export function Column({
           minHeight: viewportHeight,
           width: "100%",
         }}
-        className={`flex flex-col p-2 corner-radius overflow-hidden shadow ${
+        className={`flex flex-col p-2 corner-radius shadow ${
           highlightColumn ? "highlighted" : ""
         }`}
         onPointerEnter={() => setDragTarget(column.id as DragTarget)}
