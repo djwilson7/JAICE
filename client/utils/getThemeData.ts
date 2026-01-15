@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 const themeData = {
     light: { icon: sunIcon, label: "Light Mode", title: "Flip to Dark Mode", loadingAnimation: loadingAnimationLight },
     dark: { icon: moonIcon, label: "Dark Mode", title: "Flip to Light Mode", loadingAnimation: loadingAnimationDark },
-    bw: { icon: halfCircleIcon, label: "B/W Contrast Mode", title: "Flip to Dark Mode", loadingAnimation: loadingAnimationBW }
+    bw: { icon: halfCircleIcon, label: "Black and White", title: "Flip to Dark Mode", loadingAnimation: loadingAnimationBW }
 }
 
 interface ThemeData {
