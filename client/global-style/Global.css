@@ -88,6 +88,7 @@
 ################################################################
 */
 :root {
+  --min-content-width: 1200px;
   /* Main Color Palettes */
   --page-bg: #1e1c20;
   --page-bg-highlight: #333035;
@@ -1027,6 +1028,12 @@ to an element (className="example").
   width: 100vw;
 }
 
+.outlet-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
 .page-style {
   width: 100%;
   height: 100%;
@@ -1375,9 +1382,13 @@ to an element (className="example").
   justify-content: space-between;
   width: 100%;
   height: 50px;
-  /* background: white; */
-  min-width: 50rem;
   align-self: start;
+  min-width: var(--min-content-width);
+}
+
+.min-width {
+  width: 100%;
+  min-width: var(--min-content-width);
 }
 
 .control-bar-container {

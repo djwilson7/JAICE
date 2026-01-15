@@ -218,7 +218,7 @@ export function NavigationBar() {
           </motion.div>
         </nav>
         <motion.div
-          className="overflow-auto w-full h-full"
+          className="outlet-container"
           variants={{
             rest: { marginLeft: navWidth },
             hover: { marginLeft: navWidth },
