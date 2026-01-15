@@ -83,7 +83,6 @@ export function AccountPage() {
     event.preventDefault();
 
     setSaveProfileError(null);
-    setBusy(true);
 
     if (!user) {
       setSaveProfileError("No user is currently signed in.");
@@ -109,9 +108,7 @@ export function AccountPage() {
     } catch (error) {
       console.error("Error updating profile:", error);
       setSaveProfileError("Failed to update profile. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+    } 
   };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
