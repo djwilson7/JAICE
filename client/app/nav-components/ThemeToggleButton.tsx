@@ -4,8 +4,10 @@ import { getThemeData } from "@/utils/getThemeData";
 
 export const ThemeToggleButton = ({
   hoverMode,
+  showLabel,
 }: {
   hoverMode: NavigationBehavior;
+  showLabel: boolean;
 }) => {
   const theme = getThemeData();
   const handleThemeToggle = () => {
@@ -38,6 +40,7 @@ export const ThemeToggleButton = ({
       isSelected={false}
       hoverMode={hoverMode}
       title={theme.title}
+      showLabel={showLabel}
     />
   );
 };

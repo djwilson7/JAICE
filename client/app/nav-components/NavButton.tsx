@@ -9,6 +9,7 @@ export const NavButton = ({
   isSelected,
   hoverMode,
   title,
+  showLabel,
 }: {
   icon: string;
   label: string;
@@ -16,21 +17,29 @@ export const NavButton = ({
   isSelected: boolean;
   hoverMode: NavigationBehavior;
   title?: string;
+  showLabel: boolean;
 }) => {
-  const hoverModeRestMap = {
-    "closed": false,
-    "hover": false,
-    "open": true,
+  const labelVariants = {
+    closed: { opacity: 0, width: 0 },
+    hover: { opacity: 1, width: showLabel ? "fit-content" : 0 },
+    open: { opacity: 1, width: "auto" },
   };
 
-  const hoverModeLabelOpacityMap = {
-    "closed": 0,
-    "hover": 1,
-    "open": 1,
-  };
+  const initialLabel = () => {
+    switch (hoverMode) {
+      case "closed":
+        return "closed";
+      case "hover":
+        return showLabel ? "hover" : "closed";
+      case "open":
+        return "open";
+    }
+  }
 
   return (
-    <div className="flex flex-row items-center gap-2">
+    <motion.div
+      className="flex flex-row items-center gap-2"
+    >
       <Button
         onClick={onClick}
         isSelected={isSelected}
@@ -40,22 +49,18 @@ export const NavButton = ({
         <div className="flex items-center">
           <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
         </div>
+        {hoverMode === "open" || showLabel ? (
+          <motion.span
+            className="text-left overflow-hidden whitespace-nowrap"
+            variants={labelVariants}
+            initial={initialLabel()}
+            animate={initialLabel()}
+            transition={{ duration: 0.2 }}
+          >
+            {label}
+          </motion.span>
+        ) : null}
       </Button>
-      <motion.span
-        className="text-left overflow-hidden whitespace-nowrap"
-        style={{
-          height: "1.25rem",
-          display: "flex",
-          alignItems: "center",
-        }}
-        variants={{
-          rest: { opacity: hoverModeRestMap[hoverMode] ? 1 : 0 },
-          hover: { opacity: hoverModeLabelOpacityMap[hoverMode] },
-        }}
-        transition={{ duration: 0.15 }}
-      >
-        {label}
-      </motion.span>
-    </div>
+    </motion.div>
   );
 };

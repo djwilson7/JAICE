@@ -159,6 +159,7 @@ export function NavigationBar() {
                         isSelected={selectedButton === key}
                         hoverMode={hoverMode}
                         title={option.title}
+                        showLabel={navIsHovered && hoverMode !== "closed"}
                       />
                     </li>
                   ))}
@@ -177,7 +178,7 @@ export function NavigationBar() {
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   <li key="theme-toggle">
-                    <ThemeToggleButton hoverMode={hoverMode} />
+                    <ThemeToggleButton hoverMode={hoverMode} showLabel={navIsHovered && hoverMode !== "closed"} />
                   </li>
                   {/* <li key="menu-expand">
                     <MenuToggleButton
@@ -194,6 +195,7 @@ export function NavigationBar() {
                         isSelected={selectedButton === key}
                         hoverMode={hoverMode}
                         title={option.title}
+                        showLabel={navIsHovered && hoverMode !== "closed"}
                       />
                     </li>
                   ))}
