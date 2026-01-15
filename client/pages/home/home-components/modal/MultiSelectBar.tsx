@@ -212,7 +212,7 @@ export function MultiSelectBar({
 
   return (
     <>
-      <div className={className || "glass min-w-[500px]"}>
+      <div className={className || "glass min-w-[500px] mb-10"}>
         <div className="w-full p-2 flex flex-col">
           <div className="w-full text-center">
             <p className="secondary-text animate-element">{getStatusText()}</p>

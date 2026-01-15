@@ -93,12 +93,14 @@
   --page-bg-highlight: #333035;
   --page-bg-rgb: 30, 28, 32;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+  --page-shadow-multi-select: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.8);
+  --multi-select-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
 
   --modal-background: black;
   --modal-background-rgb: 0, 0, 0;
 
-  --glass-bg: rgba(0, 0, 0, 0.5);
-  --glass-bg-hover: rgba(0, 0, 0, 0.8);
+  --glass-bg: rgba(0, 0, 0, 0.8);
+  --glass-bg-hover: rgba(0, 0, 0);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-hover: rgba(255, 255, 255, 0.2);
 
@@ -251,6 +253,8 @@ html[data-theme="light"] {
   --page-bg-highlight: #c0bebe;
   --page-bg-rgb: 190, 190, 190;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+  --page-shadow-multi-select: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.8);
+  --multi-select-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
   --modal-background: rgb(0, 0, 0);
   --modal-background-rgb: 0, 0, 0;
@@ -1196,7 +1200,7 @@ to an element (className="example").
   border-radius: var(--corner-radius);
   backdrop-filter: blur(10px);
   border: var(--glass-border);
-  box-shadow: var(--shadow);
+  box-shadow: var(--multi-select-shadow);
   transition: all var(--animation-duration) ease;
   position: fixed;
   bottom: 1rem;
