@@ -1,5 +1,6 @@
 import Button from "@/global-components/button";
 import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
+import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
 
 export const NavButton = ({
@@ -55,7 +56,7 @@ export const NavButton = ({
             variants={labelVariants}
             initial={initialLabel()}
             animate={initialLabel()}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
           >
             {label}
           </motion.span>

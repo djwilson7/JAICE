@@ -76,7 +76,6 @@ export function NavigationBar() {
 
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
 
-
   const hoverMode = useSettings().navigationBehavior as NavigationBehavior;
 
   useEffect(() => {
@@ -110,23 +109,30 @@ export function NavigationBar() {
     navigate(route);
   };
 
-  const restWidthMap = {
-    "closed": "6rem",
-    "hover": "6rem",
-    "open": "15rem",
-  };
-
-  const hoverWidthMap = {
-    "closed": "6rem",
-    "hover": "15rem",
-    "open": "15rem",
-  };
-
   const navBarVariants = {
-    closed: { widht: "fit-content" },
+    closed: { width: "fit-content" },
     open: { width: "max-content" },
     hover: { width: "max-content" },
-  }
+  };
+
+  const [navWidth, setNavWidth] = useState<number>(0);
+  const navRef = document.getElementById("navigation-bar");
+
+  const measureWidth = new ResizeObserver(() => {
+    if (navRef) {
+      setNavWidth(navRef.offsetWidth);
+    }
+  });
+
+  useEffect(() => {
+    if (navRef) {
+      measureWidth.observe(navRef);
+      setNavWidth(navRef.offsetWidth);
+    }
+    return () => {
+      measureWidth.disconnect();
+    };
+  }, [navRef]);
 
   return (
     <div className="h-screen min-page-width overflow-x-hidden">
@@ -134,7 +140,8 @@ export function NavigationBar() {
 
       <div className={`app-content`}>
         <nav
-          className={`flex absolute left-0 top-0 h-full primary-color animate-element`}
+          className={`flex absolute left-0 top-0 h-full primary-color animate-element z-40`}
+          id="navigation-bar"
         >
           <motion.div
             className="z-50 h-full flex flex-col p-2 gap-3 overflow-hidden"
@@ -181,7 +188,10 @@ export function NavigationBar() {
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   <li key="theme-toggle">
-                    <ThemeToggleButton hoverMode={hoverMode} showLabel={navIsHovered && hoverMode !== "closed"} />
+                    <ThemeToggleButton
+                      hoverMode={hoverMode}
+                      showLabel={navIsHovered && hoverMode !== "closed"}
+                    />
                   </li>
                   {/* <li key="menu-expand">
                     <MenuToggleButton
@@ -210,8 +220,8 @@ export function NavigationBar() {
         <motion.div
           className="overflow-auto w-full h-full"
           variants={{
-            rest: { marginLeft: restWidthMap[hoverMode] },
-            hover: { marginLeft: hoverWidthMap[hoverMode] },
+            rest: { marginLeft: navWidth },
+            hover: { marginLeft: navWidth },
           }}
           animate={navIsHovered ? "hover" : "rest"}
           transition={{
