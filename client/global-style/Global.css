@@ -854,14 +854,13 @@ button.selected {
 }
 
 button.navButton {
-  padding: 1rem;
   width: fit-content;
   height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 1rem;
   gap: 1rem;
+  overflow: hidden;
 }
 
 button.small {

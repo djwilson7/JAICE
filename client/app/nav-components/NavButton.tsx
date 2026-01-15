@@ -38,7 +38,7 @@ export const NavButton = ({
 
   return (
     <motion.div
-      className="flex flex-row items-center gap-2"
+      className="flex flex-row items-start justify-start gap-2"
     >
       <Button
         onClick={onClick}

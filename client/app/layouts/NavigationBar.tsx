@@ -122,32 +122,35 @@ export function NavigationBar() {
     "open": "15rem",
   };
 
+  const navBarVariants = {
+    closed: { widht: "fit-content" },
+    open: { width: "max-content" },
+    hover: { width: "max-content" },
+  }
+
   return (
     <div className="h-screen min-page-width overflow-x-hidden">
       <MainHeader />
 
       <div className={`app-content`}>
         <nav
-          className={`flex absolute left-0 top-0  h-full primary-color animate-element`}
+          className={`flex absolute left-0 top-0 h-full primary-color animate-element`}
         >
           <motion.div
-            className="z-50 h-full flex flex-col py-4 items-left justify-center gap-3 overflow-hidden"
-            variants={{
-              rest: { width: restWidthMap[hoverMode] },
-              hover: { width: hoverWidthMap[hoverMode] },
-            }}
-            initial="rest"
-            animate={navIsHovered ? "hover" : "rest"}
+            className="z-50 h-full flex flex-col p-2 gap-3 overflow-hidden"
+            variants={navBarVariants}
+            initial={hoverMode}
+            animate={navIsHovered ? "hover" : "closed"}
             onMouseEnter={() => setNavIsHovered(true)}
             onMouseLeave={() => setNavIsHovered(false)}
             transition={{
               duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
             }}
           >
-            <div className="flex flex-col items-left h-full w-full justify-between group-hover:items-start">
-              <section aria-label="Navigation Buttons">
+            <div className="flex flex-col h-full w-full justify-between">
+              <section aria-label="Navigation Buttons" className="flex w-full">
                 <ul
-                  className="flex flex-col items-start gap-2"
+                  className="flex flex-col gap-2"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   {Object.entries(primaryOptions).map(([key, option]) => (
