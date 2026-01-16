@@ -250,7 +250,7 @@ Light theme overrides
 */
 html[data-theme="light"] {
   /* Backgrounds */
-  --page-bg: #929090;
+  --page-bg: #c0bdbd;
   --page-bg-highlight: #c0bebe;
   --page-bg-rgb: 190, 190, 190;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);

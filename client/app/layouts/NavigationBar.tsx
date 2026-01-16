@@ -140,18 +140,18 @@ export function NavigationBar() {
 
       <div className={`app-content`}>
         <nav
-          className={`flex absolute left-0 top-0 h-full primary-color animate-element z-40`}
+          className={`flex absolute left-0 top-0 h-full primary-color z-40`}
           id="navigation-bar"
         >
           <motion.div
             className="z-50 h-full flex flex-col p-2 gap-3 overflow-hidden"
             variants={navBarVariants}
             initial={hoverMode}
-            animate={navIsHovered ? "hover" : "closed"}
+            animate={hoverMode}
             onMouseEnter={() => setNavIsHovered(true)}
             onMouseLeave={() => setNavIsHovered(false)}
             transition={{
-              duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
+              duration: parseFloat(getCSSVar("--animation-duration")),
             }}
           >
             <div className="flex flex-col h-full w-full justify-between">
