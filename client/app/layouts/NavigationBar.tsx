@@ -13,7 +13,7 @@ import aboutIcon from "@/assets/icons/book-open-cover.svg";
 import dashboardIcon from "@/assets/icons/chart-pie-alt.svg";
 import accountIcon from "@/assets/icons/user.svg";
 import displayIcon from "@/assets/icons/display.svg";
-import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
+//import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
 
 import { getCSSVar } from "@/utils/getCSSVar";
@@ -59,12 +59,12 @@ const settingsOptions = {
     icon: displayIcon,
     title: "Go to Display Settings",
   },
-  notification: {
-    route: "/settings/notification",
-    label: "Notification",
-    icon: notificationIcon,
-    title: "Go to Notification Settings",
-  },
+  // notification: {
+  //   route: "/settings/notification",
+  //   label: "Notification",
+  //   icon: notificationIcon,
+  //   title: "Go to Notification Settings",
+  // },
   quit: { route: "/", label: "Quit", icon: quitIcon, title: "Logout" },
 };
 
@@ -94,8 +94,8 @@ export function NavigationBar() {
       setSelectedButton("account");
     } else if (path === "/settings/display") {
       setSelectedButton("display");
-    } else if (path === "/settings/notification") {
-      setSelectedButton("notification");
+    // } else if (path === "/settings/notification") {
+    //   setSelectedButton("notification");
     } else setSelectedButton("");
   }, [location.pathname]);
 
