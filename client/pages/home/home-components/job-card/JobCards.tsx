@@ -82,18 +82,24 @@ export function JobCard({
         <JobCardButton
           onClick={() => openJobAppModal(job)}
           icon={editIcon}
+          aria-label="Edit Job"
+          title="Edit Job"
           iconHoverColor="greenIcon"
         />
 
         <JobCardButton
           onClick={onTrashClicked}
           icon={trashIcon}
+          aria-label="Delete Job"
+          title="Delete Job"
           iconHoverColor="redIcon"
         />
 
         <JobCardButton
           onClick={() => mutateJob(job, { type: "archive" })}
           icon={archiveIcon}
+          aria-label="Archive Job"
+          title="Archive Job"
           iconHoverColor="purpleIcon"
         />
 
@@ -101,6 +107,8 @@ export function JobCard({
           onClick={() => openGmailMessage(job.id)}
           icon={viewIcon}
           iconHoverColor="blueIcon"
+          aria-label="Open Email"
+          title="Open Email"
           isVisible={job.providerSource !== "manual_entry"}
         />
 
@@ -108,6 +116,8 @@ export function JobCard({
           onClick={() => mutateJob(job, { type: "review" })}
           icon={reviewIcon}
           iconHoverColor="orangeIcon"
+          aria-label="Review Job"
+          title="Mark Job as Reviewed"
           isVisible={job.reviewNeeded}
         />
       </JobCardButtonRow>
