@@ -1,5 +1,3 @@
-// import { localfiles } from "@/directory/path/to/localimport";
-
 import Button from "@/global-components/button";
 import { getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
@@ -13,7 +11,15 @@ import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
 import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 import { UnlinkGmailModal } from "@/pages/settings/account/account-components/UnlinkGmailModal";
 import { DeleteAccountModal } from "./account-components/DeleteAccountModal";
-
+import {
+  Section,
+  SectionBody,
+  SectionHeader,
+  RowItem,
+  Row
+} from "./account-components/AccountSections";
+import linkIcon from "@/assets/icons/link.svg";
+import unlinkIcon from "@/assets/icons/unlink.svg";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -27,8 +33,8 @@ export function AccountPage() {
 
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [twoFAError, setTwoFAError] = useState<string | null>(null);
+  // const [passwordError, setPasswordError] = useState<string | null>(null);
+  // const [twoFAError, setTwoFAError] = useState<string | null>(null);
   const [saveProfileError, setSaveProfileError] = useState<string | null>(null);
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
     null
@@ -45,39 +51,38 @@ export function AccountPage() {
   const [showDaysToSync, setShowDaysToSync] = useState(false);
   const [showUnlinkGmailModal, setShowUnlinkGmailModal] = useState(false);
 
-  const [daysToSync, setDaysToSync] = useState<number | null>(null);
-
   const daysToSyncOptions = [3, 7, 14, 45];
 
   const { user, applyProfileUpdate } = useAuth();
-  const firstName: string = user?.displayName?.split(" ")[0] || "User";
-  const lastName: string =
-    user?.displayName?.split(" ").slice(1).join(" ") || "";
-  const phoneNumber: string = user?.phoneNumber || "";
+
+  // const phoneNumber: string = user?.phoneNumber || "";
   const profilePicURL: string = user?.photoURL || "";
 
-  const [firstNameField, setFirstNameField] = useState<string>(firstName);
-  const [lastNameField, setLastNameField] = useState<string>(lastName);
-  const [phoneNumberField, setPhoneNumberField] = useState<string>(phoneNumber);
+  const [firstNameField, setFirstNameField] = useState(
+    user?.displayName?.split(" ")[0] || "Enter your first name"
+  );
+  const [lastNameField, setLastNameField] = useState(
+    user?.displayName?.split(" ").slice(1).join(" ") || "Enter your last name"
+  );
+  // const [phoneNumberField, setPhoneNumberField] = useState<string>(phoneNumber);
 
   const handleFirstNameInput = (value: string) => {
     setFirstNameField(value);
-    console.log("First name input:", firstNameField);
   };
 
   const handleLastNameInput = (value: string) => {
     setLastNameField(value);
-    console.log("Last name input:", lastNameField);
   };
 
-  const handlePhoneNumberInput = (value: string) => {
-    setPhoneNumberField(value);
-    console.log("Phone number input:", phoneNumberField);
-  };
+  // const handlePhoneNumberInput = (value: string) => {
+  //   setPhoneNumberField(value);
+  //   console.log("Phone number input:", phoneNumberField);
+  // };
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     setSaveProfileError(null);
-    setBusy(true);
 
     if (!user) {
       setSaveProfileError("No user is currently signed in.");
@@ -103,9 +108,7 @@ export function AccountPage() {
     } catch (error) {
       console.error("Error updating profile:", error);
       setSaveProfileError("Failed to update profile. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+    } 
   };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
@@ -122,7 +125,6 @@ export function AccountPage() {
 
   // Handle the user's selection of days to sync from Gmail
   async function handleDaysSelection(days: number) {
-    setDaysToSync(days);
     await handleGmailLinking(days);
   }
 
@@ -202,6 +204,9 @@ export function AccountPage() {
     ? "Unlink Gmail"
     : "Link Gmail";
 
+  const gmailButtonIcon = gmailConnected ? unlinkIcon : linkIcon;
+  const gmailButtonColor = gmailConnected ? "red" : "green";
+
   async function handleDelete() {
     setShowDeleteModal(true);
     return;
@@ -242,51 +247,6 @@ export function AccountPage() {
     }
   }
 
-  const SectionHeader = ({ title }: { title: string }) => (
-    <div className="flex w-full flex-col">
-      <h1 className="w-full text-center">{title}</h1>
-      <hr className="header-split" />
-    </div>
-  );
-
-  const SectionBody = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex flex-col w-full my-4 gap-4">{children}</div>
-  );
-
-  const rowRules = "flex flex-col w-full items-center justify-center py-4";
-  const rowAlignmentRules = "flex flex-col w-full md:flex-row gap-4";
-  const rowContentRules = "flex w-full md:w-1/2";
-  const errorRules = "flex w-full items-center justify-center my-2";
-
-  const Row = ({
-    rowError,
-    children,
-  }: {
-    rowError?: string;
-    children: React.ReactNode;
-  }) => (
-    <div className={`${rowRules}`}>
-      <div className={rowAlignmentRules}>{children}</div>
-      {rowError && (
-        <div className={errorRules}>
-        <small className="red-text" role="alert">
-          {rowError}
-        </small>
-      </div>
-      )}
-    </div>
-  );
-
-  const RowItem = ({ children }: { children: React.ReactNode }) => (
-    <div className={rowContentRules}>{children}</div>
-  );
-
-  const Section = ({ children }: { children: React.ReactNode }) => (
-    <section className="account-section w-[400px] sm:w-[500px] md:w-[600px] lg:w-1/2 animate-element">
-      {children}
-    </section>
-  );
-
   // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
     <div className="page-style bg-[var(--page-gradient)]">
@@ -317,34 +277,36 @@ export function AccountPage() {
             </div>
 
             <div className="flex flex-col w-full my-4 gap-4">
-              <FloatingInputField
-                label="First Name"
-                type="text"
-                value={firstNameField}
-                action={handleFirstNameInput}
-                isValid={true}
-              />
-              <FloatingInputField
-                label="Last Name"
-                type="text"
-                value={lastNameField}
-                action={handleLastNameInput}
-                isValid={true}
-              />
-              <FloatingInputField
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={handleSaveProfile}
+              >
+                <FloatingInputField
+                  label="First Name"
+                  type="text"
+                  value={firstNameField}
+                  action={handleFirstNameInput}
+                  isValid={true}
+                />
+                <FloatingInputField
+                  label="Last Name"
+                  type="text"
+                  value={lastNameField}
+                  action={handleLastNameInput}
+                  isValid={true}
+                />
+                <Button style={{ minWidth: "50%" }} type="submit">
+                  Save Profile
+                </Button>
+              </form>
+              {/* <FloatingInputField
                 label="Phone Number"
                 type="text"
                 value={phoneNumberField}
                 action={handlePhoneNumberInput}
                 isValid={true}
-              />
+              /> */}
               <div className="flex w-full justify-between items-center gap-4">
-                <Button
-                  onClick={() => handleSaveProfile()}
-                  style={{ minWidth: "50%" }}
-                >
-                  Save Profile
-                </Button>
                 <small
                   className="flex w-full text-sm text-red-400 text-left"
                   role="alert"
@@ -377,13 +339,18 @@ export function AccountPage() {
                 </div>
               </RowItem>
               <RowItem>
-                <Button onClick={handleShowModal} style={{ minWidth: "100%" }}>
+                <Button onClick={handleShowModal} className={`${gmailButtonColor}`} >
+                  <img 
+                    src={gmailButtonIcon}
+                    alt="Gmail Link Icon"
+                    className="w-5 h-5 icon mr-2"
+                  />
                   {gmailButtonText}
                 </Button>
               </RowItem>
             </Row>
 
-            <Row rowError={passwordError || ""}>
+            {/* <Row rowError={passwordError || ""}>
               <RowItem>
                 <FloatingInputField
                   label="Reset Password"
@@ -402,10 +369,10 @@ export function AccountPage() {
                   Change
                 </Button>
               </RowItem>
-            </Row>
+            </Row> */}
 
             {/* 2FA */}
-            <Row rowError={twoFAError || ""}>
+            {/* <Row rowError={twoFAError || ""}>
               <RowItem>
                 <div className="flex flex-col w-3/4">
                   <h3 className="text-lg text-left font-medium mt-4">
@@ -435,7 +402,7 @@ export function AccountPage() {
                   </label>
                 </div>
               </RowItem>
-            </Row>
+            </Row> */}
             {/* Delete Account */}
             <Row rowError={deleteAccountError || ""}>
               <RowItem>

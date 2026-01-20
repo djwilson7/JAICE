@@ -88,17 +88,20 @@
 ################################################################
 */
 :root {
+  --min-content-width: 1200px;
   /* Main Color Palettes */
   --page-bg: #1e1c20;
   --page-bg-highlight: #333035;
   --page-bg-rgb: 30, 28, 32;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+  --page-shadow-multi-select: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.8);
+  --multi-select-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
 
   --modal-background: black;
   --modal-background-rgb: 0, 0, 0;
 
-  --glass-bg: rgba(0, 0, 0, 0.5);
-  --glass-bg-hover: rgba(0, 0, 0, 0.8);
+  --glass-bg: rgba(0, 0, 0, 0.8);
+  --glass-bg-hover: rgba(0, 0, 0);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-hover: rgba(255, 255, 255, 0.2);
 
@@ -112,7 +115,7 @@
   --gray-color: #c6c6c6;
   --orange-color: #da681b;
   --orange-color-rgb: 218, 104, 27;
-
+  --gold-rgb: 255, 215, 0;
   --job-card-background: #1d1b20;
   --job-card-background-rgb: 29, 27, 32;
   --job-card-bg: rgba(var(--job-card-background-rgb), 0.7);
@@ -142,14 +145,18 @@
   /* Very Light Blue (Main Text) */
 
   /* Gradients */
-  --page-gradient: linear-gradient(180deg,
-      var(--page-bg),
-      var(--page-bg-highlight),
-      var(--page-bg));
+  --page-gradient: linear-gradient(
+    180deg,
+    var(--page-bg),
+    var(--page-bg-highlight),
+    var(--page-bg)
+  );
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 0.92) 0%,
-      rgba(var(--primary-two-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
   --applied-color: #4d4d3a;
@@ -157,31 +164,57 @@
   --offer-color: #3d643d;
   --accepted-color: #265726;
   --rejected-color: #7a3034;
+  --review-color: #ab693ebb;
+  --processing-color: #9dab3ebb;
 
-  --applied-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--applied-color) 20%,
-      var(--primary-one) 95%);
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --interview-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--interview-color) 20%,
-      var(--primary-one) 95%);
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --offer-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--offer-color) 20%,
-      var(--primary-one) 95%);
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --accepted-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--accepted-color) 20%,
-      var(--primary-one) 95%);
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --rejected-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--rejected-color) 20%,
-      var(--primary-one) 95%);
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --review-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--review-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --processing-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--processing-color) 20%,
+    var(--primary-one) 95%
+  );
 
   /* Fonts and Text*/
   --text-primary: var(--white-color);
@@ -204,7 +237,8 @@
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 }
 
 /* 
@@ -216,10 +250,12 @@ Light theme overrides
 */
 html[data-theme="light"] {
   /* Backgrounds */
-  --page-bg: #929090;
+  --page-bg: #c0bdbd;
   --page-bg-highlight: #c0bebe;
   --page-bg-rgb: 190, 190, 190;
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
+  --page-shadow-multi-select: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.8);
+  --multi-select-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
   --modal-background: rgb(0, 0, 0);
   --modal-background-rgb: 0, 0, 0;
@@ -267,14 +303,18 @@ html[data-theme="light"] {
   --primary-light: #000000;
 
   /* Gradients */
-  --page-gradient: linear-gradient(180deg,
-      var(--page-bg),
-      var(--page-bg-highlight),
-      var(--page-bg));
+  --page-gradient: linear-gradient(
+    180deg,
+    var(--page-bg),
+    var(--page-bg-highlight),
+    var(--page-bg)
+  );
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-two-rgb), 0.92) 0%,
-      rgba(var(--primary-four-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-two-rgb), 0.92) 0%,
+    rgba(var(--primary-four-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
   --applied-color: #c7c7a5;
@@ -282,31 +322,57 @@ html[data-theme="light"] {
   --offer-color: #8fb48f;
   --accepted-color: #6ea06e;
   --rejected-color: #caa4a8;
+  --review-color: #ab693ebb;
+  --processing-color: #9dab3ebb;
 
-  --applied-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--applied-color) 20%,
-      var(--primary-one) 95%);
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --interview-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--interview-color) 20%,
-      var(--primary-one) 95%);
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --offer-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--offer-color) 20%,
-      var(--primary-one) 95%);
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --accepted-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--accepted-color) 20%,
-      var(--primary-one) 95%);
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --rejected-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--rejected-color) 20%,
-      var(--primary-one) 95%);
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --review-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--review-color) 20%,
+    var(--primary-one) 95%
+  );
+
+  --processing-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--processing-color) 20%,
+    var(--primary-one) 95%
+  );
 
   /* Fonts and Text*/
   --text-primary: var(--black-color);
@@ -329,7 +395,8 @@ html[data-theme="light"] {
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
-  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg) brightness(90%) contrast(88%);
+  --icon-filter: invert(42%) sepia(19%) saturate(839%) hue-rotate(173deg)
+    brightness(90%) contrast(88%);
 }
 
 /* Add additional themes above this line */
@@ -361,9 +428,11 @@ html[data-theme="light"] {
 html[data-contrast="low"] {
   /* Effects */
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 0.92) 0%,
-      rgba(var(--primary-two-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   --shadow: 0 0 10px rgba(var(--shadow-color-rgb), 0.1);
   --shadow-hover: 0 0 10px 2px rgba(var(--shadow-color-rgb), 0.2);
@@ -401,7 +470,6 @@ html[data-contrast="default"] {
   --job-card-review-border-header: 1px solid rgba(var(--orange-color-rgb), 1);
   --job-card-review-header-text: rgba(var(--orange-color-rgb), 1);
   --icon-opacity: 1;
-
 
   /* Button at rest */
   --button-background: var(--primary-one);
@@ -507,14 +575,18 @@ html[data-contrast="bw"] {
   /* Very Light Blue (Main Text) */
 
   /* Gradients */
-  --page-gradient: linear-gradient(160deg,
-      var(--page-bg-highlight),
-      var(--page-bg),
-      var(--page-bg-highlight));
+  --page-gradient: linear-gradient(
+    160deg,
+    var(--page-bg-highlight),
+    var(--page-bg),
+    var(--page-bg-highlight)
+  );
 
-  --primary-gradient: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 0.92) 0%,
-      rgba(var(--primary-two-rgb), 0.92) 100%);
+  --primary-gradient: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 0.92) 0%,
+    rgba(var(--primary-two-rgb), 0.92) 100%
+  );
 
   /* Other Colors */
   --applied-color: #1a1a1a;
@@ -523,30 +595,40 @@ html[data-contrast="bw"] {
   --accepted-color: #1a1a1a;
   --rejected-color: #1a1a1a;
 
-  --applied-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--applied-color) 20%,
-      var(--primary-one) 95%);
+  --applied-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--applied-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --interview-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--interview-color) 20%,
-      var(--primary-one) 95%);
+  --interview-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--interview-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --offer-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--offer-color) 20%,
-      var(--primary-one) 95%);
+  --offer-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--offer-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --accepted-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--accepted-color) 20%,
-      var(--primary-one) 95%);
+  --accepted-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--accepted-color) 20%,
+    var(--primary-one) 95%
+  );
 
-  --rejected-column-bg: linear-gradient(180deg,
-      var(--primary-one),
-      var(--rejected-color) 20%,
-      var(--primary-one) 95%);
+  --rejected-column-bg: linear-gradient(
+    180deg,
+    var(--primary-one),
+    var(--rejected-color) 20%,
+    var(--primary-one) 95%
+  );
 
   /* Fonts and Text*/
   --text-primary: var(--white-color);
@@ -568,7 +650,8 @@ html[data-contrast="bw"] {
   --fs-caption: calc(14px * var(--text-scale));
 
   --animation-duration: 0.3s;
-  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%) saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
+  --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
+    saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 
   --shadow: none;
   --shadow-hover: none;
@@ -594,10 +677,10 @@ html[data-contrast="bw"] {
   --button-selected-border: none;
   --button-selected-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
 
-  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg) brightness(100%) contrast(100%);
+  --icon-filter: invert(100%) sepia(0%) saturate(839%) hue-rotate(173deg)
+    brightness(100%) contrast(100%);
 
   --color-bg-alt: linear-gradient(160deg, black, white, black);
-
 }
 
 /* Add additional accessibility adjustments above this line */
@@ -772,13 +855,13 @@ button.selected {
 }
 
 button.navButton {
-  padding: 1rem;
-  width: 4rem;
+  width: fit-content;
   height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 1rem;
+  gap: 1rem;
+  overflow: hidden;
 }
 
 button.small {
@@ -874,7 +957,6 @@ button.undoRedo:hover {
   border-color: transparent;
 }
 
-
 button.undoRedo:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -898,8 +980,6 @@ button.undoRedo:active {
   background: transparent;
   border-color: transparent;
 }
-
-
 
 /* Add more base elements styles above this line */
 
@@ -946,6 +1026,12 @@ to an element (className="example").
   top: 6rem;
   bottom: 0;
   width: 100vw;
+}
+
+.outlet-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .page-style {
@@ -1018,6 +1104,63 @@ to an element (className="example").
   margin: 1rem;
 }
 
+.modal-description-toggle {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(var(--primary-five-rgb), 0.05);
+  border: 1px solid rgba(var(--primary-five-rgb), 0.15);
+  border-radius: 8px;
+  color: var(--primary-five);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--animation-duration) ease;
+  display: flex;
+  align-items: center;
+}
+
+.modal-description-toggle:hover {
+  background: rgba(var(--primary-five-rgb), 0.08);
+  border-color: rgba(var(--primary-five-rgb), 0.25);
+}
+
+.modal-description {
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(var(--primary-five-rgb), 0.03);
+  border: 1px solid rgba(var(--primary-five-rgb), 0.12);
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+.modal-description-summary {
+  color: var(--primary-five);
+  margin-bottom: 0.75rem;
+  opacity: 0.95;
+}
+
+.modal-description-detail {
+  color: var(--primary-five);
+  font-size: calc(var(--fs-caption) * 0.95);
+  margin-bottom: 0.65rem;
+  opacity: 0.85;
+}
+
+.modal-description-label {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.modal-description-note {
+  color: var(--primary-five);
+  font-size: calc(var(--fs-caption) * 0.9);
+  font-style: italic;
+  opacity: 0.7;
+}
+
 /* Icon Filter and Color Overrides */
 .icon {
   filter: var(--icon-filter);
@@ -1027,22 +1170,36 @@ to an element (className="example").
   border-radius: var(--corner-radius);
 }
 
-
 .redIcon {
   filter: brightness(0) invert(21%) sepia(98%) saturate(7500%) hue-rotate(0deg);
 }
 
 .orangeIcon {
-  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%) hue-rotate(359deg) brightness(99%) contrast(102%);
+  filter: brightness(0) saturate(100%) invert(47%) sepia(84%) saturate(3758%)
+    hue-rotate(359deg) brightness(99%) contrast(102%);
   opacity: var(--icon-opacity);
 }
 
+.purpleIcon {
+  filter: brightness(0) saturate(100%) invert(33%) sepia(83%) saturate(5000%)
+    hue-rotate(250deg) brightness(95%) contrast(105%);
+  opacity: var(--icon-opacity);
+}
+
+.goldIcon {
+  filter: brightness(0) saturate(100%) invert(91%) sepia(61%) saturate(579%)
+    hue-rotate(1deg) brightness(96%) contrast(92%);
+  opacity: 0.8; /* adjust alpha if needed */
+}
+
 .greenIcon {
-  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg) brightness(90%) contrast(85%);
+  filter: brightness(0) invert(42%) sepia(72%) saturate(2953%) hue-rotate(85deg)
+    brightness(90%) contrast(85%);
 }
 
 .blueIcon {
-  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%) hue-rotate(170deg) brightness(95%) contrast(90%);
+  filter: brightness(0) invert(52%) sepia(24%) saturate(7493%)
+    hue-rotate(170deg) brightness(95%) contrast(90%);
 }
 
 .glass {
@@ -1050,14 +1207,13 @@ to an element (className="example").
   border-radius: var(--corner-radius);
   backdrop-filter: blur(10px);
   border: var(--glass-border);
-  box-shadow: var(--shadow);
+  box-shadow: var(--multi-select-shadow);
   transition: all var(--animation-duration) ease;
   position: fixed;
   bottom: 1rem;
   justify-content: center;
   display: flex;
   z-index: 50;
-
 }
 
 .glass:hover {
@@ -1075,8 +1231,6 @@ to an element (className="example").
 .job-card:hover {
   background: var(--job-card-bg-hover);
 }
-
-
 
 .review {
   border: var(--job-card-review-border);
@@ -1111,9 +1265,11 @@ to an element (className="example").
 }
 
 .landing-gradient {
-  background: linear-gradient(180deg,
-      rgba(var(--primary-one-rgb), 1) 0%,
-      rgba(var(--primary-two-rgb), 1) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--primary-one-rgb), 1) 0%,
+    rgba(var(--primary-two-rgb), 1) 100%
+  );
 }
 
 .primary-text {
@@ -1145,6 +1301,11 @@ to an element (className="example").
   opacity: 0.5;
 }
 
+.vertical-divider {
+  border-left: 2px solid var(--gray-color);
+  height: 100%;
+}
+
 .brand-block {
   display: flex;
   width: 100%;
@@ -1172,7 +1333,7 @@ to an element (className="example").
 
 .text-container .user-name {
   font-weight: 600;
-  font-family: var(--font-headline)
+  font-family: var(--font-headline);
 }
 
 .text-container .secondary-info {
@@ -1182,12 +1343,9 @@ to an element (className="example").
 /* TEAM PHOTO EFFECTS */
 .team-photo {
   opacity: 0.8;
-  filter:
-    grayscale(80%) saturate(20%) brightness(0.75) contrast(1.0) hue-rotate(180deg);
-  transition:
-    opacity 300ms ease,
-    filter 300ms ease,
-    transform 300ms ease;
+  filter: grayscale(80%) saturate(20%) brightness(0.75) contrast(1)
+    hue-rotate(180deg);
+  transition: opacity 300ms ease, filter 300ms ease, transform 300ms ease;
 }
 
 /* Hover or keyboard focus restores full color */
@@ -1201,10 +1359,172 @@ to an element (className="example").
 /* Callout line used on Team cards */
 .callout-line {
   background: rgba(var(--primary-five-rgb), 0.9);
-  box-shadow:
-    0 0 6px rgba(0, 0, 0, 0.65),
-    0 0 1px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.9);
   border-radius: 999px;
+}
+
+.drop-down-menu {
+  background: var(--primary-one);
+  outline: none;
+  border: none;
+}
+
+.drop-down-menu-options {
+  background: var(--primary-gradient);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--shadow);
+  padding: 0.5rem;
+}
+
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 50px;
+  align-self: start;
+  min-width: var(--min-content-width);
+}
+
+.min-width {
+  width: 100%;
+  min-width: var(--min-content-width);
+}
+
+.control-bar-container {
+  min-height: 100%;
+  background: var(--primary-one);
+  border-radius: var(--corner-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+
+.alert-container {
+  min-height: 100%;
+  background: var(--primary-one);
+  border-radius: var(--corner-radius);
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  gap: 0.5rem;
+  width: fit-content;
+}
+
+.control-bar-container-red {
+  background: var(--red-color);
+  color: var(--white-color);
+}
+
+.control-bar-container:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.control-bar-container-red:hover {
+  background: var(--white-color);
+  color: var(--red-color);
+}
+
+.connect-email-container {
+  border: 1px solid var(--primary-four);
+  border-radius: var(--corner-radius);
+  padding: 1rem;
+  background: var(--primary-gradient);
+  box-shadow: var(--shadow);
+}
+
+.drop-area {
+  background: var(--glass-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--animation-duration) ease;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.drop-area-shadow {
+  box-shadow: var(--shadow-hover);
+}
+
+.job-card-button-row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  z-index: 50;
+  border-radius: 0px 0px var(--corner-radius) var(--corner-radius);
+  background: rgba(var(--primary-five-rgb), 0.1);
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+.demo-content-container {
+  display: flex;
+  flex: stretch;
+  width: 100%;
+  gap: 1rem;
+  border-radius: var(--corner-radius);
+  padding: 1rem;
+}
+
+.demo-column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.5rem;
+  gap: 1rem;
+  background: var(--primary-one);
+  border-radius: var(--corner-radius);
+  border: 3px solid transparent;
+}
+
+.demo-column-dynamic {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.5rem;
+  gap: 1rem;
+  background: var(--primary-one);
+  border-radius: var(--corner-radius);
+  border: 3px dashed var(--primary-four);
+}
+
+.demo-column-card {
+  border-radius: var(--corner-radius);
+  padding: 0.7rem;
+}
+
+.demo-column-card-review {
+  border: var(--job-card-review-border);
+  background: var(--orange-color);
+  border-radius: var(--corner-radius);
+  padding: 0.7rem;
+  box-shadow: var(--job-card-review-shadow);
+}
+
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.passive-column {
+  opacity: 0.7;
+}
+
+.detail-text {
+  color: var(--text-primary);
+  padding: 0.5rem;
 }
 
 /* Add more custom classes above this line */

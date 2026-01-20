@@ -5,6 +5,7 @@ import { Card, ChartHost } from "./Card";
 import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
+import { chartDescText } from "./chartDescText";
 
 const STAGE_COLORS: Record<string, string> = {
   Applied: "#F59E0B",
@@ -60,7 +61,7 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
   }, []);
 
   const palette = labels.map(
-    (label) => STAGE_COLORS[label] ?? "#64748B", // fallback
+    (label) => STAGE_COLORS[label] ?? "#64748B",
   );
 
   const chartData: ChartData<"doughnut"> = {
@@ -174,8 +175,11 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
         open={open}
         onClose={() => setOpen(false)}
         title="Applications by Stage"
+        description={chartDescText.appsByStage}
       >
-        <ChartHost>{renderContent("modal")}</ChartHost>
+        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
+          {renderContent("modal")}
+        </div>
       </Modal>
     </>
   );

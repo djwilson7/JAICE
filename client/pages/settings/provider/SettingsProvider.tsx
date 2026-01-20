@@ -7,6 +7,9 @@ import type {
   MotionPreference,
   ContrastLevel,
   SettingsContextValue,
+  NavigationBehavior,
+  ReviewBehavior,
+  PrimaryColumnBehavior,
 } from "./settingsTypes";
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -90,6 +93,76 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("appearancechange", syncFromDom);
   }, [theme, contrast]);
 
+  // THEME
+  const [navigationBehavior, setNavigationBehavior] =
+    useState<NavigationBehavior>(
+      () =>
+        (localStorage.getItem(
+          SETTINGS_KEYS.NAVIGATION_BEHAVIOR
+        ) as NavigationBehavior) || "hover"
+    );
+
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-navigation-behavior",
+      navigationBehavior
+    );
+    localStorage.setItem(SETTINGS_KEYS.NAVIGATION_BEHAVIOR, navigationBehavior);
+    window.dispatchEvent(new Event("navigationbehaviorchange"));
+  }, [navigationBehavior]);
+
+  const [reviewBehavior, setReviewBehavior] = useState<ReviewBehavior>(
+    () =>
+      (localStorage.getItem(SETTINGS_KEYS.REVIEW_BEHAVIOR) as ReviewBehavior) ||
+      "inline"
+  );
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-review-behavior",
+      reviewBehavior
+    );
+    localStorage.setItem(SETTINGS_KEYS.REVIEW_BEHAVIOR, reviewBehavior);
+    window.dispatchEvent(new Event("reviewbehaviorchange"));
+  }, [reviewBehavior]);
+
+  const [primaryColumnBehavior, setPrimaryColumnBehavior] =
+    useState<PrimaryColumnBehavior>(
+      () =>
+        (localStorage.getItem(
+          SETTINGS_KEYS.PRIMARY_COLUMN_BEHAVIOR
+        ) as PrimaryColumnBehavior) || "separate"
+    );
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-primary-column-behavior",
+      primaryColumnBehavior
+    );
+    localStorage.setItem(
+      SETTINGS_KEYS.PRIMARY_COLUMN_BEHAVIOR,
+      primaryColumnBehavior
+    );
+    window.dispatchEvent(new Event("primarycolumnbehaviorchange"));
+  }, [primaryColumnBehavior]);
+
+  const [selectedPrimaryColumn, setSelectedPrimaryColumn] = useState<
+    "accepted" | "rejected"
+  >(() => {
+    const saved = localStorage.getItem(SETTINGS_KEYS.SELECTED_PRIMARY_COLUMN);
+    return saved === "accepted" || saved === "rejected" ? saved : "accepted";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-selected-primary-column",
+      selectedPrimaryColumn
+    );
+    localStorage.setItem(
+      SETTINGS_KEYS.SELECTED_PRIMARY_COLUMN,
+      selectedPrimaryColumn
+    );
+    window.dispatchEvent(new Event("selectedprimarycolumnchange"));
+  }, [selectedPrimaryColumn]);
+
   const value: SettingsContextValue = {
     theme,
     setTheme,
@@ -99,6 +172,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setMotion,
     contrast,
     setContrast,
+    navigationBehavior,
+    setNavigationBehavior,
+    reviewBehavior,
+    setReviewBehavior,
+    primaryColumnBehavior,
+    setPrimaryColumnBehavior,
+    selectedPrimaryColumn,
+    setSelectedPrimaryColumn,
   };
 
   return (

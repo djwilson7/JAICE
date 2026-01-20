@@ -13,7 +13,7 @@ export function useJobRealtime(
 ) {
   const supabase = useMemo(() => {
     if (!rlsToken) return null;
-    console.log("Creating stable Supabase client with RLS token");
+    console.log("Creating stable Supabase client");
     return createClient(
       import.meta.env.VITE_SUPABASE_URL,
       import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -29,12 +29,12 @@ export function useJobRealtime(
       return;
     }
 
-    console.log("Connecting realtime channel for user:", userId);
+    console.log("Connecting realtime channel for user");
 
     const channel = supabase
       .channel(`user:${userId}:job_applications`)
       .on("broadcast", { event: "*" }, (payload: JobBroadcastPayload) => {
-        console.log("Realtime broadcast:", payload);
+        console.log("Realtime broadcast received:", payload.event);
         onChange(payload);
       })
       .subscribe((status) => {

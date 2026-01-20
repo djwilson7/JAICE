@@ -446,3 +446,70 @@ async def grit_score(user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error calculating Grit Score.",
         )
+        
+# ------------------------------------------------------------
+# Activity Heatmap Card
+# ------------------------------------------------------------
+@router.get(
+    "/activity-heatmap",
+    summary="Get daily application counts for the last 12 weeks",
+)
+async def activity_heatmap(user: dict = Depends(get_current_user)):
+    """
+    Returns daily application counts formatted for a calendar heatmap visualization.
+    Each data point contains:
+    - x: Date label (e.g., "Dec 18")
+    - y: Day of week (0 = Sunday, 6 = Saturday)
+    - v: Number of applications submitted that day
+    """
+    uid = user.get("uid")
+    logging.info(f"Fetching activity-heatmap for user {uid}")
+
+    # Get data for the last 84 days (12 weeks)
+    query = """
+        WITH app_events AS (
+            SELECT
+                CASE
+                    WHEN received_at IS NOT NULL
+                        AND received_at <> ''
+                        AND received_at ~ '^[0-9]+$'
+                    THEN to_timestamp(received_at::bigint / 1000.0)
+                    ELSE updated_at
+                END AS event_ts
+            FROM public.job_applications
+            WHERE user_uid = $1
+            AND is_deleted = FALSE
+            AND is_archived = FALSE
+        )
+        SELECT
+            TO_CHAR(DATE(event_ts), 'Mon DD')        AS date_label,
+            EXTRACT(DOW FROM DATE(event_ts))::int   AS day_of_week,
+            COUNT(*)::int                           AS app_count
+        FROM app_events
+        WHERE event_ts IS NOT NULL
+        AND event_ts >= timezone('utc', now()) - INTERVAL '84 days'
+        GROUP BY DATE(event_ts)
+        ORDER BY DATE(event_ts);
+    """
+
+    try:
+        async with get_connection() as conn:
+            rows = await conn.fetch(query, uid)
+
+        data = [
+            {
+                "x": r["date_label"],
+                "y": r["day_of_week"],
+                "v": r["app_count"]
+            }
+            for r in rows
+        ]
+
+        return {"status": "success", "data": data}
+
+    except Exception as e:
+        logging.error(f"Error fetching activity-heatmap for user {uid}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching activity heatmap data.",
+        )

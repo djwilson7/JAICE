@@ -10,7 +10,7 @@ import { HomeRoute } from "@/pages/home/home.meta";
 import { AboutRoute } from "@/pages/about/about.meta";
 import { DashboardRoute } from "@/pages/dashboard/dashboard.meta";
 import { AccountRoute } from "@/pages/settings/account/account.meta";
-import { AccessibilityRoute } from "@/pages/settings/accessibility/accessibility.meta";
+import { DisplayRoute } from "@/pages/settings/display/display.meta";
 import { NotificationsRoute } from "@/pages/settings/notifications/notification.meta";
 import { AuthAboutRoute } from "@/pages/auth-about/authabout.meta";
 import { ResumeRoute } from "@/pages/Resume/resume.meta";
@@ -75,8 +75,8 @@ export const router = createBrowserRouter([
         loader: requireAuth,
       },
       {
-        path: AccessibilityRoute.path,
-        element: AccessibilityRoute.element,
+        path: DisplayRoute.path,
+        element: DisplayRoute.element,
         loader: requireAuth,
       },
       {

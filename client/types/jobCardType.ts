@@ -7,13 +7,12 @@ export type JobCardType = {
   column: string;
   companyName?: string;
   date?: string;
+  salary?: number;
   receivedAtRaw?: string | null;
   isArchived?: boolean;
   isDeleted?: boolean;
   notes?: string;
-
   providerSource?: string;
-
   reviewNeeded?: boolean;
   applicationStage?: string;
 };

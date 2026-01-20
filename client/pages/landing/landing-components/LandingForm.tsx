@@ -19,16 +19,16 @@ export function LandingForm() {
 
   return (
     <div className="flex flex-col justify-between gap-4 w-full" style={formStyle}>
-      <SlidingToggle
+      {/* <SlidingToggle
         leftLabel="Log In"
         rightLabel="Sign Up"
         action={setNewUser}
         initialValue={true}
-      />
-      {newUser ? <SignUp /> : <LogIn />}
-      <div className="flex flex-col justify-center my-4 items-center">
-        <hr className="relative header-split" />
-        <h3 className="relative -translate-y-1/2 w-1/4 backdrop-blur-md secondary-text px-4">OR</h3>
+      /> */}
+      {/* {newUser ? <SignUp /> : <LogIn />} */}
+      <div className="flex flex-col justify-center my-4 gap-4 items-center">
+        <h3 className="">Login or Signup</h3>
+        <p>JAICE is a passwordless service. Please use a provider below to create an account or login.</p>
       </div>
       <QuickSignIn />
     </div>

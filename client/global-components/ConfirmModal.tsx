@@ -27,7 +27,6 @@ export default function ConfirmModal({
       className="modal-backdrop"
       role="dialog"
       aria-modal="true"
-      onClick={onCancel}
     >
       <div className="max-w-md modal" onClick={(e) => e.stopPropagation()}>
         <h3 className="primary-text text-center font-semibold">{title}</h3>

@@ -93,7 +93,7 @@ export function SplitByStageCard() {
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
           <g transform={`translate(${size / 2}, ${size / 2})`}>
             <circle r={r} fill="transparent" stroke="#0d1b24" strokeWidth={thickness} />
-            {arcs.map((a, i) => (
+            {arcs.map((a) => (
               <circle
                 key={a.key}
                 r={r}

@@ -1,84 +1,62 @@
-// import { localfiles } from "@/directory/path/to/localimport";
 import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
+import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { useState } from "react";
 
-/**
- * CheckBox Toggle Props
- * @param label - Optional label to display next to the checkbox
- * @param inactiveIcon - Icon to display when the checkbox is unchecked
- * @param activeIcon - Icon to display when the checkbox is checked
- * @param isChecked - Boolean indicating if the checkbox is checked
- * @param setIsChecked - Function to update the checked state
- */
 interface CheckBoxToggleProps {
   label?: string;
   inactiveIcon?: string;
   activeIcon?: string;
-  isChecked: boolean;
-  setIsChecked: (value: boolean) => void;
+  hoverIconColor: string;
 }
 
-/**
- * Check Box Toggle Component
- *
- * Takes an optional label, a boolean for checked state, and a function to cycle that state.
- * @param label - Optional label to display next to the checkbox
- * @param inactiveIcon - Icon to display when the checkbox is unchecked
- * @param activeIcon - Icon to display when the checkbox is checked
- * @param isChecked - Boolean indicating if the checkbox is checked
- * @param setIsChecked - Function to update the checked state
- * @returns A checkbox toggle component, with the label if provided. The hit area is the entire component.
- */
 export function CheckBoxToggle({
   label,
   inactiveIcon,
   activeIcon,
-  isChecked,
-  setIsChecked,
+  hoverIconColor,
 }: CheckBoxToggleProps) {
-  // Ref for the content div to measure its width
-  const contentRef = useRef<HTMLDivElement>(null);
-  // State to hold the target width for animation
-  const [targetWidth, setTargetWidth] = useState(40);
-  // Effect to update target width based on content and checked state
-  useEffect(() => {
-    if (!isChecked || !contentRef.current) {
-      setTargetWidth(40);
-      return;
+  const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
+  const { setSelectedJobs } = useSelectedJobs();
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleToggle = () => {
+    setIsMultiSelecting(!isMultiSelecting);
+    if (isMultiSelecting) {
+      setSelectedJobs([]); // Clear selected jobs when turning off multi-select
     }
-  // Use requestAnimationFrame to ensure DOM is updated before measuring
-    requestAnimationFrame(() => {
-      setTargetWidth(contentRef.current!.offsetWidth + 16);
-    });
-  }, [isChecked, label]);
+  };
+  const iconClass = isHovered || isMultiSelecting ? hoverIconColor : "icon";
 
   return (
     <motion.div
-      className="flex relative items-center justify-start p-2 gap-4 rounded cursor-pointer overflow-hidden"
-      animate={{ width: targetWidth }}
-      transition={{ type: "spring", stiffness: 300, damping: 30, duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
+      className="control-bar-container"
+      transition={{
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
+      }}
+      onClick={handleToggle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div ref={contentRef} className="flex items-center gap-2">
-        <img
-          src={isChecked ? activeIcon : inactiveIcon}
-          alt="Toggle Icon"
-          className="w-5 h-5 flex-shrink-0 icon"
-        />
-        <input
-          type="checkbox"
-          checked={isChecked}
-          onClick={() => {
-            setIsChecked(!isChecked);
-          }}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          title="Toggle Multi-Select"
-          onChange={() => console.log("Checked Box")}
-        />
-        {label ? (
-          <label className="select-none whitespace-nowrap secondary-text">{label}</label>
-        ) : null}
-      </div>
+      <img
+        src={isMultiSelecting ? activeIcon : inactiveIcon}
+        alt="Toggle Icon"
+        className={`w-5 h-5 shrink-0 ${iconClass}`}
+      />
+      <input
+        type="checkbox"
+        checked={isMultiSelecting}
+        className="hidden cursor-pointer"
+        title="Toggle Multi-Select"
+        onChange={() => console.log("Checked Box")}
+      />
+      <span className="cursor-pointer select-none whitespace-nowrap">
+        {label}
+      </span>
     </motion.div>
   );
 }

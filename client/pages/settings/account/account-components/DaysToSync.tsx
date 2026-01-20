@@ -36,7 +36,7 @@ export function DaysToSync({
         {options.map((days) => (
           <div className="w-1/4" key={days}>
             <Button onClick={() => onSelection(days)} className="">
-              <h4>{days} days</h4>
+              <h4 className="whitespace-nowrap">{days} days</h4>
             </Button>
           </div>
         ))}

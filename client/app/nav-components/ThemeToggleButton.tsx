@@ -1,10 +1,13 @@
+import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
 import { NavButton } from "./NavButton";
 import { getThemeData } from "@/utils/getThemeData";
 
 export const ThemeToggleButton = ({
   hoverMode,
+  showLabel,
 }: {
-  hoverMode: "hover" | "locked-open" | "locked-closed";
+  hoverMode: NavigationBehavior;
+  showLabel: boolean;
 }) => {
   const theme = getThemeData();
   const handleThemeToggle = () => {
@@ -37,6 +40,7 @@ export const ThemeToggleButton = ({
       isSelected={false}
       hoverMode={hoverMode}
       title={theme.title}
+      showLabel={showLabel}
     />
   );
 };

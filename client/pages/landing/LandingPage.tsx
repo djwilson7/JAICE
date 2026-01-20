@@ -8,14 +8,15 @@ import { useBrandImage } from "@/global-services/useBrandImage";
 export function LandingPage() {
   const navigate = useNavigate();
   const brandImg = useBrandImage();
+  const sectionClassName = "flex w-full items-center justify-center p-4";
 
   return (
     <div
-      className="flex flex-col fixed inset-0 md:flex-row overflow-auto landing-gradient"
+      className="flex flex-col fixed inset-0 xl:flex-row overflow-auto landing-gradient"
     >
     
       {/* *Top Container */}
-      <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
+      <div className={`${sectionClassName} xl:justify-end xl:pr-15`}>
         {/* Inner Container */}
         <div className="flex flex-col items-center gap-5 p-8 justify-center">
           <div className="w-120 h-120">
@@ -30,7 +31,7 @@ export function LandingPage() {
       </div>
 
       {/* *Form Container */}
-      <div className="flex w-full px-[2rem] py-[4rem] items-center justify-center">
+      <div className={`${sectionClassName} xl:justify-start xl:pl-15`}>
         {/* Inner Container */}
         <div className="flex flex-col w-[30rem]">
           <LandingForm />

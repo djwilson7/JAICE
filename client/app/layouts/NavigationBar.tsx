@@ -1,7 +1,5 @@
-// import { localfiles } from "@/directory/path/to/localimport";
 import { NavButton } from "../nav-components/NavButton";
 import { ThemeToggleButton } from "../nav-components/ThemeToggleButton";
-import { MenuToggleButton } from "../nav-components/MenuToggleButton";
 
 import { MainHeader } from "@/app/nav-components/MainHeader";
 
@@ -14,8 +12,8 @@ import homeIcon from "@/assets/icons/home.svg";
 import aboutIcon from "@/assets/icons/book-open-cover.svg";
 import dashboardIcon from "@/assets/icons/chart-pie-alt.svg";
 import accountIcon from "@/assets/icons/user.svg";
-import accessibilityIcon from "@/assets/icons/hand-paper.svg";
-import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
+import displayIcon from "@/assets/icons/display.svg";
+//import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
 
 import { getCSSVar } from "@/utils/getCSSVar";
@@ -23,6 +21,8 @@ import resumeIcon from "@/assets/icons/resume.svg";
 
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
+import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
@@ -53,18 +53,18 @@ const settingsOptions = {
     icon: accountIcon,
     title: "Go to Account Settings",
   },
-  accessibility: {
-    route: "/settings/accessibility",
-    label: "Accessibility",
-    icon: accessibilityIcon,
-    title: "Go to Accessibility Settings",
+  display: {
+    route: "/settings/display",
+    label: "Display",
+    icon: displayIcon,
+    title: "Go to Display Settings",
   },
-  notification: {
-    route: "/settings/notification",
-    label: "Notification",
-    icon: notificationIcon,
-    title: "Go to Notification Settings",
-  },
+  // notification: {
+  //   route: "/settings/notification",
+  //   label: "Notification",
+  //   icon: notificationIcon,
+  //   title: "Go to Notification Settings",
+  // },
   quit: { route: "/", label: "Quit", icon: quitIcon, title: "Logout" },
 };
 
@@ -76,9 +76,7 @@ export function NavigationBar() {
 
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
 
-  const [hoverMode, setHoverMode] = useState<
-    "hover" | "locked-open" | "locked-closed"
-  >("hover");
+  const hoverMode = useSettings().navigationBehavior as NavigationBehavior;
 
   useEffect(() => {
     // Update selected button based on current path
@@ -94,10 +92,10 @@ export function NavigationBar() {
       setSelectedButton("resume");
     } else if (path === "/settings/account") {
       setSelectedButton("account");
-    } else if (path === "/settings/accessibility") {
-      setSelectedButton("accessibility");
-    } else if (path === "/settings/notification") {
-      setSelectedButton("notification");
+    } else if (path === "/settings/display") {
+      setSelectedButton("display");
+    // } else if (path === "/settings/notification") {
+    //   setSelectedButton("notification");
     } else setSelectedButton("");
   }, [location.pathname]);
 
@@ -111,17 +109,30 @@ export function NavigationBar() {
     navigate(route);
   };
 
-  const restWidthMap = {
-    "locked-closed": "6rem",
-    hover: "6rem",
-    "locked-open": "15rem",
+  const navBarVariants = {
+    closed: { width: "fit-content" },
+    open: { width: "max-content" },
+    hover: { width: "max-content" },
   };
 
-  const hoverWidthMap = {
-    "locked-closed": "6rem",
-    hover: "15rem",
-    "locked-open": "15rem",
-  };
+  const [navWidth, setNavWidth] = useState<number>(0);
+  const navRef = document.getElementById("navigation-bar");
+
+  const measureWidth = new ResizeObserver(() => {
+    if (navRef) {
+      setNavWidth(navRef.offsetWidth);
+    }
+  });
+
+  useEffect(() => {
+    if (navRef) {
+      measureWidth.observe(navRef);
+      setNavWidth(navRef.offsetWidth);
+    }
+    return () => {
+      measureWidth.disconnect();
+    };
+  }, [navRef]);
 
   return (
     <div className="h-screen min-page-width overflow-x-hidden">
@@ -129,26 +140,24 @@ export function NavigationBar() {
 
       <div className={`app-content`}>
         <nav
-          className={`flex absolute left-0 top-0  h-full primary-color animate-element`}
+          className={`flex absolute left-0 top-0 h-full primary-color z-40`}
+          id="navigation-bar"
         >
           <motion.div
-            className="z-50 h-full flex flex-col py-4 items-left justify-center gap-3 overflow-hidden"
-            variants={{
-              rest: { width: restWidthMap[hoverMode] },
-              hover: { width: hoverWidthMap[hoverMode] },
-            }}
-            initial="rest"
-            animate={navIsHovered ? "hover" : "rest"}
+            className="z-50 h-full flex flex-col p-2 gap-3 overflow-hidden"
+            variants={navBarVariants}
+            initial={hoverMode}
+            animate={hoverMode}
             onMouseEnter={() => setNavIsHovered(true)}
             onMouseLeave={() => setNavIsHovered(false)}
             transition={{
-              duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
+              duration: parseFloat(getCSSVar("--animation-duration")),
             }}
           >
-            <div className="flex flex-col items-left h-full w-full justify-between group-hover:items-start">
-              <section aria-label="Navigation Buttons">
+            <div className="flex flex-col h-full w-full justify-between">
+              <section aria-label="Navigation Buttons" className="flex w-full">
                 <ul
-                  className="flex flex-col items-start gap-2"
+                  className="flex flex-col gap-2"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   {Object.entries(primaryOptions).map(([key, option]) => (
@@ -160,6 +169,7 @@ export function NavigationBar() {
                         isSelected={selectedButton === key}
                         hoverMode={hoverMode}
                         title={option.title}
+                        showLabel={navIsHovered && hoverMode !== "closed"}
                       />
                     </li>
                   ))}
@@ -178,14 +188,17 @@ export function NavigationBar() {
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   <li key="theme-toggle">
-                    <ThemeToggleButton hoverMode={hoverMode} />
+                    <ThemeToggleButton
+                      hoverMode={hoverMode}
+                      showLabel={navIsHovered && hoverMode !== "closed"}
+                    />
                   </li>
-                  <li key="menu-expand">
+                  {/* <li key="menu-expand">
                     <MenuToggleButton
                       hoverMode={hoverMode}
                       setHoverMode={setHoverMode}
                     />
-                  </li>
+                  </li> This no longer exists, now we react to state instead*/}
                   {Object.entries(settingsOptions).map(([key, option]) => (
                     <li key={key}>
                       <NavButton
@@ -195,6 +208,7 @@ export function NavigationBar() {
                         isSelected={selectedButton === key}
                         hoverMode={hoverMode}
                         title={option.title}
+                        showLabel={navIsHovered && hoverMode !== "closed"}
                       />
                     </li>
                   ))}
@@ -204,10 +218,10 @@ export function NavigationBar() {
           </motion.div>
         </nav>
         <motion.div
-          className="overflow-auto w-full h-full"
+          className="outlet-container"
           variants={{
-            rest: { marginLeft: restWidthMap[hoverMode] },
-            hover: { marginLeft: hoverWidthMap[hoverMode] },
+            rest: { marginLeft: navWidth },
+            hover: { marginLeft: navWidth },
           }}
           animate={navIsHovered ? "hover" : "rest"}
           transition={{
