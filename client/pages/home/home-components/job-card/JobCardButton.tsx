@@ -6,6 +6,8 @@ interface JobCardButtonProps {
   icon: string;
   iconHoverColor: string;
   isVisible?: boolean;
+  label?: string;
+  title?: string;
 }
 
 export function JobCardButton({
@@ -13,6 +15,8 @@ export function JobCardButton({
   icon,
   iconHoverColor,
   isVisible = true,
+  label = "Button",
+  title = "Click to perform action",
 }: JobCardButtonProps) {
   if (!isVisible) return null;
   const [isHovered, setIsHovered] = useState(false);
@@ -24,8 +28,8 @@ export function JobCardButton({
       style={{ background: "transparent" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      aria-label="Edit Job"
-      title="Edit job details and notes"
+      aria-label={label}
+      title={title}
     >
       <motion.img
         src={icon}
