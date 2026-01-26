@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 
 from common.logger import get_logger
 from client_api.services.supabase_client import get_connection
@@ -37,10 +37,7 @@ async def apps_by_category(user: dict = Depends(get_current_user)):
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
 
-        data = [
-            {"category": r["job_category"], "count": r["count"]}
-            for r in rows
-        ]
+        data = [{"category": r["job_category"], "count": r["count"]} for r in rows]
 
         return {"status": "success", "data": data}
 
@@ -92,7 +89,7 @@ async def apps_by_stage(user: dict = Depends(get_current_user)):
 
         labels = stage_order
         values = [counts[s] for s in stage_order]
-
+        logging.info(f"apps-by-stage labels: {labels}, values: {values}")
         return {
             "status": "success",
             "data": {
@@ -110,45 +107,53 @@ async def apps_by_stage(user: dict = Depends(get_current_user)):
 
 
 # ------------------------------------------------------------
-# Applications Over Time / Stages Over Time Card (Line)
+# split by stage (monthly counts)
 # ------------------------------------------------------------
 @router.get(
-    "/apps-over-time",
+    "/split-by-stage-monthly",
     summary="Get monthly counts of applications grouped by stage",
 )
-async def apps_over_time(user: dict = Depends(get_current_user)):
+async def split_by_stage_monthly(user: dict = Depends(get_current_user)):
     """
-    For the last 90 days:
-    - Bucket by month based on updated_at
+    For the last 4 months:
+    - Bucket by month based on received_at
     - Count how many applications are in each app_stage
-    - Return arrays per stage aligned with month labels
+    - retuns month and stage splits
     """
     uid = user.get("uid")
-    logging.info(f"Fetching apps-over-time for user {uid}")
+    logging.info(f"Fetching split-by-stage-monthly for user {uid}")
 
     query = """
         SELECT
-            DATE_TRUNC('month', updated_at) AS month,
+            date_trunc('month', received_at::timestamp)::date AS month_start,
             app_stage,
             COUNT(*)::int AS count
         FROM public.job_applications
         WHERE user_uid = $1
-          AND is_deleted = FALSE
-          AND is_archived = FALSE
-          AND updated_at IS NOT NULL
-          AND updated_at >= timezone('utc', now()) - INTERVAL '90 days'
-        GROUP BY month, app_stage
-        ORDER BY month ASC;
+        AND is_deleted = FALSE
+        AND is_archived = FALSE
+        AND received_at IS NOT NULL
+        AND received_at::timestamp >= date_trunc(
+                'month',
+                timezone('utc', now())
+            ) - INTERVAL '3 months'
+        GROUP BY month_start, app_stage
+        ORDER BY month_start ASC;
     """
+
+    from datetime import date
+    from dateutil.relativedelta import relativedelta
 
     try:
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
 
-        month_labels = [
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-        ]
+        today = date.today()
+        current_month = today.replace(day=1)
+
+        month_starts = [current_month - relativedelta(months=3 - i) for i in range(4)]
+
+        labels = [m.strftime("%b") for m in month_starts]
 
         stage_keys = ["applied", "interview", "offer", "accepted"]
 
@@ -157,55 +162,121 @@ async def apps_over_time(user: dict = Depends(get_current_user)):
             "Interview": "interview",
             "Offer": "offer",
             "Accepted": "accepted",
-            # "Rejected": "rejected",  # add later if you want
         }
 
-        month_stage_counts = {
-            m: {stage: 0 for stage in stage_keys}
-            for m in month_labels
-        }
+        stage_counts = {stage: [0] * 4 for stage in stage_keys}
+
+        month_index_map = {m: i for i, m in enumerate(month_starts)}
 
         for r in rows:
-            month_ts = r["month"]
-            if month_ts is None:
-                continue
-
-            month_index = month_ts.month - 1
-            if month_index < 0 or month_index > 11:
-                continue
-
-            month_label = month_labels[month_index]
-
-            db_stage = r["app_stage"]
-            stage_key = stage_map_db_to_key.get(db_stage)
+            month = r["month_start"]
+            stage_key = stage_map_db_to_key.get(r["app_stage"])
             if stage_key is None:
                 continue
 
-            count = r["count"] or 0
-            month_stage_counts[month_label][stage_key] += count
+            idx = month_index_map.get(month)
+            if idx is None:
+                continue
 
-        applied = [month_stage_counts[m]["applied"] for m in month_labels]
-        interview = [month_stage_counts[m]["interview"] for m in month_labels]
-        offer = [month_stage_counts[m]["offer"] for m in month_labels]
-        accepted = [month_stage_counts[m]["accepted"] for m in month_labels]
-
+            stage_counts[stage_key][idx] += r["count"] or 0
+        logging.info(
+            f"split-by-stage-monthly labels: {labels}, stage_counts: {stage_counts}"
+        )
         return {
             "status": "success",
             "data": {
-                "months": month_labels,
-                "applied": applied,
-                "interview": interview,
-                "offer": offer,
-                "accepted": accepted,
+                "labels": labels,
+                "stage_counts": stage_counts,
             },
         }
 
     except Exception as e:
-        logging.error(f"Error fetching apps-over-time for user {uid}: {e}")
+        logging.error(f"Error fetching split-by-stage-monthly for user {uid}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error fetching monthly stage trends.",
         )
+
+
+# ------------------------------------------------------------
+# Stages Over Time Card (Line)
+# ------------------------------------------------------------
+@router.get(
+    "/stages-over-time",
+    summary="Get cumulative application counts by stage over the last 90 days",
+)
+async def stages_over_time(user: dict = Depends(get_current_user)):
+    uid = user.get("uid")
+    logging.info(f"Fetching stages-over-time for user {uid}")
+
+    query = """
+        SELECT
+            received_at::date AS day,
+            app_stage,
+            COUNT(*)::int AS count
+        FROM public.job_applications
+        WHERE user_uid = $1
+          AND is_deleted = FALSE
+          AND is_archived = FALSE
+          AND received_at IS NOT NULL
+          AND received_at::timestamp >= timezone('utc', now()) - INTERVAL '90 days'
+        GROUP BY day, app_stage
+        ORDER BY day ASC;
+    """
+
+    try:
+        async with get_connection() as conn:
+            rows = await conn.fetch(query, uid)
+
+        today = date.today()
+        days = [today - timedelta(days=i) for i in range(89, -1, -1)]
+        labels = [d.isoformat() for d in days]
+
+        stage_keys = ["applied", "interview", "offer", "accepted"]
+
+        stage_map_db_to_key = {
+            "Applied": "applied",
+            "Interview": "interview",
+            "Offer": "offer",
+            "Accepted": "accepted",
+        }
+
+        stage_counts = {stage: [0] * 90 for stage in stage_keys}
+        day_index = {d: i for i, d in enumerate(days)}
+
+        for r in rows:
+            day = r["day"]
+            stage_key = stage_map_db_to_key.get(r["app_stage"])
+            if stage_key is None:
+                continue
+
+            idx = day_index.get(day)
+            if idx is None:
+                continue
+
+            stage_counts[stage_key][idx] += r["count"] or 0
+
+        for stage in stage_keys:
+            running_total = 0
+            for i in range(90):
+                running_total += stage_counts[stage][i]
+                stage_counts[stage][i] = running_total
+
+        return {
+            "status": "success",
+            "data": {
+                "labels": labels,
+                "stage_counts": stage_counts,
+            },
+        }
+
+    except Exception as e:
+        logging.error(f"Error fetching stages-over-time for user {uid}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching stage trends over time.",
+        )
+
 
 # ------------------------------------------------------------
 # Avg Time in Stage (Rolling 90-day averages)
@@ -217,7 +288,7 @@ async def apps_over_time(user: dict = Depends(get_current_user)):
 async def avg_time_in_stage(user: dict = Depends(get_current_user)):
     uid = user.get("uid")
     logging.info(f"Fetching avg-time-in-stage (sitting in stage) for user {uid}")
-    
+
     query = """
         SELECT
             COALESCE(avg_applied, 0.0)   AS applied,
@@ -228,34 +299,34 @@ async def avg_time_in_stage(user: dict = Depends(get_current_user)):
             SELECT
                 AVG(
                     CASE WHEN app_stage = 'Applied'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
                     END
                 ) AS avg_applied,
                 AVG(
                     CASE WHEN app_stage = 'Interview'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
                     END
                 ) AS avg_interview,
                 AVG(
                     CASE WHEN app_stage = 'Offer'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
                     END
                 ) AS avg_offer,
                 AVG(
                     CASE WHEN app_stage = 'Accepted'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - updated_at)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
                     END
                 ) AS avg_accepted
             FROM public.job_applications
             WHERE user_uid = $1
               AND is_deleted = FALSE
               AND is_archived = FALSE
-              AND updated_at IS NOT NULL
-              AND updated_at >= now() AT TIME ZONE 'utc' - INTERVAL '90 days'
+              AND received_at IS NOT NULL
+              AND received_at::timestamp >= now() AT TIME ZONE 'utc' - INTERVAL '90 days'
               AND app_stage IN ('Applied','Interview','Offer','Accepted')
         ) sub;
     """
-    
+
     try:
         async with get_connection() as conn:
             row = await conn.fetchrow(query, uid)
@@ -288,6 +359,7 @@ async def avg_time_in_stage(user: dict = Depends(get_current_user)):
             detail="Error calculating average time in stage.",
         )
 
+
 # ------------------------------------------------------------
 # Avg Applications Per Week
 # ------------------------------------------------------------
@@ -304,32 +376,18 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
     uid = user.get("uid")
     logging.info(f"Fetching avg-apps-per-week for user {uid}")
 
-    # current time in UTC (used to build the week buckets)
     now = datetime.now(timezone.utc)
 
     query = """
-        WITH app_events AS (
-            SELECT
-                -- Prefer received_at (epoch ms text) when present/valid,
-                -- else fall back to updated_at.
-                CASE
-                    WHEN received_at IS NOT NULL
-                         AND received_at <> ''
-                         AND received_at ~ '^[0-9]+$'
-                    THEN to_timestamp(received_at::bigint / 1000.0)
-                    ELSE updated_at
-                END AS event_ts
-            FROM public.job_applications
-            WHERE user_uid = $1
-              AND is_deleted = FALSE
-              AND is_archived = FALSE
-        )
         SELECT
-            date_trunc('week', event_ts) AS week_start,
+            date_trunc('week', received_at::timestamp)::date AS week_start,
             COUNT(*)::int AS count
-        FROM app_events
-        WHERE event_ts IS NOT NULL
-          AND event_ts >= timezone('utc', now()) - INTERVAL '10 weeks'
+        FROM public.job_applications
+        WHERE user_uid = $1
+        AND is_deleted = FALSE
+        AND is_archived = FALSE
+        AND received_at IS NOT NULL
+        AND received_at::timestamp >= timezone('utc', now()) - INTERVAL '10 weeks'
         GROUP BY week_start
         ORDER BY week_start ASC;
     """
@@ -338,19 +396,17 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
 
-        # Map week_start -> count
-        counts_by_week = {r["week_start"].date(): r["count"] for r in rows}
+        counts_by_week = {r["week_start"]: r["count"] for r in rows}
 
-        # Build a contiguous 10-week window ending this week.
-        # Align to the same week start as date_trunc('week', ...) (Monday).
-        start_week = now - timedelta(weeks=9)
-        start_week = start_week - timedelta(days=start_week.weekday())  # Monday
+        today = now.date()
+        current_week_start = today - timedelta(days=today.weekday())
 
-        week_starts = [start_week + timedelta(weeks=i) for i in range(10)]
+        week_starts = [current_week_start - timedelta(weeks=9 - i) for i in range(10)]
 
-        labels = [f"W{i+1}" for i in range(10)]
-        values = [counts_by_week.get(ws.date(), 0) for ws in week_starts]
-
+        values = [counts_by_week.get(ws, 0) for ws in week_starts]
+        labels = [
+            f"WK {ws.isocalendar().week} ({10 - i})" for i, ws in enumerate(week_starts)
+        ]
         return {
             "labels": labels,
             "values": values,
@@ -363,6 +419,7 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
             detail="Error calculating weekly application averages.",
         )
 
+
 # ------------------------------------------------------------
 # Grit Card
 # ------------------------------------------------------------
@@ -373,7 +430,7 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
 async def grit_score(user: dict = Depends(get_current_user)):
     uid = user.get("uid")
     logging.info(f"Fetching grit-score for user {uid}")
-    
+
     try:
         async with get_connection() as conn:
             # 1. Weekly Application Count (last 7 days)
@@ -394,7 +451,7 @@ async def grit_score(user: dict = Depends(get_current_user)):
             """
             weekly_row = await conn.fetchrow(weekly_query, uid)
             weekly_apps = weekly_row["apps"] if weekly_row else 0
-            
+
             # 2. Follow-ups (last 30 days)
             follow_query = """
             SELECT COUNT(*)::int as cnt
@@ -406,7 +463,7 @@ async def grit_score(user: dict = Depends(get_current_user)):
             """
             follow_row = await conn.fetchrow(follow_query, uid)
             followups = follow_row["cnt"] if follow_row else 0
-            
+
             # 3. Consistency (days user applied at least once)
             consistency_query = """
             SELECT COUNT(*)::int AS active_days
@@ -428,12 +485,9 @@ async def grit_score(user: dict = Depends(get_current_user)):
             """
             cons_row = await conn.fetchrow(consistency_query, uid)
             active_days = cons_row["active_days"] if cons_row else 0
-            
+
             # Convert raw metrics into a score
-            score = min(
-                100,
-                (weekly_apps * 6) + (followups * 4) + (active_days * 0.5)
-            )
+            score = min(100, (weekly_apps * 6) + (followups * 4) + (active_days * 0.5))
         return {
             "score": round(score),
             "weekly_apps": weekly_apps,
@@ -446,70 +500,84 @@ async def grit_score(user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error calculating Grit Score.",
         )
-        
-# ------------------------------------------------------------
-# Activity Heatmap Card
-# ------------------------------------------------------------
+
+
 @router.get(
     "/activity-heatmap",
     summary="Get daily application counts for the last 12 weeks",
 )
 async def activity_heatmap(user: dict = Depends(get_current_user)):
     """
-    Returns daily application counts formatted for a calendar heatmap visualization.
+    Returns daily application counts formatted for a calendar heatmap.
     Each data point contains:
-    - x: Date label (e.g., "Dec 18")
+    - x: ISO week number
     - y: Day of week (0 = Sunday, 6 = Saturday)
     - v: Number of applications submitted that day
+    Missing days are returned with v=0.
     """
     uid = user.get("uid")
     logging.info(f"Fetching activity-heatmap for user {uid}")
 
-    # Get data for the last 84 days (12 weeks)
     query = """
-        WITH app_events AS (
-            SELECT
-                CASE
-                    WHEN received_at IS NOT NULL
-                        AND received_at <> ''
-                        AND received_at ~ '^[0-9]+$'
-                    THEN to_timestamp(received_at::bigint / 1000.0)
-                    ELSE updated_at
-                END AS event_ts
-            FROM public.job_applications
-            WHERE user_uid = $1
-            AND is_deleted = FALSE
-            AND is_archived = FALSE
-        )
         SELECT
-            TO_CHAR(DATE(event_ts), 'Mon DD')        AS date_label,
-            EXTRACT(DOW FROM DATE(event_ts))::int   AS day_of_week,
-            COUNT(*)::int                           AS app_count
-        FROM app_events
-        WHERE event_ts IS NOT NULL
-        AND event_ts >= timezone('utc', now()) - INTERVAL '84 days'
-        GROUP BY DATE(event_ts)
-        ORDER BY DATE(event_ts);
+            DATE(received_at) AS day,
+            COUNT(*)::int AS app_count
+        FROM public.job_applications
+        WHERE user_uid = $1
+          AND is_deleted = FALSE
+          AND is_archived = FALSE
+          AND received_at IS NOT NULL
+          AND DATE(received_at) >= timezone('utc', now()) - INTERVAL '84 days'
+        GROUP BY day
+        ORDER BY day;
     """
 
     try:
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
 
-        data = [
-            {
-                "x": r["date_label"],
-                "y": r["day_of_week"],
-                "v": r["app_count"]
-            }
-            for r in rows
+        counts_by_day = {r["day"]: r["app_count"] for r in rows}
+        logging.info(f"Raw counts_by_day: {counts_by_day}")
+
+        today = date.today()
+        start_date = today - timedelta(days=83)
+        full_data_dict = {}
+
+        def getWeek(d: date) -> str:
+            iso_calendar = d.isocalendar()
+            return "WK " + str(iso_calendar[1]) 
+        
+        dow_labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        
+        def getDOW(d: date) -> str:
+            py_weekday = d.weekday() 
+            return dow_labels[(py_weekday + 1) % 7]  
+
+        for i in range(84):
+            d = start_date + timedelta(days=i)
+            count = counts_by_day.get(d, 0)
+
+            week = getWeek(d) 
+            dow = getDOW(d)  
+
+            key = (week, dow)
+            if key not in full_data_dict:
+                full_data_dict[key] = 0
+            full_data_dict[key] += count
+
+        full_data = [
+            {"x": week, "y": dow, "v": v}
+            for (week, dow), v in full_data_dict.items()
         ]
 
-        return {"status": "success", "data": data}
+        return {
+            "status": "success",
+            "data": full_data,
+        }
 
     except Exception as e:
         logging.error(f"Error fetching activity-heatmap for user {uid}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error fetching activity heatmap data.",
+            detail="Error fetching daily application counts for heatmap.",
         )

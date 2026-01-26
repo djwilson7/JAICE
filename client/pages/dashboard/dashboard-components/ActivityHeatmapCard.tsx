@@ -15,7 +15,7 @@ ChartJS.register(MatrixController, MatrixElement);
 
 type HeatmapData = {
   x: string; // date
-  y: number; // day of week (0-6)
+  y: string; // day of week (0-6)
   v: number; // value (application count)
 };
 
@@ -80,7 +80,7 @@ export function ActivityHeatmapCard({
 
   const maxValue = heatmapData.length
     ? Math.max(...heatmapData.map((d) => d.v))
-    : 10;
+    : 0;
 
   const chartData: any = {
     datasets: [
@@ -93,9 +93,9 @@ export function ActivityHeatmapCard({
           
           // Color scale from light to dark teal/cyan
           const intensity = Math.min(value / Math.max(maxValue, 1), 1);
-          const r = Math.floor(34 + (211 - 34) * (1 - intensity));
-          const g = Math.floor(211 + (255 - 211) * (1 - intensity));
-          const b = Math.floor(238 + (255 - 238) * (1 - intensity));
+          const r = Math.floor(34 + 177 * (1 - intensity));
+          const g = Math.floor(211 + 44 * (1 - intensity));
+          const b = Math.floor(238 + 17 * (1 - intensity));
           
           return `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.7})`;
         },

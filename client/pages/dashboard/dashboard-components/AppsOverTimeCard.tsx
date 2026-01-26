@@ -51,39 +51,44 @@ export function AppsOverTimeCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    applyChartDefaults();
-    let alive = true;
+useEffect(() => {
+  applyChartDefaults();
+  let alive = true;
 
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
+  async function load() {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const res = await api("/api/dashboard/apps-over-time/", {
-          method: "GET",
-        });
+      const res = await api("/api/dashboard/stages-over-time/", {
+        method: "GET",
+      });
 
-        if (!alive) return;
+      if (!alive) return;
 
-        const d = res?.data ?? {};
+      const data = res?.data;
+      if (!data) throw new Error("Invalid stages-over-time response");
 
-        setApplied(d.applied ?? []);
-        setInterview(d.interview ?? []);
-        setOffer(d.offer ?? []);
-        setAccepted(d.accepted ?? []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data");
-      } finally {
-        if (alive) setLoading(false);
-      }
+      const { labels = [], stage_counts = {} } = data;
+
+      setApplied(stage_counts.applied ?? []);
+      setInterview(stage_counts.interview ?? []);
+      setOffer(stage_counts.offer ?? []);
+      setAccepted(stage_counts.accepted ?? []);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data");
+    } finally {
+      if (alive) setLoading(false);
     }
+  }
 
-    load();
-    return () => {
-      alive = false;
-    };
-  }, []);
+  load();
+  return () => {
+    alive = false;
+  };
+}, []);
+
 
   // Filtered datasets based on selected range
   const filteredApplied = applyRange(applied, range);

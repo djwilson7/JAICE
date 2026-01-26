@@ -8,28 +8,6 @@ import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 
-type StageArrays = {
-  applied: number[];
-  interview: number[];
-  offer: number[];
-  accepted: number[];
-};
-
-const ALL_MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 export function SplitByStageCard({
   className = "",
   height,
@@ -57,51 +35,27 @@ export function SplitByStageCard({
         setLoading(true);
         setError(null);
 
-        const res = await api("/api/dashboard/apps-over-time/", {
+        const res = await api("/api/dashboard/split-by-stage-monthly/", {
           method: "GET",
         });
 
         if (!alive) return;
 
-        const raw = (res?.data ?? {}) as Partial<StageArrays>;
+        const data = res?.data;
+        if (!data) throw new Error("Invalid stage split response");
 
-        const appliedArr = raw.applied ?? new Array(ALL_MONTHS.length).fill(0);
-        const interviewArr =
-          raw.interview ?? new Array(ALL_MONTHS.length).fill(0);
-        const offerArr = raw.offer ?? new Array(ALL_MONTHS.length).fill(0);
-        const acceptedArr =
-          raw.accepted ?? new Array(ALL_MONTHS.length).fill(0);
+        const { labels = [], stage_counts = {} } = data;
 
-        // Build an ordered list of months with their stage counts
-        const monthRows = ALL_MONTHS.map((label, i) => {
-          const a = appliedArr[i] ?? 0;
-          const iv = interviewArr[i] ?? 0;
-          const o = offerArr[i] ?? 0;
-          const ac = acceptedArr[i] ?? 0;
-
-          return {
-            label,
-            applied: a,
-            interview: iv,
-            offer: o,
-            accepted: ac,
-            total: a + iv + o + ac,
-          };
-        });
-
-        // Prefer the last 4 months that actually have applications; fall back to calendar last 4.
-        const nonZero = monthRows.filter((r) => r.total > 0);
-        const sliceSource =
-          nonZero.length >= 4 ? nonZero.slice(-4) : monthRows.slice(-4);
-
-        setLabels(sliceSource.map((r) => r.label));
-        setApplied(sliceSource.map((r) => r.applied));
-        setInterview(sliceSource.map((r) => r.interview));
-        setOffer(sliceSource.map((r) => r.offer));
-        setAccepted(sliceSource.map((r) => r.accepted));
+        setLabels(labels);
+        setApplied(stage_counts.applied ?? []);
+        setInterview(stage_counts.interview ?? []);
+        setOffer(stage_counts.offer ?? []);
+        setAccepted(stage_counts.accepted ?? []);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load stage split data",
+          err instanceof Error
+            ? err.message
+            : "Failed to load stage split data",
         );
       } finally {
         if (alive) setLoading(false);
