@@ -1,0 +1,124 @@
+services:
+  # Our Redis Service for managing the message queues
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Our FastAPI backend service
+  client_api:
+    container_name: client_api
+    build:
+      context: .
+      dockerfile: ./client_api/Dockerfile.client_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  # Runs the front end in build mode
+  # frontend:
+  #   container_name: frontend
+  #   build:
+  #     context: .
+  #     dockerfile: ./src/client/Dockerfile.client
+  #   ports:
+  #     - "5173:80"
+  #   depends_on:
+  #     - core_api
+
+
+  gmail_request_intake:
+    container_name: gmail_request_intake
+    build:
+      context: .
+      dockerfile: ./gmail/Dockerfile.gmail
+    command: >
+      celery -A gmail.gmail_worker worker -Q gmail_initial_sync_queue -l info -E -n request_intake -c 15
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  gmail_fetch_content:
+    container_name: gmail_fetch_content
+    build:
+      context: .
+      dockerfile: ./gmail/Dockerfile.gmail
+    command: >
+      celery -A gmail.gmail_worker worker -Q gmail_fetch_content_queue -l info -E -n fetch_content -c 15
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  relevance_worker:
+    container_name: relevance_worker
+    build:
+      context: .
+      dockerfile: ./relevance/Dockerfile.relevance
+    command: >
+      celery -A relevance.relevance_worker worker -Q relevance_model_queue -l info -E -n relevance_model -c 3
+    env_file:
+      - .env
+    volumes:
+      - ./relevance:/app/relevance
+      - ./shared_worker_library:/app/shared_worker_library
+    depends_on:
+      - redis
+
+  classification_worker:
+    container_name: classification_worker
+    build:
+      context: .
+      dockerfile: ./classification/Dockerfile.classification
+    command: >
+      celery -A classification.class_worker worker -Q classification_model_queue -l info -E -n classification_model -c 1
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  ner_worker:
+    container_name: ner_worker
+    build:
+      context: .
+      dockerfile: ./ner/Dockerfile.ner
+    command: >
+      celery -A ner.ner_worker worker -Q ner_model_queue -l info -E -n ner_model -c 2
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  # Flower monitoring tool for Celery
+  flower:
+    container_name: flower_monitor
+    image: mher/flower:2.0.1
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+
+  openai_worker:
+    container_name: openai_worker
+    build:
+      context: .
+      dockerfile: ./OpenAI/Dockerfile.OpenAI
+    command: >
+      celery -A OpenAI.OpenAI_worker worker -Q openai_model_queue -l info -E -n openai_model -c 3
+    env_file:
+      - .env
+    volumes:
+      - ./OpenAI:/app/OpenAI
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
+    depends_on:
+      - redis

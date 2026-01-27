@@ -19,7 +19,7 @@
     /* Custom Path Alias Configuration */
     "baseUrl": ".", 
     "paths": {
-      "@/*": ["./src/*"] 
+      "@/*": ["client/*"] 
     },
 
     /* Linting */
@@ -30,5 +30,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["."]
 }
