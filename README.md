@@ -1,7 +1,7 @@
 # JAICE — Job Application Intelligence & Career Enhancement
 A clean, focused web application that helps job seekers track applications, stay organized, and get AI-powered insights to move faster and smarter.
 
-> **Current Stage:** **Beta** - model integration and analytics groundwork in prep for user testing.
+> **Current Stage:** **v0.5.0-alpha** - Baseline academic prototype build. Captures the complete original multi-service pipeline architecture (Ingestion, Redis, and ML classification workers) prior to solo v1.0.0 refactoring, local model caching implementation, and environment decoupling.
 
 ## Table of Contents
 - [Introduction](#introduction)
