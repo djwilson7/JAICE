@@ -12,11 +12,20 @@ logging = get_logger()
 
 def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
     """
-    Inserts placeholder job records for relevant emails directly into job_applications,
-    attaching only minimal fields known at relevance stage.
-    All other fields are left NULL and will be filled by downstream workers.
+    Inserts placeholder job records for relevant emails directly into `job_applications` table.
+
+    - Attaches known fields: subject, body (decrypted), provider info, and relevance score.
+    - Sets other fields to NULL for downstream workers (classification/extraction).
+    - Uses `ON CONFLICT DO NOTHING` on `provider_message_id` to prevent duplicates.
+
+    Args:
+        trace_id: Trace ID for logging.
+        model_results: RelevanceModelResult containing IDs of relevant emails.
+
+    Returns:
+        DB operation result dictionary.
     """
-    logging.info(f"[{trace_id}] Inserting minimal job records for relevant emails")
+    logging.info(f"[{trace_id}] Inserting job application records")
 
     if not model_results.relevant:
         logging.info(f"[{trace_id}] No relevant emails found to insert.")
@@ -124,7 +133,7 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
         if result["status"] == "failure":
             logging.error(f"[{trace_id}] Insert failed: {result['error']}")
         else:
-            logging.info(f"[{trace_id}] Inserted {result['rows_affected']} placeholder job records successfully.")
+            logging.info(f"[{trace_id}] Inserted {result['rows_affected']} job records")
 
         return result
 

@@ -23,34 +23,42 @@ HYPOTHESIS_TEMPLATE = "This email is a {}."
 
 
 def init_classification_model():
-    """
-    Loads and warms the zero-shot classification model ONCE per worker.
-    This replaces lazy-loading inside classify_email_stage().
-    """
     global MODEL, TOKENIZER, CLASSIFIER
 
     if CLASSIFIER is not None:
-        return  # already initialized
+        return
 
     logging.info(f"[CLASSIFIER] Loading model: {MODEL_NAME}")
 
     try:
-        MODEL = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+        use_cuda = torch.cuda.is_available()
+        device_str = "cuda" if use_cuda else "cpu"
+        dtype = torch.float16 if use_cuda else torch.float32
+
         TOKENIZER = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-        MODEL.to(DEVICE)  # type: ignore
+        MODEL = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_NAME,
+            torch_dtype=dtype,
+        ).to(device_str)
         MODEL.eval()
+
+        # If somehow dtype is wrong on CPU, force it back.
+        if device_str == "cpu" and next(MODEL.parameters()).dtype != torch.float32:
+            MODEL = MODEL.float()
 
         CLASSIFIER = pipeline(
             "zero-shot-classification",
             model=MODEL,
             tokenizer=TOKENIZER,
-            device=0 if torch.cuda.is_available() else -1,
+            device=0 if use_cuda else -1,
         )
 
-        logging.info("[CLASSIFIER] Model loaded successfully.")
+        logging.info(
+            f"[CLASSIFIER] Loaded on {device_str} dtype={next(MODEL.parameters()).dtype}"
+        )
 
-        # Warm pass (loads weights fully into CPU/GPU memory)
+        # Warm pass
         CLASSIFIER(
             "Warmup text.",
             candidate_labels=["warm", "cold"],
@@ -67,7 +75,6 @@ def init_classification_model():
         CLASSIFIER = None
         raise
 
-
 def get_classifier():
     if CLASSIFIER is None:
         raise RuntimeError(
@@ -78,8 +85,22 @@ def get_classifier():
 
 def classify_email_stage(email_text: str, threshold: float = CONFIDENCE_THRESHOLD):
     """
-    ORIGINAL prediction implementation.
-    Only difference: now uses warm-loaded classifier instead of lazy init.
+    Classifies the provided email text into one of the predefined stages.
+
+    Uses the pre-loaded zero-shot classification pipeline.
+
+    Args:
+        email_text: The full text content of the email to classify.
+        threshold: (Unused in this function scope, but defined for API consistency).
+
+    Returns:
+        A dictionary containing:
+        - stage: The top predicted label.
+        - score: The confidence score for the top label.
+        - second_stage: The second most likely label.
+        - second_score: The confidence score for the second label.
+        - raw: The raw model output.
+        - stage_scores: A dictionary of all labels and their scores.
     """
 
     classifier = get_classifier()

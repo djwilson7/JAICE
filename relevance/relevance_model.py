@@ -9,6 +9,15 @@ TOKENIZER = None
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def init_model(model_path: str):
+    """
+    Loads the DistilBert for Sequence Classification model and tokenizer.
+
+    Ensures the model is placed on the appropriate device (CUDA if available, else CPU)
+    and set to evaluation mode.
+
+    Args:
+        model_path: Path to the pretrained model directory.
+    """
     global MODEL, TOKENIZER
     try:
         MODEL = DistilBertForSequenceClassification.from_pretrained(model_path)
@@ -25,6 +34,16 @@ def init_model(model_path: str):
 
 
 def predict(emails: pd.DataFrame, threshold: float = 0.1):
+    """
+    Runs inference to determine if emails are job-related.
+
+    Args:
+        emails: DataFrame containing a 'body' column with text to classify.
+        threshold: Confidence threshold for a positive prediction (1).
+
+    Returns:
+        A copy of the input DataFrame with 'job_probability' and 'prediction' columns added.
+    """
     if MODEL is None or TOKENIZER is None:
         raise RuntimeError("Model not initialized. Call init_model() first.")
     

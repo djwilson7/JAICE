@@ -6,7 +6,15 @@ logging = get_logger()
 
 
 def to_percent(value):
-    """ convert a float value (0.0 to 1.0) to an integer percent (0 to 100) """
+    """
+    Converts a float value (0.0 to 1.0) to an integer percentage (0 to 100).
+
+    Args:
+        value: Float between 0.0 and 1.0, or None.
+
+    Returns:
+        Integer percentage, or None if input is invalid.
+    """
     try:
         if value is None:
             return None
@@ -22,8 +30,17 @@ def to_percent(value):
 
 def update_job_app_table(trace_id: str, model_results: ClassificationModelResult):
     """
-    Updates job_applications table with predicted classification stages.
-    Each stage dict maps provider_message_id -> confidence score.
+    Updates the `job_applications` table with predicted classification stages and confidence scores.
+
+    Constructs a batch UPDATE query to efficiently modify multiple rows based on the
+    `provider_message_id`.
+
+    Args:
+        trace_id: Trace ID for logging.
+        model_results: ClassificationModelResult object containing lists of results for each stage.
+
+    Returns:
+        A dictionary indicating the status of the operation (success/failure) and rows affected.
     """
     logging.info(f"[{trace_id}] Updating job_applications table with classification results.")
 

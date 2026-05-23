@@ -5,12 +5,14 @@ from classification.model_config import BATCH_SIZE, CONFIDENCE_THRESHOLD
 from classification.class_worker import celery_app
 from common.logger import get_logger
 from shared_worker_library.utils.task_definitions import TaskType, ClassificationModelResult
-from shared_worker_library.db_queries.std_queries import get_encrypted_emails
-from classification.class_queries import update_job_app_table
 from typing import List, Dict
 from common.security import decrypt_token
 from shared_worker_library.utils.to_bytes import to_bytes
 from classification.class_model import classify_email_stage
+
+# Shared Queries
+from shared_worker_library.db_queries.std_queries import get_encrypted_emails
+from classification.class_queries import update_job_app_table
 
 logging = get_logger()
 MAX_RETRIES = 3
@@ -19,6 +21,24 @@ MAX_RETRIES = 3
     queue=TaskType.CLASSIFICATION_MODEL.queue_name, name=TaskType.CLASSIFICATION_MODEL.task_name
 )
 def classification_task(trace_id: str, row_ids: list, attempt: int = 1):
+    """
+    Orchestrates the email classification process for a batch of staged emails.
+
+    Steps:
+    1.  Fetches encrypted emails from the staging table using `row_ids`.
+    2.  Decrypts the email content.
+    3.  Normalizes the text for the model (HTML stripping, etc.).
+    4.  Runs the classification model (zero-shot) to determine the application stage.
+    5.  Writes the results to the `job_applications` table.
+
+    Args:
+        trace_id: Trace ID for logging.
+        row_ids: List of database row IDs (uuids) from the staging table.
+        attempt: Retry attempt counter.
+
+    Returns:
+        Dict with status 'success' or 'failure', and result count or error message.
+    """
     logging.info(f"[{trace_id}] Starting classification task. Attempt {attempt}")
     
     if attempt > MAX_RETRIES:
@@ -26,7 +46,9 @@ def classification_task(trace_id: str, row_ids: list, attempt: int = 1):
         return {"status": "failure", "result": "max_retries_exceeded"}
     
     try:
+        # Fetch using raw SQL queries
         encrypted_emails = get_encrypted_emails(trace_id, row_ids)
+        logging.info(f"[{trace_id}] Retrieved {len(encrypted_emails)} encrypted emails")
     except Exception as e:
         logging.error(f"[{trace_id}] Error fetching encrypted emails: {e}")
         return {"status": "failure", "error": str(e)}
@@ -50,20 +72,32 @@ def classification_task(trace_id: str, row_ids: list, attempt: int = 1):
         return {"status": "failure", "error": str(e)}
 
     try:
-        results = update_job_app_table(trace_id, model_results)
+        # Write using raw SQL queries
+        result = update_job_app_table(trace_id, model_results)
+        if result["status"] == "failure":
+            raise Exception(result.get("error", "Unknown database error"))
+        
+        count = result.get("rows_affected", 0)
+        logging.info(f"[{trace_id}] Updated {count} job_applications rows successfully.")
     except Exception as e:
         logging.error(f"[{trace_id}] Error updating job_applications table: {e}")
         return {"status": "failure", "error": str(e)}
 
-    # There is no longer a need to enqueue further tasks from here
-    # Classification and NER run concurrently on the raw staging data and update the job_applications table directly.
-
     logging.info(f"[{trace_id}] Classification task completed successfully")
-    return {"status": "success", "results": results}
+    return {"status": "success", "results": count}
 
 def decrypt_email_content(trace_id: str, encrypted_emails: List[Dict]) -> List[Dict]:
-    logging.info(f"[{trace_id}] Decrypting email content")
-    # This will need to be optimized to only create the necessary decrypted fields for the classification model.
+    """
+    Decrypts sensitive fields (subject, sender, body) from a list of email dictionaries.
+
+    Args:
+        trace_id: Trace ID for logging.
+        encrypted_emails: List of dicts containing encrypted content.
+
+    Returns:
+        A list of dictionaries with decrypted content.
+    """
+    logging.debug(f"[{trace_id}] Decrypting email content")
     decrypted_emails = []
     for email in encrypted_emails:
         try:
@@ -77,52 +111,43 @@ def decrypt_email_content(trace_id: str, encrypted_emails: List[Dict]) -> List[D
                 }
             )
         except Exception as e:
-            logging.error(f"[{trace_id}] Error decrypting email ID {email['id']}: {e}")
+            logging.error(f"[{trace_id}] Error decrypting email ID {email.get('id')}: {e}")
     return decrypted_emails
 
 def normalized_emails_for_model(trace_id: str, emails: list[dict]) -> list[dict]:
-    logging.warning(f"[{trace_id}] Normalizing emails for model.")
-    # All content for the row is pulled into the emails list. This will later be optimized to only pull necessary fields for the relevance model.
-    # {
-    #     "id",                     -> Generated for the staging table
-    #     "subject",                -> email subject
-    #     "sender",                 -> email sender
-    #     "body",                   -> email body content
-    #     "provider_message_id"     -> unique email identifier from provider used to map directly into the job applications table
-    # }
+    """
+    Prepares email text for the classification model.
+
+    Performs normalization:
+    - HTML unescaping and tag removal.
+    - URL and Email masking.
+    - Unicode normalization.
+    - Whitespace collapsing.
+    - Lowercasing.
+
+    Args:
+        trace_id: Trace ID for logging.
+        emails: List of dicts containing 'subject', 'sender', 'body'.
+
+    Returns:
+        List of dicts with normalized text fields.
+    """
+    logging.debug(f"[{trace_id}] Normalizing {len(emails)} emails")
     
     def normalize_text(text: str) -> str:
         if text is None:
             return ""
-        
-        # ensure text is str
         text = str(text)
-
-        # unescape html entities
         text = html.unescape(text)
-
-        # remoce html tags
         text = re.sub(r'<[^>]+>', ' ', text)
-
-        # replace urls with token
         text = re.sub(r'http\S+|www\S+|https\S+', ' URL ', text, flags=re.IGNORECASE)
-
-        # replace email addresses with token
         text = re.sub(r"\b[\w.-]+?@\w+?\.\w+?\b", " EMAIL_ADDRESS ", text, flags=re.IGNORECASE)
-
-        # normalize unicode characters
         text = unicodedata.normalize('NFKC', text)
-
-        # collapse repetitive whitespace
         text = re.sub(r"\s+", " ", text)
-
-        # lowercase and srip leading/trailing whitespace
         text = text.lower().strip()
-
         return text
     
     normalized = []
-
     for email in emails:
         try:
             subject = normalize_text(email.get("subject", ""))
@@ -136,21 +161,24 @@ def normalized_emails_for_model(trace_id: str, emails: list[dict]) -> list[dict]
                 "body": body,
                 "provider_message_id": email["provider_message_id"],
             })
-
         except Exception as e:
             logging.error(f"[{trace_id}] Error normalizing email ID {email['id']}: {e}")
 
-    logging.info(f"[{trace_id}] Email normalization completed successfully.")
+    logging.debug(f"[{trace_id}] Email normalization completed")
     return normalized
 
 def heuristic_labeling(text: str) -> str | None:
-    """ Apply heuristic rules to check the model output for obvious misclassifications."""
+    """
+    Applies keyword-based heuristics to verify or correct model predictions.
 
-    if not text:
-        return None
-    
+    Args:
+        text: The normalized email text.
+
+    Returns:
+        A stage label string if a keyword match is found, otherwise None.
+    """
+    if not text: return None
     text_lower = text.lower()
-
     mappings = {
         "applied" : ["application received", "application submitted", "application for", "applied for", "application confirmation"],
         "interview" : ["interview scheduled", "interview confirmed", "interview invitation", "schedule an interview"],
@@ -158,16 +186,29 @@ def heuristic_labeling(text: str) -> str | None:
         "accepted" : ["offer accepted", "joining date confirmed", "signed offer", "start date confirmed"],
         "rejected" : ["application rejected", "not selected", "not moving forward", "position filled", "application unsuccessful"]
     }
-
     for label, keywords in mappings.items():
         for kw in keywords:
             if kw in text_lower:
                 return label
-
     return None
 
 def run_classification_model(trace_id: str, emails: list[dict]) -> ClassificationModelResult:
-    logging.warning(f"[{trace_id}] Running classification model on {len(emails)} emails")
+    """
+    Runs each email through the zero-shot classifier and applies logic to determine the best stage label.
+
+    - Calls `classify_email_stage`.
+    - applies heuristic checks.
+    - Flags low-confidence results for manual review.
+    - Groups results by stage (Applied, Interview, etc.).
+
+    Args:
+        trace_id: Trace ID for logging.
+        emails: List of normalized email dictionaries.
+
+    Returns:
+        A ClassificationModelResult object containing grouped results.
+    """
+    logging.info(f"[{trace_id}] Running classification model on {len(emails)} emails")
 
     applied = []
     interview = []
@@ -176,12 +217,11 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
     rejected = []
     retry = []
 
-    
     for i in range(0, len(emails), BATCH_SIZE):
         batch = emails[i:i + BATCH_SIZE]
         batch_num = (i // BATCH_SIZE) + 1
         total_batches = (len(emails) + BATCH_SIZE - 1) // BATCH_SIZE
-        logging.info(f"[{trace_id}] Processing batch {batch_num}/{total_batches}: {len(batch)} emails")
+        logging.debug(f"[{trace_id}] Processing batch {batch_num}/{total_batches}")
 
         for email in batch:
             email_text = f"Subject: {email['subject']} \nFrom: {email['sender']} \nBody: {email['body']}"
@@ -189,11 +229,8 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
                 model_out = classify_email_stage(email_text)
             except Exception as e:
                 logging.error(f"[{trace_id}] Model error for email {email['id']}: {e}")
-
-                # schedule this email for retry
                 retry.append({"email_id": email["id"]})
                 continue
-
 
             try:
                 top_label = model_out.get("stage")
@@ -201,50 +238,31 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
                 second_label = model_out.get("second_stage")
                 second_score = model_out.get("second_score", 0)
 
-                # run heuristic labeling
                 h_label = heuristic_labeling(email_text)
-
-                # decide if it needs review
                 needs_review = False
 
-                # if low confidence mark as needs review
                 if top_score < CONFIDENCE_THRESHOLD:
                     needs_review = True
-
-                # if the two top scores are close mark as needs review
                 if second_score is not None and abs(top_score - second_score) < .1:
                     needs_review = True
 
-                # make final label decision
                 final_label = top_label
 
-                # apply heuristic label adjustments
                 if h_label:
-                    # if heuristic label matches top label keep the final label the same
                     if h_label == top_label:
                         final_label = top_label
-
-                    # if heuristic label matches second label change it to the second label and mark for review
                     elif h_label == second_label:
                         final_label = second_label
                         needs_review = True
-
-                    # if heuristic label is different from both of the models labels keep it the same but mark as needs review
                     else:
                         needs_review = True
 
-                # if the final label is the second label, swap the top and second labels/scores
                 if final_label == second_label and second_label is not None:
                     top_label, second_label = second_label, top_label
                     top_score, second_score = second_score, top_score
 
-                # log email body with classification result
-                logging.info(f"[{trace_id}] Email ID: {email['id']} | Classification: {top_label} | Confidence: {top_score:.3f}")
-                logging.info(f"[{trace_id}] Subject: {email['subject']}")
-                logging.info(f"[{trace_id}] Body: {email['body']}")
-                logging.info("-----------------------------------------------------")  
+                logging.debug(f"[{trace_id}] Email {email['id']}: {top_label} (confidence: {top_score:.3f})")
                     
-                # prepare output item
                 out_item = {
                     "email_id": email["id"],
                     "provider_message_id": email["provider_message_id"],
@@ -257,27 +275,16 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
                     "stage_scores": model_out.get("stage_scores"),
                 }
 
-                # sort into list based on predicted label
-                if final_label == "applied":
-                    applied.append(out_item)
-
-                elif final_label == "interview":
-                    interview.append(out_item)
-
-                elif final_label == "offer":
-                    offer.append(out_item)
-
-                elif final_label == "accepted":
-                    accepted.append(out_item)
-
-                elif final_label == "rejected":
-                    rejected.append(out_item)
+                if final_label == "applied": applied.append(out_item)
+                elif final_label == "interview": interview.append(out_item)
+                elif final_label == "offer": offer.append(out_item)
+                elif final_label == "accepted": accepted.append(out_item)
+                elif final_label == "rejected": rejected.append(out_item)
 
             except Exception as e:
                 logging.error(f"[{trace_id}] Error processing email {email['id']}: {e}")
                 retry.append({"email_id": email["id"]})
 
-    # Log classification results summary
     logging.info(f"[{trace_id}] Classification results: applied={len(applied)}, interview={len(interview)}, offer={len(offer)}, accepted={len(accepted)}, rejected={len(rejected)}, retry={len(retry)}")
 
     return ClassificationModelResult(applied=applied, interview=interview, offer=offer, accepted=accepted, rejected=rejected, retry=retry)

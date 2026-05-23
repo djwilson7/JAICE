@@ -48,3 +48,4 @@ src/server/.env
 **/.vscode/
 
 */model/
+ROTATION_PLAN.md 
