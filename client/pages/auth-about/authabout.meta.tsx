@@ -1,8 +1,6 @@
-// import { localfiles } from "@/directory/path/to/localimport";
-
-import { AuthAboutPage } from "@/pages/auth-about/AuthAboutPage";
+import { AboutPage } from "@/pages/about/AboutPage";
 
 export const AuthAboutRoute = {
   path: "/auth-about",
-  element: <AuthAboutPage />,
+  element: <AboutPage variant="authenticated" />,
 };
