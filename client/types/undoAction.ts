@@ -11,4 +11,5 @@ export type SnapShotAction = {
   before: JobCardType[];
   after: JobCardType[];
   label?: string;
+  createdAt?: number;
 };

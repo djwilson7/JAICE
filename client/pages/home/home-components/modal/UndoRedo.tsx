@@ -7,57 +7,49 @@ import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 import { useEffect, useRef, useState } from "react";
+import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 
 export function UndoRedo() {
   const { isDragging } = useDrag();
   const { isMultiSelecting } = useIsMultiSelecting();
-  const { undoCount, redoCount, undo, redo, clear } = useUndoRedo();
+  const { undoCount, redoCount, undo, redo } = useUndoRedo();
 
   const UNDO_VISIBLE_MS = 10000;
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (undoCount === 0 && redoCount === 0) {
-      setVisible(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      return;
-    }
-
-    setVisible(true);
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    timeoutRef.current = window.setTimeout(() => {
-      setVisible(false);
-      clear();
-      timeoutRef.current = null;
-    }, UNDO_VISIBLE_MS);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [undoCount, redoCount, clear]);
-
-  const pauseTimer = () => {
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-  };
 
-  const resumeTimer = () => {
+    if (undoCount === 0 && redoCount === 0) {
+      setVisible(false);
+      return;
+    }
+
+    setVisible(true);
     timeoutRef.current = window.setTimeout(() => {
       setVisible(false);
-      clear();
+      timeoutRef.current = null;
     }, UNDO_VISIBLE_MS);
-  };
 
-  const restartTimer = () => {
+    return () => {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [undoCount, redoCount]);
+
+  const restartVisibilityTimer = () => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+
+    setVisible(true);
     timeoutRef.current = window.setTimeout(() => {
       setVisible(false);
-      clear();
+      timeoutRef.current = null;
     }, UNDO_VISIBLE_MS);
   };
 
@@ -73,8 +65,8 @@ export function UndoRedo() {
     const mappedJobs = snapshot.map((j) => ({
       title: j.title ?? "Title",
       company_name: j.companyName ?? "Company",
-      app_stage: j.applicationStage ?? "Applied",
-      salary: j.salary ? parseFloat(j.salary) : 0,
+      app_stage: j.column ?? j.applicationStage ?? "Applied",
+      salary: j.salary ?? 0,
       received_at: j.receivedAtRaw ?? new Date().toISOString(),
       note: j.notes ?? "",
       is_deleted: j.isDeleted ?? false,
@@ -93,16 +85,27 @@ export function UndoRedo() {
     }
   };
 
+  const applySnapshotLocally = (from: JobCardType[], to: JobCardType[]) => {
+    const fromById = new Map(from.map((job) => [String(job.id), job]));
+
+    for (const nextJob of to) {
+      const previousJob = fromById.get(String(nextJob.id)) ?? nextJob;
+      dispatchJobLocalChange({ before: previousJob, after: nextJob });
+    }
+  };
+
   const handleUndo = async () => {
     console.log("Undo action triggered");
     const snapshot = undo();
     if (!snapshot) return;
     try {
+      applySnapshotLocally(snapshot.after, snapshot.before);
       await handleSnapshot(snapshot.before);
     } catch (err) {
+      applySnapshotLocally(snapshot.before, snapshot.after);
       console.error("Undo failed", err);
     }
-    restartTimer();
+    restartVisibilityTimer();
   };
 
   const handleRedo = async () => {
@@ -110,11 +113,13 @@ export function UndoRedo() {
     const snapshot = redo();
     if (!snapshot) return;
     try {
+      applySnapshotLocally(snapshot.before, snapshot.after);
       await handleSnapshot(snapshot.after);
     } catch (err) {
+      applySnapshotLocally(snapshot.after, snapshot.before);
       console.error("Redo failed", err);
     }
-    restartTimer();
+    restartVisibilityTimer();
   };
 
   return (
@@ -122,8 +127,6 @@ export function UndoRedo() {
       className="glass"
       role="status"
       aria-live="polite"
-      onMouseEnter={pauseTimer}
-      onMouseLeave={resumeTimer}
     >
       <span
         title={undoCount > 0 ? "Undo (Ctrl+Z)" : "No actions to undo"}

@@ -3,7 +3,7 @@ import { convertBroadcastToJobCard } from "@/pages/home/utils/convertToJobCard";
 
 // Mapping function to handle the event types
 export function applyJobChange(prev: JobCardType[], event: any): JobCardType[] {
-  switch (event.event) {
+  switch (getBroadcastOperation(event)) {
     case "INSERT":
       return handleInsert(prev, event);
     case "UPDATE":
@@ -14,6 +14,15 @@ export function applyJobChange(prev: JobCardType[], event: any): JobCardType[] {
       console.warn("Unhandled event type:", event.event);
       return prev;
   }
+}
+
+function getBroadcastOperation(event: any): string | undefined {
+  return (
+    event?.event ??
+    event?.payload?.type ??
+    event?.payload?.event ??
+    event?.payload?.operation
+  );
 }
 
 // Adds new job cards
@@ -56,7 +65,9 @@ function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
 
 // Removes job cards that are deleted from the database
 function handleDelete(prev: JobCardType[], event: any): JobCardType[] {
-  const deletedId = event?.payload?.old?.provider_message_id;
+  const deletedId =
+    event?.payload?.old?.provider_message_id ??
+    event?.payload?.old_record?.provider_message_id;
   if (!deletedId) {
     console.warn("Delete: No ID in event (no change)");
     return prev;

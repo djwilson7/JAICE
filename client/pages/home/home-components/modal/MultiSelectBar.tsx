@@ -59,7 +59,9 @@ export function MultiSelectBar({
       const beforeJobState = [...selectedJobs]; // Capture state before move
       const afterActionJobState = selectedJobs.map((job) => ({
         ...job,
-        app_stage: targetStage,
+        column: targetStage,
+        applicationStage: targetStage,
+        reviewNeeded: false,
       })); // Capture state after move
 
       await api("/api/jobs/update-stage", {
@@ -172,7 +174,7 @@ export function MultiSelectBar({
       const beforeJobState = [...selectedJobs]; // Capture state before review
       const afterActionJobState = selectedJobs.map((job) => ({
         ...job,
-        needsReview: false,
+        reviewNeeded: false,
       })); // Capture state after review
 
       await api("/api/jobs/set-review-needed", {

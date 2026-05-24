@@ -18,8 +18,15 @@ export function UndoRedoProvider({ children }: UndoRedoProviderProps) {
   const redoRef = useRef<SnapShotAction[]>([]);
 
   const pushUndo = useCallback((action: SnapShotAction) => {
+    if (action.before.length === 0 && action.after.length === 0) return;
+
+    const actionToStore = {
+      ...action,
+      createdAt: action.createdAt ?? Date.now(),
+    };
+
     setUndoStack((prev) => {
-      const next = [...prev, action];
+      const next = [...prev, actionToStore];
       undoRef.current = next;
       return next;
     });

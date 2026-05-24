@@ -30,9 +30,12 @@ export function useJobRealtime(
     }
 
     console.log("Connecting realtime channel for user");
+    supabase.realtime.setAuth(rlsToken);
 
     const channel = supabase
-      .channel(`user:${userId}:job_applications`)
+      .channel(`user:${userId}:job_applications`, {
+        config: { private: true },
+      })
       .on("broadcast", { event: "*" }, (payload: JobBroadcastPayload) => {
         console.log("Realtime broadcast received:", payload.event);
         onChange(payload);
@@ -48,5 +51,5 @@ export function useJobRealtime(
       console.log("Cleaning up realtime channel");
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase, onChange]);
+  }, [userId, rlsToken, supabase, onChange]);
 }

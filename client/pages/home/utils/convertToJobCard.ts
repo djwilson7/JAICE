@@ -32,7 +32,13 @@ export function convertToJobCard(rawJob: any): JobCardType {
 
 // Convert broadcast payloads from Supabase realtime
 export function convertBroadcastToJobCard(event: any): JobCardType | null {
-  const eventRecord = event?.payload?.record ?? event?.payload?.old ?? null;
+  const eventRecord =
+    event?.payload?.record ??
+    event?.payload?.new ??
+    event?.payload?.new_record ??
+    event?.payload?.old ??
+    event?.payload?.old_record ??
+    null;
 
   if (!eventRecord || !eventRecord.provider_message_id) return null;
 

@@ -57,10 +57,10 @@ export function useRealtimeJobs(
 
   useJobRealtime(userId, rlsToken, handleRealtimeChange);
 
-  const resetNewJobsCount = () => {
+  const resetNewJobsCount = useCallback(() => {
     setNewJobsCount(0);
     lastSeenCountRef.current = 0;
-  };
+  }, []);
 
   return {
     newJobsCount,
