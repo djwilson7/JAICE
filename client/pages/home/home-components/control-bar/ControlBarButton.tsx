@@ -35,7 +35,7 @@ export function ControlBarButton({
         alt={alt}
         className={`w-5 h-5 ${iconClass}`}
       />
-      <p className="whitespace-nowrap no-select">
+      <p className="control-bar-label whitespace-nowrap no-select">
         {label}
       </p>
     </motion.div>

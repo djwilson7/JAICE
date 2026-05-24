@@ -72,7 +72,7 @@ export function JobCardContainer({
       <motion.div
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
-        className={`w-full flex items-center flex flex-col job-card min-h-[2rem] overflow-hidden ${reviewClass}`}
+        className={`flex w-full shrink-0 items-center flex-col job-card min-h-[2rem] overflow-hidden ${reviewClass}`}
         drag
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
@@ -81,7 +81,7 @@ export function JobCardContainer({
         whileHover={
           isMultiSelecting && !isSelected
             ? "hoverUnselected"
-            : { scale: 1.02, cursor: "pointer" }
+            : { cursor: "pointer" }
         }
         onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
         onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}

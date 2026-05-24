@@ -1,6 +1,8 @@
 import circleXIcon from "@/assets/icons/circle-xmark.svg";
+import downChevron from "@/assets/icons/angle-small-down.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 interface DropDownMenuProps {
   selectedOption: string;
@@ -21,9 +23,43 @@ export function DropDownMenu({
   setSelectedOption,
   leftIcon,
 }: DropDownMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const selected =
+    sortByOptions.find((option) => option.value === selectedOption) ??
+    sortByOptions[0];
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const selectOption = (value: string) => {
+    setSelectedOption(value);
+    setIsOpen(false);
+  };
+
   return (
     <motion.div
-      className="control-bar-container"
+      ref={menuRef}
+      className="control-bar-container relative"
       transition={{
         type: "spring",
         stiffness: 300,
@@ -36,36 +72,56 @@ export function DropDownMenu({
         alt="Filter Icon"
         className={`w-5 h-5 shrink-0 icon`}
         title="Order Job Cards"
+        onClick={() => setIsOpen((open) => !open)}
       />
-      <motion.div
-        className="flex items-center"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+      <button
+        type="button"
+        className="drop-down-menu-trigger filter-selected-trigger"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
       >
-        <select
-          value={selectedOption}
-          onChange={(e) => setSelectedOption(e.target.value)}
-          className="drop-down-menu"
+        <span>{selected.label}</span>
+        <img
+          src={downChevron}
+          alt=""
+          aria-hidden="true"
+          className={`drop-down-menu-chevron icon ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+      {isOpen && (
+        <motion.div
+          className="drop-down-menu-panel"
+          role="menu"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: parseFloat(getCSSVar("--animation-duration")) }}
         >
           {sortByOptions.map((option) => (
-            <option
+            <button
+              type="button"
               key={option.value}
               className="drop-down-menu-options"
-              value={option.value}
-              onClick={() => setSelectedOption(option.value)}
-              selected={selectedOption === option.value}
+              role="menuitem"
+              aria-current={selectedOption === option.value}
+              onClick={() => selectOption(option.value)}
             >
               {option.label}
-            </option>
+            </button>
           ))}
-        </select>
-      </motion.div>
+        </motion.div>
+      )}
       <motion.img
         src={circleXIcon}
         alt="Clear Order Icon"
-        className={`w-4 h-4 shrink-0 icon`}
-        onClick={() => setSelectedOption("new")}
+        className={`w-4 h-4 shrink-0 icon ${
+          selectedOption === "new" ? "pointer-events-none absolute opacity-0" : ""
+        }`}
+        onClick={(event) => {
+          event.stopPropagation();
+          selectOption("new");
+        }}
         title="Set to Most Recent (Default)"
         style={{
           cursor: selectedOption !== "new" ? "pointer" : "default",

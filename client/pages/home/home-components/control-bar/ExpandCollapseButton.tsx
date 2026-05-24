@@ -23,7 +23,7 @@ export function ExpandCollapseButton() {
           className={`w-5 h-5 icon -rotate-90`}
           title={text + " All"}
         />
-        <span className="whitespace-nowrap">{text + " All"}</span>
+        <span className="control-bar-label whitespace-nowrap">{text + " All"}</span>
       </div>
     </div>
   );

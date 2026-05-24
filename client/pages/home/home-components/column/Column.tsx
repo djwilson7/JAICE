@@ -13,7 +13,6 @@ interface ColumnProps {
   column: KanBanColumn;
   children: React.ReactNode;
   count: number;
-  viewportHeight: number;
   isHighlighted: string | null;
   openJobAppModal: (columnId: string) => void;
 }
@@ -22,11 +21,10 @@ export function Column({
   column,
   children,
   count,
-  viewportHeight,
   isHighlighted,
   openJobAppModal,
 }: ColumnProps) {
-  const { setDragTarget } = useDrag();
+  const { setDragTarget, isDragging } = useDrag();
   const hasChildren = count > 0;
 
   const highlightColumn =
@@ -43,18 +41,16 @@ export function Column({
 
   return (
     <motion.div
-      className="flex"
+      className="flex h-full min-h-full min-w-[19rem] flex-[0_0_19rem] self-stretch 2xl:min-w-[21rem] 2xl:flex-[1_0_21rem]"
       transition={{ duration: parseFloat(getCSSVar("--animation-duration")), ease: "easeInOut" }}
-      style={{width: "100%"}}
     >
       <motion.div
         style={{
           pointerEvents: column.visible ? "auto" : "none",
           background: column.bg,
-          minHeight: viewportHeight,
           width: "100%",
         }}
-        className={`flex flex-col p-2 corner-radius shadow ${
+        className={`flex h-full min-h-full flex-col p-2 corner-radius shadow ${
           highlightColumn ? "highlighted" : ""
         }`}
         onPointerEnter={() => setDragTarget(column.id as DragTarget)}
@@ -91,7 +87,11 @@ export function Column({
 
         <div className="flex border-b mx-4 mb-2" />
 
-        <div className="flex flex-col items-center p-2 gap-4">
+        <div
+          className={`kanban-column-scroll ${
+            isDragging ? "kanban-column-scroll-dragging" : ""
+          } flex min-h-0 w-full flex-1 flex-col items-center gap-4 py-0 pl-0 pr-0.5`}
+        >
           {hasChildren ? (
             children
           ) : (

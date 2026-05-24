@@ -237,6 +237,7 @@
 
   --corner-radius: 20px;
   --animation-duration: 0.3s;
+  --kanban-scrollbar-thumb: rgba(255, 255, 255, 0.85);
   --icon-filter: brightness(0) saturate(100%) invert(81%) sepia(11%)
     saturate(464%) hue-rotate(170deg) brightness(95%) contrast(85%);
 }
@@ -256,6 +257,7 @@ html[data-theme="light"] {
   --page-shadow: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.5);
   --page-shadow-multi-select: 0px 0px 4rem 4rem rgba(0, 0, 0, 0.8);
   --multi-select-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  --kanban-scrollbar-thumb: rgba(0, 0, 0, 0.85);
 
   --modal-background: rgb(0, 0, 0);
   --modal-background-rgb: 0, 0, 0;
@@ -855,13 +857,34 @@ button.selected {
 }
 
 button.navButton {
-  width: fit-content;
+  width: 100%;
   height: 2.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: flex-start;
+  gap: 0.625rem;
   overflow: hidden;
+  padding: 0.6em 0.4em;
+}
+
+.navButtonCollapsed {
+  justify-content: center;
+}
+
+.navButtonExpanded {
+  justify-content: flex-start;
+}
+
+.navButtonIconSlot {
+  display: flex;
+  width: 2rem;
+  min-width: 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.navButtonLabel {
+  min-width: 0;
 }
 
 button.small {
@@ -1232,6 +1255,42 @@ to an element (className="example").
   background: var(--job-card-bg-hover);
 }
 
+.kanban-column-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--kanban-scrollbar-thumb) transparent;
+}
+
+.kanban-column-scroll-dragging {
+  overflow: visible;
+}
+
+.kanban-column-scroll::-webkit-scrollbar {
+  width: 3px;
+  height: 0;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--kanban-scrollbar-thumb);
+  border: 0;
+  border-radius: 999px;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .review {
   border: var(--job-card-review-border);
   box-shadow: var(--job-card-review-shadow);
@@ -1367,13 +1426,82 @@ to an element (className="example").
   background: var(--primary-one);
   outline: none;
   border: none;
+  max-width: 100%;
+  margin-left: auto;
+  padding-right: 0.25rem;
+  text-align: right;
+  text-align-last: right;
+}
+
+.drop-down-menu-trigger {
+  width: max-content;
+  height: auto;
+  max-height: none;
+  padding: 0;
+  gap: 0.375rem;
+  justify-content: flex-end;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-primary);
+  font-size: inherit;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.drop-down-menu-trigger:hover {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+}
+
+.drop-down-menu-chevron {
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform var(--animation-duration) ease;
+}
+
+.drop-down-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  z-index: 80;
+  display: flex;
+  min-width: 100%;
+  width: max-content;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  background: var(--primary-one);
+  border-radius: calc(var(--corner-radius) * 0.65);
+  box-shadow: var(--shadow);
 }
 
 .drop-down-menu-options {
-  background: var(--primary-gradient);
-  border-radius: var(--corner-radius);
-  box-shadow: var(--shadow);
-  padding: 0.5rem;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  justify-content: flex-end;
+  padding: 0.35rem 0.5rem;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--corner-radius) * 0.45);
+  box-shadow: none;
+  color: var(--text-primary);
+  font-size: inherit;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.drop-down-menu-options:hover,
+.drop-down-menu-options[aria-current="true"] {
+  background: var(--glass-bg-hover);
+  border: 0;
+  box-shadow: none;
+  transform: none;
 }
 
 .control-bar {
@@ -1381,7 +1509,7 @@ to an element (className="example").
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 50px;
+  height: 36px;
   align-self: start;
   min-width: var(--min-content-width);
 }
@@ -1398,9 +1526,10 @@ to an element (className="example").
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 1rem;
+  padding: 0.25rem 0.75rem;
   cursor: pointer;
   gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .alert-container {
@@ -1410,10 +1539,11 @@ to an element (className="example").
   display: flex;
   align-items: center;
   justify-content: start;
-  padding: 0.4rem 1rem;
+  padding: 0.25rem 0.75rem;
   cursor: pointer;
   gap: 0.5rem;
   width: fit-content;
+  font-size: 0.875rem;
 }
 
 .control-bar-container-red {
@@ -1428,6 +1558,50 @@ to an element (className="example").
 .control-bar-container-red:hover {
   background: var(--white-color);
   color: var(--red-color);
+}
+
+.search-bar {
+  width: min(14rem, 42vw);
+  min-width: 8rem;
+}
+
+.search-bar input {
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .control-bar-label {
+    display: none;
+  }
+
+  .search-bar {
+    width: auto;
+    min-width: 0;
+  }
+
+  .filter-selected-trigger {
+    display: none;
+  }
+
+  .search-bar .search-input-wrap,
+  .search-bar > img:last-child {
+    display: none;
+  }
+
+  .search-bar.search-bar-expanded {
+    width: min(10rem, 38vw);
+  }
+
+  .search-bar.search-bar-expanded .search-input-wrap,
+  .search-bar.search-bar-expanded > img:last-child {
+    display: flex;
+  }
+}
+
+@media (max-width: 560px) {
+  .search-bar.search-bar-expanded {
+    width: min(8rem, 34vw);
+  }
 }
 
 .connect-email-container {

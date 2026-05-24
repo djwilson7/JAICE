@@ -31,6 +31,10 @@ import TrashArchiveModal from "@/pages/home/home-components/modal/TrashArchiveMo
 import NewApplication from "@/pages/home/home-components/modal/ApplicationModal";
 import ConnectEmailModal from "@/pages/home/home-components/modal/ConnectEmailModal";
 import { ExpandCollapseButton } from "@/pages/home/home-components/control-bar/ExpandCollapseButton";
+import {
+  JOB_LOCAL_CHANGE_EVENT,
+  type JobLocalChangeDetail,
+} from "@/pages/home/utils/jobLocalChangeEvent";
 
 export function HomePage() {
   const [jobAppModalPayload, setJobAppModalPayload] = useState<
@@ -87,19 +91,34 @@ export function HomePage() {
   const [isJobAppModalOpen, setIsJobAppModalOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState<string | null>(null); // to track if a column is highlighted
 
-  const [viewportHeight, setViewportHeight] = useState(
-    () => window.innerHeight
-  );
-
-  useEffect(() => {
-    const handleResize = () => setViewportHeight(window.innerHeight);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   useEffect(() => {
     if (isAlertOpen) resetNewJobsCount();
-  }, [isAlertOpen]);
+  }, [isAlertOpen, resetNewJobsCount]);
+
+  useEffect(() => {
+    const handleLocalJobChange = (event: Event) => {
+      const { after } = (event as CustomEvent<JobLocalChangeDetail>).detail;
+
+      setJobs((prev) => {
+        if (after.isArchived || after.isDeleted) {
+          return prev.filter((job) => String(job.id) !== String(after.id));
+        }
+
+        const exists = prev.some((job) => String(job.id) === String(after.id));
+        if (!exists) return [after, ...prev];
+
+        return prev.map((job) =>
+          String(job.id) === String(after.id) ? after : job
+        );
+      });
+    };
+
+    window.addEventListener(JOB_LOCAL_CHANGE_EVENT, handleLocalJobChange);
+
+    return () => {
+      window.removeEventListener(JOB_LOCAL_CHANGE_EVENT, handleLocalJobChange);
+    };
+  }, [setJobs]);
 
   return (
     <AnimatePresence mode="wait">
@@ -110,32 +129,38 @@ export function HomePage() {
           {/* ^ Page Container ^ */}
           <PageContent>
             {/* Control Bar */}
-            <ControlBar>
-              <AlertBox
-                isOpen={isAlertOpen}
-                setIsOpen={setIsAlertOpen}
-                alertMessage={alertMessage}
-              />
-              <div className="flex relative gap-4 w-full h-full justify-end items-center">
-                <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} />
-                <ArchiveModalButton setIsOpen={archive.open} />
-                <TrashModalButton setIsOpen={trash.open} />
-                <MultiSelectButton />
-              </div>
-            </ControlBar>
-            <ControlBar>
-              <ExpandCollapseButton />
-              <div className="flex relative gap-4 w-full h-full justify-end items-center">
-                <SearchBar
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
+            <div className="flex w-full flex-col gap-0">
+              <div className="p-1">
+                <ControlBar fitParent>
+                <AlertBox
+                  isOpen={isAlertOpen}
+                  setIsOpen={setIsAlertOpen}
+                  alertMessage={alertMessage}
                 />
-                <FilterButton
-                  selectedOption={sortOption}
-                  setSelectedOption={setSortOption}
-                />
+                <div className="flex relative min-w-0 flex-1 gap-2 h-full justify-end items-center">
+                  <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} />
+                  <ArchiveModalButton setIsOpen={archive.open} />
+                  <TrashModalButton setIsOpen={trash.open} />
+                  <MultiSelectButton />
+                </div>
+                </ControlBar>
               </div>
-            </ControlBar>
+              <div className="p-1">
+                <ControlBar fitParent>
+                  <ExpandCollapseButton />
+                  <div className="flex relative min-w-0 flex-1 gap-2 h-full justify-end items-center">
+                    <SearchBar
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                    />
+                    <FilterButton
+                      selectedOption={sortOption}
+                      setSelectedOption={setSortOption}
+                    />
+                  </div>
+                </ControlBar>
+              </div>
+            </div>
             {/* Kan Ban Columns */}
             <KanbanContent>
               {columns.map(
@@ -146,7 +171,6 @@ export function HomePage() {
                     column={column}
                     key={column.id} // unique key for React
                     count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
-                    viewportHeight={viewportHeight}
                     isHighlighted={isHighlighted}
                     openJobAppModal={openJobAppModal}
                   >
