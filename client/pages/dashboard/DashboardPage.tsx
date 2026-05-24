@@ -1,6 +1,5 @@
 import {
   GritCard,
-  AppsByCategoryCard,
   AppsOverTimeCard,
   AppsByStageCard,
   SplitByStageCard,
@@ -16,7 +15,10 @@ export function DashboardPage() {
   return (
     <div className="w-full min-h-screen">
       {/* Content Grid */}
-      <main key={refreshKey} className="pl-[2rem] px-6 py-6 w-full pb-24">
+      <main
+        key={refreshKey}
+        className="w-full p-2"
+      >
         {/* Top: Grit score */}
         <section className="mb-6 grid grid-cols-1 xl:grid-cols-3">
           <div className="xl:col-span-3">
@@ -32,7 +34,6 @@ export function DashboardPage() {
           <AvgTimeInStageCard className="h-full" />          
           <AppsByStageCard className="h-full" />          
           <AvgAppsPerWeekCard className="h-full" />      
-          <AppsByCategoryCard className="h-full" />      
         </section>
       </main>
     </div>

@@ -9,45 +9,16 @@ from client_api.deps.auth import get_current_user
 logging = get_logger()
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
-
-# ------------------------------------------------------------
-# Applications By Category Card
-# ------------------------------------------------------------
-@router.get(
-    "/apps-by-category",
-    summary="Get counts of applications grouped by job category",
-)
-async def apps_by_category(user: dict = Depends(get_current_user)):
-    uid = user.get("uid")
-    logging.info(f"Fetching apps-by-category for user {uid}")
-
-    query = """
-        SELECT
-            COALESCE(job_category, 'Other') AS job_category,
-            COUNT(*)::int AS count
-        FROM public.job_applications
-        WHERE user_uid = $1
-          AND is_deleted = FALSE
-          AND is_archived = FALSE
-        GROUP BY COALESCE(job_category, 'Other')
-        ORDER BY job_category;
-    """
-
-    try:
-        async with get_connection() as conn:
-            rows = await conn.fetch(query, uid)
-
-        data = [{"category": r["job_category"], "count": r["count"]} for r in rows]
-
-        return {"status": "success", "data": data}
-
-    except Exception as e:
-        logging.error(f"Error fetching apps-by-category for user {uid}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error fetching apps by category.",
-        )
-
+RECEIVED_AT_TS_SQL = """
+    CASE
+        WHEN received_at IS NULL OR btrim(received_at) = '' THEN NULL
+        WHEN received_at ~ '^[0-9]{13}$'
+            THEN to_timestamp((received_at::numeric / 1000.0)::double precision)
+        WHEN received_at ~ '^[0-9]{10}$'
+            THEN to_timestamp(received_at::double precision)
+        ELSE received_at::timestamptz
+    END
+"""
 
 # ------------------------------------------------------------
 # Applications By Stage Card (Doughnut)
@@ -105,7 +76,7 @@ async def apps_by_stage(user: dict = Depends(get_current_user)):
             detail="Error fetching apps by stage.",
         )
 
-
+# ------------------------------------------------------------
 # ------------------------------------------------------------
 # split by stage (monthly counts)
 # ------------------------------------------------------------
@@ -116,47 +87,98 @@ async def apps_by_stage(user: dict = Depends(get_current_user)):
 async def split_by_stage_monthly(user: dict = Depends(get_current_user)):
     """
     For the last 4 months:
-    - Bucket by month based on received_at
-    - Count how many applications are in each app_stage
-    - retuns month and stage splits
+    - Calculates the snapshot date for each month (last day of month, or today if current month)
+    - Reconstructs the historical application stages on those snapshot dates
+    - Returns month labels and the stage split counts
     """
     uid = user.get("uid")
     logging.info(f"Fetching split-by-stage-monthly for user {uid}")
 
-    query = """
-        SELECT
-            date_trunc('month', received_at::timestamp)::date AS month_start,
+    jobs_query = f"""
+        SELECT 
+            id, 
             app_stage,
-            COUNT(*)::int AS count
+            {RECEIVED_AT_TS_SQL} AS received_at_ts
         FROM public.job_applications
         WHERE user_uid = $1
-        AND is_deleted = FALSE
-        AND is_archived = FALSE
-        AND received_at IS NOT NULL
-        AND received_at::timestamp >= date_trunc(
-                'month',
-                timezone('utc', now())
-            ) - INTERVAL '3 months'
-        GROUP BY month_start, app_stage
-        ORDER BY month_start ASC;
+          AND is_deleted = FALSE
+          AND is_archived = FALSE;
+    """
+
+    events_query = """
+        SELECT 
+            job_fk,
+            new_value AS stage,
+            timestamp_utc
+        FROM public.app_events
+        WHERE user_uid = $1
+          AND event_type IN ('processed', 'stage_change')
+        ORDER BY timestamp_utc ASC, event_id ASC;
     """
 
     from datetime import date
     from dateutil.relativedelta import relativedelta
+    import calendar
+    from collections import defaultdict
 
     try:
+        # 1. Fetch active jobs and events
         async with get_connection() as conn:
-            rows = await conn.fetch(query, uid)
+            job_rows = await conn.fetch(jobs_query, uid)
+            event_rows = await conn.fetch(events_query, uid)
 
+        # 2. Get dynamic snapshot dates and labels for the last 4 months
         today = date.today()
-        current_month = today.replace(day=1)
+        months = []
+        for i in range(3, -1, -1):
+            d = today - relativedelta(months=i)
+            months.append((d.year, d.month))
 
-        month_starts = [current_month - relativedelta(months=3 - i) for i in range(4)]
+        snapshot_dates = []
+        labels = []
+        for year, month in months:
+            if year == today.year and month == today.month:
+                snapshot_dates.append(today)
+            else:
+                last_day = calendar.monthrange(year, month)[1]
+                snapshot_dates.append(date(year, month, last_day))
+            
+            labels.append(date(year, month, 1).strftime("%b"))
 
-        labels = [m.strftime("%b") for m in month_starts]
+        # 3. Group events by job
+        events_by_job = defaultdict(list)
+        for r in event_rows:
+            events_by_job[r["job_fk"]].append({
+                "stage": r["stage"],
+                "date": r["timestamp_utc"].date()
+            })
 
+        # 4. Assemble job timelines
+        job_states = []
+        for r in job_rows:
+            job_id = r["id"]
+            current_stage = r["app_stage"]
+            received_at_ts = r["received_at_ts"]
+            
+            created_date = received_at_ts.date() if received_at_ts else None
+            
+            job_events = events_by_job.get(job_id, [])
+            if job_events:
+                first_event_date = job_events[0]["date"]
+                if not created_date:
+                    created_date = first_event_date
+                elif first_event_date < created_date:
+                    created_date = first_event_date
+            
+            job_states.append({
+                "id": job_id,
+                "current_stage": current_stage,
+                "created_date": created_date,
+                "events": job_events
+            })
+
+        # 5. Compute stage counts on each snapshot date
         stage_keys = ["applied", "interview", "offer", "accepted"]
-
         stage_map_db_to_key = {
             "Applied": "applied",
             "Interview": "interview",
@@ -166,19 +188,29 @@ async def split_by_stage_monthly(user: dict = Depends(get_current_user)):
 
         stage_counts = {stage: [0] * 4 for stage in stage_keys}
 
-        month_index_map = {m: i for i, m in enumerate(month_starts)}
+        for idx, d in enumerate(snapshot_dates):
+            for job in job_states:
+                # If the job didn't exist yet on snapshot date 'd', skip it
+                if not job["created_date"] or job["created_date"] > d:
+                    continue
+                
+                # Find the latest event on or before snapshot date 'd'
+                active_stage = None
+                for ev in job["events"]:
+                    if ev["date"] <= d:
+                        active_stage = ev["stage"]
+                    else:
+                        break # events are sorted chronologically
+                
+                # Fallback to current_stage if no events recorded yet but job was created
+                if not active_stage:
+                    active_stage = job["current_stage"]
+                
+                # Map to stage key
+                stage_key = stage_map_db_to_key.get(active_stage)
+                if stage_key:
+                    stage_counts[stage_key][idx] += 1
 
-        for r in rows:
-            month = r["month_start"]
-            stage_key = stage_map_db_to_key.get(r["app_stage"])
-            if stage_key is None:
-                continue
-
-            idx = month_index_map.get(month)
-            if idx is None:
-                continue
-
-            stage_counts[stage_key][idx] += r["count"] or 0
         logging.info(
             f"split-by-stage-monthly labels: {labels}, stage_counts: {stage_counts}"
         )
@@ -194,7 +226,7 @@ async def split_by_stage_monthly(user: dict = Depends(get_current_user)):
         logging.error(f"Error fetching split-by-stage-monthly for user {uid}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error fetching monthly stage trends.",
+            detail="Error calculating monthly historical stage splits.",
         )
 
 
@@ -209,24 +241,33 @@ async def stages_over_time(user: dict = Depends(get_current_user)):
     uid = user.get("uid")
     logging.info(f"Fetching stages-over-time for user {uid}")
 
-    query = """
-        SELECT
-            received_at::date AS day,
+    jobs_query = f"""
+        SELECT 
+            id, 
             app_stage,
-            COUNT(*)::int AS count
+            {RECEIVED_AT_TS_SQL} AS received_at_ts
         FROM public.job_applications
         WHERE user_uid = $1
           AND is_deleted = FALSE
-          AND is_archived = FALSE
-          AND received_at IS NOT NULL
-          AND received_at::timestamp >= timezone('utc', now()) - INTERVAL '90 days'
-        GROUP BY day, app_stage
-        ORDER BY day ASC;
+          AND is_archived = FALSE;
+    """
+
+    events_query = """
+        SELECT 
+            job_fk,
+            new_value AS stage,
+            timestamp_utc
+        FROM public.app_events
+        WHERE user_uid = $1
+          AND event_type IN ('processed', 'stage_change')
+        ORDER BY timestamp_utc ASC, event_id ASC;
     """
 
     try:
+        # 1. Fetch active jobs and events
         async with get_connection() as conn:
-            rows = await conn.fetch(query, uid)
+            job_rows = await conn.fetch(jobs_query, uid)
+            event_rows = await conn.fetch(events_query, uid)
 
         today = date.today()
         days = [today - timedelta(days=i) for i in range(89, -1, -1)]
@@ -241,26 +282,65 @@ async def stages_over_time(user: dict = Depends(get_current_user)):
             "Accepted": "accepted",
         }
 
+        # 2. Group events by job
+        from collections import defaultdict
+        events_by_job = defaultdict(list)
+        for r in event_rows:
+            events_by_job[r["job_fk"]].append({
+                "stage": r["stage"],
+                "date": r["timestamp_utc"].date()
+            })
+
+        # 3. Assemble job state timelines
+        job_states = []
+        for r in job_rows:
+            job_id = r["id"]
+            current_stage = r["app_stage"]
+            received_at_ts = r["received_at_ts"]
+            
+            # Fallback creation date
+            created_date = received_at_ts.date() if received_at_ts else None
+            
+            job_events = events_by_job.get(job_id, [])
+            if job_events:
+                first_event_date = job_events[0]["date"]
+                if not created_date:
+                    created_date = first_event_date
+                elif first_event_date < created_date:
+                    created_date = first_event_date
+            
+            job_states.append({
+                "id": job_id,
+                "current_stage": current_stage,
+                "created_date": created_date,
+                "events": job_events
+            })
+
+        # 4. Count active jobs in each stage for each of the 90 days
         stage_counts = {stage: [0] * 90 for stage in stage_keys}
-        day_index = {d: i for i, d in enumerate(days)}
 
-        for r in rows:
-            day = r["day"]
-            stage_key = stage_map_db_to_key.get(r["app_stage"])
-            if stage_key is None:
-                continue
-
-            idx = day_index.get(day)
-            if idx is None:
-                continue
-
-            stage_counts[stage_key][idx] += r["count"] or 0
-
-        for stage in stage_keys:
-            running_total = 0
-            for i in range(90):
-                running_total += stage_counts[stage][i]
-                stage_counts[stage][i] = running_total
+        for day_idx, d in enumerate(days):
+            for job in job_states:
+                # If the job didn't exist yet, skip it
+                if not job["created_date"] or job["created_date"] > d:
+                    continue
+                
+                # Find the latest event on or before day 'd'
+                active_stage = None
+                for ev in job["events"]:
+                    if ev["date"] <= d:
+                        active_stage = ev["stage"]
+                    else:
+                        break # events are sorted by timestamp
+                
+                # Fallback to current_stage if no events recorded yet but job was created
+                if not active_stage:
+                    active_stage = job["current_stage"]
+                
+                # Map to stage key
+                stage_key = stage_map_db_to_key.get(active_stage)
+                if stage_key:
+                    stage_counts[stage_key][day_idx] += 1
 
         return {
             "status": "success",
@@ -289,7 +369,16 @@ async def avg_time_in_stage(user: dict = Depends(get_current_user)):
     uid = user.get("uid")
     logging.info(f"Fetching avg-time-in-stage (sitting in stage) for user {uid}")
 
-    query = """
+    query = f"""
+        WITH normalized_applications AS (
+            SELECT
+                app_stage,
+                {RECEIVED_AT_TS_SQL} AS received_at_ts
+            FROM public.job_applications
+            WHERE user_uid = $1
+              AND is_deleted = FALSE
+              AND is_archived = FALSE
+        )
         SELECT
             COALESCE(avg_applied, 0.0)   AS applied,
             COALESCE(avg_interview, 0.0) AS interview,
@@ -299,30 +388,27 @@ async def avg_time_in_stage(user: dict = Depends(get_current_user)):
             SELECT
                 AVG(
                     CASE WHEN app_stage = 'Applied'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() - received_at_ts)) / 86400.0
                     END
                 ) AS avg_applied,
                 AVG(
                     CASE WHEN app_stage = 'Interview'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() - received_at_ts)) / 86400.0
                     END
                 ) AS avg_interview,
                 AVG(
                     CASE WHEN app_stage = 'Offer'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() - received_at_ts)) / 86400.0
                     END
                 ) AS avg_offer,
                 AVG(
                     CASE WHEN app_stage = 'Accepted'
-                         THEN EXTRACT(EPOCH FROM (now() AT TIME ZONE 'utc' - received_at::timestamp)) / 86400.0
+                         THEN EXTRACT(EPOCH FROM (now() - received_at_ts)) / 86400.0
                     END
                 ) AS avg_accepted
-            FROM public.job_applications
-            WHERE user_uid = $1
-              AND is_deleted = FALSE
-              AND is_archived = FALSE
-              AND received_at IS NOT NULL
-              AND received_at::timestamp >= now() AT TIME ZONE 'utc' - INTERVAL '90 days'
+            FROM normalized_applications
+            WHERE received_at_ts IS NOT NULL
+              AND received_at_ts >= now() - INTERVAL '90 days'
               AND app_stage IN ('Applied','Interview','Offer','Accepted')
         ) sub;
     """
@@ -365,11 +451,11 @@ async def avg_time_in_stage(user: dict = Depends(get_current_user)):
 # ------------------------------------------------------------
 @router.get(
     "/avg-apps-per-week",
-    summary="Get 10-week trend of average applications per week",
+    summary="Get 12-week trend of average applications per week",
 )
 async def avg_apps_per_week(user: dict = Depends(get_current_user)):
     """
-    Returns the last 10 weeks of application counts (per week) for the user.
+    Returns the last 12 weeks of application counts (per week) for the user.
     Weeks are based on the time the application was received (received_at),
     falling back to updated_at when needed.
     """
@@ -378,16 +464,21 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
 
     now = datetime.now(timezone.utc)
 
-    query = """
+    query = f"""
+        WITH normalized_applications AS (
+            SELECT
+                {RECEIVED_AT_TS_SQL} AS received_at_ts
+            FROM public.job_applications
+            WHERE user_uid = $1
+              AND is_deleted = FALSE
+              AND is_archived = FALSE
+        )
         SELECT
-            date_trunc('week', received_at::timestamp)::date AS week_start,
+            date_trunc('week', received_at_ts)::date AS week_start,
             COUNT(*)::int AS count
-        FROM public.job_applications
-        WHERE user_uid = $1
-        AND is_deleted = FALSE
-        AND is_archived = FALSE
-        AND received_at IS NOT NULL
-        AND received_at::timestamp >= timezone('utc', now()) - INTERVAL '10 weeks'
+        FROM normalized_applications
+        WHERE received_at_ts IS NOT NULL
+        AND received_at_ts >= timezone('utc', now()) - INTERVAL '12 weeks'
         GROUP BY week_start
         ORDER BY week_start ASC;
     """
@@ -401,14 +492,16 @@ async def avg_apps_per_week(user: dict = Depends(get_current_user)):
         today = now.date()
         current_week_start = today - timedelta(days=today.weekday())
 
-        week_starts = [current_week_start - timedelta(weeks=9 - i) for i in range(10)]
+        week_starts = [current_week_start - timedelta(weeks=11 - i) for i in range(12)]
 
         values = [counts_by_week.get(ws, 0) for ws in week_starts]
         labels = [
-            f"WK {ws.isocalendar().week} ({10 - i})" for i, ws in enumerate(week_starts)
+            f"WK {ws.isocalendar().week}" for ws in week_starts
         ]
+        week_start_dates = [ws.isoformat() for ws in week_starts]
         return {
             "labels": labels,
+            "week_start_dates": week_start_dates,
             "values": values,
         }
 
@@ -434,20 +527,18 @@ async def grit_score(user: dict = Depends(get_current_user)):
     try:
         async with get_connection() as conn:
             # 1. Weekly Application Count (last 7 days)
-            weekly_query = """
+            weekly_query = f"""
+            WITH normalized_applications AS (
+                SELECT {RECEIVED_AT_TS_SQL} AS received_at_ts
+                FROM public.job_applications
+                WHERE user_uid = $1
+                    AND is_deleted = FALSE
+                    AND is_archived = FALSE
+            )
             SELECT COUNT(*)::int AS apps
-            FROM public.job_applications
-            WHERE user_uid = $1
-                AND is_deleted = FALSE
-                AND is_archived = FALSE
-                AND received_at ~ '[0-9]+$'
-                AND (
-                    CASE
-                        WHEN received_at ~ '^[0-9]+$'
-                            THEN to_timestamp(received_at::bigint / 1000)
-                        ELSE received_at::timestamptz
-                    END
-                ) >= now() - INTERVAL '7 days';
+            FROM normalized_applications
+            WHERE received_at_ts IS NOT NULL
+                AND received_at_ts >= now() - INTERVAL '7 days';
             """
             weekly_row = await conn.fetchrow(weekly_query, uid)
             weekly_apps = weekly_row["apps"] if weekly_row else 0
@@ -465,21 +556,19 @@ async def grit_score(user: dict = Depends(get_current_user)):
             followups = follow_row["cnt"] if follow_row else 0
 
             # 3. Consistency (days user applied at least once)
-            consistency_query = """
-            SELECT COUNT(*)::int AS active_days
-            FROM (
-                SELECT DATE(
-                    CASE
-                        WHEN received_at ~ '^[0-9]+$'
-                            THEN to_timestamp(received_at::bigint / 1000)
-                        ELSE received_at::timestamptz
-                    END
-                ) AS day
+            consistency_query = f"""
+            WITH normalized_applications AS (
+                SELECT {RECEIVED_AT_TS_SQL} AS received_at_ts
                 FROM public.job_applications
                 WHERE user_uid = $1
                     AND is_deleted = FALSE
                     AND is_archived = FALSE
-                    AND received_at IS NOT NULL
+            )
+            SELECT COUNT(*)::int AS active_days
+            FROM (
+                SELECT received_at_ts::date AS day
+                FROM normalized_applications
+                WHERE received_at_ts IS NOT NULL
                 GROUP BY day
             ) sub;
             """
@@ -518,16 +607,20 @@ async def activity_heatmap(user: dict = Depends(get_current_user)):
     uid = user.get("uid")
     logging.info(f"Fetching activity-heatmap for user {uid}")
 
-    query = """
+    query = f"""
+        WITH normalized_applications AS (
+            SELECT {RECEIVED_AT_TS_SQL} AS received_at_ts
+            FROM public.job_applications
+            WHERE user_uid = $1
+              AND is_deleted = FALSE
+              AND is_archived = FALSE
+        )
         SELECT
-            DATE(received_at) AS day,
+            received_at_ts::date AS day,
             COUNT(*)::int AS app_count
-        FROM public.job_applications
-        WHERE user_uid = $1
-          AND is_deleted = FALSE
-          AND is_archived = FALSE
-          AND received_at IS NOT NULL
-          AND DATE(received_at) >= timezone('utc', now()) - INTERVAL '84 days'
+        FROM normalized_applications
+        WHERE received_at_ts IS NOT NULL
+          AND received_at_ts >= timezone('utc', now()) - INTERVAL '84 days'
         GROUP BY day
         ORDER BY day;
     """
@@ -543,12 +636,14 @@ async def activity_heatmap(user: dict = Depends(get_current_user)):
         start_date = today - timedelta(days=83)
         full_data_dict = {}
 
+
+
         def getWeek(d: date) -> str:
             iso_calendar = d.isocalendar()
             return "WK " + str(iso_calendar[1]) 
         
         dow_labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-        
+
         def getDOW(d: date) -> str:
             py_weekday = d.weekday() 
             return dow_labels[(py_weekday + 1) % 7]  
@@ -561,13 +656,14 @@ async def activity_heatmap(user: dict = Depends(get_current_user)):
             dow = getDOW(d)  
 
             key = (week, dow)
-            if key not in full_data_dict:
-                full_data_dict[key] = 0
-            full_data_dict[key] += count
+            full_data_dict[key] = {
+                "v": count,
+                "date": d.isoformat()
+            }
 
         full_data = [
-            {"x": week, "y": dow, "v": v}
-            for (week, dow), v in full_data_dict.items()
+            {"x": week, "y": dow, "v": info["v"], "date": info["date"]}
+            for (week, dow), info in full_data_dict.items()
         ]
 
         return {
