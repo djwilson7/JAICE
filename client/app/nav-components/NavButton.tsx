@@ -20,47 +20,55 @@ export const NavButton = ({
   title?: string;
   showLabel: boolean;
 }) => {
+  const isExpanded = hoverMode === "open" || showLabel;
   const labelVariants = {
-    closed: { opacity: 0, width: 0 },
-    hover: { opacity: 1, width: showLabel ? "fit-content" : 0 },
-    open: { opacity: 1, width: "auto" },
+    collapsed: {
+      opacity: 0,
+      width: 0,
+      x: -6,
+      transition: {
+        duration: 0.12,
+        ease: [0.4, 0, 1, 1] as const,
+      },
+    },
+    expanded: {
+      opacity: 1,
+      width: "auto",
+      x: 0,
+      transition: {
+        duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
+        ease: [0.22, 1, 0.36, 1] as const,
+        opacity: {
+          duration: 0.16,
+          delay: 0.06,
+        },
+      },
+    },
   };
-
-  const initialLabel = () => {
-    switch (hoverMode) {
-      case "closed":
-        return "closed";
-      case "hover":
-        return showLabel ? "hover" : "closed";
-      case "open":
-        return "open";
-    }
-  }
 
   return (
     <motion.div
-      className="flex flex-row items-start justify-start gap-2"
+      className="flex w-full flex-row items-center justify-center gap-2"
     >
       <Button
         onClick={onClick}
         isSelected={isSelected}
-        className="navButton"
+        className={`navButton ${
+          isExpanded ? "navButtonExpanded" : "navButtonCollapsed"
+        }`}
         title={title}
       >
-        <div className="flex items-center">
+        <div className="navButtonIconSlot">
           <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
         </div>
-        {hoverMode === "open" || showLabel ? (
-          <motion.span
-            className="text-left overflow-hidden whitespace-nowrap"
-            variants={labelVariants}
-            initial={initialLabel()}
-            animate={initialLabel()}
-            transition={{ duration: parseFloat(getCSSVar("--animation-duration")) || 0.2 }}
-          >
-            {label}
-          </motion.span>
-        ) : null}
+        <motion.span
+          className="navButtonLabel text-left overflow-hidden whitespace-nowrap"
+          variants={labelVariants}
+          initial={false}
+          animate={isExpanded ? "expanded" : "collapsed"}
+        >
+          {label}
+        </motion.span>
       </Button>
     </motion.div>
   );

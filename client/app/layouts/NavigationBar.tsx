@@ -16,7 +16,6 @@ import displayIcon from "@/assets/icons/display.svg";
 //import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
 
-import { getCSSVar } from "@/utils/getCSSVar";
 import resumeIcon from "@/assets/icons/resume.svg";
 
 import { motion } from "framer-motion";
@@ -68,6 +67,23 @@ const settingsOptions = {
   quit: { route: "/", label: "Quit", icon: quitIcon, title: "Logout" },
 };
 
+const navLabels = [
+  ...Object.values(primaryOptions).map((option) => option.label),
+  ...Object.values(settingsOptions).map((option) => option.label),
+  "Light Mode",
+  "Dark Mode",
+  "Black and White",
+];
+
+const longestNavLabelLength = Math.max(
+  ...navLabels.map((label) => label.length)
+);
+
+const NAV_WIDTHS = {
+  closed: "4rem",
+  open: `calc(4rem + ${longestNavLabelLength}ch + 1.5rem)`,
+};
+
 export function NavigationBar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -109,59 +125,41 @@ export function NavigationBar() {
     navigate(route);
   };
 
-  const navBarVariants = {
-    closed: { width: "fit-content" },
-    open: { width: "max-content" },
-    hover: { width: "max-content" },
+  const isNavExpanded = hoverMode === "open" || (hoverMode === "hover" && navIsHovered);
+  const targetNavWidth = isNavExpanded ? NAV_WIDTHS.open : NAV_WIDTHS.closed;
+  const navTransition = {
+    type: "spring" as const,
+    stiffness: 260,
+    damping: 32,
+    mass: 0.9,
   };
-
-  const [navWidth, setNavWidth] = useState<number>(0);
-  const navRef = document.getElementById("navigation-bar");
-
-  const measureWidth = new ResizeObserver(() => {
-    if (navRef) {
-      setNavWidth(navRef.offsetWidth);
-    }
-  });
-
-  useEffect(() => {
-    if (navRef) {
-      measureWidth.observe(navRef);
-      setNavWidth(navRef.offsetWidth);
-    }
-    return () => {
-      measureWidth.disconnect();
-    };
-  }, [navRef]);
 
   return (
     <div className="h-screen min-page-width overflow-x-hidden">
       <MainHeader />
 
       <div className={`app-content`}>
-        <nav
+        <motion.nav
           className={`flex absolute left-0 top-0 h-full primary-color z-40`}
           id="navigation-bar"
+          animate={{ width: targetNavWidth }}
+          transition={navTransition}
+          onMouseEnter={() => setNavIsHovered(true)}
+          onMouseLeave={() => setNavIsHovered(false)}
         >
           <motion.div
-            className="z-50 h-full flex flex-col p-2 gap-3 overflow-hidden"
-            variants={navBarVariants}
-            initial={hoverMode}
-            animate={hoverMode}
-            onMouseEnter={() => setNavIsHovered(true)}
-            onMouseLeave={() => setNavIsHovered(false)}
-            transition={{
-              duration: parseFloat(getCSSVar("--animation-duration")),
-            }}
+            className="z-50 h-full w-full flex flex-col p-2 gap-3 overflow-hidden"
+            layout
+            transition={navTransition}
           >
             <div className="flex flex-col h-full w-full justify-between">
               <section aria-label="Navigation Buttons" className="flex w-full">
                 <ul
-                  className="flex flex-col gap-2"
+                  className="flex w-full flex-col items-center gap-2"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   {Object.entries(primaryOptions).map(([key, option]) => (
-                    <li key={key}>
+                    <li key={key} className="w-full">
                       <NavButton
                         icon={option.icon}
                         label={option.label}
@@ -177,17 +175,21 @@ export function NavigationBar() {
               </section>
 
               <section aria-label="Settings and account">
-                <div className="w-full p-2">
-                  <small className="secondary-text whitespace-nowrap">
+                <div className="flex w-full flex-col items-center justify-center overflow-hidden p-2">
+                  <motion.small
+                    className="w-full text-center secondary-text whitespace-nowrap"
+                    animate={{ opacity: isNavExpanded ? 1 : 0 }}
+                    transition={navTransition}
+                  >
                     Settings
-                  </small>
+                  </motion.small>
                   <hr className="header-split" />
                 </div>
                 <ul
-                  className="flex flex-col items-start gap-2"
+                  className="flex w-full flex-col items-center gap-2"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
-                  <li key="theme-toggle">
+                  <li key="theme-toggle" className="w-full">
                     <ThemeToggleButton
                       hoverMode={hoverMode}
                       showLabel={navIsHovered && hoverMode !== "closed"}
@@ -200,7 +202,7 @@ export function NavigationBar() {
                     />
                   </li> This no longer exists, now we react to state instead*/}
                   {Object.entries(settingsOptions).map(([key, option]) => (
-                    <li key={key}>
+                    <li key={key} className="w-full">
                       <NavButton
                         icon={option.icon}
                         label={option.label}
@@ -216,17 +218,14 @@ export function NavigationBar() {
               </section>
             </div>
           </motion.div>
-        </nav>
+        </motion.nav>
         <motion.div
           className="outlet-container"
-          variants={{
-            rest: { marginLeft: navWidth },
-            hover: { marginLeft: navWidth },
+          animate={{
+            marginLeft: targetNavWidth,
+            width: `calc(100vw - ${targetNavWidth})`,
           }}
-          animate={navIsHovered ? "hover" : "rest"}
-          transition={{
-            duration: parseFloat(getCSSVar("--animation-duration")) || 0.2,
-          }}
+          transition={navTransition}
           style={{ background: "var(--page-gradient)" }}
         >
           <Outlet />
