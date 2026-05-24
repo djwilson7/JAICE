@@ -1,16 +1,106 @@
 import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
-import { Card, ChartHost } from "./Card";
+import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 
+function normalizeWeekLabel(label: string) {
+  return label.replace(/^\((WK\s+\d+)\)$/i, "$1");
+}
+
+function formatWeekTooltipTitle(weekLabel: string, weekStartDate?: string) {
+  const normalizedWeek = normalizeWeekLabel(weekLabel);
+  if (!weekStartDate) return normalizedWeek;
+
+  const parts = weekStartDate.split("-");
+  if (parts.length !== 3) return normalizedWeek;
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]) - 1;
+  const day = Number(parts[2]);
+  const date = new Date(year, month, day);
+
+  if (Number.isNaN(date.getTime())) return normalizedWeek;
+
+  const monthName = date.toLocaleDateString("en-US", { month: "short" });
+  const weekNumber = normalizedWeek.replace(/\D/g, "") || normalizedWeek;
+
+  return `${monthName} ${date.getDate()} (WK ${weekNumber})`;
+}
+
+const createAvgAppsTooltipHandler =
+  (weekStartDates: string[]) => (context: any) => {
+  let tooltipEl = document.getElementById("chartjs-avg-apps-tooltip");
+
+  if (!tooltipEl) {
+    tooltipEl = document.createElement("div");
+    tooltipEl.id = "chartjs-avg-apps-tooltip";
+    tooltipEl.style.position = "absolute";
+    tooltipEl.style.zIndex = "10000";
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.transition = "opacity 0.15s ease, transform 0.15s ease";
+    document.body.appendChild(tooltipEl);
+  }
+
+  const tooltipModel = context.tooltip;
+  if (tooltipModel.opacity === 0) {
+    tooltipEl.style.opacity = "0";
+    return;
+  }
+
+  const point = tooltipModel.dataPoints?.[0];
+  if (point) {
+    const weekStartDate = weekStartDates[point.dataIndex];
+    const weekLabel = formatWeekTooltipTitle(point.label || "", weekStartDate);
+    const value = Number(point.parsed?.y ?? 0);
+    const appLabel = value === 1 ? "application" : "applications";
+
+    tooltipEl.innerHTML = `
+      <div style="font-family: Poppins, sans-serif; font-size: 12px;">
+        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; letter-spacing: 0.5px;">${weekLabel}</div>
+        <div style="font-weight: 500; opacity: 0.95;">${value} ${appLabel} / week</div>
+      </div>
+    `;
+  }
+
+  const position = context.chart.canvas.getBoundingClientRect();
+  const chartWidth = position.width;
+  const isRightHalf = tooltipModel.caretX > chartWidth / 2;
+
+  tooltipEl.style.opacity = "1";
+  tooltipEl.style.top = position.top + window.scrollY + tooltipModel.caretY + "px";
+
+  if (isRightHalf) {
+    tooltipEl.style.left = position.left + window.scrollX + tooltipModel.caretX - 16 + "px";
+    tooltipEl.style.transform = "translate(-100%, -50%)";
+  } else {
+    tooltipEl.style.left = position.left + window.scrollX + tooltipModel.caretX + 16 + "px";
+    tooltipEl.style.transform = "translate(0, -50%)";
+  }
+
+  tooltipEl.style.minWidth = "150px";
+  tooltipEl.style.width = "max-content";
+  tooltipEl.style.maxWidth = "calc(100vw - 24px)";
+  tooltipEl.style.whiteSpace = "nowrap";
+  tooltipEl.style.border = "1px solid rgba(var(--primary-five-rgb), 0.24)";
+  tooltipEl.style.borderRadius = "12px";
+  tooltipEl.style.background = "rgba(var(--primary-one-rgb), 0.82)";
+  tooltipEl.style.backdropFilter = "blur(16px) saturate(1.25)";
+  tooltipEl.style.setProperty("-webkit-backdrop-filter", "blur(16px) saturate(1.25)");
+  tooltipEl.style.boxShadow = "0 18px 40px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(var(--primary-five-rgb), 0.06)";
+  tooltipEl.style.color = "var(--primary-five)";
+  tooltipEl.style.padding = "12px 14px";
+};
+
 export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
+  const [weekStartDates, setWeekStartDates] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,48 +108,65 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
 
     async function fetchData() {
       try {
+        setError(null);
         const res = await api("/api/dashboard/avg-apps-per-week");
         const data = res.data ?? res;
 
-        setLabels(data.labels ?? []);
+        setLabels((data.labels ?? []).map(normalizeWeekLabel));
         setValues(data.values ?? []);
+        setWeekStartDates(data.week_start_dates ?? []);
       } catch (err) {
         console.error("Error fetching avg apps per week", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load average applications per week.",
+        );
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
+    return () => {
+      const el = document.getElementById("chartjs-avg-apps-tooltip");
+      if (el) el.remove();
+    };
   }, []);
 
   if (loading) {
     return (
-      <Card title="Avg Applications per Week" subtitle="10-week trend">
+      <Card
+        title="Avg Applications per Week"
+        subtitle="12-week trend"
+        infoDescription={chartDescText.avgAppsPerWeek}
+        className={`${className} cursor-pointer`}
+        expandable
+        onExpand={() => setOpen(true)}
+      >
         <ChartHost>
-          <div className="flex h-full items-center justify-center text-slate-300">
-            Loading…
-          </div>
+          <ChartSkeleton variant="line" />
         </ChartHost>
       </Card>
     );
   }
 
   const maxValue = Math.max(...values, 5);
+  const xTickInterval = 3;
 
   const data: ChartData<"line"> = {
     labels,
     datasets: [
       {
-        label: "Avg Apps / Week",
+        label: "Applications / Week",
         data: values,
-        borderColor: "#F59E0B",
-        backgroundColor: "rgba(245,158,11,0.18)",
+        borderColor: "#E5E7EB",
+        backgroundColor: "rgba(229,231,235,0.16)",
         borderWidth: 3,
-        pointRadius: 3,
+        pointRadius: 0,
         pointHoverRadius: 6,
-        tension: 0.35,
-        fill: "start",
+        tension: 0.4,
+        fill: false,
       },
     ],
   };
@@ -67,25 +174,42 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
   const options: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
     plugins: {
-      legend: { position: "bottom", labels: { color: "#fff" } },
+      legend: { display: false },
       tooltip: {
-        backgroundColor: "rgba(15,20,30,.95)",
-        titleColor: "#fff",
-        bodyColor: "#fff",
-        borderColor: "rgba(255,255,255,.2)",
-        borderWidth: 1,
+        enabled: false,
+        mode: "index",
+        intersect: false,
+        external: createAvgAppsTooltipHandler(weekStartDates),
       },
     },
     scales: {
       x: {
-        grid: { color: "rgba(255,255,255,.12)" },
-        ticks: { color: "rgba(255,255,255,.85)" },
+        grid: { color: "rgba(255,255,255,0.04)" },
+        border: { color: "rgba(255,255,255,.25)" },
+        ticks: {
+          color: "rgba(255,255,255,.85)",
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
+          callback: function(_value, index) {
+            if (index % xTickInterval === 0) {
+              return normalizeWeekLabel(labels[index]);
+            }
+
+            return "";
+          },
+        },
       },
       y: {
         beginAtZero: true,
         suggestedMax: maxValue + 1,
-        grid: { color: "rgba(255,255,255,.12)" },
+        grid: { color: "rgba(255,255,255,0.04)" },
+        border: { color: "rgba(255,255,255,.25)" },
         ticks: { color: "rgba(255,255,255,.85)" },
       },
     },
@@ -95,13 +219,14 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
     <>
       <Card
         title="Avg Applications per Week"
-        subtitle="10-week trend"
+        subtitle="12-week trend"
+        infoDescription={chartDescText.avgAppsPerWeek}
         className={`${className} cursor-pointer`}
         expandable
         onExpand={() => setOpen(true)}
       >
         <ChartHost>
-          <Line data={data} options={options} />
+          {error ? <ChartError message={error} /> : <Line data={data} options={options} />}
         </ChartHost>
       </Card>
 
@@ -112,7 +237,7 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
         description={chartDescText.avgAppsPerWeek}
       >
         <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
-          <Line data={data} options={options} />
+          {error ? <ChartError message={error} /> : <Line data={data} options={options} />}
         </div>
       </Modal>
     </>

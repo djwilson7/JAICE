@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, ChartHost } from "./Card";
+import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
@@ -11,6 +11,41 @@ type AvgStageAges = {
   offer: number;
   accepted: number;
 };
+
+type TimePart = {
+  value: number;
+  unit: string;
+};
+
+function parseHumanizedTime(raw: number | null | undefined): TimePart[] | string {
+  if (raw === null || raw === undefined || Number.isNaN(raw)) {
+    return "—";
+  }
+
+  const totalHours = Math.ceil(raw * 24);
+  if (totalHours <= 0) {
+    return [{ value: 0, unit: "hours" }];
+  }
+
+  let hoursLeft = totalHours;
+
+  const years = Math.floor(hoursLeft / (365 * 24));
+  hoursLeft %= (365 * 24);
+
+  const months = Math.floor(hoursLeft / (30 * 24));
+  hoursLeft %= (30 * 24);
+
+  const days = Math.floor(hoursLeft / 24);
+  const hours = hoursLeft % 24;
+
+  const parts: TimePart[] = [];
+  if (years > 0) parts.push({ value: years, unit: years === 1 ? "year" : "years" });
+  if (months > 0) parts.push({ value: months, unit: months === 1 ? "month" : "months" });
+  if (days > 0) parts.push({ value: days, unit: days === 1 ? "day" : "days" });
+  if (hours > 0) parts.push({ value: hours, unit: hours === 1 ? "hour" : "hours" });
+
+  return parts.length > 0 ? parts : [{ value: 0, unit: "hours" }];
+}
 
 export function AvgTimeInStageCard({
   className = "",
@@ -41,8 +76,6 @@ export function AvgTimeInStageCard({
         if (!alive) return;
 
         const d = res?.data ?? {};
-
-        console.log("avg-time-in-stage response", d); // TEMP
 
         setValues({
           applied: d.applied ?? 0,
@@ -79,19 +112,11 @@ export function AvgTimeInStageCard({
     const isModal = variant === "modal";
 
     if (loading) {
-      return (
-        <div className="flex h-full items-center justify-center text-sm text-slate-300">
-          Calculating averages…
-        </div>
-      );
+      return <ChartSkeleton variant="tiles" />;
     }
 
     if (error) {
-      return (
-        <div className="flex h-full items-center justify-center text-sm text-red-400">
-          {error}
-        </div>
-      );
+      return <ChartError message={error} />;
     }
 
     if (!values) {
@@ -105,25 +130,25 @@ export function AvgTimeInStageCard({
     const tiles = [
       {
         key: "applied" as const,
-        label: "APPLIED",
+        label: "Applied",
         value: values.applied,
         color: stageColors.applied,
       },
       {
         key: "interview" as const,
-        label: "INTERVIEW",
+        label: "Interview",
         value: values.interview,
         color: stageColors.interview,
       },
       {
         key: "offer" as const,
-        label: "OFFER",
+        label: "Offer",
         value: values.offer,
         color: stageColors.offer,
       },
       {
         key: "accepted" as const,
-        label: "ACCEPTED",
+        label: "Accepted",
         value: values.accepted,
         color: stageColors.accepted,
       },
@@ -132,62 +157,105 @@ export function AvgTimeInStageCard({
     return (
       <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-2">
         {tiles.map((tile) => {
-          const raw = tile.value;
-          const isMissing =
-            raw === null || raw === undefined || Number.isNaN(raw as number);
+          const timeParts = parseHumanizedTime(tile.value);
 
-          let display: string;
+          const renderDisplayValue = () => {
+            if (typeof timeParts === "string") {
+              return (
+                <span 
+                  className="text-white font-medium"
+                  style={{ fontSize: isModal ? "5.25rem" : "1.625rem" }}
+                >
+                  {timeParts}
+                </span>
+              );
+            }
 
-          if (isMissing) {
-            display = "—";
-          } else if ((raw as number) < 1) {
-            const hours = (raw as number) * 24;
-            display = `${hours.toFixed(2)} hrs`;
-          } else {
-            display = `${(raw as number).toFixed(2)} days`;
-          }
+            const macroParts = timeParts.filter(
+              (p) =>
+                p.unit === "yr" ||
+                p.unit === "year" ||
+                p.unit === "years" ||
+                p.unit === "mo" ||
+                p.unit === "month" ||
+                p.unit === "months"
+            );
+            const microParts = timeParts.filter(
+              (p) =>
+                p.unit === "d" ||
+                p.unit === "day" ||
+                p.unit === "days" ||
+                p.unit === "h" ||
+                p.unit === "hour" ||
+                p.unit === "hours"
+            );
+
+            const renderPart = (part: TimePart, idx: number) => (
+              <span key={idx} className="inline-flex items-baseline gap-0.5">
+                <span
+                  className="text-white font-medium"
+                  style={{ fontSize: isModal ? "5.25rem" : "1.625rem", letterSpacing: "-0.5px" }}
+                >
+                  {part.value}
+                </span>
+                <span
+                  className="text-slate-400 font-normal opacity-60 lowercase"
+                  style={{ fontSize: isModal ? "2.25rem" : "1.0rem" }}
+                >
+                  {part.unit}
+                </span>
+              </span>
+            );
+
+            const hasMacro = macroParts.length > 0;
+            const hasMicro = microParts.length > 0;
+
+            if (hasMacro && hasMicro) {
+              return (
+                <span className="flex flex-col items-center gap-1">
+                  <span className="inline-flex items-baseline gap-2">
+                    {macroParts.map(renderPart)}
+                  </span>
+                  <span className="inline-flex items-baseline gap-2">
+                    {microParts.map(renderPart)}
+                  </span>
+                </span>
+              );
+            }
+
+            return (
+              <span className="inline-flex items-baseline gap-2">
+                {timeParts.map(renderPart)}
+              </span>
+            );
+          };
 
           return (
             <div
               key={tile.key}
-              className={`flex flex-col justify-between rounded-2xl border border-white/10 bg-slate-900/50 shadow-lg shadow-black/30 ${
-                isModal ? "px-6 py-5" : "px-4 py-3"
+              className={`flex flex-col rounded-2xl border border-white/10 bg-slate-900/50 shadow-lg shadow-black/30 ${
+                isModal ? "px-6 py-5 h-full" : "px-4 py-4 h-full"
               }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">
-                  {tile.label}
-                </span>
+              <div
+                className="flex flex-shrink-0 items-center gap-2 text-[7px] font-medium leading-none text-[rgba(255,255,255,0.62)]"
+                style={{ letterSpacing: "1.4px" }}
+              >
                 <span
-                  className="h-2 w-8 rounded-full"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: tile.color }}
                 />
+                <span>
+                  {tile.label}
+                </span>
               </div>
 
-              {/* BIG number in modal, smaller in card */}
+              {/* BIG centered number in both card and modal */}
               <div
-                className="mt-4 font-semibold text-white"
-                style={
-                  isModal
-                    ? {
-                        fontSize: "5.25rem",
-                        lineHeight: 1.05,
-                      }
-                    : {
-                        fontSize: "1.0rem",
-                        lineHeight: 1.2,
-                      }
-                }
+                className="flex-1 flex items-center justify-center text-center"
+                style={{ marginTop: isModal ? "1rem" : "0.5rem" }}
               >
-                {display}
-              </div>
-
-              <div
-                className={`mt-2 text-slate-400 ${
-                  isModal ? "text-xs sm:text-sm" : "text-[11px]"
-                }`}
-              >
-                Avg time currently sitting in this stage
+                {renderDisplayValue()}
               </div>
             </div>
           );
@@ -201,6 +269,7 @@ export function AvgTimeInStageCard({
       <Card
         title="Avg Time in Stage"
         subtitle="Rolling 90-day averages"
+        infoDescription={chartDescText.avgTimeInStage}
         className={`${className} cursor-pointer`}
         height={height ?? "18rem"}
         expandable
