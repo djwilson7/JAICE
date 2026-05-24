@@ -69,7 +69,7 @@ useEffect(() => {
       const data = res?.data;
       if (!data) throw new Error("Invalid stages-over-time response");
 
-      const { labels = [], stage_counts = {} } = data;
+      const { stage_counts = {} } = data;
 
       setApplied(stage_counts.applied ?? []);
       setInterview(stage_counts.interview ?? []);

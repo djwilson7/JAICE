@@ -72,7 +72,18 @@ export function FloatingInputField({
     <div className="relative" style={style}>
       <input
         ref={inputRef}
-        onFocus={() => setShowToolTip(true)}
+        onFocus={() => {
+          const rect = inputRef.current?.getBoundingClientRect();
+          if (rect) {
+            setCoords({
+              left: rect.left,
+              top: rect.top,
+              right: rect.right,
+              bottom: rect.bottom,
+            });
+          }
+          setShowToolTip(true);
+        }}
         onBlur={() => setShowToolTip(false)}
         type={type}
         id={inputID}

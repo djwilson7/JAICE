@@ -10,7 +10,7 @@ interface ConnectEmailButtonProps {
 
 export function ConnectEmailButton({ setIsOpen }: ConnectEmailButtonProps) {
   const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
-  const [gmailError, setGmailError] = useState<string | null>(null);
+  const [, setGmailError] = useState<string | null>(null);
 
   const connectEmailIcon = gmailConnected ? linkIcon : unlinkIcon;
   const connectEmailHoverColor = gmailConnected ? "greenIcon" : "redIcon";

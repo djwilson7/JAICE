@@ -18,7 +18,7 @@ export default function ConnectEmailModal({
   const navigate = useNavigate();
   
   const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
-  const [gmailError, setGmailError] = useState<string | null>(null);
+  const [, setGmailError] = useState<string | null>(null);
 
   useEffect(() => {
     checkGmailStatus({ setGmailConnected, setGmailError });

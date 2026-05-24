@@ -80,9 +80,9 @@ const extractDataIntoStandardFormat = (
     return {
       app_stage: payload.applicationStage || "",
       job_title: payload.title || "",
-      received_at: (payload.date as string) ?? new Date().toISOString(),
+      received_at: payload.date ?? new Date().toISOString(),
       company_name: payload.companyName || "",
-      salary: payload.salary || "",
+      salary: payload.salary === undefined ? "" : String(payload.salary),
       notes: payload.notes || "",
       providerMessageID: payload.id, // for editing existing applications
     };
@@ -119,9 +119,9 @@ export default function NewApplication({
   //existing state variables defaults set to the extracted data
   const [stage, setStage] = useState(data.app_stage);
   const [jobTitle, setJobTitle] = useState(data.job_title);
-  const [receivedAt, setReceivedAt] = useState<string>(data.received_at);
+  const [receivedAt] = useState<string>(data.received_at);
   const [companyName, setCompanyName] = useState(data.company_name);
-  const [salary, setSalary] = useState<string>(data.salary) || "";
+  const [salary, setSalary] = useState<string>(data.salary);
   const [notes, setNotes] = useState(data.notes);
 
   // Keep the key functionality to close on escape and prevent background scroll
