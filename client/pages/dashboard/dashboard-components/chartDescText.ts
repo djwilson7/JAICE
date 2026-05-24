@@ -5,54 +5,48 @@ export const chartDescText: Record<string, {
     notes?: string;
 }> = {
     stagesOverTime: {
-        summary: "Shows how many applications entered each pipeline stage over the selected time range.",
-        calculation: "Counts are grouped by day and split by stage label.",
-        interpretation: "Use this to spot spikes in activity or slowdowns in progress over time.",
-        notes: "Only includes applications with a valid stage timestamp in the selected range."
-    },
-
-    applicationsByCategory: {
-        summary: "Displays the total number of applications grouped by job category for the selected period.",
-        calculation: "Each bar represents a category count based on the application's assigned category.",
-        interpretation: "Helps you identify which job categories you're focusing on most and where you might want to diversify or concentrate your efforts."
+        summary: "Shows how your applications move across stages over time.",
+        calculation: "We count applications by day and group them by stage.",
+        interpretation: "Use it to spot busy weeks, quiet stretches, and where your search is slowing down.",
+        notes: "Only applications with a valid received date are included."
     },
 
     splitByStage: {
-        summary: "Shows monthly totals for each stage so you can compare stage volume month-to-month.",
-        calculation: "Counts applications per month based on the stage date, displaying the last 4 months with activity.",
-        interpretation: "Track how your application pipeline has evolved over time and identify seasonal patterns in your job search."
+        summary: "Shows how many applications landed in each stage by month.",
+        calculation: "We count applications for each month and split them by stage.",
+        interpretation: "Use it to compare months and see if your pipeline is growing or getting stuck."
     },
 
     avgTimeInStage: {
-        summary: "Displays the average time (in hours or days) that applications currently spend in each stage.",
-        calculation: "Calculated as a rolling 90-day average for applications actively sitting in each stage.",
-        interpretation: "Helps you understand bottlenecks in your pipeline. Higher times may indicate stages that need more attention or follow-up.",
-        notes: "Values under 1 day are shown in hours for precision."
+        summary: "Shows how long applications usually sit in each stage.",
+        calculation: "We average active applications from the last 90 days.",
+        interpretation: "Longer times can point to stages that may need a follow-up or closer review.",
+        notes: "Small values are shown in hours instead of days."
     },
 
     avgAppsPerWeek: {
-        summary: "Tracks your average weekly application submission rate over the last 10 weeks.",
-        calculation: "Total applications submitted per week, averaged over the rolling 10-week period.",
-        interpretation: "Monitor your job search momentum and consistency. Steady or increasing trends indicate sustained effort."
+        summary: "Shows how many applications you send each week.",
+        calculation: "We count weekly applications over the last 12 weeks.",
+        interpretation: "Use it to check your pace and see if your search activity is rising or dropping."
     },
 
     appsByStage: {
-        summary: "Shows the total distribution of all your applications across each pipeline stage.",
-        calculation: "Counts all applications currently in each stage (Applied, Interview, Offer, Accepted).",
-        interpretation: "Get a quick overview of where your applications stand. A healthy pipeline typically shows movement across multiple stages."
+        summary: "Shows where your current applications stand right now.",
+        calculation: "We count active applications in each stage.",
+        interpretation: "Use it as a quick snapshot of your pipeline."
     },
 
     gritScore: {
-        summary: "Your Grit Score (0-100) measures how actively and consistently you're pursuing your job search over the past 90 days.",
-        calculation: "The score is calculated from three key metrics: (1) Weekly Applications - how many jobs you apply to each week, (2) Follow-ups - how often you follow up with employers or take action on applications, and (3) Consistency - how many consecutive days you've been active in your job search. Each component is weighted and combined into a single score out of 100.",
-        interpretation: "A higher score means you're staying active, following up regularly, and maintaining momentum in your search. Scores of 80+ (Trailblazer) indicate exceptional job search habits. Scores of 60-79 (Go-Getter) show strong effort. To improve your score, focus on applying to more positions weekly, following up on existing applications, and maintaining daily activity.",
-        notes: "The score updates based on your last 90 days of activity. Rankings: Trailblazer (80-100), Go-Getter (60-79), Fresh Starter (40-59), Rising Talent (20-39), Newcomer (0-19)."
+        summary: "Shows your overall job-search momentum on a 0 to 100 scale.",
+        calculation: "We combine weekly applications, follow-up activity, and active search days.",
+        interpretation: "A higher score means you are applying, following up, and staying consistent.",
+        notes: "Ranks: Newcomer, Rising Talent, Fresh Starter, Go-Getter, and Trailblazer."
     },
 
      activityHeatmap: {
-        summary: "Visualizes your daily job application activity over the past 12 weeks in a calendar-style heatmap.",
-        calculation: "Each cell represents one day, with color intensity showing the number of applications submitted that day.",
-        interpretation: "Identify patterns in your job search consistency. Darker colors indicate higher activity. Use this to spot gaps, maintain momentum, and establish consistent application habits.",
-        notes: "Hover over any day to see the exact application count. Empty cells indicate days with no applications."
+        summary: "Shows your daily application activity over the last 12 weeks.",
+        calculation: "Each square is one day. Darker squares mean more applications.",
+        interpretation: "Use it to spot gaps, strong streaks, and days when you were most active.",
+        notes: "Hover a square to see the exact count."
      }
 };

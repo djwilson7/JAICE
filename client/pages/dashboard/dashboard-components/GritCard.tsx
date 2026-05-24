@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Card } from "./Card";
-import infoIcon from "@/assets/icons/info.svg";
+import { Card, ChartSkeleton } from "./Card";
 import { useGritScore } from "@/utils/useGritScore";
+import { chartDescText } from "./chartDescText";
 
 // Export RANK_TIERS for use in the progress bar
 // eslint-disable-next-line react-refresh/only-export-components
@@ -13,6 +13,24 @@ export const RANK_TIERS = [
   { min: 80, max: 100, name: "Trailblazer", color: "#F59E0B" },
 ];
 
+const scoreToPercent = (scoreValue: number) =>
+  Math.min(100, Math.max(0, scoreValue));
+
+const tierGradient = RANK_TIERS.map((rankTier) => {
+  const start = scoreToPercent(rankTier.min);
+  const end = scoreToPercent(rankTier.max + 1);
+  return `${rankTier.color} ${start}%, ${rankTier.color} ${end}%`;
+}).join(", ");
+
+const tierColumns = RANK_TIERS.map((rankTier) => {
+  const span = rankTier.max - rankTier.min + 1;
+  return `${span}fr`;
+}).join(" ");
+
+const tierBreakpoints = RANK_TIERS.slice(0, -1).map((rankTier) =>
+  scoreToPercent(rankTier.max + 1)
+);
+
 export function GritCard({
   className = "",
   height = "24rem",
@@ -21,7 +39,6 @@ export function GritCard({
   height?: number | string;
 }) {
   const { score, weeklyApps, followups, consistency, tier, tierColor, loading } = useGritScore();
-  const [showTooltip, setShowTooltip] = useState(false);
 
   // Progress bar animation - starts at 0 and animates to actual score
   const [animatedScore, setAnimatedScore] = useState(0);
@@ -39,91 +56,20 @@ export function GritCard({
       <Card
         title="Grit Score"
         subtitle="Rating for activity, consistency, and follow-through (rolling 90 days)"
+        infoDescription={chartDescText.gritScore}
         className={className}
         height={height}
       >
-        <div className="flex items-center justify-center h-full opacity-70">
-          Loading…
-        </div>
+        <ChartSkeleton variant="grit" />
       </Card>
     );
   }
-
-  // Info icon component
-  const infoIconElement = (
-    <div className="relative">
-      <button
-        onClick={() => setShowTooltip(!showTooltip)}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className="cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
-        style={{
-          background: "none",
-          border: "none",
-          padding: 4,
-          display: "flex",
-          alignItems: "center",
-        }}
-        aria-label="More information about Grit Score"
-      >
-        <img 
-          src={infoIcon} 
-          alt="Info" 
-          style={{ 
-            width: 20, 
-            height: 20,
-            filter: 'var(--icon-filter)'
-          }}
-        />
-      </button>
-      
-      {/* Tooltip */}
-      {showTooltip && (
-        <div
-          className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-120 max-w-[95vw] bg-gray-900 text-white text-sm rounded-lg shadow-xl p-4"
-          style={{
-            top: "100%",
-            border: "1px solid rgba(255,255,255,0.1)",
-            zIndex: 9999,
-          }}
-        >
-          <div className="space-y-2">
-            <p className="font-semibold">What is this?</p>
-            <p className="text-xs opacity-90">
-              Your Grit Score (0-100) measures how actively and consistently you're pursuing your job search over the past 90 days.
-            </p>
-            
-            <p className="font-semibold text-xs mt-3">How it's calculated:</p>
-            <p className="text-xs opacity-90">
-              The score combines three metrics: (1) Weekly Applications, (2) Follow-ups with employers, and (3) Consistency of daily activity.
-            </p>
-            
-            <p className="font-semibold text-xs mt-3">Rankings:</p>
-            <p className="text-xs opacity-90">
-              Trailblazer (80-100), Go-Getter (60-79), Fresh Starter (40-59), Rising Talent (20-39), Newcomer (0-19)
-            </p>
-          </div>
-          {/* Arrow pointer */}
-          <div
-            className="absolute bottom-full left-1/2 transform -translate-x-1/2"
-            style={{
-              width: 0,
-              height: 0,
-              borderLeft: "8px solid transparent",
-              borderRight: "8px solid transparent",
-              borderBottom: "8px solid #111827",
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <Card
       title="Grit Score"
       subtitle="Rating for activity, consistency, and follow-through (rolling 90 days)"
-      titleIcon={infoIconElement}
+      infoDescription={chartDescText.gritScore}
       className={className}
       height={height}
     >
@@ -178,26 +124,24 @@ export function GritCard({
                 boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
               }}
             >
-              {/* Continuous fill bar with color gradient and diagonal stripes */}
+              {/* Continuous fill bar with full-track tier mapping clipped by score */}
               <div
-                className="h-full transition-all duration-[1500ms] ease-out relative overflow-hidden"
+                className="relative h-full overflow-hidden transition-all duration-[1500ms] ease-out"
                 style={{
                   width: `${animatedScore}%`,
-                  background: `linear-gradient(to right, 
-                    ${RANK_TIERS[0].color} 0%, 
-                    ${RANK_TIERS[0].color} 20%,
-                    ${RANK_TIERS[1].color} 20%,
-                    ${RANK_TIERS[1].color} 40%,
-                    ${RANK_TIERS[2].color} 40%,
-                    ${RANK_TIERS[2].color} 60%,
-                    ${RANK_TIERS[3].color} 60%,
-                    ${RANK_TIERS[3].color} 80%,
-                    ${RANK_TIERS[4].color} 80%,
-                    ${RANK_TIERS[4].color} 100%
-                  )`,
                   boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
                 }}
               >
+                <div
+                  className="h-full"
+                  style={{
+                    width:
+                      animatedScore > 0
+                        ? `${10000 / scoreToPercent(animatedScore)}%`
+                        : "100%",
+                    background: `linear-gradient(to right, ${tierGradient})`,
+                  }}
+                />
                 {/* Diagonal stripe overlay */}
                 <div
                   className="absolute inset-0"
@@ -215,26 +159,29 @@ export function GritCard({
               </div>
               
               {/* Milestone markers */}
-              <div className="absolute inset-0 flex pointer-events-none">
-                {RANK_TIERS.slice(0, -1).map((_, index) => (
+              <div className="absolute inset-0 pointer-events-none">
+                {tierBreakpoints.map((breakpoint, index) => (
                   <div
                     key={index}
-                    className="flex-1"
+                    className="absolute top-0 h-full"
                     style={{
+                      left: `${breakpoint}%`,
                       borderRight: "2px solid rgba(0, 0, 0, 0.4)",
                     }}
                   />
                 ))}
-                <div className="flex-1" />
               </div>
             </div>
 
             {/* Rank labels below */}
-            <div className="mt-2 flex justify-between text-xs opacity-70">
+            <div
+              className="mt-2 grid text-xs opacity-70"
+              style={{ gridTemplateColumns: tierColumns }}
+            >
               {RANK_TIERS.map((rankTier, index) => (
                 <div
                   key={index}
-                  className="flex-1 text-center"
+                  className="text-center"
                   style={{
                     color: score >= rankTier.min ? rankTier.color : 'inherit',
                     fontWeight: score >= rankTier.min && score <= rankTier.max ? 600 : 400,
