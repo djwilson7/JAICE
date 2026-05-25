@@ -33,7 +33,7 @@ const tierBreakpoints = RANK_TIERS.slice(0, -1).map((rankTier) =>
 
 export function GritCard({
   className = "",
-  height = "24rem",
+  height = "auto",
 }: {
   className?: string;
   height?: number | string;

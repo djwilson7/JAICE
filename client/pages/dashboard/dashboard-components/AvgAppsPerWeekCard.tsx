@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
-import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
@@ -95,8 +94,13 @@ const createAvgAppsTooltipHandler =
   tooltipEl.style.padding = "12px 14px";
 };
 
-export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
-  const [open, setOpen] = useState(false);
+export function AvgAppsPerWeekCard({
+  className = "",
+  height,
+}: {
+  className?: string;
+  height?: number | string;
+}) {
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
   const [weekStartDates, setWeekStartDates] = useState<string[]>([]);
@@ -140,9 +144,8 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
         title="Avg Applications per Week"
         subtitle="12-week trend"
         infoDescription={chartDescText.avgAppsPerWeek}
-        className={`${className} cursor-pointer`}
-        expandable
-        onExpand={() => setOpen(true)}
+        className={className}
+        height={height ?? "18rem"}
       >
         <ChartHost>
           <ChartSkeleton variant="line" />
@@ -216,31 +219,17 @@ export function AvgAppsPerWeekCard({ className = "" }: { className?: string }) {
   };
 
   return (
-    <>
-      <Card
-        title="Avg Applications per Week"
-        subtitle="12-week trend"
-        infoDescription={chartDescText.avgAppsPerWeek}
-        className={`${className} cursor-pointer`}
-        expandable
-        onExpand={() => setOpen(true)}
-      >
-        <ChartHost>
-          {error ? <ChartError message={error} /> : <Line data={data} options={options} />}
-        </ChartHost>
-      </Card>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Avg Apps per Week"
-        description={chartDescText.avgAppsPerWeek}
-      >
-        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
-          {error ? <ChartError message={error} /> : <Line data={data} options={options} />}
-        </div>
-      </Modal>
-    </>
+    <Card
+      title="Avg Applications per Week"
+      subtitle="12-week trend"
+      infoDescription={chartDescText.avgAppsPerWeek}
+      className={className}
+      height={height ?? "18rem"}
+    >
+      <ChartHost>
+        {error ? <ChartError message={error} /> : <Line data={data} options={options} />}
+      </ChartHost>
+    </Card>
   );
 }
 

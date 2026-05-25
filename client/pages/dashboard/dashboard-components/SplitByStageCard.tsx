@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
-import { Modal } from "./Modal";
 import { makeDarkOptions } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
@@ -82,8 +81,6 @@ export function SplitByStageCard({
   className?: string;
   height?: number | string;
 }) {
-  const [open, setOpen] = useState(false);
-
   const [labels, setLabels] = useState<string[]>([]);
   const [applied, setApplied] = useState<number[]>([]);
   const [interview, setInterview] = useState<number[]>([]);
@@ -253,29 +250,15 @@ export function SplitByStageCard({
   };
 
   return (
-    <>
-      <Card
-        title="Split by Stage"
-        subtitle="Monthly counts"
-        className={`${className} cursor-pointer`}
-        height={height ?? "18rem"}
-        expandable
-        onExpand={() => setOpen(true)}
-      >
-        <ChartHost>{content()}</ChartHost>
-      </Card>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Split by Stage"
-        description={chartDescText.splitByStage}
-      >
-        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
-          {content()}
-        </div>
-      </Modal>
-    </>
+    <Card
+      title="Split by Stage"
+      subtitle="Monthly counts"
+      infoDescription={chartDescText.splitByStage}
+      className={className}
+      height={height ?? "18rem"}
+    >
+      <ChartHost>{content()}</ChartHost>
+    </Card>
   );
 }
 

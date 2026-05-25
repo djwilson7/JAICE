@@ -2,13 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { Line } from "react-chartjs-2";
 import { applyChartDefaults } from "./chartSetup";
-import { Modal } from "./Modal";
 import { api } from "@/global-services/api";
-import Button from "@/global-components/button";
 import { chartDescText } from "./chartDescText";
-
-type RangeOptions = 3 | 7 | 14 | 30 | 45 | 90;
-const RANGES: RangeOptions[] = [3, 7, 14, 30, 45, 90];
 
 // Generate the last N days as labels
 function lastNDaysLabels(n: number) {
@@ -110,9 +105,7 @@ export function AppsOverTimeCard({
   className?: string;
   height?: number | string;
 }) {
-  const [open, setOpen] = useState(false);
-
-  const [range, setRange] = useState<RangeOptions>(90);
+  const range = 90;
 
   const [applied, setApplied] = useState<number[]>([]);
   const [interview, setInterview] = useState<number[]>([]);
@@ -320,74 +313,27 @@ export function AppsOverTimeCard({
     },
   };
 
-  // Shared range selector component
-  const RangeSelector = ({
-    range,
-    onChange,
-  }: {
-    range: RangeOptions;
-    onChange: (value: RangeOptions) => void;
-  }) => (
-    <div className="flex gap-2 mb-4">
-      {RANGES.map((r) => (
-        <Button
-          key={r}
-          onClick={() => onChange(r)}
-          isSelected={range === r ? true : false}
-        >
-          {r} days
-        </Button>
-      ))}
-    </div>
-  );
-
   return (
-    <>
-      <Card
-        title="Stages Over Time"
-        subtitle={`${range}-day trend`}
-        infoDescription={chartDescText.stagesOverTime}
-        className={`${className} cursor-pointer`}
-        height={height ?? "18rem"}
-        expandable
-        onExpand={() => setOpen(true)}
-      >
-        <ChartHost>
-          {loading && <ChartSkeleton variant="line" />}
-          {error && <ChartError message={error} />}
-          {!loading && !error && (
-            <div className="flex h-full min-h-0 w-full flex-col">
-              <div className="min-h-0 flex-1">
-                <Line data={data} options={options} />
-              </div>
-              <ChartLegend items={legendItems} />
+    <Card
+      title="Stages Over Time"
+      subtitle={`${range}-day trend`}
+      infoDescription={chartDescText.stagesOverTime}
+      className={className}
+      height={height ?? "18rem"}
+    >
+      <ChartHost>
+        {loading && <ChartSkeleton variant="line" />}
+        {error && <ChartError message={error} />}
+        {!loading && !error && (
+          <div className="flex h-full min-h-0 w-full flex-col">
+            <div className="min-h-0 flex-1">
+              <Line data={data} options={options} />
             </div>
-          )}
-        </ChartHost>
-      </Card>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Stages Over Time"
-        description={chartDescText.stagesOverTime}
-      >
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "0 1rem" }}>
-          <div style={{ flexShrink: 0, paddingTop: "0.5rem" }}>
-            <RangeSelector range={range} onChange={setRange} />
+            <ChartLegend items={legendItems} />
           </div>
-
-          <div style={{ flex: 1, minHeight: 0, paddingBottom: "1rem" }}>
-            <div className="flex h-full min-h-0 w-full flex-col">
-              <div className="min-h-0 flex-1">
-                <Line data={data} options={options} />
-              </div>
-              <ChartLegend items={legendItems} />
-            </div>
-          </div>
-        </div>
-      </Modal>
-    </>
+        )}
+      </ChartHost>
+    </Card>
   );
 }
 

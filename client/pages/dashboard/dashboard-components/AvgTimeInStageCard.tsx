@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
-import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
@@ -54,8 +53,6 @@ export function AvgTimeInStageCard({
   className?: string;
   height?: number | string;
 }) {
-  const [open, setOpen] = useState(false);
-
   const [values, setValues] = useState<AvgStageAges | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,9 +105,7 @@ export function AvgTimeInStageCard({
     accepted: "#34D399",
   };
 
-  const renderSquares = (variant: "card" | "modal" = "card") => {
-    const isModal = variant === "modal";
-
+  const renderSquares = () => {
     if (loading) {
       return <ChartSkeleton variant="tiles" />;
     }
@@ -164,7 +159,7 @@ export function AvgTimeInStageCard({
               return (
                 <span 
                   className="text-white font-medium"
-                  style={{ fontSize: isModal ? "5.25rem" : "1.625rem" }}
+                  style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)" }}
                 >
                   {timeParts}
                 </span>
@@ -194,13 +189,13 @@ export function AvgTimeInStageCard({
               <span key={idx} className="inline-flex items-baseline gap-0.5">
                 <span
                   className="text-white font-medium"
-                  style={{ fontSize: isModal ? "5.25rem" : "1.625rem", letterSpacing: "-0.5px" }}
+                  style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)", letterSpacing: "-0.5px" }}
                 >
                   {part.value}
                 </span>
                 <span
                   className="text-slate-400 font-normal opacity-60 lowercase"
-                  style={{ fontSize: isModal ? "2.25rem" : "1.0rem" }}
+                  style={{ fontSize: "clamp(0.7rem, 1.2vw, 0.9rem)" }}
                 >
                   {part.unit}
                 </span>
@@ -233,9 +228,7 @@ export function AvgTimeInStageCard({
           return (
             <div
               key={tile.key}
-              className={`flex flex-col rounded-2xl border border-white/10 bg-slate-900/50 shadow-lg shadow-black/30 ${
-                isModal ? "px-6 py-5 h-full" : "px-4 py-4 h-full"
-              }`}
+              className="flex flex-col rounded-2xl border border-white/10 bg-slate-900/50 shadow-lg shadow-black/30 px-4 py-4 h-full"
             >
               <div
                 className="flex flex-shrink-0 items-center gap-2 text-[7px] font-medium leading-none text-[rgba(255,255,255,0.62)]"
@@ -250,10 +243,10 @@ export function AvgTimeInStageCard({
                 </span>
               </div>
 
-              {/* BIG centered number in both card and modal */}
+              {/* BIG centered number in card */}
               <div
                 className="flex-1 flex items-center justify-center text-center"
-                style={{ marginTop: isModal ? "1rem" : "0.5rem" }}
+                style={{ marginTop: "0.5rem" }}
               >
                 {renderDisplayValue()}
               </div>
@@ -265,30 +258,15 @@ export function AvgTimeInStageCard({
   };
 
   return (
-    <>
-      <Card
-        title="Avg Time in Stage"
-        subtitle="Rolling 90-day averages"
-        infoDescription={chartDescText.avgTimeInStage}
-        className={`${className} cursor-pointer`}
-        height={height ?? "18rem"}
-        expandable
-        onExpand={() => setOpen(true)}
-      >
-        <ChartHost>{renderSquares("card")}</ChartHost>
-      </Card>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Avg Time in Stage"
-        description={chartDescText.avgTimeInStage}
-      >
-        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
-          {renderSquares("modal")}
-        </div>
-      </Modal>
-    </>
+    <Card
+      title="Avg Time in Stage"
+      subtitle="Rolling 90-day averages"
+      infoDescription={chartDescText.avgTimeInStage}
+      className={className}
+      height={height ?? "18rem"}
+    >
+      <ChartHost>{renderSquares()}</ChartHost>
+    </Card>
   );
 }
 

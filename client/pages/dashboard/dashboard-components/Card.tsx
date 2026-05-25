@@ -56,11 +56,17 @@ export function Card({
     const [showInfo, setShowInfo] = React.useState(false);
     const infoButtonRef = React.useRef<HTMLButtonElement>(null);
 
-    const bodyHeight = height != null ? typeof height === "number"
-                                    ? `${height}px` : height
-                                    : size === "lg" ? "14rem"
-                                    : size === "md" ? "12rem"
-                                    : "9rem";
+    // Used as minHeight on the body — gives chart cards a sensible floor so the
+    // CSS Grid track has a real size to equalize against. The grid then stretches
+    // all siblings in the same row to match the tallest card automatically.
+    const bodyMinHeight = height === "auto"
+        ? undefined
+        : height != null
+            ? typeof height === "number" ? `${height}px` : height
+            : size === "lg" ? "14rem"
+            : size === "md" ? "12rem"
+            : "9rem";
+    const isAutoHeight = height === "auto";
     const tooltipWidth = 360;
     const tooltipRect = infoButtonRef.current?.getBoundingClientRect();
     const tooltipPosition = tooltipRect && typeof window !== "undefined"
@@ -87,8 +93,8 @@ export function Card({
 
     return (
         <section
-            className={className}
-            style={{ ...style, display: "flex", flexDirection: "column" }}
+            className={`card ${className}`}
+            style={{ ...style, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}
             onClick={expandable ? onExpand : undefined}
             onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
@@ -214,13 +220,22 @@ export function Card({
                 document.body
             )}
 
-            {/* Body container sets a consistent height for charts/metrics */}
+            {/* Body: auto-height cards (e.g. GritCard) use flexShrink:0 so their
+                 content drives the grid track size. Fixed-height cards use flex:1
+                 + minHeight so they have a floor and fill any extra grid row space. */}
             <div
                 className={`card-body ${expandable ? "cursor-pointer" : ""}`}
-                style={{
+                style={isAutoHeight ? {
+                    flexShrink: 0,
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                } : {
                     flex: 1,
-                    height: bodyHeight,
-                    minHeight: 0,
+                    minHeight: bodyMinHeight,
+                    minWidth: 0,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -316,10 +331,12 @@ export function ChartHost({ children, inset = 0, }: {
     return (
         <div
             style={{
-                position: "relative",
+                position: "absolute",
                 inset: inset,
                 width: "100%",
                 height: "100%",
+                top: 0,
+                left: 0,
             }}
         >
             {children}

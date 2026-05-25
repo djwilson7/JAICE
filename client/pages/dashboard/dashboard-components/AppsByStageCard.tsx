@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
-import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
@@ -80,8 +79,13 @@ const STAGE_COLORS: Record<string, string> = {
 };
 const STAGE_ORDER = ["Applied", "Interview", "Offer", "Accepted"];
 
-export function AppsByStageCard({ className = "" }: { className?: string }) {
-  const [open, setOpen] = useState(false);
+export function AppsByStageCard({
+  className = "",
+  height,
+}: {
+  className?: string;
+  height?: number | string;
+}) {
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,8 +174,7 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
     cutout: "60%",
   };
 
-  const renderContent = (variant: "card" | "modal" = "card") => {
-    const isModal = variant === "modal";
+  const renderContent = () => {
     const legendItems = STAGE_ORDER.map((stage) => ({
       label: stage,
       color: STAGE_COLORS[stage],
@@ -194,20 +197,8 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
     }
 
     return (
-      <div
-        className={`flex h-full flex-col items-center justify-center gap-6 ${
-          isModal ? "pt-2 gap-10" : "pt-6 gap-6"
-        }`}
-      >
-        {/* BIGGER donut in modal */}
-        <div
-          className={
-            isModal
-              ? "relative h-96 w-96 md:h-128 md:w-128"
-              : "relative min-h-0 w-full min-w-0 flex-1"
-          }
-          style={{ paddingBottom: isModal ? 24 : 14 }}
-        >
+      <div className="flex h-full flex-col items-center justify-center gap-6 pt-6">
+        <div className="relative min-h-0 w-full min-w-0 flex-1" style={{ paddingBottom: 14 }}>
           <Doughnut data={chartData} options={options} />
         </div>
 
@@ -217,29 +208,15 @@ export function AppsByStageCard({ className = "" }: { className?: string }) {
   };
 
   return (
-    <>
-      <Card
-        title="Applications by Stage"
-        subtitle="Total distribution"
-        infoDescription={chartDescText.appsByStage}
-        className={`${className} cursor-pointer`}
-        expandable
-        onExpand={() => setOpen(true)}
-      >
-        <ChartHost>{renderContent("card")}</ChartHost>
-      </Card>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Applications by Stage"
-        description={chartDescText.appsByStage}
-      >
-        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
-          {renderContent("modal")}
-        </div>
-      </Modal>
-    </>
+    <Card
+      title="Applications by Stage"
+      subtitle="Total distribution"
+      infoDescription={chartDescText.appsByStage}
+      className={className}
+      height={height ?? "18rem"}
+    >
+      <ChartHost>{renderContent()}</ChartHost>
+    </Card>
   );
 }
 

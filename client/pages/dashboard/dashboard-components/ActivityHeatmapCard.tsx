@@ -5,7 +5,6 @@ import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 import { Chart as ChartJS } from "chart.js";
 import type { ChartOptions } from "chart.js";
 import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
-import { Modal } from "./Modal";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
@@ -140,7 +139,6 @@ export function ActivityHeatmapCard({
   className?: string;
   height?: number | string;
 }) {
-  const [open, setOpen] = useState(false);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,13 +193,14 @@ export function ActivityHeatmapCard({
           const value = context.raw?.v || 0;
           if (value === 0) return "rgba(255,255,255,0.05)";
           
-          // Neutral activity scale, separate from stage/category legend colors.
+          // Vibrant green intensity scale.
+          // Brighter/more vibrant green for more activity, darker/deeper green for less activity.
           const intensity = Math.min(value / Math.max(maxValue, 1), 1);
-          const r = Math.floor(226 - 112 * intensity);
-          const g = Math.floor(232 - 116 * intensity);
-          const b = Math.floor(240 - 120 * intensity);
+          const r = Math.floor(16 + 41 * intensity);
+          const g = Math.floor(50 + 161 * intensity);
+          const b = Math.floor(28 + 55 * intensity);
           
-          return `rgba(${r}, ${g}, ${b}, ${0.28 + intensity * 0.62})`;
+          return `rgba(${r}, ${g}, ${b}, ${0.4 + intensity * 0.6})`;
         },
         borderColor: "rgba(255,255,255,0.1)",
         borderWidth: 1,
@@ -313,30 +312,15 @@ export function ActivityHeatmapCard({
   };
 
   return (
-    <>
-      <Card
-        title="Activity Heatmap"
-        subtitle="12-week application pattern"
-        infoDescription={chartDescText.activityHeatmap}
-        className={`${className} cursor-pointer`}
-        height={height ?? "18rem"}
-        expandable
-        onExpand={() => setOpen(true)}
-      >
-        <ChartHost>{content()}</ChartHost>
-      </Card>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Activity Heatmap"
-        description={chartDescText.activityHeatmap}
-      >
-        <div style={{ height: "100%", padding: "0 1rem 1rem 1rem" }}>
-          {content()}
-        </div>
-      </Modal>
-    </>
+    <Card
+      title="Activity Heatmap"
+      subtitle="12-week application pattern"
+      infoDescription={chartDescText.activityHeatmap}
+      className={className}
+      height={height ?? "18rem"}
+    >
+      <ChartHost>{content()}</ChartHost>
+    </Card>
   );
 }
 
