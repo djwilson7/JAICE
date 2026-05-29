@@ -82,7 +82,7 @@ def evaluate_resume_pdf(file_bytes: bytes, model: str | None = None) -> Dict[str
             "raw": "",
         }
 
-    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4.1-mini")
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
 
     system = {
         "role": "system",
@@ -188,7 +188,7 @@ def improve_resume_bullet(
     Returns:
     { "improved_bullet": "<rewritten bullet>" }
     """
-    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4.1-mini")
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
 
     context_parts = []
     if job_title:
@@ -233,7 +233,7 @@ def improve_resume_summary(
     Returns:
     { "improved_summary": "<rewritten summary>" }
     """
-    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4.1-mini")
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
 
     role_line = f"Target role: {target_role}" if target_role else "Target role: not specified."
 
@@ -268,25 +268,49 @@ def _structured_resume_to_text(resume: Dict[str, Any]) -> str:
     """
     lines: List[str] = []
 
+    def format_skill_categories(skills: Any) -> List[str]:
+        if not isinstance(skills, list):
+            return []
+        if all(isinstance(skill, str) for skill in skills):
+            flat_skills = [skill.strip() for skill in skills if skill and skill.strip()]
+            return [", ".join(flat_skills)] if flat_skills else []
+
+        formatted: List[str] = []
+        for skill in skills:
+            if not isinstance(skill, dict):
+                continue
+            category = str(skill.get("category") or "Skills").strip()
+            items = skill.get("items", [])
+            if not isinstance(items, list):
+                continue
+            clean_items = [str(item).strip() for item in items if str(item).strip()]
+            if clean_items:
+                formatted.append(f"{category}: {', '.join(clean_items)}")
+        return formatted
+
     full_name = resume.get("fullName") or resume.get("name") or ""
     if full_name:
         lines.append(full_name)
 
     contact_parts = []
-    for key in ("email", "phone", "location", "website", "linkedin"):
-        if resume.get(key):
+    hidden_contact_fields = set(resume.get("hiddenContactFields") or [])
+    for key in ("location", "phone", "email", "linkedin", "website", "github"):
+        if key not in hidden_contact_fields and resume.get(key):
             contact_parts.append(str(resume[key]))
+    for field in resume.get("customContact", []) or []:
+        if isinstance(field, dict) and field.get("value"):
+            contact_parts.append(str(field["value"]))
     if contact_parts:
         lines.append("Contact: " + " | ".join(contact_parts))
 
     if resume.get("summary"):
-        lines.append("\nSummary:")
+        lines.append("\nProfessional Summary:")
         lines.append(str(resume["summary"]))
 
     # Experience
     experiences = resume.get("experience", [])
     if experiences:
-        lines.append("\nExperience:")
+        lines.append("\nWork Experience:")
         for exp in experiences:
             title = exp.get("jobTitle", "")
             company = exp.get("company", "")
@@ -321,10 +345,10 @@ def _structured_resume_to_text(resume: Dict[str, Any]) -> str:
 
     # Skills
     skills = resume.get("skills", [])
-    if skills:
-        skills_str = ", ".join([str(s) for s in skills if str(s).strip()])
+    skills_lines = format_skill_categories(skills)
+    if skills_lines:
         lines.append("\nSkills:")
-        lines.append(skills_str)
+        lines.extend(skills_lines)
 
     return "\n".join(lines)
 
@@ -349,7 +373,7 @@ def evaluate_resume_structured(
             "raw": "",
         }
 
-    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4.1-mini")
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
 
     system = {
         "role": "system",
@@ -428,4 +452,157 @@ def evaluate_resume_structured(
         "suggestions": suggestions,
         "checklist": checklist,
         "raw": raw,
+    }
+
+
+def analyze_job_overlap_ai(
+    resume_data: Dict[str, Any],
+    job_description: str,
+    model: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Compare resume data with a job description. Returns a structured JSON payload:
+    {
+      "match_score": int,
+      "position_summary": str,
+      "key_requirements": [str, ...],
+      "overlap_analysis": [str, ...],
+      "gaps_analysis": [str, ...],
+      "actionable_suggestions": [str, ...]
+    }
+    """
+    resume_text = _structured_resume_to_text(resume_data)
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
+
+    system = {
+        "role": "system",
+        "content": (
+            "You are an expert recruiter and career coach. Compare the resume text with "
+            "the job description. Be objective and factual. "
+            "Respond ONLY with a single JSON object. Do not include markdown code fences or explanations."
+        )
+    }
+
+    schema_instruction = (
+        "Schema:\n"
+        "{\n"
+        '  "match_score": <number between 0 and 100 representing overlap percent>,\n'
+        '  "position_summary": "<concise 2-3 sentence overview of what the role is>",\n'
+        '  "key_requirements": ["list of top 3-5 core qualifications required"],\n'
+        '  "overlap_analysis": ["list of 2-4 key matches in candidate background"],\n'
+        '  "gaps_analysis": ["list of 2-4 critical missing gaps in candidate background"],\n'
+        '  "actionable_suggestions": ["3-5 concrete tasks candidate can do to improve odds"]\n'
+        "}"
+    )
+
+    user = {
+        "role": "user",
+        "content": (
+            f"Resume Text:\n{resume_text}\n\n"
+            f"Job Description:\n{job_description}\n\n"
+            f"Instructions: Provide the comparative analysis. Respond strictly matching this {schema_instruction}"
+        )
+    }
+
+    out = call_openai_chat(model_name, [system, user], max_tokens=1000, temperature=0.0)
+    raw = out.get("raw", "") or ""
+
+    try:
+        start = raw.index("{")
+        end = raw.rfind("}")
+        json_str = raw[start:end + 1]
+        json_str = json_str.replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(json_str)
+    except Exception:
+        return {
+            "match_score": 0,
+            "position_summary": "Failed to parse analysis response from AI.",
+            "key_requirements": [],
+            "overlap_analysis": [],
+            "gaps_analysis": ["API response parsing error"],
+            "actionable_suggestions": ["Please verify input parameters and retry."],
+        }
+
+    return {
+        "match_score": int(parsed.get("match_score", 0)),
+        "position_summary": str(parsed.get("position_summary", "")),
+        "key_requirements": list(parsed.get("key_requirements") or []),
+        "overlap_analysis": list(parsed.get("overlap_analysis") or []),
+        "gaps_analysis": list(parsed.get("gaps_analysis") or []),
+        "actionable_suggestions": list(parsed.get("actionable_suggestions") or []),
+    }
+
+
+def tailor_resume_ai(
+    resume_data: Dict[str, Any],
+    job_description: str,
+    model: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Tailor a resume structured data based on a target job description.
+    Enforces a strict zero-hallucination policy.
+    Returns:
+    {
+      "tailored_resume_data": ResumeData,
+      "changes": [ChangeMetadata, ...],
+      "warnings": [str, ...]
+    }
+    """
+    model_name = model or os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
+
+    system = {
+        "role": "system",
+        "content": (
+            "You are an expert resume writer. Tailor the candidate's resume data to the job description.\n"
+            "CRITICAL RULES:\n"
+            "1. ZERO HALLUCINATION: You are strictly forbidden from inventing, fabricating, or adding any biographical details "
+            "not mentioned in the original resume. Do NOT create new companies, employment dates, credentials, certifications, "
+            "technologies, metrics, or outcomes. You may only rephrase, re-order, emphasize, or selectively omit factual details.\n"
+            "2. Output format: Respond ONLY with a single JSON object matching the schema below. Do not use code fences.\n\n"
+            "Schema:\n"
+            "{\n"
+            '  "tailored_resume_data": <modified version of input resume JSON matching exactly the structure>,\n'
+            '  "changes": [\n'
+            '    {\n'
+            '      "path": "<dot-path of the field changed, e.g. summary or experience.0.bullets.1 or skills>",\n'
+            '      "before": "<original text>",\n'
+            '      "after": "<updated tailored text>",\n'
+            '      "reason": "<short explanation of why this change aligns with the job listing>"\n'
+            "    }, ...\n"
+            "  ],\n"
+            '  "warnings": ["list of key warnings identifying missing requirements in the job description that could not be added because they are absent from original resume. e.g. \'AWS experience required but absent from original resume.\'"]\n'
+            "}"
+        )
+    }
+
+    user = {
+        "role": "user",
+        "content": (
+            f"Original Resume JSON:\n{json.dumps(resume_data)}\n\n"
+            f"Job Description:\n{job_description}\n\n"
+            "Instructions: Rewrite the professional summary, rephrase or reorder experience bullet points, "
+            "and reorder skills to match the job post. Maintain strict factuality. Return the JSON object."
+        )
+    }
+
+    out = call_openai_chat(model_name, [system, user], max_tokens=1500, temperature=0.2)
+    raw = out.get("raw", "") or ""
+
+    try:
+        start = raw.index("{")
+        end = raw.rfind("}")
+        json_str = raw[start:end + 1]
+        json_str = json_str.replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(json_str)
+    except Exception:
+        return {
+            "tailored_resume_data": resume_data,
+            "changes": [],
+            "warnings": ["Failed to parse tailored response from AI."],
+        }
+
+    return {
+        "tailored_resume_data": parsed.get("tailored_resume_data") or resume_data,
+        "changes": parsed.get("changes") or [],
+        "warnings": parsed.get("warnings") or [],
     }
