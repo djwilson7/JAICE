@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM python:3.9-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -10,16 +11,16 @@ WORKDIR /app
 COPY ./shared_worker_library/shared_req.txt shared_worker_library/shared_req.txt
 COPY ./gmail/req.txt gmail/req.txt
 
-RUN pip install --no-cache-dir -r shared_worker_library/shared_req.txt
-RUN pip install --no-cache-dir -r gmail/req.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r shared_worker_library/shared_req.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r gmail/req.txt
 
 COPY ./gmail gmail
 COPY ./shared_worker_library shared_worker_library
 COPY ./common common
 
-RUN pip install ./gmail
-RUN pip install ./shared_worker_library
-RUN pip install ./common
+RUN pip install -e ./gmail
+RUN pip install -e ./shared_worker_library
+RUN pip install -e ./common
 
 RUN chown -R appuser:appgroup /app
 USER appuser

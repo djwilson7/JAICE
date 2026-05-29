@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM pytorch/pytorch
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -10,16 +11,16 @@ WORKDIR /app
 COPY ./shared_worker_library/shared_req.txt ./shared_worker_library/shared_req.txt
 COPY ./relevance/req.txt ./relevance/req.txt
 
-RUN pip install --no-cache-dir -r ./shared_worker_library/shared_req.txt
-RUN pip install --no-cache-dir -r ./relevance/req.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r ./shared_worker_library/shared_req.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r ./relevance/req.txt
 
 COPY ./relevance ./relevance
 COPY ./shared_worker_library ./shared_worker_library
 COPY ./common ./common
 
-RUN pip install ./relevance
-RUN pip install ./shared_worker_library
-RUN pip install ./common
+RUN pip install -e ./relevance
+RUN pip install -e ./shared_worker_library
+RUN pip install -e ./common
 RUN python -m spacy download en_core_web_lg
 
 RUN chown -R appuser:appgroup /app
