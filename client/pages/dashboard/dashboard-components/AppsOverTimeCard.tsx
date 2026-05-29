@@ -4,6 +4,8 @@ import { Line } from "react-chartjs-2";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 // Generate the last N days as labels
 function lastNDaysLabels(n: number) {
@@ -105,6 +107,8 @@ export function AppsOverTimeCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const range = 90;
 
   const [applied, setApplied] = useState<number[]>([]);
@@ -163,12 +167,7 @@ export function AppsOverTimeCard({
 
   const labels = lastNDaysLabels(range);
 
-  const colors = {
-    applied: "#F59E0B",
-    interview: "#22D3EE",
-    offer: "#A78BFA",
-    accepted: "#34D399",
-  };
+  const colors = chartTheme.stageColors;
   const legendItems = [
     { label: "Applied", color: colors.applied },
     { label: "Interview", color: colors.interview },
@@ -252,7 +251,7 @@ export function AppsOverTimeCard({
 
             // If the range is small, keep the default subtle grid lines
             if (range <= 14) {
-              return "rgba(255,255,255,0.09)";
+              return chartTheme.gridStrong;
             }
 
             // Parse month day
@@ -263,19 +262,20 @@ export function AppsOverTimeCard({
 
             // Prominent vertical line for the 1st of the month (reduced opacity)
             if (dayNum === 1) {
-              return "rgba(255,255,255,0.12)";
+              return chartTheme.gridStrong;
             }
 
             // Less prominent vertical line for mid-month (15th, or 14th if February) (reduced opacity)
             const isMidMonth = dayNum === 15 || (dayNum === 14 && label.startsWith("Feb"));
             if (isMidMonth) {
-              return "rgba(255,255,255,0.04)";
+              return chartTheme.grid;
             }
 
             return "transparent";
           }
         },
         ticks: {
+          color: chartTheme.axis,
           autoSkip: false,
           maxRotation: 0,
           minRotation: 0,
@@ -305,8 +305,10 @@ export function AppsOverTimeCard({
       },
       y: {
         beginAtZero: true,
-        grid: { color: "rgba(255,255,255,0.04)" },
+        grid: { color: chartTheme.grid },
+        border: { color: chartTheme.border },
         ticks: {
+          color: chartTheme.axis,
           precision: 0,
         },
       },

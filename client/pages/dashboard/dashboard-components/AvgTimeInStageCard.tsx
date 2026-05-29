@@ -3,6 +3,8 @@ import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 type AvgStageAges = {
   applied: number;
@@ -53,6 +55,8 @@ export function AvgTimeInStageCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const [values, setValues] = useState<AvgStageAges | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,12 +102,7 @@ export function AvgTimeInStageCard({
     };
   }, []);
 
-  const stageColors = {
-    applied: "#F59E0B",
-    interview: "#22D3EE",
-    offer: "#A78BFA",
-    accepted: "#34D399",
-  };
+  const stageColors = chartTheme.stageColors;
 
   const renderSquares = () => {
     if (loading) {
@@ -116,7 +115,7 @@ export function AvgTimeInStageCard({
 
     if (!values) {
       return (
-        <div className="flex h-full items-center justify-center text-sm text-slate-300">
+        <div className={`flex h-full items-center justify-center text-sm ${chartTheme.emptyText}`}>
           No applications in the last 90 days.
         </div>
       );
@@ -150,7 +149,7 @@ export function AvgTimeInStageCard({
     ];
 
     return (
-      <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="flex h-full w-full flex-col justify-evenly gap-3">
         {tiles.map((tile) => {
           const timeParts = parseHumanizedTime(tile.value);
 
@@ -158,68 +157,33 @@ export function AvgTimeInStageCard({
             if (typeof timeParts === "string") {
               return (
                 <span 
-                  className="text-white font-medium"
-                  style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)" }}
+                  className={`${chartTheme.tile.value} font-medium`}
+                  style={{ fontSize: "clamp(0.88rem, 1.35vw, 1.15rem)" }}
                 >
                   {timeParts}
                 </span>
               );
             }
 
-            const macroParts = timeParts.filter(
-              (p) =>
-                p.unit === "yr" ||
-                p.unit === "year" ||
-                p.unit === "years" ||
-                p.unit === "mo" ||
-                p.unit === "month" ||
-                p.unit === "months"
-            );
-            const microParts = timeParts.filter(
-              (p) =>
-                p.unit === "d" ||
-                p.unit === "day" ||
-                p.unit === "days" ||
-                p.unit === "h" ||
-                p.unit === "hour" ||
-                p.unit === "hours"
-            );
-
             const renderPart = (part: TimePart, idx: number) => (
               <span key={idx} className="inline-flex items-baseline gap-0.5">
                 <span
-                  className="text-white font-medium"
-                  style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)", letterSpacing: "-0.5px" }}
+                  className={`${chartTheme.tile.value} font-medium`}
+                  style={{ fontSize: "clamp(0.88rem, 1.35vw, 1.15rem)", letterSpacing: "-0.25px" }}
                 >
                   {part.value}
                 </span>
                 <span
-                  className="text-slate-400 font-normal opacity-60 lowercase"
-                  style={{ fontSize: "clamp(0.7rem, 1.2vw, 0.9rem)" }}
+                  className={`${chartTheme.tile.unit} font-normal opacity-70 lowercase`}
+                  style={{ fontSize: "clamp(0.58rem, 0.85vw, 0.72rem)" }}
                 >
                   {part.unit}
                 </span>
               </span>
             );
 
-            const hasMacro = macroParts.length > 0;
-            const hasMicro = microParts.length > 0;
-
-            if (hasMacro && hasMicro) {
-              return (
-                <span className="flex flex-col items-center gap-1">
-                  <span className="inline-flex items-baseline gap-2">
-                    {macroParts.map(renderPart)}
-                  </span>
-                  <span className="inline-flex items-baseline gap-2">
-                    {microParts.map(renderPart)}
-                  </span>
-                </span>
-              );
-            }
-
             return (
-              <span className="inline-flex items-baseline gap-2">
+              <span className="inline-flex items-baseline justify-end gap-x-2 whitespace-nowrap text-right">
                 {timeParts.map(renderPart)}
               </span>
             );
@@ -228,25 +192,25 @@ export function AvgTimeInStageCard({
           return (
             <div
               key={tile.key}
-              className="flex flex-col rounded-2xl border border-white/10 bg-slate-900/50 shadow-lg shadow-black/30 px-4 py-4 h-full"
+              className={`flex min-h-[3.25rem] items-center justify-between gap-4 rounded-2xl border ${chartTheme.tile.border} ${
+                chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
+              } px-4 py-3`}
             >
               <div
-                className="flex flex-shrink-0 items-center gap-2 text-[7px] font-medium leading-none text-[rgba(255,255,255,0.62)]"
+                className={`flex min-w-0 flex-1 items-center gap-2 text-[7px] font-medium leading-none ${chartTheme.tile.label}`}
                 style={{ letterSpacing: "1.4px" }}
               >
                 <span
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: tile.color }}
                 />
-                <span>
+                <span className="truncate">
                   {tile.label}
                 </span>
               </div>
 
-              {/* BIG centered number in card */}
               <div
-                className="flex-1 flex items-center justify-center text-center"
-                style={{ marginTop: "0.5rem" }}
+                className="shrink-0 text-right"
               >
                 {renderDisplayValue()}
               </div>

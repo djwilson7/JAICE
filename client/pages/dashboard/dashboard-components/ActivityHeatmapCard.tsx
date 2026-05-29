@@ -8,6 +8,8 @@ import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 // Register the matrix controller
 ChartJS.register(MatrixController, MatrixElement);
@@ -139,6 +141,8 @@ export function ActivityHeatmapCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,18 +195,20 @@ export function ActivityHeatmapCard({
         data: heatmapData,
         backgroundColor(context: MatrixContext) {
           const value = context.raw?.v || 0;
-          if (value === 0) return "rgba(255,255,255,0.05)";
+          if (value === 0) return chartTheme.heatmap.zero;
           
           // Vibrant green intensity scale.
           // Brighter/more vibrant green for more activity, darker/deeper green for less activity.
           const intensity = Math.min(value / Math.max(maxValue, 1), 1);
-          const r = Math.floor(16 + 41 * intensity);
-          const g = Math.floor(50 + 161 * intensity);
-          const b = Math.floor(28 + 55 * intensity);
+          const [lowR, lowG, lowB] = chartTheme.heatmap.low;
+          const [highR, highG, highB] = chartTheme.heatmap.high;
+          const r = Math.floor(lowR + (highR - lowR) * intensity);
+          const g = Math.floor(lowG + (highG - lowG) * intensity);
+          const b = Math.floor(lowB + (highB - lowB) * intensity);
           
           return `rgba(${r}, ${g}, ${b}, ${0.4 + intensity * 0.6})`;
         },
-        borderColor: "rgba(255,255,255,0.1)",
+        borderColor: chartTheme.heatmap.border,
         borderWidth: 1,
         width(context: MatrixContext) {
           const a = context.chart.chartArea || { left: 0, right: 0 };
@@ -247,7 +253,7 @@ export function ActivityHeatmapCard({
         position: "bottom",
         offset: true,
         ticks: {
-          color: "rgba(255,255,255,0.85)",
+          color: chartTheme.axis,
           font: { size: 11 },
           maxRotation: 0,
           minRotation: 0,
@@ -265,7 +271,7 @@ export function ActivityHeatmapCard({
         grid: {
           display: true,
           offset: true,
-          color: "rgba(255,255,255,0.04)",
+          color: chartTheme.grid,
           lineWidth: 1,
           drawTicks: false            
         },
@@ -276,13 +282,13 @@ export function ActivityHeatmapCard({
         offset: true,
         labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         ticks: {
-          color: "rgba(255,255,255,0.85)",
+          color: chartTheme.axis,
           font: { size: 11 },
         },
         grid: { 
           display: true,
           offset: true,
-          color: "rgba(255,255,255,0.08)",
+          color: chartTheme.gridStrong,
           lineWidth: 1,
           drawTicks: false,
         },
@@ -302,7 +308,7 @@ export function ActivityHeatmapCard({
 
     if (!heatmapData.length) {
       return (
-        <div className="flex h-full items-center justify-center text-sm text-slate-300">
+        <div className={`flex h-full items-center justify-center text-sm ${chartTheme.emptyText}`}>
           No activity data available yet.
         </div>
       );

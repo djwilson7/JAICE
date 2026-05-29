@@ -1,6 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import infoIcon from "@/assets/icons/info.svg";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 type Variant = "teal" | "solid";
 type Size = "sm" | "md" | "lg";
@@ -28,14 +30,16 @@ export type CardProps = {
     onExpand?: () => void;
 };
 
-function useCardStyles(variant: Variant, rounded: boolean) {
+function useCardStyles(variant: Variant, rounded: boolean, isLightMode: boolean) {
     const base: React.CSSProperties = {
         position: "relative",
         borderRadius: rounded ? 22 : 16,
         padding: 20,
         color: "var(--primary-five)",
         border: "1px solid rgba(var(--primary-five-rgb), 0.35)",
-        boxShadow: "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
+        boxShadow: isLightMode
+            ? "0 10px 24px rgba(15,23,42,0.12), inset 0 0 0 1px rgba(255,255,255,0.42)"
+            : "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
         transition: "box-shadow 0.2s ease, transform 0.2s ease",
     };
 
@@ -52,7 +56,9 @@ export function Card({
     title, subtitle, titleIcon, infoDescription, className = "", children, footer,
     variant = "teal", size = "md", height, rounded = true,
     expandable, onExpand }: CardProps) {
-    const style = useCardStyles(variant, rounded);
+    const { theme } = useSettings();
+    const isLightMode = theme === "light";
+    const style = useCardStyles(variant, rounded, isLightMode);
     const [showInfo, setShowInfo] = React.useState(false);
     const infoButtonRef = React.useRef<HTMLButtonElement>(null);
 
@@ -97,11 +103,13 @@ export function Card({
             style={{ ...style, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}
             onClick={expandable ? onExpand : undefined}
             onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
+                (e.currentTarget as HTMLElement).style.boxShadow = isLightMode
+                    ? "0 14px 28px rgba(15,23,42,0.16), inset 0 0 0 1px rgba(255,255,255,0.58)"
+                    : "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
                 (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)";
+                (e.currentTarget as HTMLElement).style.boxShadow = String(style.boxShadow);
                 (e.currentTarget as HTMLElement).style.transform = "none";
             }}
         >
@@ -358,13 +366,16 @@ export type ChartLegendItem = {
 };
 
 export function ChartLegend({ items }: { items: ChartLegendItem[] }) {
+    const { theme } = useSettings();
+    const chartTheme = getDashboardChartTheme(theme);
+
     return (
         <div className="flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-2">
             {items.map((item) => (
                 <div
                     key={item.label}
-                    className="flex items-center gap-2 text-[7px] font-medium leading-none text-[rgba(255,255,255,0.62)]"
-                    style={{ letterSpacing: "1.4px" }}
+                    className="flex items-center gap-2 text-[7px] font-medium leading-none"
+                    style={{ letterSpacing: "1.4px", color: chartTheme.legend }}
                 >
                     <span
                         className="h-2 w-2 shrink-0 rounded-full"
@@ -382,6 +393,9 @@ type ChartSkeletonVariant = "line" | "bar" | "donut" | "heatmap" | "tiles" | "gr
 const skeletonBase = "animate-pulse rounded-md bg-[rgba(var(--primary-five-rgb),0.12)]";
 
 export function ChartSkeleton({ variant = "line" }: { variant?: ChartSkeletonVariant }) {
+    const { theme } = useSettings();
+    const chartTheme = getDashboardChartTheme(theme);
+
     if (variant === "grit") {
         return (
             <div className="grid h-full w-full grid-cols-1 items-center gap-5 lg:grid-cols-3">
@@ -432,7 +446,7 @@ export function ChartSkeleton({ variant = "line" }: { variant?: ChartSkeletonVar
         return (
             <div className="grid h-full w-full grid-cols-1 gap-4 md:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
+                    <div key={index} className={`rounded-2xl border ${chartTheme.tile.border} ${chartTheme.tile.background} p-4`}>
                         <div className={`${skeletonBase} mb-8 h-3 w-24`} />
                         <div className={`${skeletonBase} h-8 w-28`} />
                         <div className={`${skeletonBase} mt-4 h-3 w-full`} />

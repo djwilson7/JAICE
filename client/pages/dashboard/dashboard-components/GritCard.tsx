@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, ChartSkeleton } from "./Card";
 import { useGritScore } from "@/utils/useGritScore";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 // Export RANK_TIERS for use in the progress bar
 // eslint-disable-next-line react-refresh/only-export-components
@@ -16,10 +18,11 @@ export const RANK_TIERS = [
 const scoreToPercent = (scoreValue: number) =>
   Math.min(100, Math.max(0, scoreValue));
 
-const tierGradient = RANK_TIERS.map((rankTier) => {
+const tierGlassGradient = RANK_TIERS.map((rankTier) => {
   const start = scoreToPercent(rankTier.min);
   const end = scoreToPercent(rankTier.max + 1);
-  return `${rankTier.color} ${start}%, ${rankTier.color} ${end}%`;
+  const fadeStart = Math.max(start, end - 3);
+  return `${rankTier.color}E6 ${start}%, ${rankTier.color}B8 ${fadeStart}%, ${rankTier.color}F2 ${end}%`;
 }).join(", ");
 
 const tierColumns = RANK_TIERS.map((rankTier) => {
@@ -38,6 +41,8 @@ export function GritCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const { score, weeklyApps, followups, consistency, tier, tierColor, loading } = useGritScore();
 
   // Progress bar animation - starts at 0 and animates to actual score
@@ -118,42 +123,36 @@ export function GritCard({
             <div 
               className="relative h-8 w-full rounded-lg overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.05) 75%, transparent 75%, transparent)',
-                backgroundSize: '20px 20px',
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
+                background: chartTheme.isLight
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.78), rgba(226,232,240,0.52))"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.13), rgba(15,23,42,0.22))",
+                boxShadow: chartTheme.isLight
+                  ? "inset 0 1px 0 rgba(255,255,255,0.92), inset 0 -1px 0 rgba(15,23,42,0.10), 0 8px 18px rgba(15,23,42,0.10)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.40), 0 10px 24px rgba(0,0,0,0.20)",
               }}
             >
-              {/* Continuous fill bar with full-track tier mapping clipped by score */}
               <div
-                className="relative h-full overflow-hidden transition-all duration-[1500ms] ease-out"
+                className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
                 style={{
-                  width: `${animatedScore}%`,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.28), transparent)",
+                }}
+              />
+              <div
+                className="absolute inset-0 transition-[clip-path] duration-[1500ms] ease-out"
+                style={{
+                  clipPath: `inset(0 ${100 - scoreToPercent(animatedScore)}% 0 0)`,
+                  background: `linear-gradient(to right, ${tierGlassGradient})`,
+                  boxShadow: chartTheme.isLight
+                    ? "inset 0 1px 0 rgba(255,255,255,0.56), inset 0 -1px 0 rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.12)"
+                    : "inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(0,0,0,0.24), 0 2px 8px rgba(0,0,0,0.36)",
                 }}
               >
-                <div
-                  className="h-full"
-                  style={{
-                    width:
-                      animatedScore > 0
-                        ? `${10000 / scoreToPercent(animatedScore)}%`
-                        : "100%",
-                    background: `linear-gradient(to right, ${tierGradient})`,
-                  }}
-                />
-                {/* Diagonal stripe overlay */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.15) 10px, rgba(0,0,0,0.15) 20px)',
-                  }}
-                />
                 {/* Shine effect */}
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: 'linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)',
+                    background: "linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.10) 42%, rgba(0,0,0,0.13) 100%)",
+                    mixBlendMode: chartTheme.isLight ? "soft-light" : "screen",
                   }}
                 />
               </div>
@@ -195,21 +194,27 @@ export function GritCard({
 
           {/* KPI Row */}
           <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-center">
+            <div className={`rounded-xl border ${chartTheme.tile.border} ${
+              chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
+            } px-4 py-3 text-center`}>
               <div className="text-xs sm:text-sm opacity-80">Weekly Apps</div>
               <div className="mt-1 text-lg sm:text-xl font-medium">
                 {weeklyApps}
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-center">
+            <div className={`rounded-xl border ${chartTheme.tile.border} ${
+              chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
+            } px-4 py-3 text-center`}>
               <div className="text-xs sm:text-sm opacity-80">Follow-ups</div>
               <div className="mt-1 text-lg sm:text-xl font-medium">
                 {followups}
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-center">
+            <div className={`rounded-xl border ${chartTheme.tile.border} ${
+              chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
+            } px-4 py-3 text-center`}>
               <div className="text-xs sm:text-sm opacity-80">Consistency</div>
               <div className="mt-1 text-lg sm:text-xl font-medium">
                 {consistency} days

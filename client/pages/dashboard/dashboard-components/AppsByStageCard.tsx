@@ -5,6 +5,8 @@ import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card"
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 const appsByStageTooltipHandler = (context: any) => {
   let tooltipEl = document.getElementById("chartjs-apps-by-stage-tooltip");
@@ -71,12 +73,6 @@ const appsByStageTooltipHandler = (context: any) => {
   tooltipEl.style.padding = "12px 14px";
 };
 
-const STAGE_COLORS: Record<string, string> = {
-  Applied: "#F59E0B",
-  Interview: "#22D3EE",
-  Offer: "#A78BFA",
-  Accepted: "#34D399",
-};
 const STAGE_ORDER = ["Applied", "Interview", "Offer", "Accepted"];
 
 export function AppsByStageCard({
@@ -86,6 +82,8 @@ export function AppsByStageCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,8 +140,15 @@ export function AppsByStageCard({
     };
   }, []);
 
+  const themedStageColors: Record<string, string> = {
+    Applied: chartTheme.stageColors.applied,
+    Interview: chartTheme.stageColors.interview,
+    Offer: chartTheme.stageColors.offer,
+    Accepted: chartTheme.stageColors.accepted,
+  };
+
   const palette = labels.map(
-    (label) => STAGE_COLORS[label] ?? "#64748B",
+    (label) => themedStageColors[label] ?? "#64748B",
   );
 
   const chartData: ChartData<"doughnut"> = {
@@ -177,7 +182,7 @@ export function AppsByStageCard({
   const renderContent = () => {
     const legendItems = STAGE_ORDER.map((stage) => ({
       label: stage,
-      color: STAGE_COLORS[stage],
+      color: themedStageColors[stage],
     }));
 
     if (loading) {
@@ -190,7 +195,7 @@ export function AppsByStageCard({
 
     if (!labels.length || !values.length) {
       return (
-        <div className="flex h-full items-center justify-center text-sm text-slate-300">
+        <div className={`flex h-full items-center justify-center text-sm ${chartTheme.emptyText}`}>
           No applications to display yet.
         </div>
       );

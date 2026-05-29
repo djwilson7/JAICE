@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
-import { makeDarkOptions } from "./chartTheme";
+import { getDashboardChartTheme } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
 
 const splitByStageTooltipHandler = (context: any) => {
   let tooltipEl = document.getElementById("chartjs-split-by-stage-tooltip");
@@ -81,6 +82,8 @@ export function SplitByStageCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const [labels, setLabels] = useState<string[]>([]);
   const [applied, setApplied] = useState<number[]>([]);
   const [interview, setInterview] = useState<number[]>([]);
@@ -135,12 +138,7 @@ export function SplitByStageCard({
   }, []);
 
   // Same palette as AppsOverTime
-  const colors = {
-    applied: "#F59E0B",
-    interview: "#22D3EE",
-    offer: "#A78BFA",
-    accepted: "#34D399",
-  };
+  const colors = chartTheme.stageColors;
   const legendItems = [
     { label: "Applied", color: colors.applied },
     { label: "Interview", color: colors.interview },
@@ -184,7 +182,9 @@ export function SplitByStageCard({
     ],
   };
 
-  const options: ChartOptions<"bar"> = makeDarkOptions<"bar">({
+  const options: ChartOptions<"bar"> = {
+    responsive: true,
+    maintainAspectRatio: false,
     interaction: {
       mode: "index",
       intersect: false,
@@ -203,24 +203,22 @@ export function SplitByStageCard({
     scales: {
       x: {
         stacked: false,
-        ticks: { color: "rgba(255,255,255,.9)" },
-        grid: { color: "rgba(255,255,255,0.04)" },
-        border: { color: "rgba(255,255,255,.25)" },
+        ticks: { color: chartTheme.axis },
+        grid: { color: chartTheme.grid },
+        border: { color: chartTheme.border },
       },
       y: {
         stacked: false,
         beginAtZero: true,
         ticks: {
-          color: "rgba(255,255,255,.9)",
+          color: chartTheme.axis,
           precision: 0,
         },
-        grid: { color: "rgba(255,255,255,0.04)" },
-        border: { color: "rgba(255,255,255,.25)" },
+        grid: { color: chartTheme.grid },
+        border: { color: chartTheme.border },
       },
     },
-    responsive: true,
-    maintainAspectRatio: false,
-  });
+  };
 
   const content = () => {
     if (loading) {
@@ -233,7 +231,7 @@ export function SplitByStageCard({
 
     if (!labels.length) {
       return (
-        <div className="flex h-full items-center justify-center text-sm text-slate-300">
+        <div className={`flex h-full items-center justify-center text-sm ${chartTheme.emptyText}`}>
           No applications to display yet.
         </div>
       );

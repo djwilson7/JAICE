@@ -5,6 +5,8 @@ import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
+import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { getDashboardChartTheme } from "./chartTheme";
 
 function normalizeWeekLabel(label: string) {
   return label.replace(/^\((WK\s+\d+)\)$/i, "$1");
@@ -101,6 +103,8 @@ export function AvgAppsPerWeekCard({
   className?: string;
   height?: number | string;
 }) {
+  const { theme } = useSettings();
+  const chartTheme = getDashboardChartTheme(theme);
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
   const [weekStartDates, setWeekStartDates] = useState<string[]>([]);
@@ -163,8 +167,8 @@ export function AvgAppsPerWeekCard({
       {
         label: "Applications / Week",
         data: values,
-        borderColor: "#E5E7EB",
-        backgroundColor: "rgba(229,231,235,0.16)",
+        borderColor: chartTheme.avgLine,
+        backgroundColor: chartTheme.avgFill,
         borderWidth: 3,
         pointRadius: 0,
         pointHoverRadius: 6,
@@ -192,10 +196,10 @@ export function AvgAppsPerWeekCard({
     },
     scales: {
       x: {
-        grid: { color: "rgba(255,255,255,0.04)" },
-        border: { color: "rgba(255,255,255,.25)" },
+        grid: { color: chartTheme.grid },
+        border: { color: chartTheme.border },
         ticks: {
-          color: "rgba(255,255,255,.85)",
+          color: chartTheme.axis,
           autoSkip: false,
           maxRotation: 0,
           minRotation: 0,
@@ -211,9 +215,9 @@ export function AvgAppsPerWeekCard({
       y: {
         beginAtZero: true,
         suggestedMax: maxValue + 1,
-        grid: { color: "rgba(255,255,255,0.04)" },
-        border: { color: "rgba(255,255,255,.25)" },
-        ticks: { color: "rgba(255,255,255,.85)" },
+        grid: { color: chartTheme.grid },
+        border: { color: chartTheme.border },
+        ticks: { color: chartTheme.axis },
       },
     },
   };
