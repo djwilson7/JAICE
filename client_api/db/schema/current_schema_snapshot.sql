@@ -1,5 +1,5 @@
 -- JAICE current Supabase schema baseline
--- Generated at: 2026-05-23T18:15:44.673669+00:00
+-- Generated at: 2026-05-28T13:55:39.171743+00:00
 -- Scope: schema-only; no table data is included.
 -- Source schemas: public, internal_staging
 
@@ -7,8 +7,6 @@ create schema if not exists public;
 create schema if not exists internal_staging;
 
 -- Extensions observed on source. Review before applying to a new Supabase project.
--- extension: pg_cron schema=pg_catalog version=1.6.4
--- extension: pg_net schema=extensions version=0.19.5
 -- extension: pg_stat_statements schema=extensions version=1.11
 -- extension: pgcrypto schema=extensions version=1.3
 -- extension: plpgsql schema=pg_catalog version=1.0
@@ -69,6 +67,20 @@ create table if not exists "public"."job_applications" (
     "salary" numeric
 );
 
+create table if not exists "public"."resumes" (
+    "id" uuid default gen_random_uuid() not null,
+    "user_uid" text not null,
+    "name" text default 'My Resume'::text not null,
+    "is_master" boolean default false not null,
+    "schema_version" integer default 1 not null,
+    "source_resume_id" uuid,
+    "resume_data" jsonb not null,
+    "target_job_title" text,
+    "target_job_description" text,
+    "created_at" timestamp with time zone default timezone('utc'::text, now()) not null,
+    "updated_at" timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 create table if not exists "public"."user_account" (
     "user_id" text not null,
     "user_email" text,
@@ -110,6 +122,9 @@ alter table only "public"."app_events" add constraint "app_events_job_fk_fkey" F
 alter table only "public"."job_applications" add constraint "job_applications_provider_message_id_key" UNIQUE (provider_message_id);
 alter table only "public"."job_applications" add constraint "job_applications_pkey" PRIMARY KEY (id);
 alter table only "public"."job_applications" add constraint "fk_user_account_uid" FOREIGN KEY (user_uid) REFERENCES user_account(user_id) ON DELETE CASCADE;
+alter table only "public"."resumes" add constraint "resumes_pkey" PRIMARY KEY (id);
+alter table only "public"."resumes" add constraint "resumes_source_resume_id_fkey" FOREIGN KEY (source_resume_id) REFERENCES resumes(id) ON DELETE SET NULL;
+alter table only "public"."resumes" add constraint "resumes_user_uid_fkey" FOREIGN KEY (user_uid) REFERENCES user_account(user_id) ON DELETE CASCADE;
 alter table only "public"."user_account" add constraint "user_account_pkey" PRIMARY KEY (user_id);
 alter table only "public"."user_notification_settings" add constraint "user_notification_settings_pkey" PRIMARY KEY (user_uid);
 alter table only "public"."user_notification_settings" add constraint "user_notification_settings_user_uid_fkey" FOREIGN KEY (user_uid) REFERENCES user_account(user_id) ON DELETE CASCADE;
@@ -120,6 +135,8 @@ CREATE INDEX idx_email_staging_user ON internal_staging.email_staging USING btre
 CREATE INDEX app_events_job_fk_idx ON public.app_events USING btree (job_fk);
 CREATE INDEX app_events_user_uid_idx ON public.app_events USING btree (user_uid);
 CREATE INDEX job_applications_user_uid_idx ON public.job_applications USING btree (user_uid);
+CREATE UNIQUE INDEX one_master_resume_per_user ON public.resumes USING btree (user_uid) WHERE (is_master = true);
+CREATE INDEX resumes_user_uid_idx ON public.resumes USING btree (user_uid);
 
 -- Rules
 
@@ -131,7 +148,7 @@ CREATE OR REPLACE FUNCTION internal_staging.remove_purged_emails()
  SET search_path TO 'internal_staging', 'pg_catalog'
 AS $function$
 BEGIN
-  DELETE FROM internal_staing.email_staging
+  DELETE FROM internal_staging.email_staging
   WHERE status = 'PURGE';
 END;
 $function$;
@@ -160,27 +177,29 @@ $function$;
 CREATE OR REPLACE FUNCTION public.broadcast_job_applications_changes()
  RETURNS trigger
  LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
 AS $function$
-DECLARE
+declare
   uid text;
-BEGIN
-  -- Pick correct user_uid depending on operation
-  uid := CASE
-           WHEN TG_OP = 'DELETE' THEN OLD.user_uid::text
-           ELSE NEW.user_uid::text
-         END;
+begin
+  uid := case
+           when tg_op = 'DELETE' then old.user_uid::text
+           else new.user_uid::text
+         end;
 
-  PERFORM public.broadcast_changes(
-    topic       := 'user:' || uid || ':job_applications',
-    schema_name := TG_TABLE_SCHEMA,
-    table_name  := TG_TABLE_NAME,
-    operation   := TG_OP,
-    old_record  := to_jsonb(OLD),
-    new_record  := to_jsonb(NEW)
+  perform realtime.broadcast_changes(
+    'user:' || uid || ':job_applications',
+    tg_op,
+    tg_op,
+    tg_table_name,
+    tg_table_schema,
+    new,
+    old
   );
 
-  RETURN NULL;
-END;
+  return null;
+end;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.handle_expired_soft_deletes()
@@ -245,6 +264,36 @@ BEGIN
 END;
 $function$;
 
+CREATE OR REPLACE FUNCTION public.rls_auto_enable()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE
+  cmd record;
+BEGIN
+  FOR cmd IN
+    SELECT *
+    FROM pg_event_trigger_ddl_commands()
+    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+      AND object_type IN ('table','partitioned table')
+  LOOP
+     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
+      BEGIN
+        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
+        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
+      END;
+     ELSE
+        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
+     END IF;
+  END LOOP;
+END;
+$function$;
+
 CREATE OR REPLACE FUNCTION public.set_uns_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -271,11 +320,13 @@ CREATE TRIGGER job_applications_realtime_trigger AFTER INSERT OR DELETE OR UPDAT
 CREATE TRIGGER on_job_applications_update BEFORE UPDATE ON job_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trigger_log_new_job_application AFTER INSERT ON job_applications FOR EACH ROW EXECUTE FUNCTION log_new_job_application();
 CREATE TRIGGER trigger_log_stage_change AFTER UPDATE ON job_applications FOR EACH ROW WHEN (old.app_stage IS DISTINCT FROM new.app_stage) EXECUTE FUNCTION log_stage_change();
+CREATE TRIGGER update_resumes_updated_at BEFORE UPDATE ON resumes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER set_uns_updated_at BEFORE UPDATE ON user_notification_settings FOR EACH ROW EXECUTE FUNCTION set_uns_updated_at();
 
 -- Row-level security
 alter table "public"."app_events" enable row level security;
 alter table "public"."job_applications" enable row level security;
+alter table "public"."resumes" enable row level security;
 alter table "public"."user_account" enable row level security;
 alter table "public"."user_notification_settings" enable row level security;
 create policy "Users can create their own job events."
@@ -328,6 +379,31 @@ as permissive
 for select
 to public
 using (((( SELECT auth.uid() AS uid))::text = user_uid));
+create policy "Users can delete their own resumes"
+on "public"."resumes"
+as permissive
+for delete
+to authenticated
+using ((user_uid = (auth.uid())::text));
+create policy "Users can insert their own resumes"
+on "public"."resumes"
+as permissive
+for insert
+to authenticated
+with check ((user_uid = (auth.uid())::text));
+create policy "Users can update their own resumes"
+on "public"."resumes"
+as permissive
+for update
+to authenticated
+using ((user_uid = (auth.uid())::text))
+with check ((user_uid = (auth.uid())::text));
+create policy "Users can view their own resumes"
+on "public"."resumes"
+as permissive
+for select
+to authenticated
+using ((user_uid = (auth.uid())::text));
 create policy "user_parser_access"
 on "public"."user_account"
 as permissive
@@ -370,6 +446,10 @@ grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "pu
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "authenticated";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "postgres";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "service_role";
+grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."resumes" to "anon";
+grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."resumes" to "authenticated";
+grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."resumes" to "postgres";
+grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."resumes" to "service_role";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."user_account" to "anon";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."user_account" to "authenticated";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."user_account" to "postgres";
@@ -399,6 +479,10 @@ grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "pu
 -- routine grant observed: EXECUTE on "public"."log_stage_change" to "authenticated"
 -- routine grant observed: EXECUTE on "public"."log_stage_change" to "postgres"
 -- routine grant observed: EXECUTE on "public"."log_stage_change" to "service_role"
+-- routine grant observed: EXECUTE on "public"."rls_auto_enable" to "anon"
+-- routine grant observed: EXECUTE on "public"."rls_auto_enable" to "authenticated"
+-- routine grant observed: EXECUTE on "public"."rls_auto_enable" to "postgres"
+-- routine grant observed: EXECUTE on "public"."rls_auto_enable" to "service_role"
 -- routine grant observed: EXECUTE on "public"."set_uns_updated_at" to "anon"
 -- routine grant observed: EXECUTE on "public"."set_uns_updated_at" to "authenticated"
 -- routine grant observed: EXECUTE on "public"."set_uns_updated_at" to "postgres"

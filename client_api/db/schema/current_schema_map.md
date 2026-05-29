@@ -1,6 +1,6 @@
 # Current Supabase Schema Discovery
 
-- Generated at: `2026-05-23T18:15:44.673669+00:00`
+- Generated at: `2026-05-28T13:55:39.171743+00:00`
 - Source: current `CLIENT_DATABASE_URL` from `.env`
 - Scope: schema only; no table data copied
 - Schemas: `public`, `internal_staging`
@@ -14,6 +14,7 @@
 - `internal_staging.email_staging`: 10 columns, RLS=off
 - `public.app_events`: 8 columns, RLS=on
 - `public.job_applications`: 22 columns, RLS=on
+- `public.resumes`: 11 columns, RLS=on
 - `public.user_account`: 13 columns, RLS=on
 - `public.user_notification_settings`: 15 columns, RLS=on
 
@@ -24,6 +25,7 @@
 - `public.handle_expired_soft_deletes()`
 - `public.log_new_job_application()`
 - `public.log_stage_change()`
+- `public.rls_auto_enable()`
 - `public.set_uns_updated_at()`
 - `public.update_updated_at_column()`
 
@@ -32,6 +34,7 @@
 - `public.job_applications` -> `on_job_applications_update`
 - `public.job_applications` -> `trigger_log_new_job_application`
 - `public.job_applications` -> `trigger_log_stage_change`
+- `public.resumes` -> `update_resumes_updated_at`
 - `public.user_notification_settings` -> `set_uns_updated_at`
 
 ## RLS Policies
@@ -43,6 +46,10 @@
 - `public.job_applications` -> `Users can delete their own job applications.` (DELETE)
 - `public.job_applications` -> `Users can update their own job applications.` (UPDATE)
 - `public.job_applications` -> `Users can view their own job applications.` (SELECT)
+- `public.resumes` -> `Users can delete their own resumes` (DELETE)
+- `public.resumes` -> `Users can insert their own resumes` (INSERT)
+- `public.resumes` -> `Users can update their own resumes` (UPDATE)
+- `public.resumes` -> `Users can view their own resumes` (SELECT)
 - `public.user_account` -> `user_parser_access` (ALL)
 - `public.user_notification_settings` -> `uns_insert_self` (INSERT)
 - `public.user_notification_settings` -> `uns_read_self` (SELECT)
@@ -56,6 +63,3 @@
 - Review the generated SQL before using it against a new Supabase project.
 - Supabase-managed schemas such as `auth`, `storage`, and extension schemas are intentionally not cloned.
 - Realtime internals are audited but not wholesale cloned.
-
-## Migration Review Warnings
-- `internal_staging.remove_purged_emails` references `internal_staing`; verify whether this source typo must be corrected before rebuild.
