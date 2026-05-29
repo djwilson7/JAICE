@@ -1,0 +1,2 @@
+"""Resume chat service package."""
+
