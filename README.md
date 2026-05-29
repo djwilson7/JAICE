@@ -44,6 +44,33 @@ The goal for this month is to be ready for **User Testing** next month. Our team
 - **Personalized Insights (planned)** — Recommendations using skills, experience, and market data.
 - **Grit Score(planned)** — A momentum metric to visualize consistency and progress.
 - **Notifications** — Fine-grained alerts for interviews, follow-ups, and deadlines.
+
+## Local Resume Chat Model
+The resume right rail defaults to a local Ollama model for privacy and to avoid hosted-model rate limits.
+
+Environment defaults:
+```
+RESUME_LLM_PROVIDER=ollama
+RESUME_LLM_MODEL=qwen2.5:1.5b
+RESUME_LLM_TIMEOUT_SECONDS=60
+RESUME_REWRITE_NUM_CTX=1536
+RESUME_REWRITE_NUM_PREDICT=450
+RESUME_REWRITE_TEMPERATURE=0.05
+OLLAMA_BASE_URL=http://local_llm:11434
+```
+
+If the backend runs in Docker and Ollama runs on the host, use:
+```
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+```
+
+By default, `docker compose up` starts the local Ollama server and runs a one-shot model loader that pulls `RESUME_LLM_MODEL` before the API starts. No separate model setup command is required for the Compose workflow.
+
+The default model is intentionally small enough for typical Docker Desktop memory limits. Larger models such as `qwen2.5:3b-instruct` may require increasing Docker's memory allocation.
+
+The right-rail chat and margin rewrite buttons use the same configured Ollama model. Rewrite buttons use a smaller dedicated prompt path and send only the selected section text, not the full resume or chat history. Rewrite suggestions are intentionally conservative: unsupported model-added facts are replaced with the original wording before the response reaches the UI.
+
+OpenAI is a configurable alternative only. Resume data, chat history, and job context are not sent to OpenAI unless `RESUME_LLM_PROVIDER=openai` is explicitly configured.
 - **Accessibility First** — Toggles and sensible defaults; designed for clarity and speed. 
 
 ## Technologies

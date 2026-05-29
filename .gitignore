@@ -42,11 +42,9 @@ src/server/.env
 **/client_secrets.json
 **/credentials.json
 
-# Docker files
-.dockerignore
-
 # VS CODE Scripts
 **/.vscode/
 
 */model/
 ROTATION_PLAN.md 
+scratch/
