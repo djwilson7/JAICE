@@ -12,23 +12,49 @@ services:
     build:
       context: .
       dockerfile: ./client_api/Dockerfile.client_api
+    command: >
+      uvicorn client_api.main:app --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /app/client_api --reload-dir /app/common --reload-dir /app/OpenAI
     env_file:
       - .env
+    environment:
+      RESUME_LLM_PROVIDER: ${RESUME_LLM_PROVIDER:-ollama}
+      RESUME_LLM_MODEL: ${RESUME_LLM_MODEL:-qwen2.5:1.5b}
+      RESUME_LLM_TIMEOUT_SECONDS: ${RESUME_LLM_TIMEOUT_SECONDS:-60}
+      RESUME_REWRITE_NUM_CTX: ${RESUME_REWRITE_NUM_CTX:-1536}
+      RESUME_REWRITE_NUM_PREDICT: ${RESUME_REWRITE_NUM_PREDICT:-450}
+      RESUME_REWRITE_TEMPERATURE: ${RESUME_REWRITE_TEMPERATURE:-0.05}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://local_llm:11434}
     ports:
       - "8000:8000"
+    volumes:
+      - ./client_api:/app/client_api
+      - ./common:/app/common
+      - ./OpenAI:/app/OpenAI
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      local_llm:
+        condition: service_healthy
+      local_llm_model_loader:
+        condition: service_completed_successfully
 
-  # Runs the front end in build mode
-  # frontend:
-  #   container_name: frontend
-  #   build:
-  #     context: .
-  #     dockerfile: ./src/client/Dockerfile.client
-  #   ports:
-  #     - "5173:80"
-  #   depends_on:
-  #     - core_api
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile.client
+      target: dev
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - client_api
 
 
   gmail_request_intake:
@@ -37,9 +63,15 @@ services:
       context: .
       dockerfile: ./gmail/Dockerfile.gmail
     command: >
+      watchmedo auto-restart --directory=/app/gmail --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
       celery -A gmail.gmail_worker worker -Q gmail_initial_sync_queue -l info -E -n request_intake -c 15
     env_file:
       - .env
+    volumes:
+      - ./gmail:/app/gmail
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
     depends_on:
       - redis
 
@@ -49,9 +81,15 @@ services:
       context: .
       dockerfile: ./gmail/Dockerfile.gmail
     command: >
+      watchmedo auto-restart --directory=/app/gmail --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
       celery -A gmail.gmail_worker worker -Q gmail_fetch_content_queue -l info -E -n fetch_content -c 15
     env_file:
       - .env
+    volumes:
+      - ./gmail:/app/gmail
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
     depends_on:
       - redis
 
@@ -61,12 +99,15 @@ services:
       context: .
       dockerfile: ./relevance/Dockerfile.relevance
     command: >
+      watchmedo auto-restart --directory=/app/relevance --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
       celery -A relevance.relevance_worker worker -Q relevance_model_queue -l info -E -n relevance_model -c 3
     env_file:
       - .env
     volumes:
       - ./relevance:/app/relevance
       - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
     depends_on:
       - redis
 
@@ -76,9 +117,15 @@ services:
       context: .
       dockerfile: ./classification/Dockerfile.classification
     command: >
+      watchmedo auto-restart --directory=/app/classification --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
       celery -A classification.class_worker worker -Q classification_model_queue -l info -E -n classification_model -c 1
     env_file:
       - .env
+    volumes:
+      - ./classification:/app/classification
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
     depends_on:
       - redis
 
@@ -88,9 +135,15 @@ services:
       context: .
       dockerfile: ./ner/Dockerfile.ner
     command: >
+      watchmedo auto-restart --directory=/app/ner --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
       celery -A ner.ner_worker worker -Q ner_model_queue -l info -E -n ner_model -c 2
     env_file:
       - .env
+    volumes:
+      - ./ner:/app/ner
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
     depends_on:
       - redis
 
@@ -106,19 +159,32 @@ services:
     depends_on:
       - redis
 
-
-  openai_worker:
-    container_name: openai_worker
-    build:
-      context: .
-      dockerfile: ./OpenAI/Dockerfile.OpenAI
-    command: >
-      celery -A OpenAI.OpenAI_worker worker -Q openai_model_queue -l info -E -n openai_model -c 3
-    env_file:
-      - .env
+  local_llm:
+    container_name: local_llm
+    image: ollama/ollama:0.5.7
+    ports:
+      - "11434:11434"
     volumes:
-      - ./OpenAI:/app/OpenAI
-      - ./shared_worker_library:/app/shared_worker_library
-      - ./common:/app/common
+      - local_llm_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  local_llm_model_loader:
+    container_name: local_llm_model_loader
+    image: ollama/ollama:0.5.7
+    command: ["pull", "${RESUME_LLM_MODEL:-qwen2.5:1.5b}"]
+    volumes:
+      - local_llm_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: http://local_llm:11434
     depends_on:
-      - redis
+      local_llm:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  local_llm_data:
