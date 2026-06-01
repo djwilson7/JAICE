@@ -267,15 +267,20 @@ def _font_face_css() -> str:
     root = Path(__file__).resolve().parents[2]
     font_root = root / "client" / "assets" / "fonts"
     fonts = [
-        ("Poppins", 400, font_root / "Poppins" / "Poppins-Regular.ttf"),
-        ("Poppins", 500, font_root / "Poppins" / "Poppins-Medium.ttf"),
-        ("Poppins", 600, font_root / "Poppins" / "Poppins-SemiBold.ttf"),
-        ("Poppins", 700, font_root / "Poppins" / "Poppins-Bold.ttf"),
-        ("Baskerville", 400, font_root / "Libre_Baskerville" / "LibreBaskerville-Regular.ttf"),
-        ("Baskerville", 700, font_root / "Libre_Baskerville" / "LibreBaskerville-Bold.ttf"),
+        ("Poppins", 400, "normal", font_root / "Poppins" / "Poppins-Regular.ttf"),
+        ("Poppins", 400, "italic", font_root / "Poppins" / "Poppins-Italic.ttf"),
+        ("Poppins", 500, "normal", font_root / "Poppins" / "Poppins-Medium.ttf"),
+        ("Poppins", 500, "italic", font_root / "Poppins" / "Poppins-MediumItalic.ttf"),
+        ("Poppins", 600, "normal", font_root / "Poppins" / "Poppins-SemiBold.ttf"),
+        ("Poppins", 600, "italic", font_root / "Poppins" / "Poppins-SemiBoldItalic.ttf"),
+        ("Poppins", 700, "normal", font_root / "Poppins" / "Poppins-Bold.ttf"),
+        ("Poppins", 700, "italic", font_root / "Poppins" / "Poppins-BoldItalic.ttf"),
+        ("Baskerville", 400, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Regular.ttf"),
+        ("Baskerville", 400, "italic", font_root / "Libre_Baskerville" / "LibreBaskerville-Italic.ttf"),
+        ("Baskerville", 700, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Bold.ttf"),
     ]
     rules = []
-    for family, weight, path in fonts:
+    for family, weight, style, path in fonts:
         data_uri = _font_data_uri(path)
         if not data_uri:
             continue
@@ -283,7 +288,7 @@ def _font_face_css() -> str:
             "@font-face { "
             f"font-family: '{family}'; "
             f"src: url('{data_uri}') format('truetype'); "
-            f"font-weight: {weight}; font-style: normal; font-display: block; "
+            f"font-weight: {weight}; font-style: {style}; font-display: block; "
             "}"
         )
     return "\n".join(rules)
@@ -362,29 +367,28 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
         experience_items = []
         for exp in payload.experience:
             bullets = "".join(
-                f"<li>{_safe_text(bullet.text)}</li>"
+                f"<div class='bullet-row'><span class='bullet-marker'>&bull;</span><div class='bullet-text'>{_safe_text(bullet.text)}</div></div>"
                 for bullet in (exp.bullets or [])
                 if bullet.text and bullet.text.strip()
             )
             date_parts = [part for part in [exp.startDate, exp.endDate] if part and part.strip()]
             dates = ""
             if date_parts:
-                dates = "<div class='date-row'>" + "<span class='date-separator'>-</span>".join(_safe_text(part) for part in date_parts) + "</div>"
+                dates = "<div class='date-row'>" + "<span class='date-separator'>-</span>".join(
+                    f"<span class='date-field'>{_safe_text(part)}</span>" for part in date_parts
+                ) + "</div>"
             left_parts = [
-                f"<strong>{_safe_text(exp.jobTitle)}</strong>" if exp.jobTitle else "",
-                f"<strong>{_safe_text(exp.company)}</strong>" if exp.company else "",
-                f"<strong>{_safe_text(exp.location)}</strong>" if exp.location else "",
+                f"<span class='meta-field meta-field-title'>{_safe_text(exp.jobTitle)}</span>" if exp.jobTitle else "",
+                f"<span class='meta-field meta-field-company'>{_safe_text(exp.company)}</span>" if exp.company else "",
+                f"<span class='meta-field meta-field-location'>{_safe_text(exp.location)}</span>" if exp.location else "",
             ]
             left_html = "<span class='meta-separator'>|</span>".join([part for part in left_parts if part])
             if not left_html and not dates and not bullets:
                 continue
             experience_items.append(f"""
                 <article class="experience-item">
-                    <div class="meta-row">
-                        <div class="meta-left">{left_html}</div>
-                        {dates}
-                    </div>
-                    {f"<ul>{bullets}</ul>" if bullets else ""}
+                    {f"<div class='meta-row experience-row'><div class='meta-left'>{left_html}</div>{dates}</div>" if left_html or dates else ""}
+                    {f"<div class='bullet-stack experience-bullets'>{bullets}</div>" if bullets else ""}
                 </article>
             """)
         if experience_items:
@@ -399,28 +403,27 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
         education_items = []
         for ed in payload.education:
             details = "".join(
-                f"<li>{_safe_text(detail.text)}</li>"
+                f"<div class='bullet-row'><span class='bullet-marker'>&bull;</span><div class='bullet-text'>{_safe_text(detail.text)}</div></div>"
                 for detail in (ed.details or [])
                 if detail.text and detail.text.strip()
             )
             date_parts = [part for part in [ed.startDate, ed.endDate] if part and part.strip()]
             dates = ""
             if date_parts:
-                dates = "<div class='date-row'>" + "<span class='date-separator'>-</span>".join(_safe_text(part) for part in date_parts) + "</div>"
+                dates = "<div class='date-row'>" + "<span class='date-separator'>-</span>".join(
+                    f"<span class='date-field'>{_safe_text(part)}</span>" for part in date_parts
+                ) + "</div>"
             left_parts = [
-                f"<strong>{_safe_text(ed.degree)}</strong>" if ed.degree else "",
-                f"<strong>{_safe_text(ed.school)}</strong>" if ed.school else "",
+                f"<span class='meta-field meta-field-degree'>{_safe_text(ed.degree)}</span>" if ed.degree else "",
+                f"<span class='meta-field meta-field-school'>{_safe_text(ed.school)}</span>" if ed.school else "",
             ]
             left_html = "<span class='meta-separator'>|</span>".join([part for part in left_parts if part])
             if not left_html and not dates and not details:
                 continue
             education_items.append(f"""
                 <article class="education-item">
-                    <div class="meta-row education-row">
-                        <div class="meta-left">{left_html}</div>
-                        {dates}
-                    </div>
-                    {f"<ul class='education-details'>{details}</ul>" if details else ""}
+                    {f"<div class='meta-row education-row'><div class='meta-left'>{left_html}</div>{dates}</div>" if left_html or dates else ""}
+                    {f"<div class='bullet-stack education-details'>{details}</div>" if details else ""}
                 </article>
             """)
         if education_items:
@@ -439,9 +442,9 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             continue
         skill_rows.append(f"""
             <div class="skill-row">
-                {f"<strong>{_safe_text(category)}</strong>" if category else ""}
+                {f"<span class='skill-category'>{_safe_text(category)}</span>" if category else ""}
                 {f"<span class='skill-colon'>:</span>" if category else ""}
-                <span>{_safe_text(", ".join(items))}</span>
+                <span class="skill-items">{_safe_text(", ".join(items))}</span>
             </div>
         """)
     if skill_rows:
@@ -454,7 +457,8 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
 
     css = f"""
         {_font_face_css()}
-        @page {{ size: {page_name}; margin: 0; }}
+        /* Canvas-first typography: mirrors client/pages/Resume/resumeTypography.ts. */
+        @page {{ size: {page_name}; margin: {margin_pt}pt; }}
         html, body {{
             margin: 0;
             padding: 0;
@@ -465,32 +469,40 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
         }}
         * {{ box-sizing: border-box; }}
         body {{
-            width: {page_width};
-            min-height: {page_height};
-            font-family: Poppins, Arial, sans-serif;
+            font-family: Baskerville, serif;
             font-size: {body_font}px;
             line-height: 1.38;
             text-align: left;
         }}
         .page {{
-            width: {page_width};
-            min-height: {page_height};
-            padding: {margin_pt}pt;
+            width: 100%;
+            min-height: 100%;
+            padding: 0;
             background: #ffffff;
         }}
         .resume-section {{
             width: 100%;
             margin: 0 0 {section_gap}px;
             text-align: left;
+            break-inside: auto;
+        }}
+        .resume-section h2 {{
+            break-after: avoid;
+        }}
+        .experience-item,
+        .education-item,
+        .skill-row {{
+            break-inside: avoid;
         }}
         .final-section {{ margin-bottom: 0; }}
         h1 {{
-            margin: 0 0 4px;
-            padding: 2px 0;
+            margin: 0 0 2px;
+            padding: 4px 6px;
             text-align: center;
             font-family: Poppins, Arial, sans-serif;
             font-size: {title_font}px;
             font-weight: 700;
+            font-style: normal;
             line-height: 1;
             color: #0f172a;
         }}
@@ -524,9 +536,10 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             margin: 0 0 4px;
             padding: 0 0 2px;
             border-bottom: 1px solid #cbd5e1;
-            font-family: Arial, sans-serif;
+            font-family: Poppins, Arial, sans-serif;
             font-size: {header_font}px;
             font-weight: 700;
+            font-style: normal;
             line-height: 1.1;
             letter-spacing: 0;
             text-align: left;
@@ -535,12 +548,15 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
         }}
         .body-text {{
             margin: 0;
+            padding: 2px 6px;
             color: #334155;
-            font-family: Poppins, Arial, sans-serif;
+            font-family: Baskerville, serif;
             font-size: {body_font}px;
             font-weight: 400;
-            line-height: 1.38;
+            font-style: normal;
+            line-height: 1.45;
             text-align: left;
+            white-space: pre-wrap;
         }}
         .item-stack {{
             display: flex;
@@ -552,84 +568,140 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             display: flex;
             align-items: baseline;
             justify-content: space-between;
-            gap: 16px;
-            margin: 0 0 6px;
+            flex-wrap: wrap;
+            column-gap: 16px;
+            row-gap: 4px;
+            margin: 0;
             color: #475569;
             font-family: Poppins, Arial, sans-serif;
             font-size: {body_font}px;
             font-weight: 500;
+            font-style: normal;
             line-height: 1.25;
-            white-space: nowrap;
         }}
+        .experience-row {{ margin-bottom: 10px; }}
         .education-row {{ margin-bottom: 0; }}
-        .education-details {{
-            margin-top: 3px;
-        }}
         .meta-left {{
             display: flex;
             align-items: baseline;
-            gap: 9px;
+            flex-wrap: wrap;
+            gap: 6px;
             min-width: 0;
             flex: 1 1 auto;
-            overflow: hidden;
+            overflow: visible;
         }}
-        .meta-left strong {{
+        .meta-field,
+        .date-field {{
             flex: 0 0 auto;
+            padding: 2px 6px;
+            font-style: normal;
+        }}
+        .meta-field-title,
+        .meta-field-degree {{
+            color: #0f172a;
             font-weight: 700;
+        }}
+        .meta-field-company,
+        .meta-field-school {{
+            color: #1f2937;
+            font-weight: 600;
+        }}
+        .meta-field-location {{
+            color: #475569;
+            font-weight: 600;
         }}
         .date-row {{
             display: flex;
             align-items: baseline;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 4px;
             flex: 0 0 auto;
             color: #475569;
             font-weight: 500;
+            font-style: normal;
         }}
-        ul {{
-            margin: 0 0 0 18px;
-            padding: 0;
-            color: #334155;
-            font-family: Poppins, Arial, sans-serif;
+        .bullet-stack {{
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin: 0 0 0 12px;
+        }}
+        .education-details {{
+            margin-top: 2px;
+        }}
+        .bullet-row {{
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            border: 1px solid transparent;
+        }}
+        .bullet-marker {{
+            display: inline-block;
+            flex: 0 0 auto;
+            padding: 2px 0;
+            color: #475569;
+            font-family: Baskerville, serif;
             font-size: {body_font}px;
             font-weight: 400;
+            font-style: normal;
             line-height: 1.38;
-            list-style-position: outside;
-            list-style-type: disc;
         }}
-        li {{
-            display: list-item;
-            margin: 0 0 4px;
-            padding-left: 4px;
+        .bullet-text {{
+            min-width: 0;
+            flex: 1 1 auto;
+            padding: 2px 6px;
+            color: #334155;
+            font-family: Baskerville, serif;
+            font-size: {body_font}px;
+            font-weight: 400;
+            font-style: normal;
+            line-height: 1.38;
             text-align: left;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
         }}
         .skill-stack {{
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }}
         .skill-row {{
             display: flex;
-            align-items: baseline;
+            align-items: flex-start;
             justify-content: flex-start;
-            gap: 8px;
+            gap: 6px;
             color: #334155;
-            font-family: Poppins, Arial, sans-serif;
+            font-family: Baskerville, serif;
             font-size: {body_font}px;
             font-weight: 400;
+            font-style: normal;
             line-height: 1.38;
             text-align: left;
         }}
-        .skill-row strong {{
-            min-width: 88px;
+        .skill-category {{
             flex: 0 0 auto;
+            padding: 2px 6px;
             color: #0f172a;
+            font-family: Poppins, Arial, sans-serif;
             font-weight: 700;
+            font-style: normal;
+            line-height: 1.25;
             text-align: left;
         }}
         .skill-colon {{
             flex: 0 0 auto;
+            padding-top: 4px;
             color: #0f172a;
+            font-family: Baskerville, serif;
             font-weight: 700;
+            font-style: normal;
+            line-height: 1;
+        }}
+        .skill-items {{
+            min-width: 0;
+            padding: 2px 6px;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
         }}
     """
 
