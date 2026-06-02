@@ -9,7 +9,7 @@
   All React-rendered content lives inside this container.
 
   The @font-face declarations register our primary typefaces
-  (Baskerville and Poppins) for consistent typography across the app.
+  (Libre Baskerville and Poppins) for consistent typography across the app.
   Fonts are loaded with `font-display: swap` to ensure fast rendering
   and avoid layout jank during fallback → custom font transitions.
 
@@ -26,17 +26,57 @@
 }
 
 @font-face {
-  font-family: "Baskerville";
-  src: url("/fonts/LibreBaskerville-Regular.ttf") format("truetype");
-  font-weight: normal;
+  font-family: "Libre Baskerville";
+  src: url("/fonts/Libre_Baskerville/LibreBaskerville-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Poppins";
-  src: url("/fonts/Poppins-Regular.ttf") format("truetype");
-  font-weight: normal;
+  src: url("/fonts/Poppins/Poppins-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Baskerville";
+  src: url("/fonts/Libre_Baskerville/LibreBaskerville-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Baskerville";
+  src: url("/fonts/Libre_Baskerville/LibreBaskerville-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/Poppins/Poppins-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/Poppins/Poppins-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/Poppins/Poppins-Bold.ttf") format("truetype");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -222,8 +262,8 @@
   --text-red: var(--red-color);
   --text-orange: var(--orange-color);
 
-  --font-title: "Baskerville", serif;
-  --font-headline: "Baskerville", serif;
+  --font-title: "Libre Baskerville", serif;
+  --font-headline: "Libre Baskerville", serif;
   --font-subheading: "Poppins", sans-serif;
   --font-body: "Poppins", sans-serif;
   --font-caption: "Poppins", sans-serif;
@@ -382,8 +422,8 @@ html[data-theme="light"] {
   --text-red: var(--red-color);
   --text-orange: var(--orange-color);
 
-  --font-title: "Baskerville", serif;
-  --font-headline: "Baskerville", serif;
+  --font-title: "Libre Baskerville", serif;
+  --font-headline: "Libre Baskerville", serif;
   --font-subheading: "Poppins", sans-serif;
   --font-body: "Poppins", sans-serif;
   --font-caption: "Poppins", sans-serif;
@@ -638,8 +678,8 @@ html[data-contrast="bw"] {
   --text-red: var(--red-color);
   --text-orange: var(--orange-color);
 
-  --font-title: "Baskerville", serif;
-  --font-headline: "Baskerville", serif;
+  --font-title: "Libre Baskerville", serif;
+  --font-headline: "Libre Baskerville", serif;
   --font-subheading: "Poppins", sans-serif;
   --font-body: "Poppins", sans-serif;
   --font-caption: "Poppins", sans-serif;
