@@ -1,0 +1,27 @@
+[run]
+branch = True
+relative_files = True
+omit =
+    */__pycache__/*
+    */.venv/*
+    */setup.py
+    */__init__.py
+    client_api/api/resume.py
+    client_api/services/resume_chat/*
+    client_api/db/schema/*
+    client_api/db/validate_new_supabase_schema.py
+    client_api/db/apply_migration_asyncpg.py
+    classification/class_worker.py
+    gmail/gmail_worker.py
+    relevance/relevance_worker.py
+    ner/ner_worker.py
+    OpenAI/*
+    supabase/*
+    */Dockerfile*
+
+[report]
+precision = 2
+skip_empty = True
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:

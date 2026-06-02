@@ -37,6 +37,9 @@ src/server/.env
 # Python cache files
 **/__pycache__/
 **/*.pyc
+.coverage
+coverage.json
+htmlcov/
 
 # Credentials files
 **/client_secrets.json
