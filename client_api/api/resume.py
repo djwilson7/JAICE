@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Body, Request
 from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import Any, List, Optional
 import uuid
 import json
@@ -86,7 +86,8 @@ class SkillCategory(BaseModel):
     category: str = "Skills"
     items: List[str] = []
 
-    @validator("items", pre=True)
+    @field_validator("items", mode="before")
+    @classmethod
     def normalize_items(cls, value):
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item and item.strip()]
@@ -123,7 +124,8 @@ class ResumeData(BaseModel):
     hiddenContactFields: List[str] = []
     formatting: ResumeFormatting = ResumeFormatting()
 
-    @validator("skills", pre=True)
+    @field_validator("skills", mode="before")
+    @classmethod
     def normalize_skills(cls, value):
         if not value:
             return []
@@ -839,7 +841,7 @@ async def save_resume(
                     payload.name,
                     payload.is_master,
                     source_id,
-                    payload.resume_data.json(),
+                    payload.resume_data.model_dump_json(),
                     payload.target_job_title,
                     payload.target_job_description
                 )
@@ -909,7 +911,7 @@ async def update_resume(
                     query,
                     payload.name,
                     payload.is_master,
-                    payload.resume_data.json(),
+                    payload.resume_data.model_dump_json(),
                     payload.target_job_title,
                     payload.target_job_description,
                     res_uuid,
@@ -1065,7 +1067,7 @@ async def evaluate_resume_structured_endpoint(
     try:
         from OpenAI.OpenAI_model import evaluate_resume_structured
 
-        out = evaluate_resume_structured(payload.dict())
+        out = evaluate_resume_structured(payload.model_dump())
         return EvaluateStructuredResponse(**out)
     except Exception as e:
         logging.error("Error evaluating structured resume", exc_info=True)
@@ -1092,7 +1094,7 @@ async def tailor_resume_endpoint(
         from OpenAI.OpenAI_model import tailor_resume_ai
         
         out = tailor_resume_ai(
-            resume_data=payload.resume_data.dict(),
+            resume_data=payload.resume_data.model_dump(),
             job_description=payload.job_description
         )
         return TailorResumeResponse(**out)
@@ -1116,7 +1118,7 @@ async def analyze_listing_endpoint(
         from OpenAI.OpenAI_model import analyze_job_overlap_ai
         
         out = analyze_job_overlap_ai(
-            resume_data=payload.resume_data.dict(),
+            resume_data=payload.resume_data.model_dump(),
             job_description=payload.job_description
         )
         return AnalysisResponse(**out)
