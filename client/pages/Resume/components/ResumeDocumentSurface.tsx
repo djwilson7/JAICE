@@ -240,7 +240,7 @@ export const ResumeDocumentSurface: React.FC<ResumeDocumentSurfaceProps> = ({
                                         {(exp.bullets || []).some((bullet) => hasText(bullet.text)) && (
                                             <div style={{ display: "flex", flexDirection: "column", gap: RESUME_DOCUMENT_TYPOGRAPHY.educationDetailGapPx, margin: `0 0 0 ${RESUME_DOCUMENT_TYPOGRAPHY.bulletIndentPx}px` }}>
                                                 {(exp.bullets || []).filter((bullet) => hasText(bullet.text)).map((bullet) => (
-                                                    <div key={bullet.id} style={bulletRowStyle}>
+                                                    <div key={bullet.id} className="resume-diagnostic-bullet-row" data-resume-diagnostic="bullet-row" style={bulletRowStyle}>
                                                         <span style={bulletMarkerStyle}>&bull;</span>
                                                         <div style={bulletTextStyle}>{bullet.text}</div>
                                                     </div>
@@ -315,7 +315,7 @@ export const ResumeDocumentSurface: React.FC<ResumeDocumentSurfaceProps> = ({
                                         {details.length > 0 && (
                                             <div style={{ display: "flex", flexDirection: "column", gap: RESUME_DOCUMENT_TYPOGRAPHY.educationDetailGapPx, margin: `${RESUME_DOCUMENT_TYPOGRAPHY.educationDetailGapPx}px 0 0 ${RESUME_DOCUMENT_TYPOGRAPHY.bulletIndentPx}px` }}>
                                                 {details.map((detail) => (
-                                                    <div key={detail.id} style={bulletRowStyle}>
+                                                    <div key={detail.id} className="resume-diagnostic-bullet-row" data-resume-diagnostic="bullet-row" style={bulletRowStyle}>
                                                         <span style={bulletMarkerStyle}>&bull;</span>
                                                         <div style={bulletTextStyle}>{detail.text}</div>
                                                     </div>

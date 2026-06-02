@@ -78,11 +78,25 @@ export const deleteSavedResume = (id: string) => {
     }) as Promise<{ status: "success" }>;
 };
 
-export const exportResumePdf = (resumeData: ResumeData) => {
-    return apiBlob("/api/resume/export-pdf", {
+export const exportResumePdf = (resumeData: ResumeData, debugPdf = false) => {
+    const path = debugPdf ? "/api/resume/export-pdf?debug_pdf=1" : "/api/resume/export-pdf";
+    return apiBlob(path, {
         method: "POST",
         body: JSON.stringify(resumeData)
     });
+};
+
+export const saveResumeRenderDiagnostics = (payload: unknown) => {
+    return api("/api/resume/debug/render-diagnostics?debug_pdf=1", {
+        method: "POST",
+        body: JSON.stringify(payload)
+    }) as Promise<{
+        status: "success";
+        latest_path: string;
+        snapshot_path: string;
+        host_latest_path?: string | null;
+        host_snapshot_path?: string | null;
+    }>;
 };
 
 export const streamResumeTailorSuggestion = async (

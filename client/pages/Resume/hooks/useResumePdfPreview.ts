@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ResumeData, ResumeFormatting } from "../types";
 import { normalizeResumeDataForPayload } from "../resumeData";
 import { exportResumePdf } from "../resumeApi";
+import { isResumeDebugEnabled } from "../resumeDiagnostics";
 
 type UseResumePdfPreviewParams = {
     resumeData: ResumeData;
@@ -55,7 +56,7 @@ export const useResumePdfPreview = ({
         setIsGeneratingPdfPreview(true);
 
         try {
-            const { blob, filename } = await exportResumePdf(exportData);
+            const { blob, filename } = await exportResumePdf(exportData, isResumeDebugEnabled());
             const objectUrl = URL.createObjectURL(blob);
             setPdfPreviewUrl((currentUrl) => {
                 revokePdfPreviewUrl(currentUrl);

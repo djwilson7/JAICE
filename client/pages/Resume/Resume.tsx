@@ -16,10 +16,12 @@ import { useResumeChat } from "./hooks/useResumeChat";
 import { useResumeRewriteSuggestions } from "./hooks/useResumeRewriteSuggestions";
 import { useResumePdfPreview } from "./hooks/useResumePdfPreview";
 import { useResumeDocumentViewModel } from "./documentViewModel";
+import { isResumeDebugEnabled } from "./resumeDiagnostics";
 
 export function Resume() {
     const { theme } = useSettings();
     const isLightMode = theme === "light";
+    const resumeDebugEnabled = isResumeDebugEnabled();
 
     const formatting = useResumeFormatting(isLightMode);
     const {
@@ -346,7 +348,14 @@ export function Resume() {
                 id="resume-print-comparison-harness"
                 aria-hidden="true"
                 data-comparison="ResumePrintDocument vs ResumeDocumentSurface"
-                style={{ display: "none" }}
+                style={resumeDebugEnabled ? {
+                    position: "absolute",
+                    left: "-10000px",
+                    top: 0,
+                    opacity: 0,
+                    pointerEvents: "none",
+                    zIndex: -1
+                } : { display: "none" }}
             >
                 <ResumeDocumentSurface
                     rootId="resume-document-surface-print-comparison"
@@ -585,6 +594,7 @@ export function Resume() {
                 closePdfPreview={closePdfPreview}
                 downloadPdfPreview={downloadPdfPreview}
                 openPdfPreview={openPdfPreview}
+                loadingList={loadingList}
             />
             <ResumeChatRail
                 isLightMode={isLightMode}

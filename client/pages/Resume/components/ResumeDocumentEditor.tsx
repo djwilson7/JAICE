@@ -683,7 +683,8 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                             <React.Fragment key={b.id}>
                                                             <div
                                                                 key={b.id}
-                                                                className="relative group/bullet flex items-start gap-2 rounded-sm border border-transparent"
+                                                                className="resume-diagnostic-bullet-row relative group/bullet flex items-start gap-2 rounded-sm border border-transparent"
+                                                                data-resume-diagnostic="bullet-row"
                                                             >
                                                                 <span
                                                                     className="text-slate-600 select-none py-0.5 leading-[1.38]"
@@ -938,7 +939,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                             {(visibleEducationDetails.length > 0 || showEducationFields) && (
                                                 <div className="ml-3 mt-0.5 space-y-0.5 relative z-20">
                                                     {visibleEducationDetails.map((detail, detailIdx) => (
-                                                        <div key={detail.id} className="relative flex items-start gap-2 rounded-sm border border-transparent">
+                                                        <div key={detail.id} className="resume-diagnostic-bullet-row relative flex items-start gap-2 rounded-sm border border-transparent" data-resume-diagnostic="bullet-row">
                                                             <span
                                                                 className="text-slate-600 select-none py-0.5 leading-[1.38]"
                                                                 style={{ ...documentTextStyle, display: "inline-block" }}

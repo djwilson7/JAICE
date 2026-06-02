@@ -6,6 +6,8 @@ import { ResumeCanvas } from "./ResumeCanvas";
 import { ResumeDocumentEditor } from "./ResumeDocumentEditor";
 import { ResumePdfPreview } from "./ResumePdfPreview";
 import { PageStyleShelf } from "./PageStyleShelf";
+import { saveResumeRenderDiagnostics } from "../resumeApi";
+import { RESUME_RENDER_DIAGNOSTICS_VERSION, buildResumeRenderDiagnostics, isResumeDebugEnabled } from "../resumeDiagnostics";
 
 type OverlayInputParams = {
     path: string;
@@ -121,6 +123,7 @@ type ResumeWorkspaceProps = {
     pageSize: PageSize; setPageSize: React.Dispatch<React.SetStateAction<PageSize>>; setTitleFontSize: React.Dispatch<React.SetStateAction<number>>; headerFontSize: number; setHeaderFontSize: React.Dispatch<React.SetStateAction<number>>; setBodyFontSize: React.Dispatch<React.SetStateAction<number>>; setPageMarginPt: React.Dispatch<React.SetStateAction<number>>; paperLayoutFormat: PaperLayoutFormat; setPaperLayoutFormat: React.Dispatch<React.SetStateAction<PaperLayoutFormat>>; setFontPreviewTarget: React.Dispatch<React.SetStateAction<FontPreviewTarget | null>>; setIsMarginPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsPageFormatPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsSectionGapPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
     toolbarSurfaceStyle: React.CSSProperties; documentToolButtonClass: string; handleTogglePageStyleShelf: () => void; handleFitZoom: () => void; zoomMode: ZoomMode; manualZoom: number; setZoomMode: React.Dispatch<React.SetStateAction<ZoomMode>>; setManualZoom: React.Dispatch<React.SetStateAction<number>>; zoomPercent: number;
     isPdfPreviewOpen: boolean; pdfPreviewUrl: string | null; pdfPreviewFilename: string; isGeneratingPdfPreview: boolean; canDownloadPdfPreview: boolean; closePdfPreview: () => void; downloadPdfPreview: () => void; openPdfPreview: () => void | Promise<void>;
+    loadingList: boolean;
 };
 
 export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
@@ -131,8 +134,113 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         activeDocumentSection, setActiveDocumentSection, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId,
         renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, isFieldChanged, getSuggestionReviewClass, updateField, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, updateBulletText, removeBullet, updateEducationField, addEducation, removeEducation, addEducationDetailWithText, updateEducationDetailText, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleAnalyzeSummary, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setResumeData, setChangeMetadata,
         isPageStyleShelfOpen, isPageStyleShelfCompact, shelfSurfaceStyle, shelfSectionClass, shelfSectionTitleClass, shelfControlLabelClass, shelfDividerClass, shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass, shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass, pageSize, setPageSize, setTitleFontSize, headerFontSize, setHeaderFontSize, setBodyFontSize, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible, setIsPageFormatPreviewVisible, setIsSectionGapPreviewVisible, toolbarSurfaceStyle, documentToolButtonClass, handleTogglePageStyleShelf, handleFitZoom, zoomMode, manualZoom, setZoomMode, setManualZoom, zoomPercent,
-        isPdfPreviewOpen, pdfPreviewUrl, pdfPreviewFilename, isGeneratingPdfPreview, canDownloadPdfPreview, closePdfPreview, downloadPdfPreview, openPdfPreview
+        isPdfPreviewOpen, pdfPreviewUrl, pdfPreviewFilename, isGeneratingPdfPreview, canDownloadPdfPreview, closePdfPreview, downloadPdfPreview, openPdfPreview, loadingList
     } = props;
+    const lastPostedRenderDiagnosticsFingerprintRef = React.useRef<string | null>(null);
+    const renderDiagnosticsFingerprint = JSON.stringify({
+        diagnosticsVersion: RESUME_RENDER_DIAGNOSTICS_VERSION,
+        resumeData,
+        formatting: {
+            pageSize,
+            titleFontSize,
+            headerFontSize,
+            bodyFontSize,
+            pageMarginPt,
+            paperLayoutFormat
+        },
+        paperHeight: paperMetrics.height
+    });
+
+    React.useEffect(() => {
+        if (!isResumeDebugEnabled() || isPdfPreviewOpen || loadingList) {
+            return;
+        }
+        if (lastPostedRenderDiagnosticsFingerprintRef.current === renderDiagnosticsFingerprint) return;
+
+        let attempts = 0;
+        let timeoutId = 0;
+        let cancelled = false;
+
+        const captureAndSave = async () => {
+            if (
+                cancelled ||
+                lastPostedRenderDiagnosticsFingerprintRef.current === renderDiagnosticsFingerprint
+            ) {
+                return;
+            }
+
+            const editorElement = resumeDocumentContentRef.current;
+            const canvasElement = document.getElementById("print-canvas");
+            const surfaceElement = document.getElementById("resume-document-surface-print-comparison");
+
+            if (!editorElement || !canvasElement || !surfaceElement) {
+                attempts += 1;
+                if (attempts < 8) {
+                    timeoutId = window.setTimeout(captureAndSave, 200);
+                }
+                return;
+            }
+
+            await document.fonts?.ready;
+            await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+            const diagnostics = buildResumeRenderDiagnostics({
+                phase: "edit-canvas",
+                formatting: {
+                    pageSize,
+                    titleFontSize,
+                    headerFontSize,
+                    bodyFontSize,
+                    pageMarginPt,
+                    paperLayoutFormat
+                },
+                targets: [
+                    {
+                        label: "editor renderer",
+                        element: editorElement,
+                        intendedPageHeight: paperMetrics.height
+                    },
+                    {
+                        label: "document surface renderer",
+                        element: surfaceElement,
+                        intendedPageHeight: paperMetrics.height
+                    },
+                    {
+                        label: "canvas frame",
+                        element: canvasElement,
+                        intendedPageHeight: paperMetrics.height
+                    }
+                ]
+            });
+
+            try {
+                const result = await saveResumeRenderDiagnostics(diagnostics);
+                lastPostedRenderDiagnosticsFingerprintRef.current = renderDiagnosticsFingerprint;
+                console.info("[resumeDebug] frontend render diagnostics saved", result);
+            } catch (error) {
+                console.warn("[resumeDebug] failed to save frontend render diagnostics", error);
+            }
+        };
+
+        timeoutId = window.setTimeout(captureAndSave, 750);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timeoutId);
+        };
+    }, [
+        bodyFontSize,
+        headerFontSize,
+        isPdfPreviewOpen,
+        loadingList,
+        pageMarginPt,
+        pageSize,
+        paperLayoutFormat,
+        paperMetrics.height,
+        renderDiagnosticsFingerprint,
+        resumeDocumentContentRef,
+        titleFontSize
+    ]);
 
     return (
             <main className="h-full flex-1 flex flex-col min-w-0 overflow-hidden print:p-0 relative z-10">
