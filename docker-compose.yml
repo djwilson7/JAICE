@@ -25,12 +25,15 @@ services:
       RESUME_REWRITE_NUM_PREDICT: ${RESUME_REWRITE_NUM_PREDICT:-450}
       RESUME_REWRITE_TEMPERATURE: ${RESUME_REWRITE_TEMPERATURE:-0.05}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://local_llm:11434}
+      RESUME_PDF_DEBUG_DIR: ${RESUME_PDF_DEBUG_DIR:-/tmp/jaice-resume-pdf-debug}
+      RESUME_PDF_DEBUG_HOST_DIR: ${RESUME_PDF_DEBUG_HOST_DIR:-./scratch/resume-pdf-debug}
     ports:
       - "8000:8000"
     volumes:
       - ./client_api:/app/client_api
       - ./common:/app/common
       - ./OpenAI:/app/OpenAI
+      - ./scratch/resume-pdf-debug:/tmp/jaice-resume-pdf-debug
     depends_on:
       redis:
         condition: service_started

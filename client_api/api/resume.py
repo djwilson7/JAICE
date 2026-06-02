@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Body
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Body, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, validator
 from typing import Any, List, Optional
@@ -6,6 +6,8 @@ import uuid
 import json
 import base64
 import html
+import os
+from datetime import datetime
 from pathlib import Path
 from common.logger import get_logger
 from client_api.deps.auth import get_current_user
@@ -26,6 +28,29 @@ from client_api.services.resume_chat.service import (
 
 router = APIRouter(tags=["resume"])
 logging = get_logger()
+
+
+def _resume_pdf_debug_enabled(request: Request) -> bool:
+    return (
+        os.getenv("RESUME_PDF_DEBUG") == "1"
+        or request.query_params.get("debug_pdf") == "1"
+    )
+
+
+def _resume_pdf_debug_dir() -> Path:
+    default_debug_dir = (
+        "C:/tmp/jaice-resume-pdf-debug"
+        if os.name == "nt"
+        else "/tmp/jaice-resume-pdf-debug"
+    )
+    return Path(os.getenv("RESUME_PDF_DEBUG_DIR", default_debug_dir))
+
+
+def _resume_pdf_debug_host_path(filename: str) -> Optional[str]:
+    host_dir = os.getenv("RESUME_PDF_DEBUG_HOST_DIR")
+    if not host_dir:
+        return None
+    return str(Path(host_dir) / filename)
 
 
 # ---------------------------------------
@@ -275,9 +300,9 @@ def _font_face_css() -> str:
         ("Poppins", 600, "italic", font_root / "Poppins" / "Poppins-SemiBoldItalic.ttf"),
         ("Poppins", 700, "normal", font_root / "Poppins" / "Poppins-Bold.ttf"),
         ("Poppins", 700, "italic", font_root / "Poppins" / "Poppins-BoldItalic.ttf"),
-        ("Baskerville", 400, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Regular.ttf"),
-        ("Baskerville", 400, "italic", font_root / "Libre_Baskerville" / "LibreBaskerville-Italic.ttf"),
-        ("Baskerville", 700, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Bold.ttf"),
+        ("Libre Baskerville", 400, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Regular.ttf"),
+        ("Libre Baskerville", 400, "italic", font_root / "Libre_Baskerville" / "LibreBaskerville-Italic.ttf"),
+        ("Libre Baskerville", 700, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Bold.ttf"),
     ]
     rules = []
     for family, weight, style, path in fonts:
@@ -298,6 +323,12 @@ def _paper_dimensions(page_size: str) -> tuple[str, str, str]:
     if page_size == "letter":
         return "8.5in", "11in", "Letter"
     return "210mm", "297mm", "A4"
+
+
+def _paper_viewport_dimensions(page_name: str) -> dict[str, int]:
+    if page_name == "Letter":
+        return {"width": 816, "height": 1056}
+    return {"width": 794, "height": 1123}
 
 
 def _render_contact_items(payload: ResumeData) -> List[str]:
@@ -335,7 +366,7 @@ def _render_contact_html(payload: ResumeData) -> str:
     return f"<div class='contact-strip'>{''.join(rows)}</div>"
 
 
-def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
+def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str, float]:
     formatting = payload.formatting or ResumeFormatting()
     page_size = formatting.pageSize if formatting.pageSize in {"a4", "letter"} else "a4"
     page_width, page_height, page_name = _paper_dimensions(page_size)
@@ -393,7 +424,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             """)
         if experience_items:
             sections.append(f"""
-                <section class="resume-section">
+                <section class="resume-section experience-section">
                     <h2>Work Experience</h2>
                     <div class="item-stack">{''.join(experience_items)}</div>
                 </section>
@@ -458,7 +489,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
     css = f"""
         {_font_face_css()}
         /* Canvas-first typography: mirrors client/pages/Resume/resumeTypography.ts. */
-        @page {{ size: {page_name}; margin: {margin_pt}pt; }}
+        @page {{ size: {page_name}; margin: 0; }}
         html, body {{
             margin: 0;
             padding: 0;
@@ -469,16 +500,19 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
         }}
         * {{ box-sizing: border-box; }}
         body {{
-            font-family: Baskerville, serif;
+            font-family: "Libre Baskerville", serif;
             font-size: {body_font}px;
             line-height: 1.38;
             text-align: left;
         }}
         .page {{
-            width: 100%;
-            min-height: 100%;
-            padding: 0;
+            width: {page_width};
+            height: {page_height};
+            min-height: {page_height};
+            padding: {margin_pt}pt;
+            box-sizing: border-box;
             background: #ffffff;
+            overflow: visible;
         }}
         .resume-section {{
             width: 100%;
@@ -550,7 +584,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             margin: 0;
             padding: 2px 6px;
             color: #334155;
-            font-family: Baskerville, serif;
+            font-family: "Libre Baskerville", serif;
             font-size: {body_font}px;
             font-weight: 400;
             font-style: normal;
@@ -633,14 +667,13 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             display: flex;
             align-items: flex-start;
             gap: 8px;
-            border: 1px solid transparent;
         }}
         .bullet-marker {{
             display: inline-block;
             flex: 0 0 auto;
             padding: 2px 0;
             color: #475569;
-            font-family: Baskerville, serif;
+            font-family: "Libre Baskerville", serif;
             font-size: {body_font}px;
             font-weight: 400;
             font-style: normal;
@@ -651,7 +684,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             flex: 1 1 auto;
             padding: 2px 6px;
             color: #334155;
-            font-family: Baskerville, serif;
+            font-family: "Libre Baskerville", serif;
             font-size: {body_font}px;
             font-weight: 400;
             font-style: normal;
@@ -671,7 +704,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             justify-content: flex-start;
             gap: 6px;
             color: #334155;
-            font-family: Baskerville, serif;
+            font-family: "Libre Baskerville", serif;
             font-size: {body_font}px;
             font-weight: 400;
             font-style: normal;
@@ -692,7 +725,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             flex: 0 0 auto;
             padding-top: 4px;
             color: #0f172a;
-            font-family: Baskerville, serif;
+            font-family: "Libre Baskerville", serif;
             font-weight: 700;
             font-style: normal;
             line-height: 1;
@@ -719,7 +752,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str]:
             </body>
         </html>
     """
-    return document, page_width, page_height, page_name
+    return document, page_width, page_height, page_name, margin_pt
 
 
 # ----------------------------
@@ -1097,11 +1130,49 @@ async def analyze_listing_endpoint(
 # ---------------------------------------
 
 @router.post(
+    "/debug/render-diagnostics",
+    summary="Persist frontend resume render diagnostics for PDF drift analysis",
+)
+async def save_resume_render_diagnostics(
+    request: Request,
+    payload: Any = Body(...),
+    user: dict = Depends(get_current_user),
+) -> Any:
+    if not _resume_pdf_debug_enabled(request):
+        raise HTTPException(status_code=404, detail="Resume render diagnostics are disabled.")
+
+    debug_dir = _resume_pdf_debug_dir()
+    debug_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    latest_filename = "frontend-render-diagnostics-latest.json"
+    snapshot_filename = f"frontend-render-diagnostics-{timestamp}.json"
+    latest_path = debug_dir / latest_filename
+    snapshot_path = debug_dir / snapshot_filename
+    serialized_payload = json.dumps(payload, indent=2, ensure_ascii=False, default=str)
+
+    latest_path.write_text(serialized_payload, encoding="utf-8")
+    snapshot_path.write_text(serialized_payload, encoding="utf-8")
+    logging.info(
+        "Frontend resume render diagnostics saved: "
+        f"latest={latest_path}, snapshot={snapshot_path}"
+    )
+
+    return {
+        "status": "success",
+        "latest_path": str(latest_path),
+        "snapshot_path": str(snapshot_path),
+        "host_latest_path": _resume_pdf_debug_host_path(latest_filename),
+        "host_snapshot_path": _resume_pdf_debug_host_path(snapshot_filename),
+    }
+
+
+@router.post(
     "/export-pdf",
     summary="Export a structured resume as a downloadable PDF",
 )
 async def export_resume_pdf(
-    payload: ResumeData, user: dict = Depends(get_current_user)
+    payload: ResumeData, request: Request, user: dict = Depends(get_current_user)
 ) -> Response:
     """
     Accept structured resume JSON and return a PDF file rendered by headless Chromium.
@@ -1115,7 +1186,24 @@ async def export_resume_pdf(
                 detail="Playwright is not installed for the client API service."
             ) from import_error
 
-        document_html, page_width, page_height, _page_name = _render_resume_pdf_html(payload)
+        document_html, page_width, page_height, page_name, page_padding_pt = _render_resume_pdf_html(payload)
+        viewport = _paper_viewport_dimensions(page_name)
+        debug_enabled = _resume_pdf_debug_enabled(request)
+        debug_dir = _resume_pdf_debug_dir()
+        if debug_enabled:
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            html_path = debug_dir / "resume-export.html"
+            html_path.write_text(document_html, encoding="utf-8")
+            logging.info(
+                "Resume PDF debug page resolution: "
+                f"payload_page_size={payload.formatting.pageSize if payload.formatting else None}, "
+                f"resolved_page_name={page_name}, "
+                f"viewport={viewport['width']}x{viewport['height']}, "
+                f"pdf_width={page_width}, pdf_height={page_height}, "
+                f"page_padding={page_padding_pt}pt, "
+                "css_page_margin=0, playwright_pdf_margin=0"
+            )
+            logging.info(f"Resume PDF debug HTML saved to {html_path}")
 
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(
@@ -1124,20 +1212,334 @@ async def export_resume_pdf(
             )
             try:
                 page = await browser.new_page(
-                    viewport={"width": 816, "height": 1123},
+                    viewport=viewport,
                     device_scale_factor=1,
                 )
                 await page.set_content(document_html, wait_until="networkidle")
                 await page.emulate_media(media="print")
                 await page.evaluate("document.fonts && document.fonts.ready")
-                pdf_bytes = await page.pdf(
-                    width=page_width,
-                    height=page_height,
-                    margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
-                    print_background=True,
-                    prefer_css_page_size=True,
-                    scale=1,
-                )
+
+                pdf_options = {
+                    "width": page_width,
+                    "height": page_height,
+                    "margin": {"top": "0", "right": "0", "bottom": "0", "left": "0"},
+                    "print_background": True,
+                    "prefer_css_page_size": True,
+                    "scale": 1,
+                }
+
+                if debug_enabled:
+                    screenshot_path = debug_dir / "resume-before-pdf.png"
+                    await page.screenshot(path=str(screenshot_path), full_page=True)
+                    metrics = await page.evaluate(
+                        """
+                        () => {
+                            const read = (selector) => {
+                                const el = document.querySelector(selector);
+                                if (!el) return null;
+                                const rect = el.getBoundingClientRect();
+                                const style = window.getComputedStyle(el);
+                                const paddingLeft = parseFloat(style.paddingLeft) || 0;
+                                const paddingRight = parseFloat(style.paddingRight) || 0;
+                                const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+                                const borderRight = parseFloat(style.borderRightWidth) || 0;
+                                return {
+                                    selector,
+                                    boundingBox: {
+                                        x: rect.x,
+                                        y: rect.y,
+                                        width: rect.width,
+                                        height: rect.height,
+                                        top: rect.top,
+                                        right: rect.right,
+                                        bottom: rect.bottom,
+                                        left: rect.left
+                                    },
+                                    scrollHeight: el.scrollHeight,
+                                    scrollWidth: el.scrollWidth,
+                                    offsetHeight: el.offsetHeight,
+                                    offsetWidth: el.offsetWidth,
+                                    clientHeight: el.clientHeight,
+                                    clientWidth: el.clientWidth,
+                                    contentOverflowHeight: Math.max(0, el.scrollHeight - el.clientHeight),
+                                    computedWidth: style.width,
+                                    computedHeight: style.height,
+                                    computedContentWidth: rect.width - paddingLeft - paddingRight - borderLeft - borderRight,
+                                    computedBoxSizing: style.boxSizing,
+                                    computedPadding: {
+                                        top: style.paddingTop,
+                                        right: style.paddingRight,
+                                        bottom: style.paddingBottom,
+                                        left: style.paddingLeft
+                                    },
+                                    computedBorderWidth: {
+                                        top: style.borderTopWidth,
+                                        right: style.borderRightWidth,
+                                        bottom: style.borderBottomWidth,
+                                        left: style.borderLeftWidth
+                                    },
+                                    computedOverflow: {
+                                        x: style.overflowX,
+                                        y: style.overflowY
+                                    },
+                                    computedMargin: {
+                                        top: style.marginTop,
+                                        right: style.marginRight,
+                                        bottom: style.marginBottom,
+                                        left: style.marginLeft
+                                    },
+                                    computedGap: style.gap,
+                                    computedFontFamily: style.fontFamily,
+                                    computedFontSize: style.fontSize,
+                                    computedFontWeight: style.fontWeight,
+                                    computedLineHeight: style.lineHeight,
+                                    computedLetterSpacing: style.letterSpacing,
+                                    computedWhiteSpace: style.whiteSpace,
+                                    computedOverflowWrap: style.overflowWrap,
+                                    computedWordBreak: style.wordBreak
+                                };
+                            };
+                            const readElement = (el) => {
+                                if (!el) return null;
+                                const rect = el.getBoundingClientRect();
+                                const style = window.getComputedStyle(el);
+                                const paddingLeft = parseFloat(style.paddingLeft) || 0;
+                                const paddingRight = parseFloat(style.paddingRight) || 0;
+                                const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+                                const borderRight = parseFloat(style.borderRightWidth) || 0;
+                                return {
+                                    boundingBox: {
+                                        x: rect.x,
+                                        y: rect.y,
+                                        width: rect.width,
+                                        height: rect.height,
+                                        top: rect.top,
+                                        right: rect.right,
+                                        bottom: rect.bottom,
+                                        left: rect.left
+                                    },
+                                    scrollHeight: el.scrollHeight,
+                                    scrollWidth: el.scrollWidth,
+                                    offsetHeight: el.offsetHeight,
+                                    offsetWidth: el.offsetWidth,
+                                    clientHeight: el.clientHeight,
+                                    clientWidth: el.clientWidth,
+                                    computedWidth: style.width,
+                                    computedHeight: style.height,
+                                    computedContentWidth: rect.width - paddingLeft - paddingRight - borderLeft - borderRight,
+                                    computedBoxSizing: style.boxSizing,
+                                    computedPadding: {
+                                        top: style.paddingTop,
+                                        right: style.paddingRight,
+                                        bottom: style.paddingBottom,
+                                        left: style.paddingLeft
+                                    },
+                                    computedBorderWidth: {
+                                        top: style.borderTopWidth,
+                                        right: style.borderRightWidth,
+                                        bottom: style.borderBottomWidth,
+                                        left: style.borderLeftWidth
+                                    },
+                                    computedMargin: {
+                                        top: style.marginTop,
+                                        right: style.marginRight,
+                                        bottom: style.marginBottom,
+                                        left: style.marginLeft
+                                    },
+                                    computedGap: style.gap,
+                                    computedFontFamily: style.fontFamily,
+                                    computedFontSize: style.fontSize,
+                                    computedFontWeight: style.fontWeight,
+                                    computedLineHeight: style.lineHeight,
+                                    computedLetterSpacing: style.letterSpacing,
+                                    computedWhiteSpace: style.whiteSpace,
+                                    computedOverflowWrap: style.overflowWrap,
+                                    computedWordBreak: style.wordBreak
+                                };
+                            };
+                            const estimateLineCount = (el) => {
+                                if (!el) return null;
+                                const rect = el.getBoundingClientRect();
+                                const lineHeight = parseFloat(window.getComputedStyle(el).lineHeight);
+                                if (!lineHeight || lineHeight <= 0) return null;
+                                return rect.height / lineHeight;
+                            };
+                            const traceChildren = (selector) => {
+                                const root = document.querySelector(selector);
+                                if (!root) return null;
+                                const rootRect = root.getBoundingClientRect();
+                                const sectionTraces = Array.from(root.children).map((child, index) => {
+                                    const rect = child.getBoundingClientRect();
+                                    const style = window.getComputedStyle(child);
+                                    return {
+                                        index,
+                                        tagName: child.tagName.toLowerCase(),
+                                        label: child.id || child.className || child.tagName.toLowerCase(),
+                                        boundingBox: {
+                                            x: rect.x,
+                                            y: rect.y,
+                                            width: rect.width,
+                                            height: rect.height,
+                                            top: rect.top,
+                                            right: rect.right,
+                                            bottom: rect.bottom,
+                                            left: rect.left
+                                        },
+                                        height: rect.height,
+                                        bottom: rect.bottom,
+                                        marginBottom: style.marginBottom,
+                                        overflowPastRootBottom: Math.max(0, rect.bottom - rootRect.bottom)
+                                    };
+                                });
+                                const lastChild = sectionTraces[sectionTraces.length - 1] || null;
+                                const maxChildBottom = sectionTraces.reduce(
+                                    (max, child) => Math.max(max, child.bottom),
+                                    rootRect.top
+                                );
+
+                                return {
+                                    rootBottom: rootRect.bottom,
+                                    maxChildBottom,
+                                    lastChildBottom: lastChild ? lastChild.bottom : null,
+                                    lastChildMarginBottom: lastChild ? lastChild.marginBottom : null,
+                                    maxChildOverflowPastRootBottom: Math.max(0, maxChildBottom - rootRect.bottom),
+                                    overflowingChildren: sectionTraces.filter((child) => child.overflowPastRootBottom > 0),
+                                    sectionTraces
+                                };
+                            };
+                            const traceExperience = () => {
+                                const section = document.querySelector(".experience-section");
+                                if (!section) return null;
+                                const sectionRect = section.getBoundingClientRect();
+                                let globalBulletIndex = 0;
+                                const items = Array.from(section.querySelectorAll(".experience-item")).map((item, index) => {
+                                    const itemRect = item.getBoundingClientRect();
+                                    const metaRow = item.querySelector(".experience-row");
+                                    const bulletStack = item.querySelector(".experience-bullets");
+                                    const bulletRows = Array.from(item.querySelectorAll(".bullet-row"));
+                                    const bulletRowHeights = bulletRows.map((row) => row.getBoundingClientRect().height);
+                                    const bulletMetrics = bulletRows.map((row, bulletIndex) => {
+                                        const marker = row.querySelector(".bullet-marker");
+                                        const text = row.querySelector(".bullet-text");
+                                        const currentGlobalBulletIndex = globalBulletIndex;
+                                        globalBulletIndex += 1;
+                                        return {
+                                            index: currentGlobalBulletIndex,
+                                            itemIndex: index,
+                                            itemBulletIndex: bulletIndex,
+                                            textPreview: text ? text.textContent.trim().slice(0, 140) : "",
+                                            row: readElement(row),
+                                            marker: readElement(marker),
+                                            text: readElement(text),
+                                            estimatedLineCount: estimateLineCount(text),
+                                            appearsMultiLine: (estimateLineCount(text) || 0) > 1.25
+                                        };
+                                    });
+                                    const previousItem = index > 0
+                                        ? section.querySelectorAll(".experience-item")[index - 1]
+                                        : null;
+                                    const previousBottom = previousItem
+                                        ? previousItem.getBoundingClientRect().bottom
+                                        : null;
+                                    const bulletStackRect = bulletStack ? bulletStack.getBoundingClientRect() : null;
+                                    const metaRowRect = metaRow ? metaRow.getBoundingClientRect() : null;
+
+                                    return {
+                                        index,
+                                        boundingBox: {
+                                            x: itemRect.x,
+                                            y: itemRect.y,
+                                            width: itemRect.width,
+                                            height: itemRect.height,
+                                            top: itemRect.top,
+                                            right: itemRect.right,
+                                            bottom: itemRect.bottom,
+                                            left: itemRect.left
+                                        },
+                                        top: itemRect.top,
+                                        bottom: itemRect.bottom,
+                                        height: itemRect.height,
+                                        gapFromPreviousItem: previousBottom === null ? null : itemRect.top - previousBottom,
+                                        metaRow: metaRowRect ? {
+                                            top: metaRowRect.top,
+                                            bottom: metaRowRect.bottom,
+                                            height: metaRowRect.height,
+                                            metrics: readElement(metaRow),
+                                            children: metaRow ? Array.from(metaRow.children).map((child, childIndex) => ({
+                                                index: childIndex,
+                                                metrics: readElement(child),
+                                                text: child.textContent || ""
+                                            })) : []
+                                        } : null,
+                                        bulletStack: bulletStackRect ? {
+                                            top: bulletStackRect.top,
+                                            bottom: bulletStackRect.bottom,
+                                            height: bulletStackRect.height
+                                        } : null,
+                                        bulletRowCount: bulletRows.length,
+                                        firstBulletRowHeight: bulletRowHeights[0] || null,
+                                        averageBulletRowHeight: bulletRowHeights.length
+                                            ? bulletRowHeights.reduce((sum, height) => sum + height, 0) / bulletRowHeights.length
+                                            : null,
+                                        bulletRowHeights,
+                                        bullets: bulletMetrics
+                                    };
+                                });
+
+                                return {
+                                    section: read(".experience-section"),
+                                    top: sectionRect.top,
+                                    bottom: sectionRect.bottom,
+                                    height: sectionRect.height,
+                                    itemCount: items.length,
+                                    items
+                                };
+                            };
+                            return {
+                                pageModel: {
+                                    resolvedPageName: %s,
+                                    resolvedPageWidth: %s,
+                                    resolvedPageHeight: %s,
+                                    resolvedPagePaddingPt: %s,
+                                    cssPageMargin: "0",
+                                    playwrightPdfMargin: {
+                                        top: "0",
+                                        right: "0",
+                                        bottom: "0",
+                                        left: "0"
+                                    }
+                                },
+                                viewport: {
+                                    width: window.innerWidth,
+                                    height: window.innerHeight
+                                },
+                                devicePixelRatio: window.devicePixelRatio,
+                                bodyScrollHeight: document.body.scrollHeight,
+                                htmlScrollHeight: document.documentElement.scrollHeight,
+                                page: read(".page"),
+                                pageChildOverflowTrace: traceChildren(".page"),
+                                h1: read("h1"),
+                                h2: read("h2"),
+                                bodyText: read(".body-text"),
+                                bulletRow: read(".bullet-row"),
+                                bulletText: read(".bullet-text"),
+                                bulletMarker: read(".bullet-marker"),
+                                experience: traceExperience()
+                            };
+                        }
+                        """
+                        % (
+                            json.dumps(page_name),
+                            json.dumps(page_width),
+                            json.dumps(page_height),
+                            json.dumps(page_padding_pt),
+                        )
+                    )
+                    logging.info(f"Resume PDF debug screenshot saved to {screenshot_path}")
+                    logging.info(f"Resume PDF debug metrics: {json.dumps(metrics, default=str)}")
+                    logging.info(f"Resume PDF debug page.pdf options: {json.dumps(pdf_options)}")
+
+                pdf_bytes = await page.pdf(**pdf_options)
             finally:
                 await browser.close()
 
