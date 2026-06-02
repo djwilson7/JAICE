@@ -183,6 +183,14 @@ async def test_jobs_endpoints_success_and_current_error_behavior(monkeypatch, us
         await jobs.create_job_application({}, user)
     assert missing_title.value.status_code == 400
 
+    with pytest.raises(HTTPException) as missing_provider:
+        await jobs.update_job_application({"title": "Engineer"}, user)
+    assert missing_provider.value.status_code == 400
+
+    with pytest.raises(HTTPException) as no_fields:
+        await jobs.update_job_application({"provider_message_id": ["msg-1"]}, user)
+    assert no_fields.value.status_code == 400
+
     with pytest.raises(HTTPException) as current_behavior:
         await jobs.update_job_stage({"provider_message_ids": ["missing"], "app_stage": "offer"}, user)
     assert current_behavior.value.status_code == 500
@@ -218,7 +226,15 @@ async def test_jobs_collection_endpoints(monkeypatch, user):
     assert (await jobs.write_jobs_to_db({"jobs_to_update": [{"id": "x", "title": "T"}, {"title": "skip"}]}, user)) == {"status": "success", "count": 2}
 
     with pytest.raises(HTTPException):
+        await jobs.set_review_needed({"provider_message_ids": ["r1"]}, user)
+    with pytest.raises(HTTPException):
+        await jobs.flip_archived_state({}, user)
+    with pytest.raises(HTTPException):
+        await jobs.flip_deleted_state({}, user)
+    with pytest.raises(HTTPException):
         await jobs.permanent_delete_jobs({"provider_message_ids": [], "confirm": True}, user)
+    with pytest.raises(HTTPException):
+        await jobs.permanent_delete_jobs({"provider_message_ids": ["x"], "confirm": False}, user)
     with pytest.raises(HTTPException):
         await jobs.snapshot_update_jobs({"jobs": "bad"}, user)
     with pytest.raises(HTTPException):

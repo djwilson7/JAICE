@@ -11,7 +11,7 @@ def run(command: list[str]) -> None:
 
 
 def main() -> int:
-    run([sys.executable, "-m", "pytest", "tests/backend", "-q"])
+    run([sys.executable, "-m", "pytest", "-q"])
     run([sys.executable, "scripts/check_backend_function_coverage.py"])
     return 0
 

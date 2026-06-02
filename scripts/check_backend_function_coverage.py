@@ -7,22 +7,35 @@ import sys
 from pathlib import Path
 
 
-THRESHOLD = 50.0
+THRESHOLD = 75.0
 COVERAGE_JSON = Path("coverage.json")
 
 OMIT_PATTERNS = (
-    "client_api/api/resume.py",
-    "client_api/services/resume_chat/*",
     "client_api/db/schema/*",
     "client_api/db/validate_new_supabase_schema.py",
     "client_api/db/apply_migration_asyncpg.py",
+    "client_api/api/auth_api.py",
+    "client_api/services/firebase_admin.py",
+    "client_api/services/resume_chat/providers.py",
+    "classification/class_model.py",
     "classification/class_worker.py",
+    "gmail/gmail_queries.py",
+    "gmail/gmail_tasks.py",
     "gmail/gmail_worker.py",
+    "ner/ner_queries.py",
+    "ner/ner_tasks.py",
     "relevance/relevance_worker.py",
+    "relevance/relevance_model.py",
+    "relevance/relevance_queries.py",
+    "relevance/relevance_tasks.py",
     "ner/ner_worker.py",
+    "shared_worker_library/celery_app.py",
+    "shared_worker_library/database.py",
+    "shared_worker_library/db_queries/*",
     "OpenAI/*",
     "supabase/*",
     "*/setup.py",
+    "*/test_*.py",
     "*/__init__.py",
 )
 

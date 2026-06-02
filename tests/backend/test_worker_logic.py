@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import sys
 import types
 
 import pandas as pd
@@ -213,6 +214,48 @@ def test_relevance_text_normalization_and_redaction_layers(monkeypatch):
     stripped, final_counts = relevance_norm.strip_pii(pd.DataFrame([{"body": "Jane paid $50 for api_key=abcdefghijklmnopqrstuvwx"}]))
     assert "jane paid money for api key api key" in stripped.loc[0, "body"]
     assert final_counts["PERSON"] == 1
+
+
+def test_relevance_ner_redaction_branches(monkeypatch):
+    worker = sys.modules["relevance.relevance_worker"]
+    monkeypatch.setattr(worker, "NLP_MODEL", None)
+    with pytest.raises(RuntimeError, match="NLP_MODEL"):
+        relevance_norm.layer_two_ner_redaction(pd.DataFrame([{"body": "Jane at Acme"}]))
+
+    class Ent:
+        def __init__(self, text, label, start, end):
+            self.text = text
+            self.label_ = label
+            self.start_char = start
+            self.end_char = end
+
+    class Doc:
+        def __init__(self, text, ents):
+            self.text = text
+            self.ents = ents
+
+    class Model:
+        def pipe(self, bodies, batch_size=150):
+            assert batch_size == 150
+            for text in bodies:
+                yield Doc(
+                    text,
+                    [
+                        Ent("Jane", "PERSON", 0, 4),
+                        Ent("[EMAIL]", "PERSON", 9, 16),
+                        Ent("Acme", "ORG", 20, 24),
+                        Ent("ignored", "DATE", 0, 0),
+                    ],
+                )
+
+    monkeypatch.setattr(worker, "NLP_MODEL", Model())
+    redacted, counts = relevance_norm.layer_two_ner_redaction(
+        pd.DataFrame([{"body": "Jane and [EMAIL] at Acme"}])
+    )
+
+    assert redacted.loc[0, "body"] == "[PERSON] and [EMAIL] at [ORG]"
+    assert counts["PERSON"] == 1
+    assert counts["ORG"] == 1
 
 
 def test_relevance_tasks_split_predictions_and_enqueue(monkeypatch):
