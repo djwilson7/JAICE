@@ -74,6 +74,10 @@ async def test_auth_dependencies(monkeypatch):
         await auth.get_user_from_token_query("bad")
     assert invalid.value.status_code == 401
 
+    with pytest.raises(HTTPException) as missing_query:
+        await auth.get_user_from_token_query("")
+    assert missing_query.value.status_code == 401
+
 
 def test_auth_api_mint_jwt_and_dispatch(monkeypatch):
     from client_api.api import auth_api
@@ -334,6 +338,50 @@ async def test_supabase_client_pool_paths(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         await supabase_client.check_db_pool_status()
     assert exc.value.status_code == 503
+
+    with pytest.raises(HTTPException) as connection_exc:
+        async with supabase_client.get_connection():
+            pass
+    assert connection_exc.value.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_supabase_client_retry_and_close_paths(monkeypatch):
+    from client_api.services import supabase_client
+
+    attempts = []
+
+    async def refused_pool(*_args, **_kwargs):
+        attempts.append("refused")
+        raise ConnectionRefusedError("down")
+
+    monkeypatch.setattr(supabase_client, "DATABASE_URL", "postgresql://db")
+    monkeypatch.setattr(supabase_client.asyncpg, "create_pool", refused_pool)
+    assert await supabase_client.connect_to_db(max_retries=1, retry_delay=0) is None
+    assert attempts == ["refused"]
+
+    async def invalid_password(*_args, **_kwargs):
+        raise supabase_client.InvalidPasswordError("bad password")
+
+    monkeypatch.setattr(supabase_client.asyncpg, "create_pool", invalid_password)
+    with pytest.raises(supabase_client.InvalidPasswordError):
+        await supabase_client.connect_to_db(max_retries=1, retry_delay=0)
+
+    async def generic_failure(*_args, **_kwargs):
+        raise RuntimeError("down")
+
+    monkeypatch.setattr(supabase_client.asyncpg, "create_pool", generic_failure)
+    assert await supabase_client.connect_to_db(max_retries=1, retry_delay=0) is None
+
+    pool = types.SimpleNamespace(closed=False)
+
+    async def close():
+        pool.closed = True
+
+    pool.close = close
+    monkeypatch.setattr(supabase_client, "db_pool", pool)
+    await supabase_client.close_db_connection()
+    assert pool.closed is True
 
 
 @pytest.mark.asyncio

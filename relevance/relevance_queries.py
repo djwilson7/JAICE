@@ -87,10 +87,6 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
                 )
             )
 
-        if not values:
-            logging.warning(f"[{trace_id}] No valid rows to insert.")
-            return {"status": "no_valid_rows"}
-
         # SQL aligned with schema
         query = """
         INSERT INTO public.job_applications (

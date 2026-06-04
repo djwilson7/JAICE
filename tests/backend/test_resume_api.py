@@ -556,6 +556,126 @@ def test_resume_prompt_builders_cover_sparse_and_structured_inputs():
     assert "Optional resume context" not in conversation_prompt
 
 
+def test_resume_prompt_builders_cover_false_sides():
+    context = prompts.resume_context_to_text(
+        {
+            "experience": [
+                {"id": "", "jobTitle": "", "company": "", "bullets": [{"text": ""}, "", None]},
+            ],
+            "skills": [
+                {"category": "Empty", "items": []},
+                {"category": "", "items": ["", "Python"]},
+                {"category": "Invalid", "items": "not-a-list"},
+            ],
+            "education": [
+                {"school": "", "degree": "", "details": [{"text": ""}, "", None]},
+                {"school": "State", "degree": "", "details": "not-a-list"},
+            ],
+        }
+    )
+    assert "Untitled role" in context
+    assert "Python" in context
+    assert "State" in context
+
+    prompt = prompts.build_user_prompt(
+        "conversation",
+        "Hello",
+        {},
+        context=None,
+        include_resume_context=True,
+    )
+    assert "Optional resume context" in prompt
+    assert "Additional context" not in prompt
+
+
+def test_resume_sparse_render_helpers(monkeypatch):
+    monkeypatch.setenv("RESUME_PDF_DEBUG", "1")
+    assert resume._resume_pdf_debug_enabled(Request()) is True
+    monkeypatch.delenv("RESUME_PDF_DEBUG", raising=False)
+    assert resume._resume_pdf_debug_enabled(Request()) is False
+
+    assert resume.ResumeData(fullName="A", skills=[]).skills == []
+    assert resume.ResumeData(fullName="A", skills=["", " "]).skills == []
+    assert resume.ResumeData(fullName="A", skills=[{"category": "Language", "items": ["Python"]}]).skills[0].category == "Language"
+
+    empty = resume.ResumeData(fullName="", hiddenContactFields=["email"])
+    assert resume._render_contact_html(empty) == ""
+
+    uris = iter(["uri", None] + [None] * 9)
+    monkeypatch.setattr(resume, "_font_data_uri", lambda _path: next(uris))
+    css = resume._font_face_css()
+    assert "@font-face" in css
+    monkeypatch.setattr(resume, "_font_data_uri", lambda _path: None)
+
+    sparse = resume.ResumeData(
+        fullName="Sparse",
+        summary=" ",
+        experience=[
+            {"jobTitle": "", "company": "", "location": "", "startDate": "", "endDate": "", "bullets": []},
+            {"jobTitle": "Engineer", "company": "", "location": "", "bullets": [{"text": " "}]},
+        ],
+        education=[
+            {"school": "", "degree": "", "details": []},
+            {"school": "State", "degree": "", "details": [{"text": " "}]},
+        ],
+        skills=[
+            {"category": "", "items": []},
+            {"category": "", "items": ["Python", " "]},
+        ],
+        formatting={"pageSize": "invalid", "pageMarginPt": 0, "paperLayoutFormat": "unknown"},
+    )
+    document, width, height, page_name, margin = resume._render_resume_pdf_html(sparse)
+    assert page_name == "A4"
+    assert width == "210mm"
+    assert height == "297mm"
+    assert margin == 0
+    assert "Python" in document
+
+
+@pytest.mark.asyncio
+async def test_resume_crud_error_and_invalid_json_paths(monkeypatch, user):
+    invalid_json_row = row(resume_data="{bad json")
+    monkeypatch.setattr(resume, "get_connection", lambda: conn_context(ResumeConn(rows=[invalid_json_row])))
+    listed = await resume.list_resumes(user)
+    assert listed["resumes"][0]["resume_data"] == "{bad json"
+
+    @asynccontextmanager
+    async def failing_conn():
+        raise RuntimeError("database down")
+        yield
+
+    monkeypatch.setattr(resume, "get_connection", failing_conn)
+    with pytest.raises(HTTPException) as list_exc:
+        await resume.list_resumes(user)
+    assert list_exc.value.status_code == 500
+
+    monkeypatch.setattr(resume, "get_connection", lambda: conn_context(ResumeConn(row=None)))
+    with pytest.raises(HTTPException) as save_exc:
+        await resume.save_resume(
+            resume.SaveResumeRequest(name="Missing", resume_data=sample_resume_data()),
+            user,
+        )
+    assert save_exc.value.status_code == 500
+
+    monkeypatch.setattr(resume, "get_connection", lambda: conn_context(ResumeConn(row=None, exists=True)))
+    with pytest.raises(HTTPException) as update_exc:
+        await resume.update_resume(
+            "11111111-1111-1111-1111-111111111111",
+            resume.UpdateResumeRequest(name="Missing", resume_data=sample_resume_data()),
+            user,
+        )
+    assert update_exc.value.status_code == 500
+
+    with pytest.raises(HTTPException) as bad_delete:
+        await resume.delete_resume("bad-id", user)
+    assert bad_delete.value.status_code == 400
+
+    monkeypatch.setattr(resume, "get_connection", failing_conn)
+    with pytest.raises(HTTPException) as delete_exc:
+        await resume.delete_resume("11111111-1111-1111-1111-111111111111", user)
+    assert delete_exc.value.status_code == 500
+
+
 def test_resume_provider_helpers_and_option_defaults(monkeypatch):
     monkeypatch.setenv("RESUME_LLM_TIMEOUT_SECONDS", "bad")
     assert providers._timeout_seconds() == 60.0

@@ -54,6 +54,23 @@ def test_classification_query_helpers(monkeypatch):
         ClassificationModelResult([], [], [], [], [], []),
     ) == {"status": "no_updates"}
 
+    monkeypatch.setattr(
+        class_queries,
+        "execute_transfer_query",
+        lambda **_kwargs: {"status": "failure", "error": "database down"},
+    )
+    assert class_queries.update_job_app_table(
+        "trace",
+        ClassificationModelResult(
+            applied=[{"provider_message_id": "msg-1"}],
+            interview=[],
+            offer=[],
+            accepted=[],
+            rejected=[],
+            retry=[],
+        ),
+    ) == {"status": "failure", "error": "database down"}
+
 
 def test_classification_normalizes_email_text_and_skips_bad_rows():
     normalized = class_tasks.normalized_emails_for_model(
@@ -124,6 +141,87 @@ def test_run_classification_model_groups_review_and_retry(monkeypatch):
     assert len(result.interview) == 1
     assert result.interview[0]["needs_review"] is True
     assert result.retry == [{"email_id": "id-err"}]
+
+
+def test_run_classification_model_covers_remaining_labels_and_bad_output(monkeypatch):
+    outputs = {
+        "offer": {"stage": "offer", "score": 0.9, "second_stage": None, "second_score": None},
+        "accepted": {"stage": "accepted", "score": 0.9, "second_stage": None, "second_score": None},
+        "rejected": {"stage": "rejected", "score": 0.9, "second_stage": None, "second_score": None},
+        "bad": {"stage": "applied", "score": "invalid", "second_stage": None, "second_score": None},
+    }
+    monkeypatch.setattr(
+        class_tasks,
+        "classify_email_stage",
+        lambda text: next(output for key, output in outputs.items() if key in text),
+    )
+
+    result = class_tasks.run_classification_model(
+        "trace",
+        [
+            {"id": key, "subject": key, "sender": "", "body": "", "provider_message_id": key}
+            for key in outputs
+        ],
+    )
+
+    assert [item["email_id"] for item in result.offer] == ["offer"]
+    assert [item["email_id"] for item in result.accepted] == ["accepted"]
+    assert [item["email_id"] for item in result.rejected] == ["rejected"]
+    assert result.retry == [{"email_id": "bad"}]
+
+
+def test_classification_task_orchestration_paths(monkeypatch):
+    assert class_tasks.classification_task("trace", [], attempt=class_tasks.MAX_RETRIES + 1) == {
+        "status": "failure",
+        "result": "max_retries_exceeded",
+    }
+
+    monkeypatch.setattr(
+        class_tasks,
+        "get_encrypted_emails",
+        lambda *_args: (_ for _ in ()).throw(RuntimeError("fetch")),
+    )
+    assert class_tasks.classification_task("trace", []) == {"status": "failure", "error": "fetch"}
+
+    monkeypatch.setattr(class_tasks, "get_encrypted_emails", lambda *_args: [])
+    monkeypatch.setattr(
+        class_tasks,
+        "decrypt_email_content",
+        lambda *_args: (_ for _ in ()).throw(RuntimeError("decrypt")),
+    )
+    assert class_tasks.classification_task("trace", []) == {"status": "failure", "error": "decrypt"}
+
+    monkeypatch.setattr(class_tasks, "decrypt_email_content", lambda *_args: [])
+    monkeypatch.setattr(
+        class_tasks,
+        "normalized_emails_for_model",
+        lambda *_args: (_ for _ in ()).throw(RuntimeError("normalize")),
+    )
+    assert class_tasks.classification_task("trace", []) == {"status": "failure", "error": "normalize"}
+
+    monkeypatch.setattr(class_tasks, "normalized_emails_for_model", lambda *_args: [])
+    monkeypatch.setattr(
+        class_tasks,
+        "run_classification_model",
+        lambda *_args: (_ for _ in ()).throw(RuntimeError("model")),
+    )
+    assert class_tasks.classification_task("trace", []) == {"status": "failure", "error": "model"}
+
+    empty = ClassificationModelResult([], [], [], [], [], [])
+    monkeypatch.setattr(class_tasks, "run_classification_model", lambda *_args: empty)
+    monkeypatch.setattr(
+        class_tasks,
+        "update_job_app_table",
+        lambda *_args: {"status": "failure", "error": "database"},
+    )
+    assert class_tasks.classification_task("trace", []) == {"status": "failure", "error": "database"}
+
+    monkeypatch.setattr(
+        class_tasks,
+        "update_job_app_table",
+        lambda *_args: {"status": "success", "rows_affected": 2},
+    )
+    assert class_tasks.classification_task("trace", []) == {"status": "success", "results": 2}
 
 
 def test_class_model_classifier_output_shapes(monkeypatch):
@@ -214,6 +312,17 @@ def test_relevance_text_normalization_and_redaction_layers(monkeypatch):
     stripped, final_counts = relevance_norm.strip_pii(pd.DataFrame([{"body": "Jane paid $50 for api_key=abcdefghijklmnopqrstuvwx"}]))
     assert "jane paid money for api key api key" in stripped.loc[0, "body"]
     assert final_counts["PERSON"] == 1
+
+
+def test_relevance_redaction_edge_branches():
+    assert relevance_norm.strip_html(None) == ""
+    assert relevance_norm._entropy("") == 0.0
+    assert relevance_norm.redact_keys("[JWT] 123456789012345678901234")[1]["[SECRET]"] == 0
+    assert relevance_norm._red_token("1st")[1] == 0
+
+    counts = relevance_norm._init_final_counts()
+    relevance_norm._merge_counts(counts, {})
+    assert counts["TOKEN"] == 0
 
 
 def test_relevance_ner_redaction_branches(monkeypatch):

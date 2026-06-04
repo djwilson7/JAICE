@@ -345,17 +345,6 @@ KEY_REGEX_PATTERNS = {
     ),
 }
 
-PLACEHOLDER_SET = {
-    "[JWT]",
-    "[STRIPE_KEY]",
-    "[AWS_KEY_ID]",
-    "[UUID]",
-    "[LICENSE_KEY]",
-    "[API_KEY]",
-    "[SECRET]",
-}
-
-
 def _replace_span(text: str, start: int, end: int, repl: str) -> str:
     return text[:start] + repl + text[end:]
 
@@ -421,9 +410,6 @@ def redact_keys(text: str) -> Tuple[str, Dict[str, int]]:
         matches = list(pattern.finditer(redacted))
         for m in reversed(matches):
             s, e = m.span()
-            seg = redacted[s:e]
-            if "[" in seg or "]" in seg:
-                continue
             if placeholder == "[API_KEY]":
                 vs, ve = m.span(1)
                 redacted = _replace_span(redacted, vs, ve, "[API_KEY]")
@@ -435,8 +421,6 @@ def redact_keys(text: str) -> Tuple[str, Dict[str, int]]:
     for m in reversed(generic_matches):
         s, e = m.span(1)
         token = redacted[s:e]
-        if token in PLACEHOLDER_SET or "[" in token or "]" in token:
-            continue
         if token.isdigit():
             continue
         if _entropy(token) >= 3.2:
@@ -522,12 +506,6 @@ def _red_num(text: str):
         start, end = m.span()
         number = new_text[start:end]
 
-        if re.match(r"\d+(st|nd|rd|th)$", number, re.IGNORECASE):
-            continue
-
-        if number.startswith("[") and number.endswith("]"):
-            continue
-
         new_text = new_text[:start] + "[NUM]" + new_text[end:]
         count += 1
 
@@ -568,9 +546,6 @@ def _red_token(text: str):
     matches = list(MIXED_TOKEN_PATTERN.finditer(text))
     for m in reversed(matches):
         token = m.group(0)
-
-        if token.startswith("[") and token.endswith("]"):
-            continue
 
         if ORDINAL_PATTERN.match(token):
             continue

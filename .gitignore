@@ -40,6 +40,8 @@ src/server/.env
 .coverage
 coverage.json
 htmlcov/
+.pytest_cache/
+.pytest_tmp/
 
 # Credentials files
 **/client_secrets.json
