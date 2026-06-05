@@ -1,9 +1,14 @@
 import Button from "@/global-components/button";
 import { Modal } from "@/global-components/Modal";
 
+export interface DaysToSyncOption {
+  label: string;
+  days: number;
+}
+
 interface DaysToSyncProps {
   show: boolean;
-  options: number[];
+  options: DaysToSyncOption[];
   onSelection: (days: number) => void;
   onCancel: () => void;
 }
@@ -33,10 +38,10 @@ export function DaysToSync({
       </div>
       <hr className="header-split" />
       <div className="flex flex-row w-full gap-2">
-        {options.map((days) => (
-          <div className="w-1/4" key={days}>
-            <Button onClick={() => onSelection(days)} className="">
-              <h4 className="whitespace-nowrap">{days} days</h4>
+        {options.map((option) => (
+          <div className="w-1/3" key={option.days}>
+            <Button onClick={() => onSelection(option.days)} className="">
+              <h4 className="whitespace-nowrap">{option.label}</h4>
             </Button>
           </div>
         ))}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
-import { DaysToSync } from "./account-components/DaysToSync";
+import { DaysToSync, type DaysToSyncOption } from "./account-components/DaysToSync";
 import { useAuth } from "@/global-components/authContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
@@ -51,7 +51,11 @@ export function AccountPage() {
   const [showDaysToSync, setShowDaysToSync] = useState(false);
   const [showUnlinkGmailModal, setShowUnlinkGmailModal] = useState(false);
 
-  const daysToSyncOptions = [3, 7, 14, 45];
+  const daysToSyncOptions: DaysToSyncOption[] = [
+    { label: "1mo", days: 30 },
+    { label: "3mo", days: 90 },
+    { label: "6mo", days: 180 },
+  ];
 
   const { user, applyProfileUpdate } = useAuth();
 
@@ -157,7 +161,7 @@ export function AccountPage() {
     }
   }
 
-  async function linkGmail(days: number = 14) {
+  async function linkGmail(days: number = 180) {
     const res = await api("/api/auth/setup-rls-session", {
       method: "POST",
       body: JSON.stringify({ daysToSync: days }),
