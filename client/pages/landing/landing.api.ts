@@ -10,6 +10,10 @@ import { api } from "@/global-services/api";
 // Return shape used components: [ok, message?]
 type ApiResponse = [boolean, string?];
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 async function checkOrCreateUserInDB(): Promise<ApiResponse> {
   try {
     console.log("Checking or Creating user database record");
@@ -20,8 +24,8 @@ async function checkOrCreateUserInDB(): Promise<ApiResponse> {
     } else {
       return [false, "Failed to verify/create user database record"];
     }
-  } catch (error: any) {
-    return [false, error?.message ?? "Failed to verify/create user database record"];
+  } catch (error: unknown) {
+    return [false, getErrorMessage(error, "Failed to verify/create user database record")];
   }
 }
 
@@ -35,14 +39,14 @@ export async function CreateNewAccount({
 }: {
   email: string;
   password: string;
-}) {
+}): Promise<ApiResponse> {
   // takes the email and password, and creates a new account.
   try {
     await emailSignUp(email, password);
     await checkOrCreateUserInDB();
     return [true, "Account created successfully"];
-  } catch (error: any) {
-    return [false, error?.message ?? "Account creation failed"]; 
+  } catch (error: unknown) {
+    return [false, getErrorMessage(error, "Account creation failed")]; 
   }
 }
 
@@ -60,8 +64,8 @@ export async function LogUserIn({
     await checkOrCreateUserInDB();
     navigate("/home");
     return [true, "Login successful"];
-  } catch (error: any) {
-    return [false, error?.message ?? "Login failed"];
+  } catch (error: unknown) {
+    return [false, getErrorMessage(error, "Login failed")];
   }
 }
 
@@ -82,7 +86,7 @@ export async function thirdPartyLogIn(
       // Placeholder for Outlook sign-in method
       return [false, "Outlook sign in not implemented"];
     }
-  } catch (error: any) {
-    return [false, error?.message ?? `${provider} log in failed`];
+  } catch (error: unknown) {
+    return [false, getErrorMessage(error, `${provider} log in failed`)];
   }
 }

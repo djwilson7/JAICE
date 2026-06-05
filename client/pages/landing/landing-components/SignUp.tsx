@@ -31,16 +31,10 @@ export function SignUp() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isEnabled, setIsEnabled] = useState(false);
 
-  const handleEnableCheck = () => {
-    if (validEmail && validConfirmEmail && validPassword && validConfirmPassword) {
-      setIsEnabled(true);
-    } else {
-      setIsEnabled(false);
-    }
-  };
-
   useEffect(() => {
-    handleEnableCheck();
+    setIsEnabled(
+      Boolean(validEmail && validConfirmEmail && validPassword && validConfirmPassword)
+    );
   }, [validEmail, validConfirmEmail, validPassword, validConfirmPassword]);
 
   const submitTitle = isEnabled ? "Create Account" : "Fill out all fields correctly to create a new account";

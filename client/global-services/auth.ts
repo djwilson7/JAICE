@@ -16,6 +16,15 @@ import
 import type { User } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 
+function getAuthErrorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : undefined;
+}
+
 // Observe auth state changes
 export function observeUser(callback: (user: User | null) => void) 
 {
@@ -136,9 +145,10 @@ export async function deleteCurrentUser(opts?: { email?: string; password?: stri
   try {
     await deleteUser(user);
     return { ok: true as const };
-  } catch (err: any) {
-    if (err?.code !== "auth/requires-recent-login") {
-      return { ok: false as const, code: err?.code ?? "unknown" };
+  } catch (err: unknown) {
+    const code = getAuthErrorCode(err);
+    if (code !== "auth/requires-recent-login") {
+      return { ok: false as const, code: code ?? "unknown" };
     }
 
     // Requires recent login — try to reauthenticate based on provider
@@ -163,8 +173,8 @@ export async function deleteCurrentUser(opts?: { email?: string; password?: stri
       // After successful reauth, try delete again
       await deleteUser(user);
       return { ok: true as const };
-    } catch (reauthErr: any) {
-      return { ok: false as const, code: reauthErr?.code ?? "reauth-failed" as const };
+    } catch (reauthErr: unknown) {
+      return { ok: false as const, code: getAuthErrorCode(reauthErr) ?? "reauth-failed" as const };
     }
   }
 }

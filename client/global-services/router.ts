@@ -27,7 +27,11 @@ function waitForAuth(timeoutMs = 5000): Promise<User | null> {
     });
     // Safety timeout
     setTimeout(() => {
-      try { unsubscribe(); } catch {}
+      try {
+        unsubscribe();
+      } catch {
+        // Auth may already be unsubscribed if initialization resolved first.
+      }
       resolve(auth.currentUser);
     }, timeoutMs);
   });

@@ -59,16 +59,8 @@ export function LogIn() {
     setValidPassword(validatePassword(value) && value !== "");
   };
 
-  const handleEnableCheck = () => {
-    if (validEmail && validPassword) {
-      setIsEnabled(true);
-    } else {
-      setIsEnabled(false);
-    }
-  };
-
   useEffect(() => {
-    handleEnableCheck();
+    setIsEnabled(Boolean(validEmail && validPassword));
   }, [validEmail, validPassword]);
 
   return (
