@@ -12,15 +12,30 @@ from client_api.api import auth_api
 
 
 class Conn:
-    def __init__(self, *, fetchrow=(), execute_error: Exception | None = None):
+    def __init__(
+        self,
+        *,
+        fetchrow=(),
+        fetch=(),
+        execute_error: Exception | None = None,
+    ):
         self.fetchrow_results = deque(fetchrow)
+        self.fetch_results = deque(fetch)
         self.execute_error = execute_error
         self.fetchrow_calls = []
+        self.fetch_calls = []
         self.execute_calls = []
 
     async def fetchrow(self, query, *args):
         self.fetchrow_calls.append((query, args))
         result = self.fetchrow_results.popleft() if self.fetchrow_results else None
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    async def fetch(self, query, *args):
+        self.fetch_calls.append((query, args))
+        result = self.fetch_results.popleft() if self.fetch_results else []
         if isinstance(result, Exception):
             raise result
         return result
@@ -490,10 +505,26 @@ async def test_logout_success_and_error(monkeypatch):
 async def test_delete_account_success_and_errors(monkeypatch):
     auth = Auth()
     monkeypatch.setattr(auth_api, "get_auth", lambda: auth)
+    monkeypatch.setattr(
+        auth_api,
+        "decrypt_token",
+        lambda token: {"enc:u1": "u1", "enc:u2": "u2"}[token],
+    )
+    conn = Conn(
+        fetch=[
+            [
+                {"id": "staging-1", "user_id_enc": "enc:u1"},
+                {"id": "staging-2", "user_id_enc": "enc:u2"},
+            ]
+        ]
+    )
     assert await auth_api.delete_account(
-        request(pool=Pool(Conn())), {"uid": "u1"}
+        request(pool=Pool(conn)), {"uid": "u1"}
     ) == {"status": "success", "message": "Account deleted successfully"}
     assert auth.deleted == ["u1"]
+    assert "FROM internal_staging.email_staging" in conn.fetch_calls[0][0]
+    assert conn.execute_calls[0][1] == (["staging-1"],)
+    assert conn.execute_calls[1][1] == ("u1",)
 
     with pytest.raises(HTTPException, match="delete account"):
         await auth_api.delete_account(

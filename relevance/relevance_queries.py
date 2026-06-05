@@ -46,17 +46,34 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
 
         values = []
         for row in staging_rows:
-            (
-                staging_id,
-                _user_id_enc,
-                _trace_id,
-                provider,
-                provider_message_id,
-                subject_enc,
-                _sender_enc,
-                received_at,
-                body_enc,
-            ) = row
+            provider_thread_id = None
+            provider_history_id = None
+            if len(row) >= 11:
+                (
+                    staging_id,
+                    _user_id_enc,
+                    _trace_id,
+                    provider,
+                    provider_message_id,
+                    subject_enc,
+                    _sender_enc,
+                    received_at,
+                    body_enc,
+                    provider_thread_id,
+                    provider_history_id,
+                ) = row
+            else:
+                (
+                    staging_id,
+                    _user_id_enc,
+                    _trace_id,
+                    provider,
+                    provider_message_id,
+                    subject_enc,
+                    _sender_enc,
+                    received_at,
+                    body_enc,
+                ) = row
 
             # Map only minimal known fields
             provider_source = provider or "gmail"
@@ -84,6 +101,12 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
                     None,                # needs_review
                     provider_message_id, # provider_message_id
                     relevance_conf,      # relevance_model_confidence
+                    provider_thread_id,  # provider_thread_id
+                    provider_history_id, # provider_history_id
+                    provider_thread_id,  # nullable thread gate
+                    user_uid,            # existing thread lookup
+                    provider_source,     # existing thread lookup
+                    provider_thread_id,  # existing thread lookup
                 )
             )
 
@@ -107,13 +130,25 @@ def update_job_app_table(trace_id: str, model_results: RelevanceModelResult):
             stage_confidence_secondary,
             needs_review,
             provider_message_id,
-            relevance_model_confidence
+            relevance_model_confidence,
+            provider_thread_id,
+            provider_history_id
         )
-        VALUES (
+        SELECT
             %s, %s, %s, %s,
             %s, %s, %s, %s,
             %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s,
+            %s, %s
+        WHERE (
+            %s::text IS NULL
+            OR NOT EXISTS (
+                SELECT 1
+                FROM public.job_applications existing
+                WHERE existing.user_uid = %s
+                  AND existing.provider_source = %s
+                  AND existing.provider_thread_id = %s::text
+            )
         )
         ON CONFLICT (provider_message_id) DO NOTHING;
         """

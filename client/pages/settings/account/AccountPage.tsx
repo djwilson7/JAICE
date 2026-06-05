@@ -168,8 +168,7 @@ export function AccountPage() {
     });
     console.log("Setup RLS session response:", res);
     const token = await getIdToken();
-    console.log(BASE_URL);
-    console.log(GMAIL_CONSENT_URL);
+    console.log(`Redirecting to Gmail consent flow for ${days} days of email sync.`);
     window.location.href = `${BASE_URL}${GMAIL_CONSENT_URL}?token=${token}&days=${days}`;
     return res;
   }

@@ -48,6 +48,14 @@ GOOGLE_REVOKE_ENDPOINT = os.getenv(
 GMAIL_INITIAL_SYNC_WINDOW_DAYS = 180
 
 
+def to_bytes(val):
+    if isinstance(val, memoryview):
+        return bytes(val)
+    if isinstance(val, str) and val.startswith("\\x"):
+        return bytes.fromhex(val[2:])
+    return val
+
+
 def is_missing_gmail_sync_column_error(error: Exception) -> bool:
     message = str(error)
     return (
@@ -84,6 +92,7 @@ def get_oauth_consent_url(user: dict = Depends(get_user_from_token_query)):
     auth_url, state = flow.authorization_url(
         access_type="offline", state=uid, prompt="consent"
     )
+    logging.info("Redirecting user to Google OAuth consent screen.")
     return RedirectResponse(auth_url)
 
 
@@ -530,6 +539,43 @@ async def setup_frontend_rls_session(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Failed to mint RLS session token.")
 
 
+async def delete_staged_emails_for_user(conn, uid: str) -> int:
+    """
+    Delete staging rows for a user.
+
+    Staging stores user_id_enc with Fernet encryption, which is intentionally
+    non-deterministic. We cannot match by encrypting uid again, so we decrypt
+    candidate row ownership in application code and delete matching IDs.
+    """
+    rows = await conn.fetch(
+        """
+        SELECT id, user_id_enc
+        FROM internal_staging.email_staging
+        """
+    )
+    staging_ids = []
+    for row in rows:
+        try:
+            if decrypt_token(to_bytes(row["user_id_enc"])) == uid:
+                staging_ids.append(row["id"])
+        except Exception as e:
+            logging.warning(
+                f"Unable to decrypt staging owner for row {row['id']} during account deletion: {e}"
+            )
+
+    if not staging_ids:
+        return 0
+
+    await conn.execute(
+        """
+        DELETE FROM internal_staging.email_staging
+        WHERE id = ANY($1::text[])
+        """,
+        staging_ids,
+    )
+    return len(staging_ids)
+
+
 @router.get(
     "/gmail-consent-status",
     summary="Gets the current user's gmail consent status from the database.",
@@ -597,13 +643,17 @@ async def delete_account(request: Request, user: dict = Depends(get_current_user
 
     try:
         async with pool.acquire() as conn:
+            deleted_staging_emails = await delete_staged_emails_for_user(conn, uid)
             await conn.execute(
                 "DELETE FROM user_account WHERE user_id = $1",
                 uid,
             )
 
         auth.delete_user(uid)
-        logging.info(f"User {uid} account deleted successfully.")
+        logging.info(
+            f"User {uid} account deleted successfully. "
+            f"Deleted {deleted_staging_emails} staged email rows."
+        )
         return {"status": "success", "message": "Account deleted successfully"}
 
     except Exception as e:

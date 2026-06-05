@@ -49,12 +49,18 @@ def relevance_task(trace_id: str, row_ids: list, attempt: int = 1):
     except Exception as e:
         logging.error(f"[{trace_id}] Error fetching encrypted emails: {e}")
         return {"status": "failure", "error": str(e)}
+    if not encrypted_emails:
+        logging.info(f"[{trace_id}] No encrypted emails found; relevance task skipped.")
+        return {"status": "skipped", "reason": "no_data"}
 
     try:
         decrypted_emails = decrypt_email_content(trace_id, encrypted_emails)
     except Exception as e:
         logging.error(f"[{trace_id}] Error decrypting emails: {e}")
         return {"status": "failure", "error": str(e)}
+    if not decrypted_emails:
+        logging.info(f"[{trace_id}] No decrypted emails available; relevance task skipped.")
+        return {"status": "skipped", "reason": "no_data"}
 
     try:
         normalized_emails = normalized_emails_for_model(trace_id, decrypted_emails)
@@ -117,6 +123,8 @@ def normalized_emails_for_model(trace_id: str, emails: list[dict]) -> pd.DataFra
         A pandas DataFrame with a 'body' column containing redacted/normalized text.
     """
     logging.debug(f"[{trace_id}] Normalizing {len(emails)} emails")
+    if not emails:
+        return pd.DataFrame(columns=["id", "body", "subject"])
     df = pd.DataFrame(emails)
     df_normalized, redaction_counts = strip_pii(df)
     return df_normalized

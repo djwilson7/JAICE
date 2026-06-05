@@ -9,7 +9,11 @@ def get_encrypted_emails(trace_id: str, row_ids: list[int]):
     with get_connection() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                "SELECT id, subject_enc, body_enc, sender_enc, provider_message_id FROM internal_staging.email_staging WHERE id = ANY(%s)",
+                """
+                SELECT id, subject_enc, body_enc, sender_enc, provider_message_id
+                FROM internal_staging.email_staging
+                WHERE id = ANY(%s)
+                """,
                 (row_ids,),
                 prepare=False
             )
@@ -34,7 +38,9 @@ def get_data_from_staging(trace_id: str, row_ids: list[str]) -> list[tuple]:
         subject_enc,
         sender_enc,
         received_at,
-        body_enc
+        body_enc,
+        provider_thread_id,
+        provider_history_id
     FROM internal_staging.email_staging
     WHERE id = ANY(%s);
     """

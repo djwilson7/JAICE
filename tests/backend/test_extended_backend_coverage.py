@@ -236,6 +236,8 @@ def test_relevance_query_paths(monkeypatch):
     )
     assert relevance_queries.update_job_app_table("trace", result)["status"] == "success"
     assert captured["values"][0][0:6] == ("user", "subject", None, "body", "staging", "gmail")
+    assert "%s::text IS NULL" in captured["query"]
+    assert "existing.provider_thread_id = %s::text" in captured["query"]
 
     monkeypatch.setattr(
         relevance_queries,
@@ -464,6 +466,12 @@ def test_relevance_task_orchestration_paths(monkeypatch):
     assert relevance_tasks.relevance_task("trace", []) == {"status": "failure", "error": "fetch"}
 
     monkeypatch.setattr(relevance_tasks, "get_encrypted_emails", lambda *_args: [])
+    assert relevance_tasks.relevance_task("trace", []) == {
+        "status": "skipped",
+        "reason": "no_data",
+    }
+
+    monkeypatch.setattr(relevance_tasks, "get_encrypted_emails", lambda *_args: [{"id": "one"}])
     for name, error in [
         ("decrypt_email_content", "decrypt"),
         ("normalized_emails_for_model", "normalize"),
@@ -473,11 +481,26 @@ def test_relevance_task_orchestration_paths(monkeypatch):
     ]:
         monkeypatch.setattr(
             relevance_tasks,
+            "decrypt_email_content",
+            lambda *_args: [{"id": "one", "body": "body", "subject": "subject"}],
+        )
+        monkeypatch.setattr(
+            relevance_tasks,
+            "normalized_emails_for_model",
+            lambda *_args: pd.DataFrame([{"id": "one", "body": "body"}]),
+        )
+        model_result = RelevanceModelResult(relevant={"one": 0.9}, retry=[], purge=[])
+        monkeypatch.setattr(
+            relevance_tasks, "run_relevance_model", lambda *_args: model_result
+        )
+        monkeypatch.setattr(relevance_tasks, "update_job_app_table", lambda *_args: None)
+        monkeypatch.setattr(relevance_tasks, "enqueue", lambda *_args: None)
+        monkeypatch.setattr(
+            relevance_tasks,
             name,
             lambda *_args, error=error: (_ for _ in ()).throw(RuntimeError(error)),
         )
         assert relevance_tasks.relevance_task("trace", []) == {"status": "failure", "error": error}
-        monkeypatch.setattr(relevance_tasks, name, lambda *_args: None)
 
     model_result = RelevanceModelResult(relevant={"one": 0.9}, retry=[], purge=[])
     monkeypatch.setattr(relevance_tasks, "run_relevance_model", lambda *_args: model_result)
