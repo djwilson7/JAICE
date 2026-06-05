@@ -35,6 +35,34 @@ def main() -> None:
             order by table_schema, table_name;
             """
         ).fetchall()
+        columns = conn.execute(
+            """
+            select table_schema, table_name, column_name
+            from information_schema.columns
+            where (table_schema, table_name, column_name) in (
+                ('public', 'user_account', 'gmail_history_id'),
+                ('public', 'user_account', 'gmail_watch_expiration'),
+                ('public', 'user_account', 'last_pubsub_message_id'),
+                ('public', 'user_account', 'gmail_sync_status'),
+                ('public', 'user_account', 'gmail_last_sync_at'),
+                ('public', 'user_account', 'gmail_last_sync_error'),
+                ('internal_staging', 'email_staging', 'provider_thread_id'),
+                ('internal_staging', 'email_staging', 'provider_history_id'),
+                ('public', 'job_applications', 'provider_thread_id'),
+                ('public', 'job_applications', 'provider_history_id')
+            )
+            order by table_schema, table_name, column_name;
+            """
+        ).fetchall()
+        indexes = conn.execute(
+            """
+            select schemaname, tablename, indexname
+            from pg_indexes
+            where schemaname = 'internal_staging'
+              and tablename = 'email_staging'
+              and indexname = 'email_staging_provider_message_unique';
+            """
+        ).fetchall()
 
     print(
         {
@@ -42,6 +70,12 @@ def main() -> None:
             "database": database,
             "user": user,
             "critical_tables": [(schema, table) for schema, table in tables],
+            "gmail_pubsub_columns": [
+                (schema, table, column) for schema, table, column in columns
+            ],
+            "gmail_pubsub_indexes": [
+                (schema, table, index) for schema, table, index in indexes
+            ],
         }
     )
 
