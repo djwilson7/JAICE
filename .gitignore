@@ -46,6 +46,9 @@ htmlcov/
 # Credentials files
 **/client_secrets.json
 **/credentials.json
+scratchgoogle-application-credentials.json
+gmail-pubsub-credentials.json
+google-application-credentials.json
 
 # VS CODE Scripts
 **/.vscode/

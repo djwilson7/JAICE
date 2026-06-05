@@ -37,28 +37,6 @@ services:
     depends_on:
       redis:
         condition: service_started
-      local_llm:
-        condition: service_healthy
-      local_llm_model_loader:
-        condition: service_completed_successfully
-
-  frontend:
-    container_name: frontend
-    build:
-      context: .
-      dockerfile: ./client/Dockerfile.client
-      target: dev
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
-    ports:
-      - "5173:5173"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    depends_on:
-      - client_api
-
 
   gmail_request_intake:
     container_name: gmail_request_intake
@@ -68,7 +46,7 @@ services:
     command: >
       watchmedo auto-restart --directory=/app/gmail --directory=/app/shared_worker_library
       --directory=/app/common --patterns=*.py --recursive --
-      celery -A gmail.gmail_worker worker -Q gmail_initial_sync_queue -l info -E -n request_intake -c 15
+      celery -A gmail.gmail_worker worker -Q gmail_initial_sync_queue -l info -n request_intake -c ${GMAIL_INTAKE_CONCURRENCY:-2}
     env_file:
       - .env
     volumes:
@@ -86,13 +64,34 @@ services:
     command: >
       watchmedo auto-restart --directory=/app/gmail --directory=/app/shared_worker_library
       --directory=/app/common --patterns=*.py --recursive --
-      celery -A gmail.gmail_worker worker -Q gmail_fetch_content_queue -l info -E -n fetch_content -c 15
+      celery -A gmail.gmail_worker worker -Q gmail_fetch_content_queue -l info -n fetch_content -c ${GMAIL_FETCH_CONCURRENCY:-4}
     env_file:
       - .env
     volumes:
       - ./gmail:/app/gmail
       - ./shared_worker_library:/app/shared_worker_library
       - ./common:/app/common
+    depends_on:
+      - redis
+
+  gmail_pubsub_listener:
+    container_name: gmail_pubsub_listener
+    build:
+      context: .
+      dockerfile: ./gmail/Dockerfile.gmail
+    command: >
+      watchmedo auto-restart --directory=/app/gmail --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
+      python -m gmail.pubsub_listener
+    env_file:
+      - .env
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /app/gcp/credentials.json
+    volumes:
+      - ./gmail:/app/gmail
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
+      - ${GMAIL_PUBSUB_CREDENTIALS_HOST:-./scratch/gmail-pubsub-credentials.json}:/app/gcp/credentials.json:ro
     depends_on:
       - redis
 
