@@ -1,4 +1,4 @@
-from typing import List, Dict, Iterable
+from typing import List, Dict, Iterable, Optional, Tuple
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os, base64, time, requests, random, redis, uuid
@@ -6,10 +6,22 @@ from gmail.gmail_worker import celery_app
 from google.oauth2.credentials import Credentials
 from common.security import encrypt_token, decrypt_token
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from shared_worker_library.utils.task_definitions import TaskType, EmailStatus
 from common.logger import get_logger
-from gmail.gmail_queries import get_refresh_token, insert_staging_records, can_fetch_emails
-from datetime import datetime
+from gmail.gmail_queries import (
+    can_fetch_emails,
+    clear_gmail_sync_state,
+    get_gmail_sync_state,
+    get_refresh_token,
+    get_user_by_email,
+    insert_staging_records,
+    mark_gmail_sync_error,
+    update_gmail_history_id,
+    update_gmail_watch_state,
+    update_pubsub_marker,
+)
+from datetime import datetime, timezone
 
 logging = get_logger()
 
@@ -20,6 +32,12 @@ POST_BATCH_SLEEP_SEC = 0.5
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID_LOCAL") or os.getenv("GOOGLE_CLIENT_ID_PROD")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET_LOCAL") or os.getenv("GOOGLE_CLIENT_SECRET_PROD")
 GOOGLE_TOKEN_URL = os.getenv("GOOGLE_TOKEN_URL", "https://oauth2.googleapis.com/token")
+GMAIL_PUBSUB_PROJECT_ID = os.getenv("GMAIL_PUBSUB_PROJECT_ID")
+GMAIL_PUBSUB_TOPIC = (
+    os.getenv("GMAIL_PUBSUB_TOPIC")
+    or os.getenv("GMAIL_PUBSUB_TOPIC_NAME")
+)
+WATCH_RENEWAL_SKEW_SECONDS = int(os.getenv("GMAIL_WATCH_RENEWAL_SKEW_SECONDS", "86400"))
 
 
 REDIS_URL = os.getenv("CELERY_BROKER_URL_LOCAL") or os.getenv("CELERY_BROKER_URL_PROD")
@@ -27,6 +45,292 @@ if not REDIS_URL:
     raise ValueError("CELERY_BROKER_URL environment variable is not set.")
 
 r = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+
+
+def _topic_name() -> str:
+    if not GMAIL_PUBSUB_TOPIC:
+        raise ValueError("GMAIL_PUBSUB_TOPIC_NAME environment variable is not set.")
+    if GMAIL_PUBSUB_TOPIC.startswith("projects/"):
+        return GMAIL_PUBSUB_TOPIC
+    if not GMAIL_PUBSUB_PROJECT_ID:
+        raise ValueError("GMAIL_PUBSUB_PROJECT_ID environment variable is not set.")
+    return f"projects/{GMAIL_PUBSUB_PROJECT_ID}/topics/{GMAIL_PUBSUB_TOPIC}"
+
+
+@celery_app.task(
+    bind=True,
+    name=TaskType.ENSURE_WATCH.task_name,
+    queue=TaskType.ENSURE_WATCH.queue_name,
+    max_retries=MAX_RETRIES,
+    default_retry_delay=RETRY_DELAY,
+)
+def ensure_watch(self, uid: str, trace_id: str, force: bool = False):
+    try:
+        return ensure_gmail_watch(uid, trace_id, force=force)
+    except Exception as e:
+        logging.error(f"[{trace_id}] ensure_watch: failed for user {uid}: {e}")
+        try:
+            mark_gmail_sync_error(uid, str(e))
+        except Exception:
+            pass
+        raise self.retry(exc=e, countdown=RETRY_DELAY)
+
+
+@celery_app.task(
+    bind=True,
+    name=TaskType.CATCH_UP_SYNC.task_name,
+    queue=TaskType.CATCH_UP_SYNC.queue_name,
+    max_retries=MAX_RETRIES,
+    default_retry_delay=RETRY_DELAY,
+)
+def catch_up_sync(self, uid: str, trace_id: str):
+    try:
+        result = sync_history_for_user(uid, trace_id)
+        watch_state = ensure_gmail_watch(uid, trace_id, force=False)
+        result["watch"] = watch_state
+        return result
+    except Exception as e:
+        logging.error(f"[{trace_id}] catch_up_sync: failed for user {uid}: {e}")
+        try:
+            mark_gmail_sync_error(uid, str(e))
+        except Exception:
+            pass
+        raise self.retry(exc=e, countdown=RETRY_DELAY)
+
+
+@celery_app.task(
+    bind=True,
+    name=TaskType.PROCESS_HISTORY_EVENT.task_name,
+    queue=TaskType.PROCESS_HISTORY_EVENT.queue_name,
+    max_retries=MAX_RETRIES,
+    default_retry_delay=RETRY_DELAY,
+)
+def process_history_event(
+    self,
+    pubsub_message_id: str,
+    email_address: str,
+    event_history_id: str,
+    trace_id: Optional[str] = None,
+):
+    trace_id = trace_id or str(uuid.uuid4())
+    try:
+        uid = get_user_by_email(email_address)
+        if not uid:
+            logging.warning(
+                f"[{trace_id}] process_history_event: no local user for {email_address}"
+            )
+            return {"status": "ignored", "reason": "unknown_user"}
+
+        update_pubsub_marker(uid, pubsub_message_id)
+        result = sync_history_for_user(uid, trace_id, target_history_id=event_history_id)
+        result["watch"] = ensure_gmail_watch(uid, trace_id, force=False)
+        return result
+    except Exception as e:
+        logging.error(
+            f"[{trace_id}] process_history_event: failed for {email_address}: {e}"
+        )
+        raise self.retry(exc=e, countdown=RETRY_DELAY)
+
+
+def ensure_gmail_watch(uid: str, trace_id: str, force: bool = False) -> Dict:
+    state = get_gmail_sync_state(uid)
+    if not state or not state.get("google_refresh_token"):
+        logging.info(f"[{trace_id}] ensure_gmail_watch: no Gmail token for user {uid}")
+        return {"status": "skipped", "reason": "not_connected"}
+
+    expiration = state.get("gmail_watch_expiration")
+    if not force and expiration:
+        now = datetime.now(timezone.utc)
+        exp = expiration
+        if getattr(exp, "tzinfo", None) is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        seconds_remaining = (exp - now).total_seconds()
+        if seconds_remaining > WATCH_RENEWAL_SKEW_SECONDS:
+            return {
+                "status": "active",
+                "history_id": state.get("gmail_history_id"),
+                "watch_expires_at": exp.isoformat(),
+            }
+
+    token = decrypt_token(state["google_refresh_token"])
+    access_token = get_access_token_from_refresh(token, trace_id)
+    service = build_gmail_service(access_token)
+    request = {
+        "labelIds": ["INBOX"],
+        "labelFilterBehavior": "INCLUDE",
+        "topicName": _topic_name(),
+    }
+    response = service.users().watch(userId="me", body=request).execute()
+    history_id = str(response.get("historyId") or "")
+    watch_expiration = response.get("expiration")
+    if not history_id or not watch_expiration:
+        raise RuntimeError("Gmail watch response did not include historyId/expiration.")
+
+    update_gmail_watch_state(uid, history_id, watch_expiration)
+    logging.info(
+        f"[{trace_id}] ensure_gmail_watch: watch active for user {uid}, history_id={history_id}"
+    )
+    return {
+        "status": "renewed",
+        "history_id": history_id,
+        "watch_expires_at": datetime.fromtimestamp(
+            int(watch_expiration) / 1000, tz=timezone.utc
+        ).isoformat(),
+    }
+
+
+def stop_gmail_watch_for_user(uid: str, trace_id: str) -> None:
+    state = get_gmail_sync_state(uid)
+    if not state or not state.get("google_refresh_token"):
+        clear_gmail_sync_state(uid)
+        return
+
+    try:
+        token = decrypt_token(state["google_refresh_token"])
+        access_token = get_access_token_from_refresh(token, trace_id)
+        build_gmail_service(access_token).users().stop(userId="me").execute()
+    except Exception as e:
+        logging.warning(f"[{trace_id}] stop_gmail_watch_for_user: Google stop failed: {e}")
+    finally:
+        clear_gmail_sync_state(uid)
+
+
+def sync_history_for_user(
+    uid: str, trace_id: str, target_history_id: Optional[str] = None
+) -> Dict:
+    state = get_gmail_sync_state(uid)
+    if not state or not state.get("google_refresh_token"):
+        return {"status": "skipped", "reason": "not_connected"}
+
+    start_history_id = state.get("gmail_history_id")
+    if not start_history_id:
+        return fallback_time_window_sync(uid, trace_id, target_history_id)
+
+    token = decrypt_token(state["google_refresh_token"])
+    access_token = get_access_token_from_refresh(token, trace_id)
+
+    try:
+        message_ids, latest_history_id = fetch_history_message_ids(
+            access_token, trace_id, start_history_id
+        )
+    except HttpError as e:
+        if _is_invalid_history_error(e):
+            logging.warning(
+                f"[{trace_id}] sync_history_for_user: history cursor expired; using bounded fallback"
+            )
+            return fallback_time_window_sync(uid, trace_id, target_history_id)
+        raise
+
+    queued = enqueue_fetch_batches(uid, trace_id, access_token, message_ids)
+    next_history_id = str(target_history_id or latest_history_id or start_history_id)
+    update_gmail_history_id(uid, next_history_id)
+    return {
+        "status": "success",
+        "message_count": len(message_ids),
+        "queued_batches": queued,
+        "history_id": next_history_id,
+    }
+
+
+def fallback_time_window_sync(
+    uid: str, trace_id: str, target_history_id: Optional[str] = None
+) -> Dict:
+    state = get_gmail_sync_state(uid)
+    token = decrypt_token(state["google_refresh_token"])
+    access_token = get_access_token_from_refresh(token, trace_id)
+    message_ids = fetch_message_ids(access_token, trace_id, days_back=14)
+    queued = enqueue_fetch_batches(uid, trace_id, access_token, message_ids)
+    watch_state = ensure_gmail_watch(uid, trace_id, force=True)
+    next_history_id = str(target_history_id or watch_state.get("history_id") or "")
+    if next_history_id:
+        update_gmail_history_id(uid, next_history_id)
+    return {
+        "status": "fallback",
+        "message_count": len(message_ids),
+        "queued_batches": queued,
+        "history_id": next_history_id,
+    }
+
+
+def enqueue_fetch_batches(
+    uid: str, trace_id: str, access_token: str, message_ids: List[str]
+) -> int:
+    queued = 0
+    for batch in chunk_list(dedupe_preserve_order(message_ids), EMAILS_PER_BATCH):
+        fetch_content.delay(batch, encrypt_token(uid), trace_id, encrypt_token(access_token))
+        queued += 1
+    return queued
+
+
+def fetch_history_message_ids(
+    access_token: str, trace_id: str, start_history_id: str
+) -> Tuple[List[str], Optional[str]]:
+    service = build_gmail_service(access_token)
+    message_ids: List[str] = []
+    latest_history_id = None
+    page_token = None
+
+    while True:
+        request = (
+            service.users()
+            .history()
+            .list(
+                userId="me",
+                startHistoryId=start_history_id,
+                historyTypes=["messageAdded"],
+                labelId="INBOX",
+                pageToken=page_token,
+            )
+        )
+        data = request.execute()
+        latest_history_id = data.get("historyId") or latest_history_id
+        message_ids.extend(extract_message_ids_from_history(data.get("history", [])))
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            break
+
+    logging.info(
+        f"[{trace_id}] fetch_history_message_ids: found {len(message_ids)} message IDs"
+    )
+    return dedupe_preserve_order(message_ids), latest_history_id
+
+
+def extract_message_ids_from_history(history_records: List[Dict]) -> List[str]:
+    ids: List[str] = []
+    for record in history_records or []:
+        for item in record.get("messagesAdded", []) or []:
+            message_id = (item.get("message") or {}).get("id")
+            if message_id:
+                ids.append(message_id)
+    return dedupe_preserve_order(ids)
+
+
+def dedupe_preserve_order(values: Iterable[str]) -> List[str]:
+    seen = set()
+    result = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def build_gmail_service(access_token: str):
+    return build(
+        "gmail",
+        "v1",
+        credentials=Credentials(token=access_token),
+        cache_discovery=False,
+    )
+
+
+def _is_invalid_history_error(error: HttpError) -> bool:
+    status = getattr(getattr(error, "resp", None), "status", None)
+    text = str(error).lower()
+    return status in {400, 404} and (
+        "starthistoryid" in text or "history" in text or "invalid" in text
+    )
 
 
 @celery_app.task(
@@ -147,7 +451,12 @@ def fetch_content(
 
         encrypted_emails = prepare_staging_payload(trace_id, parsed)
         row_ids = write_to_staging(trace_id, encrypted_emails)
-        enqueue_model_processing(trace_id, row_ids)
+        if row_ids:
+            enqueue_model_processing(trace_id, row_ids)
+        else:
+            logging.info(
+                f"[{trace_id}] model: no new staging rows to process; skipping relevance stage"
+            )
         
         if results.retry:
             schedule_retry(
@@ -210,8 +519,7 @@ def gmail_fetch_batch(
     Runs a Gmail batch get(format=full) for given message IDs.
     Returns a BatchResult: successful (raw responses), retry (IDs), skipped (IDs).
     """
-    credentials = Credentials(token=access_token)
-    service = build("gmail", "v1", credentials=credentials, cache_discovery=False)
+    service = build_gmail_service(access_token)
 
     successful = []
     retry = []
@@ -290,8 +598,8 @@ def parse_successful_fetches(
                     "trace_id": trace_id,
                     "provider": "google",
                     "provider_message_id": resp.get("id", msg_id),
-                    "thread_id": resp.get("threadId"),
-                    "history_id": resp.get("historyId"),
+                    "provider_thread_id": resp.get("threadId"),
+                    "provider_history_id": resp.get("historyId"),
                     "received_at": resp.get("internalDate"),
                     "subject": subject,
                     "sender": sender,
@@ -404,6 +712,8 @@ def prepare_staging_payload(trace_id: str, parsed_emails: List[Dict]) -> List[Di
                 "trace_id": e["trace_id"],
                 "provider": e["provider"],
                 "provider_message_id": e["provider_message_id"],
+                "provider_thread_id": e.get("provider_thread_id"),
+                "provider_history_id": e.get("provider_history_id"),
                 "subject_enc": encrypt_token(e["subject"]),
                 "sender_enc": encrypt_token(e["sender"]),
                 "received_at": e["received_at"],
@@ -435,6 +745,10 @@ def write_to_staging(trace_id: str, encrypted_emails: List[Dict]) -> List[str]:
 
 
 def enqueue_model_processing(trace_id: str, row_ids: List[str]) -> None:
+    if not row_ids:
+        logging.info(f"[{trace_id}] model: no row IDs provided; skipping relevance stage")
+        return
+
     logging.info(
         f"[{trace_id}] model: enqueuing batch of {len(row_ids)} rows for relevance stage"
     )

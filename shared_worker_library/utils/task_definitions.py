@@ -4,6 +4,9 @@ from typing import Dict
 
 class TaskType(Enum):
     INITIAL_SYNC = ("gmail.initial_sync", "gmail_initial_sync_queue")
+    ENSURE_WATCH = ("gmail.ensure_watch", "gmail_initial_sync_queue")
+    PROCESS_HISTORY_EVENT = ("gmail.process_history_event", "gmail_initial_sync_queue")
+    CATCH_UP_SYNC = ("gmail.catch_up_sync", "gmail_initial_sync_queue")
     FETCH_CONTENT = ("gmail.fetch_content", "gmail_fetch_content_queue")
     RELEVANCE_MODEL = ("filter_model.relevance_task", "relevance_model_queue")
     CLASSIFICATION_MODEL = (
