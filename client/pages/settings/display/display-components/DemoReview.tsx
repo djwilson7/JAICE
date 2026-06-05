@@ -1,4 +1,4 @@
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 export function DemoReview() {
   const { reviewBehavior } = useSettings();

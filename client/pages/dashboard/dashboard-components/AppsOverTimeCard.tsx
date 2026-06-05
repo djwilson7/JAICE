@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { Line } from "react-chartjs-2";
+import type { Chart, ChartOptions, TooltipModel } from "chart.js";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 
 // Generate the last N days as labels
@@ -29,7 +30,16 @@ function applyRange(arr: number[], range: number) {
   return arr.slice(-range);
 }
 
-const externalTooltipHandler = (context: any) => {
+type ExternalTooltipContext<T extends "line"> = {
+  chart: Chart<T>;
+  tooltip: TooltipModel<T>;
+};
+
+type TooltipBodyLine = {
+  lines: string[];
+};
+
+const externalTooltipHandler = (context: ExternalTooltipContext<"line">) => {
   // Tooltip Element
   let tooltipEl = document.getElementById("chartjs-apps-over-time-tooltip");
 
@@ -62,7 +72,7 @@ const externalTooltipHandler = (context: any) => {
       innerHtml += `<div style='font-weight: bold; margin-bottom: 8px; font-size: 13px; letter-spacing: 0.5px;'>${title}</div>`;
     });
 
-    bodyLines.forEach((bodyItem: any, i: number) => {
+    bodyLines.forEach((bodyItem: TooltipBodyLine, i: number) => {
       const colors = tooltipModel.labelColors[i];
       const stageName = bodyItem.lines[0];
       const span = `<span style='display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: ${colors.borderColor};'></span>`;
@@ -225,7 +235,7 @@ export function AppsOverTimeCard({
     ],
   };
 
-  const options = {
+  const options: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -244,7 +254,7 @@ export function AppsOverTimeCard({
     scales: {
       x: {
         grid: {
-          color: function(context: any): string {
+          color: function(context: { index: number }): string {
             const index = context.index;
             const label = labels[index];
             if (!label) return "transparent";
@@ -279,7 +289,7 @@ export function AppsOverTimeCard({
           autoSkip: false,
           maxRotation: 0,
           minRotation: 0,
-          callback: function(_val: any, index: number): string {
+          callback: function(_val: string | number, index: number): string {
             const label = labels[index];
             if (!label) return "";
 

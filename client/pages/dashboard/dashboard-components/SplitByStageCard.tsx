@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
-import type { ChartData, ChartOptions } from "chart.js";
+import type { Chart, ChartData, ChartOptions, TooltipItem, TooltipModel } from "chart.js";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { getDashboardChartTheme } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
-const splitByStageTooltipHandler = (context: any) => {
+const splitByStageTooltipHandler = (context: {
+  chart: Chart<"bar">;
+  tooltip: TooltipModel<"bar">;
+}) => {
   let tooltipEl = document.getElementById("chartjs-split-by-stage-tooltip");
 
   if (!tooltipEl) {
@@ -34,7 +37,7 @@ const splitByStageTooltipHandler = (context: any) => {
     let innerHtml = "<div style='font-family: Poppins, sans-serif; font-size: 12px;'>";
     innerHtml += `<div style='font-weight: bold; margin-bottom: 8px; font-size: 13px; letter-spacing: 0.5px;'>${title}</div>`;
 
-    points.forEach((point: any) => {
+    points.forEach((point: TooltipItem<"bar">) => {
       const stage = point.dataset?.label ?? "";
       const count = Number(point.parsed?.y ?? 0);
       const appLabel = count === 1 ? "application" : "applications";

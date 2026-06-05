@@ -17,10 +17,10 @@ interface ThemeData {
     icon: string;
     label: string;
     title: string;
-    loadingAnimation: any;
+    loadingAnimation: unknown;
 }
 
-export function getThemeData() {
+export function useThemeData() {
 
   const computeThemeIcon = () => {
     const theme = document.documentElement.getAttribute("data-theme");

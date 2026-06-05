@@ -1,6 +1,6 @@
 import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
 import { NavButton } from "./NavButton";
-import { getThemeData } from "@/utils/getThemeData";
+import { useThemeData } from "@/utils/getThemeData";
 
 export const ThemeToggleButton = ({
   hoverMode,
@@ -9,7 +9,7 @@ export const ThemeToggleButton = ({
   hoverMode: NavigationBehavior;
   showLabel: boolean;
 }) => {
-  const theme = getThemeData();
+  const theme = useThemeData();
   const handleThemeToggle = () => {
     const currentTheme = document.documentElement.getAttribute("data-theme");
     const currentContrast =

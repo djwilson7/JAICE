@@ -1,9 +1,9 @@
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 export function MotionDetails() {
   const { motion } = useSettings();
 
-  var descriptionText = "";
+  let descriptionText = "";
 
   switch (motion) {
     case "slow":

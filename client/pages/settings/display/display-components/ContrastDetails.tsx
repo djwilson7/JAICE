@@ -1,9 +1,9 @@
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 export function ContrastDetails() {
   const { contrast } = useSettings();
 
-  var descriptionText = "";
+  let descriptionText = "";
 
   switch (contrast) {
     case "low":

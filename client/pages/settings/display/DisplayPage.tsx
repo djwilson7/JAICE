@@ -1,4 +1,4 @@
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { DemoReview } from "@/pages/settings/display/display-components/DemoReview";
 import { ContrastDetails } from "@/pages/settings/display/display-components/ContrastDetails";
 import { MotionDetails } from "@/pages/settings/display/display-components/MotionDetails";

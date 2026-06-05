@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import infoIcon from "@/assets/icons/info.svg";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 
 type Variant = "teal" | "solid";

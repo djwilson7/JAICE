@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { normalizeResumeDataForPayload } from "./resumeData";
 import { ResumeGlobalStyles } from "./components/ResumeGlobalStyles";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";

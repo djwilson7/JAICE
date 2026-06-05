@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { SETTINGS_KEYS } from "./settingKeys";
+import { SettingsContext } from "./settingsContext";
 import type {
   Theme,
   TextScale,
@@ -11,8 +12,6 @@ import type {
   ReviewBehavior,
   PrimaryColumnBehavior,
 } from "./settingsTypes";
-
-const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   // THEME
@@ -187,11 +186,4 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       {children}
     </SettingsContext.Provider>
   );
-}
-
-export function useSettings() {
-  const ctx = useContext(SettingsContext);
-  if (!ctx)
-    throw new Error("useSettings must be used inside <SettingsProvider>");
-  return ctx;
 }

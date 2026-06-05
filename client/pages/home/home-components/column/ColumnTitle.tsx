@@ -1,4 +1,4 @@
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { motion } from "framer-motion";
 
 interface ColumnTitleProps {

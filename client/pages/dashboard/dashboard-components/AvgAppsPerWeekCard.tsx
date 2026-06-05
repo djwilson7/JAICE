@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
-import type { ChartData, ChartOptions } from "chart.js";
+import type { Chart, ChartData, ChartOptions, TooltipModel } from "chart.js";
 import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 
 function normalizeWeekLabel(label: string) {
@@ -33,7 +33,10 @@ function formatWeekTooltipTitle(weekLabel: string, weekStartDate?: string) {
 }
 
 const createAvgAppsTooltipHandler =
-  (weekStartDates: string[]) => (context: any) => {
+  (weekStartDates: string[]) => (context: {
+    chart: Chart<"line">;
+    tooltip: TooltipModel<"line">;
+  }) => {
   let tooltipEl = document.getElementById("chartjs-avg-apps-tooltip");
 
   if (!tooltipEl) {

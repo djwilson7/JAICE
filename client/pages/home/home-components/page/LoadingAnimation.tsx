@@ -1,9 +1,9 @@
 import Lottie from "lottie-react";
-import { getThemeData } from "@/utils/getThemeData";
+import { useThemeData } from "@/utils/getThemeData";
 import { motion } from "framer-motion";
 
 export function LoadingAnimation() {
-  const themeData = getThemeData();
+  const themeData = useThemeData();
 
   return (
     <motion.div

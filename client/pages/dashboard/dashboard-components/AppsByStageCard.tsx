@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
-import type { ChartData, ChartOptions } from "chart.js";
+import type { Chart, ChartData, ChartOptions, TooltipModel } from "chart.js";
 import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 
-const appsByStageTooltipHandler = (context: any) => {
+type ExternalTooltipContext<T extends "doughnut"> = {
+  chart: Chart<T>;
+  tooltip: TooltipModel<T>;
+};
+
+const appsByStageTooltipHandler = (context: ExternalTooltipContext<"doughnut">) => {
   let tooltipEl = document.getElementById("chartjs-apps-by-stage-tooltip");
 
   if (!tooltipEl) {

@@ -1,4 +1,4 @@
-import { useAuth } from "@/global-components/AuthProvider";
+import { useAuth } from "@/global-components/authContext";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useGritScore } from "@/utils/useGritScore";

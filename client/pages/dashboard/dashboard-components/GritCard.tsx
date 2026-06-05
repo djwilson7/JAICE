@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, ChartSkeleton } from "./Card";
 import { useGritScore } from "@/utils/useGritScore";
 import { chartDescText } from "./chartDescText";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 
 // Export RANK_TIERS for use in the progress bar

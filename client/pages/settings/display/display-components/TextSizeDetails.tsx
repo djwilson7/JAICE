@@ -1,9 +1,9 @@
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 export function TextSizeDetails() {
   const { textScale } = useSettings();
 
-  var descriptionText = "";
+  let descriptionText = "";
 
   switch (textScale) {
     case "small":

@@ -1,4 +1,4 @@
-import { useAuth } from "@/global-components/AuthProvider";
+import { useAuth } from "@/global-components/authContext";
 import Button from "@/global-components/button";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { useState } from "react";
@@ -14,7 +14,6 @@ export function ChangePhotoModal({
   showModal,
   setShowModal,
 }: ChangePhotoModalProps) {
-  if (!showModal) return null;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,6 +25,8 @@ export function ChangePhotoModal({
     setShowModal(false);
     navigate(location.pathname);
   };
+
+  if (!showModal) return null;
 
   return (
     <Modal

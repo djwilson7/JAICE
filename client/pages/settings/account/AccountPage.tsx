@@ -5,7 +5,7 @@ import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
 import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { DaysToSync } from "./account-components/DaysToSync";
-import { useAuth } from "@/global-components/AuthProvider";
+import { useAuth } from "@/global-components/authContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChangePhotoModal } from "./account-components/ChangePhotoModal";
 import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";

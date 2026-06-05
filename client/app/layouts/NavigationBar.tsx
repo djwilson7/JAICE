@@ -21,7 +21,7 @@ import resumeIcon from "@/assets/icons/resume.svg";
 import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
 import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },

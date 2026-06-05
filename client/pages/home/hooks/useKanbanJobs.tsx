@@ -1,7 +1,7 @@
 import { type JSX } from "react";
 import { JobCard } from "@/pages/home/home-components/job-card/JobCards";
 import type { JobCardType } from "@/types/jobCardType";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 export function useKanbanJobs({
   jobs,
@@ -9,18 +9,17 @@ export function useKanbanJobs({
   matchOrderMap,
   hasSearch,
   openJobAppModal,
-  sortOption,
 }: {
   jobs: JobCardType[];
   columns: { id: string; title: string; bg: string }[];
   matchOrderMap: Map<string, number>;
   hasSearch: boolean;
   openJobAppModal: (payload: string | JobCardType | null) => void;
-  sortOption: string;
 
 }): Record<string, JSX.Element[]> {
+  const { reviewBehavior } = useSettings();
+
   return columns.reduce((acc, column) => {
-    const { reviewBehavior } = useSettings();
     let jobsInColumn: JobCardType[];
 
     if (column.id === "review") {
@@ -56,7 +55,6 @@ export function useKanbanJobs({
         job={job}
         dimmed={hasSearch && !matchOrderMap.has(job.id)}
         openJobAppModal={openJobAppModal}
-        sortOption={sortOption}
       />
     ));
 
