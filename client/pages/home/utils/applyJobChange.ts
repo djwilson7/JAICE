@@ -1,8 +1,9 @@
 import type { JobCardType } from "@/types/jobCardType";
 import { convertBroadcastToJobCard } from "@/pages/home/utils/convertToJobCard";
+import type { JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
 
 // Mapping function to handle the event types
-export function applyJobChange(prev: JobCardType[], event: any): JobCardType[] {
+export function applyJobChange(prev: JobCardType[], event: JobRealtimeEvent): JobCardType[] {
   switch (getBroadcastOperation(event)) {
     case "INSERT":
       return handleInsert(prev, event);
@@ -16,7 +17,7 @@ export function applyJobChange(prev: JobCardType[], event: any): JobCardType[] {
   }
 }
 
-function getBroadcastOperation(event: any): string | undefined {
+function getBroadcastOperation(event: JobRealtimeEvent): string | undefined {
   return (
     event?.event ??
     event?.payload?.type ??
@@ -26,7 +27,7 @@ function getBroadcastOperation(event: any): string | undefined {
 }
 
 // Adds new job cards
-function handleInsert(prev: JobCardType[], event: any): JobCardType[] {
+function handleInsert(prev: JobCardType[], event: JobRealtimeEvent): JobCardType[] {
   const newCard = convertBroadcastToJobCard(event);
   if (!newCard) return prev;
 
@@ -39,7 +40,7 @@ function handleInsert(prev: JobCardType[], event: any): JobCardType[] {
 }
 
 // Updates existing job cards
-function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
+function handleUpdate(prev: JobCardType[], event: JobRealtimeEvent): JobCardType[] {
   const updatedCard = convertBroadcastToJobCard(event);
   if (!updatedCard) return prev;
 
@@ -64,7 +65,7 @@ function handleUpdate(prev: JobCardType[], event: any): JobCardType[] {
 }
 
 // Removes job cards that are deleted from the database
-function handleDelete(prev: JobCardType[], event: any): JobCardType[] {
+function handleDelete(prev: JobCardType[], event: JobRealtimeEvent): JobCardType[] {
   const deletedId =
     event?.payload?.old?.provider_message_id ??
     event?.payload?.old_record?.provider_message_id;

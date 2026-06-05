@@ -25,6 +25,13 @@ export function useDragEndHandler({ job }: UseDragEndHandlerArgs) {
     setDragStart,
   } = drag;
 
+  const cleanup = useCallback(() => {
+    setIsDragging(false);
+    setDraggedId(null);
+    setDragTarget(null);
+    setDragStart(null);
+  }, [setDraggedId, setDragStart, setDragTarget, setIsDragging]);
+
   const processDragEnd = useCallback(async () => {
     if (!draggedId || draggedId !== job.id) return;
 
@@ -57,14 +64,7 @@ export function useDragEndHandler({ job }: UseDragEndHandlerArgs) {
     } finally {
       cleanup();
     }
-  }, [draggedId, dragTarget, dragStart, job]);
-
-  const cleanup = () => {
-    setIsDragging(false);
-    setDraggedId(null);
-    setDragTarget(null);
-    setDragStart(null);
-  };
+  }, [cleanup, draggedId, dragTarget, dragStart, job]);
 
   return { processDragEnd };
 }

@@ -1,15 +1,41 @@
 import type { JobCardType } from "@/types/jobCardType";
+import type { JobApplicationRow } from "@/types/jobApplicationRow";
 import { convertTime } from "@/pages/home/utils/convertTime";
 // These utility functions convert the raw job data from the database or broadcast events.
 // The format for the returned data from the database comes in two forms. One is standard fetch, the other is from the realtime broadcast payload.
+export type RawJobApplication = Partial<JobApplicationRow> & {
+  provider_message_id?: string | number;
+  salary?: number | null;
+  note?: string | null;
+  needs_review?: boolean | null;
+  review_needed?: boolean | null;
+  needsReview?: boolean | null;
+  application_stage?: string | null;
+  applicationStage?: string | null;
+};
+
+export type JobRealtimeEvent = {
+  event?: string;
+  type?: string;
+  payload?: {
+    event?: string;
+    type?: string;
+    operation?: string;
+    record?: RawJobApplication | null;
+    new?: RawJobApplication | null;
+    new_record?: RawJobApplication | null;
+    old?: RawJobApplication | null;
+    old_record?: RawJobApplication | null;
+  };
+};
 
 // Convert an array of job records from a normal DB fetch
-export function convertToJobCardArray(rawJobs: any[] = []): JobCardType[] {
+export function convertToJobCardArray(rawJobs: RawJobApplication[] = []): JobCardType[] {
   return rawJobs.map(convertToJobCard);
 }
 
 // Convert a single job record from a normal DB fetch
-export function convertToJobCard(rawJob: any): JobCardType {
+export function convertToJobCard(rawJob: RawJobApplication): JobCardType {
   const rawDate = rawJob.received_at ?? null;
 
   return {
@@ -31,7 +57,7 @@ export function convertToJobCard(rawJob: any): JobCardType {
 }
 
 // Convert broadcast payloads from Supabase realtime
-export function convertBroadcastToJobCard(event: any): JobCardType | null {
+export function convertBroadcastToJobCard(event: JobRealtimeEvent): JobCardType | null {
   const eventRecord =
     event?.payload?.record ??
     event?.payload?.new ??

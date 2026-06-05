@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { JobCardType } from "@/types/jobCardType";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { kanBanColumns } from "@/pages/home/home-components/column/KanBanColumn";
 
 export function useKanbanColumns(jobs: JobCardType[]) {

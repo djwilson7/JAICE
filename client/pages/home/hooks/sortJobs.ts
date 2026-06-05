@@ -20,9 +20,6 @@ export const sortJobs = (
     case "za":
       return [...list].sort((a, b) => b.title.localeCompare(a.title));
 
-    case "salary high to low":
-      return [...list].sort((a, b) => (b.salary ?? 0) - (a.salary ?? 0));
-
     default:
       return [...list];
   }

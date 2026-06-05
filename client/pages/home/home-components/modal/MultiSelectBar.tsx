@@ -21,6 +21,27 @@ import { useDrag } from "@/pages/home/hooks/useDrag";
 
 import ConfirmModal from "@/global-components/ConfirmModal";
 
+type HoverAction =
+  | "move"
+  | "archive"
+  | "delete"
+  | "applied"
+  | "interview"
+  | "offer"
+  | "accepted"
+  | "rejected"
+  | "review"
+  | "back"
+  | null;
+
+const MOVE_STAGES = [
+  "Applied",
+  "Interview",
+  "Offer",
+  "Accepted",
+  "Rejected",
+] as const;
+
 export function MultiSelectBar({
   className,
   setIsHighlighted,
@@ -33,21 +54,7 @@ export function MultiSelectBar({
   const { pushUndo } = useUndoRedo();
   const { isDragging } = useDrag();
 
-  if (!isMultiSelecting || isDragging) return null;
-
-  const [hoverAction, setHoverAction] = useState<
-    | "move"
-    | "archive"
-    | "delete"
-    | "applied"
-    | "interview"
-    | "offer"
-    | "accepted"
-    | "rejected"
-    | "review"
-    | "back"
-    | null
-  >(null);
+  const [hoverAction, setHoverAction] = useState<HoverAction>(null);
 
   const [showMoveOptions, setShowMoveOptions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -94,6 +101,8 @@ export function MultiSelectBar({
   useEffect(() => {
     setIsEnabled(selectedCount > 0);
   }, [selectedCount]);
+
+  if (!isMultiSelecting || isDragging) return null;
 
   const getStatusText = () => {
     if (selectedCount === 0) return "Select jobs to see actions.";
@@ -328,16 +337,10 @@ export function MultiSelectBar({
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
                   className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
                 >
-                  {[
-                    "Applied",
-                    "Interview",
-                    "Offer",
-                    "Accepted",
-                    "Rejected",
-                  ].map((stage) => (
+                  {MOVE_STAGES.map((stage) => (
                     <div
                       onMouseEnter={() =>
-                        setHoverAction(`${stage}`.toLowerCase() as any)
+                        setHoverAction(stage.toLowerCase() as HoverAction)
                       }
                       onMouseLeave={() => setHoverAction(null)}
                       className={`${labelDim} ${

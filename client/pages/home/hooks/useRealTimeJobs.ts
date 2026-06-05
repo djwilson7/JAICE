@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/global-services/api";
 import { useJobRealtime } from "@/pages/home/hooks/useJobRealtime";
 import { applyJobChange } from "@/pages/home/utils/applyJobChange";
+import type { JobCardType } from "@/types/jobCardType";
+import type { JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
 
 export function useRealtimeJobs(
   userId: string,
-  setJobs: React.Dispatch<React.SetStateAction<any[]>>
+  setJobs: React.Dispatch<React.SetStateAction<JobCardType[]>>
 ) {
   const [rlsToken, setRlsToken] = useState<string | null>(null);
   const [newJobsCount, setNewJobsCount] = useState(0);
@@ -22,7 +24,9 @@ export function useRealtimeJobs(
           method: "POST",
         });
         if (!cancelled) setRlsToken(res?.rls_jwt ?? null);
-      } catch {}
+      } catch {
+        // Keep the previous token when session setup fails.
+      }
     })();
 
     return () => {
@@ -42,18 +46,20 @@ export function useRealtimeJobs(
           method: "POST",
         });
         setRlsToken(res?.rls_jwt ?? null);
-      } catch {}
+      } catch {
+        // Keep the previous token when refresh fails.
+      }
     }, REFRESH_MS);
 
     return () => clearInterval(id);
   }, [userId]);
 
-  const handleRealtimeChange = useCallback((event: any) => {
+  const handleRealtimeChange = useCallback((event: JobRealtimeEvent) => {
     if (event.type === "INSERT") {
       setNewJobsCount((n) => n + 1);
     }
     setJobs((prev) => applyJobChange(prev, event));
-  }, []);
+  }, [setJobs]);
 
   useJobRealtime(userId, rlsToken, handleRealtimeChange);
 

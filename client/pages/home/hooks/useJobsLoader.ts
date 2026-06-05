@@ -7,6 +7,7 @@ export function useJobsLoader() {
   const [jobs, setJobs] = useState<JobCardType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const hasLoadedRef = useRef(false);
+  const hasSyncedGmailRef = useRef(false);
 
   const load = useCallback(
     async (force = false) => {
@@ -34,6 +35,27 @@ export function useJobsLoader() {
   // initial load
   useEffect(() => {
     load();
+  }, [load]);
+
+  useEffect(() => {
+    if (hasSyncedGmailRef.current) return;
+    hasSyncedGmailRef.current = true;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await api("/api/gmail/sync-now", { method: "POST" });
+        if (!cancelled) {
+          await load(true);
+        }
+      } catch (err) {
+        console.error("Failed to enqueue Gmail sync:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   return {
