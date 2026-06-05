@@ -143,6 +143,11 @@ async def test_oauth_callback_success_for_sync_window_values(
         "dispatch_initial_gmail_sync",
         lambda *args: dispatched.append(args),
     )
+    monkeypatch.setattr(
+        auth_api,
+        "dispatch_gmail_watch_setup",
+        lambda *args, **kwargs: dispatched.append(args + (kwargs,)),
+    )
 
     response = await auth_api.oauth_callback(
         request(pool=Pool(conn), redis=redis),
@@ -192,6 +197,7 @@ async def test_oauth_callback_token_exchange_errors(monkeypatch, flow, expected_
 async def test_oauth_callback_db_dispatch_and_frontend_errors(monkeypatch):
     install_flow(monkeypatch, Flow())
     monkeypatch.setattr(auth_api, "encrypt_token", lambda token: token)
+    monkeypatch.setattr(auth_api, "dispatch_gmail_watch_setup", lambda *_args, **_kwargs: None)
 
     with pytest.raises(HTTPException, match="Database error"):
         await auth_api.oauth_callback(
@@ -211,6 +217,7 @@ async def test_oauth_callback_db_dispatch_and_frontend_errors(monkeypatch):
         )
 
     monkeypatch.setattr(auth_api, "dispatch_initial_gmail_sync", lambda *_args: None)
+    monkeypatch.setattr(auth_api, "dispatch_gmail_watch_setup", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(auth_api, "FRONTEND_DASHBOARD_URL", None)
     with pytest.raises(ValueError, match="FRONTEND_DASHBOARD_URL"):
         await auth_api.oauth_callback(
@@ -303,7 +310,9 @@ async def test_revoke_gmail_consent_remote_outcomes(monkeypatch, remote_result):
     )
 
     assert response.status_code == 200
-    assert len(conn.execute_calls) == 1
+    assert len(conn.execute_calls) == 2
+    assert "google_refresh_token = NULL" in conn.execute_calls[0][0]
+    assert "gmail_history_id = NULL" in conn.execute_calls[1][0]
 
 
 @pytest.mark.asyncio
@@ -377,7 +386,7 @@ async def test_setup_rls_session_missing_token_and_error(monkeypatch):
         auth_api.SetupRLSBody(daysToSync=None),
     )
     assert result == ({"uid": "u1"}, "NO_GMAIL_TOKEN_GRANTED", "jwt:u1")
-    assert redis.set_calls == [(("gmail_sync_window:u1", 3), {"ex": 30})]
+    assert redis.set_calls == [(("gmail_sync_window:u1", 180), {"ex": 30})]
 
     with pytest.raises(HTTPException, match="Critical system error"):
         await auth_api.setup_rls_session(

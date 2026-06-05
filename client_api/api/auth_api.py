@@ -45,6 +45,19 @@ REDIRECT_URI = os.getenv("REDIRECT_URI", "/api/auth/google/callback")
 GOOGLE_REVOKE_ENDPOINT = os.getenv(
     "GOOGLE_REVOKE_ENDPOINT", "https://oauth2.googleapis.com/revoke"
 )
+GMAIL_INITIAL_SYNC_WINDOW_DAYS = 180
+
+
+def is_missing_gmail_sync_column_error(error: Exception) -> bool:
+    message = str(error)
+    return (
+        "gmail_history_id" in message
+        or "gmail_watch_expiration" in message
+        or "last_pubsub_message_id" in message
+        or "gmail_sync_status" in message
+        or "gmail_last_sync_at" in message
+        or "gmail_last_sync_error" in message
+    ) and "does not exist" in message
 
 
 @router.get("/consent", summary="Generates the Google OAuth2 consent screen URL.")
@@ -71,7 +84,6 @@ def get_oauth_consent_url(user: dict = Depends(get_user_from_token_query)):
     auth_url, state = flow.authorization_url(
         access_type="offline", state=uid, prompt="consent"
     )
-    logging.debug(f"OAuth2 consent URL generated")
     return RedirectResponse(auth_url)
 
 
@@ -90,15 +102,16 @@ async def oauth_callback(request: Request, code: str, state: str):
 
     logging.warning(f"Fetched gmail_sync_window from redis for user {uid}: {raw_value}")
     if not raw_value or str(raw_value).lower() == "none":
-        days_to_sync = 14
+        days_to_sync = GMAIL_INITIAL_SYNC_WINDOW_DAYS
     else:
         try:
             days_to_sync = int(raw_value)
         except (ValueError, TypeError):
             logging.warning(
-                f"Invalid days_to_sync value '{raw_value}' for user {uid}; defaulting to 14"
+                f"Invalid days_to_sync value '{raw_value}' for user {uid}; "
+                f"defaulting to {GMAIL_INITIAL_SYNC_WINDOW_DAYS}"
             )
-            days_to_sync = 14
+            days_to_sync = GMAIL_INITIAL_SYNC_WINDOW_DAYS
 
     start_date = datetime.utcnow() - timedelta(days=days_to_sync)
     logging.info(
@@ -174,6 +187,7 @@ async def oauth_callback(request: Request, code: str, state: str):
         logging.info(
             f"Enqueuing initial Gmail inbox sync task for user: {uid} with trace ID: {trace_id}"
         )
+        dispatch_gmail_watch_setup(uid, trace_id, force=True)
         dispatch_initial_gmail_sync(uid, trace_id, start_date)
     except Exception as e:
         logging.error(f"Error dispatching initial Gmail sync for user {uid}: {e}")
@@ -311,6 +325,14 @@ async def revoke_gmail_consent(
                 logging.info(
                     f"Successfully revoked token on Google's side for user: {uid}"
                 )
+            elif response.status_code == status.HTTP_400_BAD_REQUEST and (
+                "invalid_token" in response.text
+                or "Token is not revocable" in response.text
+            ):
+                logging.warning(
+                    f"Google token was already invalid or not revocable for user {uid}; "
+                    "continuing local Gmail cleanup."
+                )
             else:
                 logging.error(
                     f"Google Revocation failed (Status: {response.status_code}) for user {uid}. "
@@ -341,6 +363,29 @@ async def revoke_gmail_consent(
                 """,
                 uid,
             )
+            try:
+                await conn.execute(
+                    """
+                    UPDATE user_account
+                    SET
+                    gmail_history_id = NULL,
+                    gmail_watch_expiration = NULL,
+                    last_pubsub_message_id = NULL,
+                    gmail_sync_status = NULL,
+                    gmail_last_sync_at = NULL,
+                    gmail_last_sync_error = NULL
+                WHERE user_id = $1
+                    """,
+                    uid,
+                )
+            except Exception as e:
+                if not is_missing_gmail_sync_column_error(e):
+                    raise
+                logging.warning(
+                    "Gmail sync-state columns are missing during revocation cleanup "
+                    f"for user {uid}; apply the Gmail Pub/Sub migration to clear "
+                    "watch/cursor metadata."
+                )
         logging.info(f"Database cleanup successful for user: {uid}")
     except Exception as e:
         logging.error(f"DB WRITE ERROR during revocation cleanup for user {uid}: {e}")
@@ -406,7 +451,7 @@ async def setup_user_db(request: Request, user: dict = Depends(get_current_user)
 
 
 class SetupRLSBody(BaseModel):
-    daysToSync: int | None = 14
+    daysToSync: int | None = GMAIL_INITIAL_SYNC_WINDOW_DAYS
 
 
 @router.post(
@@ -421,7 +466,7 @@ async def setup_rls_session(
 ):
     uid = user_data.get("uid", "")
     pool = request.app.state.pool
-    days_to_sync = body.daysToSync or 3
+    days_to_sync = body.daysToSync or GMAIL_INITIAL_SYNC_WINDOW_DAYS
     logging.info(f"Setting up RLS session for user: {uid}, days_to_sync={days_to_sync}")
 
     try:
@@ -579,5 +624,14 @@ def dispatch_initial_gmail_sync(uid: str, trace_id: str, start_date: datetime):
         TaskType.GMAIL_INITIAL_SYNC.task_name,
         args=[uid, trace_id, start_date.isoformat()],
         queue=TaskType.GMAIL_INITIAL_SYNC.queue_name,
+        headers={"trace_id": trace_id, "uid": uid},
+    )
+
+
+def dispatch_gmail_watch_setup(uid: str, trace_id: str, force: bool = True):
+    return celery_client.send_task(
+        TaskType.GMAIL_ENSURE_WATCH.task_name,
+        args=[uid, trace_id, force],
+        queue=TaskType.GMAIL_ENSURE_WATCH.queue_name,
         headers={"trace_id": trace_id, "uid": uid},
     )
