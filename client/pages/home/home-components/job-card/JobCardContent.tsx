@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import type { JobCardType } from "@/types/jobCardType";
 import { getCSSVar } from "@/utils/getCSSVar";
+import { formatInboxMessage } from "@/pages/home/utils/formatInboxMessage";
 
 interface JobCardContentProps {
   isOpen: boolean;
@@ -8,9 +9,11 @@ interface JobCardContentProps {
 }
 
 export function JobCardContent({ isOpen, job }: JobCardContentProps) {
+  const inboxMessage = formatInboxMessage(job.description);
+
   return (
     <motion.div
-      className="flex flex-col overflow-hidden items-center justify-center w-full"
+      className="flex flex-col overflow-hidden items-center w-full"
       initial={{ height: 0, opacity: 0 }}
       animate={{
         height: isOpen ? "auto" : 0,
@@ -22,22 +25,16 @@ export function JobCardContent({ isOpen, job }: JobCardContentProps) {
       <div className="justify-center items-center w-[80%] whitespace-nowrap text-ellipsis overflow-hidden">
         <hr className="header-split" />
       </div>
-      <div className="flex flex-col text-left w-[80%] gap-2 py-4">
-        <small className="secondary-text font-semibold whitespace-nowrap text-ellipsis overflow-hidden">
-          {job.companyName ?? "Unknown Company"}
-        </small>
-
-        <small className="secondary-text font-semibold whitespace-nowrap text-ellipsis overflow-hidden">
-          {`Salary: $${job.salary?.toLocaleString() ?? "Unknown Salary"}`} 
-        </small>
-
-        <p className="primary-text whitespace-pre-wrap">
-          {job.description ?? "No description provided for this job."}
+      <div className="flex flex-col text-left w-[80%] gap-3 py-4">
+        <p className="primary-text whitespace-pre-wrap leading-relaxed">
+          {inboxMessage || "No email content available."}
         </p>
 
-        <small className="secondary-text whitespace-pre-wrap">
-          {job.notes ?? "No additional notes."}
-        </small>
+        {job.notes && (
+          <small className="secondary-text whitespace-pre-wrap">
+            {formatInboxMessage(job.notes)}
+          </small>
+        )}
       </div>
     </motion.div>
   );

@@ -106,8 +106,6 @@ export default function NewApplication({
   payload,
   onSave,
 }: NewApplicationProps) {
-  if (!isOpen) return null; // Don't render if not open
-
   // Standardized data extracted from the payload
   const data = extractDataIntoStandardFormat(payload);
 
@@ -142,6 +140,8 @@ export default function NewApplication({
       document.body.style.overflow = "";
     };
   }, [isOpen, setIsOpen]);
+
+  if (!isOpen) return null; // Don't render if not open
 
   // Function to convert the current state variables back into the standardized data object
   function convertStateToPayload(): ModalData {

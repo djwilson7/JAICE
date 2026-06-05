@@ -2,6 +2,7 @@ import React from "react";
 import type { JobCardType } from "@/types/jobCardType";
 import downChevron from "@/assets/icons/angle-small-down.svg";
 import { getCSSVar } from "@/utils/getCSSVar";
+import { formatInboxMessage } from "@/pages/home/utils/formatInboxMessage";
 
 export default function JobCardView({
     job,
@@ -17,6 +18,7 @@ export default function JobCardView({
     leftSlot?: React.ReactNode;
 }) {
     const [isOpen, setIsOpen] = React.useState(false);
+    const inboxMessage = formatInboxMessage(job.description);
 
     const handleToggle = (e?: React.MouseEvent | React.KeyboardEvent) => {
         if (onClick)
@@ -81,18 +83,16 @@ export default function JobCardView({
       {showDetails && (
         <div className="overflow-hidden w-full px-4">
           <hr className="header-split" />
-          <div className="flex flex-col text-left w-full gap-2 py-4">
-            <small className="secondary-text font-semibold">
-              {job.companyName ?? "Unknown Company"}
-            </small>
-
-            <p className="primary-text">
-              {job.description ?? "No description provided for this job."}
+          <div className="flex flex-col text-left w-full gap-3 py-4">
+            <p className="primary-text whitespace-pre-wrap leading-relaxed">
+              {inboxMessage || "No email content available."}
             </p>
 
-            <small className="secondary-text">
-              {job.notes ?? "No additional notes."}
-            </small>
+            {job.notes && (
+              <small className="secondary-text whitespace-pre-wrap">
+                {formatInboxMessage(job.notes)}
+              </small>
+            )}
           </div>
         </div>
       )}

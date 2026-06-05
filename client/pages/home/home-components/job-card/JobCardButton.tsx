@@ -18,8 +18,10 @@ export function JobCardButton({
   label = "Button",
   title = "Click to perform action",
 }: JobCardButtonProps) {
-  if (!isVisible) return null;
   const [isHovered, setIsHovered] = useState(false);
+
+  if (!isVisible) return null;
+
   return (
     <motion.button
       onClick={onClick}

@@ -14,11 +14,11 @@ export default function ConnectEmailModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  if (!isOpen) return null;
   const navigate = useNavigate();
   
   const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
   const [, setGmailError] = useState<string | null>(null);
+  const [buttonHovered, setButtonHovered] = useState<boolean>(false);
 
   useEffect(() => {
     checkGmailStatus({ setGmailConnected, setGmailError });
@@ -30,7 +30,8 @@ export default function ConnectEmailModal({
     : "Link Email";
   const connectButtonIconColor = gmailConnected ? "redIcon" : "greenIcon";
   const connectButtonColor = gmailConnected ? "red" : "green";
-  const [buttonHovered, setButtonHovered] = useState<boolean>(false);
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="modal-backdrop" role="dialog" aria-modal="true">

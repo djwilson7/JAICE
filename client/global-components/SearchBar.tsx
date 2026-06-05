@@ -1,9 +1,9 @@
 import searchIcon from "@/assets/icons/search.svg";
-import circleXIcon from "@/assets/icons/circle-xmark.svg";
-import { motion } from "framer-motion";
+import xIcon from "@/assets/icons/x.svg";
+import { AnimatePresence, motion } from "framer-motion";
 import { getCSSVar } from "@/utils/getCSSVar";
-import { useEffect, useRef, useState } from "react";
-import { useSettings } from "@/pages/settings/provider/SettingsProvider";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
 
 interface SearchBarProps {
   searchQuery: string;
@@ -23,7 +23,7 @@ export function SearchBar({
   setSearchQuery,
   placeholder = "Search...",
   searchTitle = "Search Job Cards",
-  inputTitle = "Search by job title, company, or dates.",
+  inputTitle = "Search by email subject, stage, or date.",
   focusSignal,
   collapsed = false,
   onCollapsedActivate,
@@ -36,6 +36,13 @@ export function SearchBar({
   const searchBarRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const showInput = !collapsed && (isExpanded || searchQuery !== "");
+
+  const focusInput = useCallback(() => {
+    setIsExpanded(true);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -56,11 +63,8 @@ export function SearchBar({
 
   useEffect(() => {
     if (focusSignal === undefined) return;
-    setIsExpanded(true);
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-    });
-  }, [focusSignal]);
+    focusInput();
+  }, [focusInput, focusSignal]);
 
   const isPremium = variant === "premium";
   const premiumChromeStyle = isPremium
@@ -97,7 +101,7 @@ export function SearchBar({
       <img
         src={searchIcon}
         alt="Search Icon"
-        className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 shrink-0 icon ${isPremium ? "opacity-40 group-focus-within:opacity-80 transition-opacity" : ""}`}
+        className={`search-bar-icon absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 shrink-0 icon ${isPremium ? "opacity-40 group-focus-within:opacity-80 transition-opacity" : ""}`}
         style={isPremium ? { filter: premiumIconFilter } : undefined}
         title={searchTitle}
         onClick={() => {
@@ -105,44 +109,57 @@ export function SearchBar({
             onCollapsedActivate?.();
             return;
           }
-          setIsExpanded(true);
+          focusInput();
         }}
       />
-      <motion.div
-        key="search-input"
-        className={`search-input-wrap flex min-w-0 flex-1 items-center transition-opacity duration-150 shrink-0 whitespace-nowrap ${isPremium ? "pl-7" : "pl-6"} ${
-          collapsed ? "opacity-0" : "opacity-100"
-        }`}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder={placeholder}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setIsExpanded(true)}
-          onBlur={() => setIsExpanded(false)}
-          className={`w-full min-w-0 outline-none bg-transparent ${isPremium ? isLightMode ? "text-[12px] text-slate-900 placeholder:text-slate-500 font-sans" : "text-[12px] text-slate-100 placeholder:text-slate-500 font-sans" : ""}`}
-          title={inputTitle}
-        />
-      </motion.div>
-      <motion.img
-        src={circleXIcon}
-        alt="Clear Search Icon"
-        className={`w-4 h-4 shrink-0 icon ${isPremium ? "opacity-40 hover:opacity-80 transition-opacity" : ""}`}
-        aria-hidden={searchQuery === ""}
-        style={{
-          cursor: searchQuery !== "" ? "pointer" : "default",
-          opacity: searchQuery !== "" ? (isPremium ? 0.4 : 1) : 0,
-          filter: isPremium ? premiumIconFilter : undefined,
-        }}
-        animate={{opacity: searchQuery !== "" ? (isPremium ? 0.4 : 1) : 0}}
-        onClick={() => {
-          setSearchQuery("");
-          setIsExpanded(false);
-        }}
-        title="Clear Search"
-      />
+      <AnimatePresence initial={false}>
+        {showInput && (
+          <>
+            <motion.div
+              key="search-input"
+              className={`search-input-wrap flex min-w-0 flex-1 items-center shrink-0 whitespace-nowrap ${isPremium ? "pl-7" : "pl-6"}`}
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder={placeholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsExpanded(true)}
+                onBlur={() => setIsExpanded(false)}
+                className={`w-full min-w-0 outline-none bg-transparent ${isPremium ? isLightMode ? "text-[12px] text-slate-900 placeholder:text-slate-500 font-sans" : "text-[12px] text-slate-100 placeholder:text-slate-500 font-sans" : ""}`}
+                title={inputTitle}
+              />
+            </motion.div>
+            <motion.img
+              key="search-clear"
+              src={xIcon}
+              alt="Clear Search Icon"
+              className={`search-bar-clear w-3 h-3 shrink-0 icon ${isPremium ? "opacity-40 hover:opacity-80 transition-opacity" : ""}`}
+              aria-hidden={searchQuery === ""}
+              style={{
+                cursor: searchQuery !== "" ? "pointer" : "default",
+                filter: isPremium ? premiumIconFilter : undefined,
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: searchQuery !== "" ? (isPremium ? 0.4 : 1) : 0 }}
+              exit={{ opacity: 0 }}
+              onMouseDown={(event) => {
+                event.preventDefault();
+              }}
+              onClick={() => {
+                setSearchQuery("");
+                focusInput();
+              }}
+              title="Clear Search"
+            />
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

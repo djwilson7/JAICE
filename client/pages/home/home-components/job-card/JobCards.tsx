@@ -22,12 +22,10 @@ export function JobCard({
   job,
   dimmed,
   openJobAppModal,
-  sortOption,
 }: {
   job: JobCardType;
   dimmed: boolean;
   openJobAppModal: (job: JobCardType) => void;
-  sortOption: string;
 }) {
   const { isMultiSelecting } = useIsMultiSelecting();
   const { mutateJob } = useJobMutation();
@@ -73,7 +71,6 @@ export function JobCard({
         setIsSelected={setIsSelected}
         isOpen={isOpen}
         setLocalOpen={setLocalOpen}
-        sortOption={sortOption}
       />
 
       <JobCardContent isOpen={isOpen} job={job} />
