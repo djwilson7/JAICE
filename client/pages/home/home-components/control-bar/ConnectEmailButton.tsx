@@ -6,9 +6,10 @@ import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 
 interface ConnectEmailButtonProps {
   setIsOpen: (value: boolean) => void;
+  compact?: boolean;
 }
 
-export function ConnectEmailButton({ setIsOpen }: ConnectEmailButtonProps) {
+export function ConnectEmailButton({ setIsOpen, compact = false }: ConnectEmailButtonProps) {
   const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
   const [, setGmailError] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export function ConnectEmailButton({ setIsOpen }: ConnectEmailButtonProps) {
       label={connectEmailLabel}
       prominent={gmailConnected ? false : true}
       alt="Connect Email Icon"
+      compact={compact}
     />
   );
 }

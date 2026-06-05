@@ -8,6 +8,7 @@ interface DropDownMenuProps {
   selectedOption: string;
   setSelectedOption: (value: string) => void;
   leftIcon: string;
+  compact?: boolean;
 }
 
 const sortByOptions = [
@@ -15,13 +16,13 @@ const sortByOptions = [
   { value: "old", label: "Oldest First" },
   { value: "az", label: "Ascend (a-z)" },
   { value: "za", label: "Descend (z-a)" },
-  { value: "salary high to low", label: "Salary (High to Low)" },
 ];
 
 export function DropDownMenu({
   selectedOption,
   setSelectedOption,
   leftIcon,
+  compact = false,
 }: DropDownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -59,7 +60,7 @@ export function DropDownMenu({
   return (
     <motion.div
       ref={menuRef}
-      className="control-bar-container relative"
+      className={`control-bar-container relative ${compact ? "drop-down-menu-compact" : ""}`}
       transition={{
         type: "spring",
         stiffness: 300,
@@ -81,7 +82,9 @@ export function DropDownMenu({
         aria-expanded={isOpen}
         onClick={() => setIsOpen((open) => !open)}
       >
-        <span>{selected.label}</span>
+        <span className={compact ? "drop-down-menu-selected-compact" : ""}>
+          {selected.label}
+        </span>
         <img
           src={downChevron}
           alt=""

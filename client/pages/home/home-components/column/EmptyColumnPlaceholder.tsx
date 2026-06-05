@@ -3,9 +3,9 @@ interface EmptyColumnPlaceholderProps {
 }
 
 export function EmptyColumnPlaceholder({ title }: EmptyColumnPlaceholderProps) {
-  var cardTitle = "No " + title + " Jobs";
-  var description = "";
-  var subText = "";
+  const cardTitle = "No " + title + " Jobs";
+  let description = "";
+  let subText = "";
 
   switch (title.toLowerCase()) {
     case "applied":

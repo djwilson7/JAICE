@@ -75,7 +75,6 @@ export function HomePage() {
     matchOrderMap,
     hasSearch,
     openJobAppModal,
-    sortOption,
   });
 
   const userInfo = getCurrentUserInfo();
@@ -129,37 +128,33 @@ export function HomePage() {
           {/* ^ Page Container ^ */}
           <PageContent>
             {/* Control Bar */}
-            <div className="flex w-full flex-col gap-0">
-              <div className="p-1">
-                <ControlBar fitParent>
+            <div className="home-action-toolbar-wrap p-1">
+              <ControlBar fitParent className="home-action-toolbar">
+                <div className="home-action-group home-action-group-left">
+                  <ExpandCollapseButton compact />
                 <AlertBox
                   isOpen={isAlertOpen}
                   setIsOpen={setIsAlertOpen}
                   alertMessage={alertMessage}
                 />
-                <div className="flex relative min-w-0 flex-1 gap-2 h-full justify-end items-center">
-                  <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} />
-                  <ArchiveModalButton setIsOpen={archive.open} />
-                  <TrashModalButton setIsOpen={trash.open} />
-                  <MultiSelectButton />
+                  <SearchBar
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    className="home-action-search"
+                  />
+                  <FilterButton
+                    selectedOption={sortOption}
+                    setSelectedOption={setSortOption}
+                    compact
+                  />
                 </div>
-                </ControlBar>
-              </div>
-              <div className="p-1">
-                <ControlBar fitParent>
-                  <ExpandCollapseButton />
-                  <div className="flex relative min-w-0 flex-1 gap-2 h-full justify-end items-center">
-                    <SearchBar
-                      searchQuery={searchQuery}
-                      setSearchQuery={setSearchQuery}
-                    />
-                    <FilterButton
-                      selectedOption={sortOption}
-                      setSelectedOption={setSortOption}
-                    />
-                  </div>
-                </ControlBar>
-              </div>
+                <div className="home-action-group home-action-group-right">
+                  <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} compact />
+                  <ArchiveModalButton setIsOpen={archive.open} compact />
+                  <TrashModalButton setIsOpen={trash.open} compact />
+                  <MultiSelectButton compact />
+                </div>
+              </ControlBar>
             </div>
             {/* Kan Ban Columns */}
             <KanbanContent>

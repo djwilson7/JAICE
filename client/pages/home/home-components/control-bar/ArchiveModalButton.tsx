@@ -3,9 +3,10 @@ import archiveIcon from "@/assets/icons/folder.svg";
 
 interface ArchiveModalButtonProps {
   setIsOpen: (value: boolean) => void;
+  compact?: boolean;
 }
 
-export function ArchiveModalButton({ setIsOpen }: ArchiveModalButtonProps) {
+export function ArchiveModalButton({ setIsOpen, compact = false }: ArchiveModalButtonProps) {
   return (
     <ControlBarButton
       onClick={() => setIsOpen(true)}
@@ -13,6 +14,7 @@ export function ArchiveModalButton({ setIsOpen }: ArchiveModalButtonProps) {
       iconHoverColor={"purpleIcon"}
       label="Archive"
       alt="Archive Icon"
+      compact={compact}
     />
   );
 }

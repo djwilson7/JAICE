@@ -9,6 +9,7 @@ interface CheckBoxToggleProps {
   inactiveIcon?: string;
   activeIcon?: string;
   hoverIconColor: string;
+  compact?: boolean;
 }
 
 export function CheckBoxToggle({
@@ -16,6 +17,7 @@ export function CheckBoxToggle({
   inactiveIcon,
   activeIcon,
   hoverIconColor,
+  compact = false,
 }: CheckBoxToggleProps) {
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { setSelectedJobs } = useSelectedJobs();
@@ -31,7 +33,7 @@ export function CheckBoxToggle({
 
   return (
     <motion.div
-      className="control-bar-container"
+      className={`control-bar-container ${compact ? "control-bar-container-compact" : ""}`}
       transition={{
         type: "spring",
         stiffness: 300,
@@ -41,6 +43,10 @@ export function CheckBoxToggle({
       onClick={handleToggle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      title={label || "Toggle Multi-Select"}
+      role="button"
+      aria-label={label || "Toggle Multi-Select"}
+      aria-pressed={isMultiSelecting}
     >
       <img
         src={isMultiSelecting ? activeIcon : inactiveIcon}
@@ -54,9 +60,11 @@ export function CheckBoxToggle({
         title="Toggle Multi-Select"
         onChange={() => console.log("Checked Box")}
       />
-      <span className="control-bar-label cursor-pointer select-none whitespace-nowrap">
-        {label}
-      </span>
+      {!compact && (
+        <span className="control-bar-label cursor-pointer select-none whitespace-nowrap">
+          {label}
+        </span>
+      )}
     </motion.div>
   );
 }

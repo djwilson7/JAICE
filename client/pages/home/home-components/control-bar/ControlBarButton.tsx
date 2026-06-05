@@ -8,6 +8,7 @@ interface ControlBarButtonProps {
   label?: string;
   prominent?: boolean;
   alt: string;
+  compact?: boolean;
 }
 
 export function ControlBarButton({
@@ -17,6 +18,7 @@ export function ControlBarButton({
   label,
   prominent,
   alt,
+  compact = false,
 }: ControlBarButtonProps) {
   
   const [mouseEnter, setMouseEnter] = useState<boolean>(false);
@@ -25,19 +27,24 @@ export function ControlBarButton({
 
   return (
     <motion.div
-      className={`no-select ${buttonClass}`}
+      className={`no-select ${buttonClass} ${compact ? "control-bar-container-compact" : ""}`}
       onMouseEnter={() => setMouseEnter(true)}
       onMouseLeave={() => setMouseEnter(false)}
       onClick={onClick}
+      title={label || alt}
+      role="button"
+      aria-label={label || alt}
     >
       <motion.img
         src={icon}
         alt={alt}
         className={`w-5 h-5 ${iconClass}`}
       />
-      <p className="control-bar-label whitespace-nowrap no-select">
-        {label}
-      </p>
+      {!compact && (
+        <p className="control-bar-label whitespace-nowrap no-select">
+          {label}
+        </p>
+      )}
     </motion.div>
   );
 }

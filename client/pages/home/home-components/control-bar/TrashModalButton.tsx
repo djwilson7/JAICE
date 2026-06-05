@@ -3,9 +3,10 @@ import trashIcon from "@/assets/icons/trash-undo.svg";
 
 interface TrashModalButtonProps {
   setIsOpen: (value: boolean) => void;
+  compact?: boolean;
 }
 
-export function TrashModalButton({ setIsOpen }: TrashModalButtonProps) {
+export function TrashModalButton({ setIsOpen, compact = false }: TrashModalButtonProps) {
 
   return (
     <ControlBarButton
@@ -14,6 +15,7 @@ export function TrashModalButton({ setIsOpen }: TrashModalButtonProps) {
       iconHoverColor={"redIcon"}
       label="Trash"
       alt="Undo Trash Icon"
+      compact={compact}
     />
   );
 }
