@@ -9,6 +9,7 @@ from typing import List, Dict
 from common.security import decrypt_token
 from shared_worker_library.utils.to_bytes import to_bytes
 from classification.class_model import classify_email_stage
+from classification.class_rules import classify_email_stage_by_rules
 
 # Shared Queries
 from shared_worker_library.db_queries.std_queries import get_encrypted_emails
@@ -40,6 +41,16 @@ def classification_task(trace_id: str, row_ids: list, attempt: int = 1):
         Dict with status 'success' or 'failure', and result count or error message.
     """
     logging.info(f"[{trace_id}] Starting classification task. Attempt {attempt}")
+
+    no_rows_result = {
+        "status": "success",
+        "results": 0,
+        "message": "No classification rows to process",
+    }
+
+    if not row_ids:
+        logging.info(f"[{trace_id}] No row IDs provided; classification task skipped.")
+        return no_rows_result
     
     if attempt > MAX_RETRIES:
         logging.error(f"[{trace_id}] Exceeded maximum retries for classification task.")
@@ -52,18 +63,27 @@ def classification_task(trace_id: str, row_ids: list, attempt: int = 1):
     except Exception as e:
         logging.error(f"[{trace_id}] Error fetching encrypted emails: {e}")
         return {"status": "failure", "error": str(e)}
+    if not encrypted_emails:
+        logging.info(f"[{trace_id}] No encrypted emails found; classification task skipped.")
+        return no_rows_result
 
     try:
         decrypted_emails = decrypt_email_content(trace_id, encrypted_emails)
     except Exception as e:
         logging.error(f"[{trace_id}] Error decrypting emails: {e}")
         return {"status": "failure", "error": str(e)}
+    if not decrypted_emails:
+        logging.info(f"[{trace_id}] No decrypted emails available; classification task skipped.")
+        return no_rows_result
 
     try:
         normalized_emails = normalized_emails_for_model(trace_id, decrypted_emails)
     except Exception as e:
         logging.error(f"[{trace_id}] Error normalizing emails: {e}")
         return {"status": "failure", "error": str(e)}
+    if not normalized_emails:
+        logging.info(f"[{trace_id}] No normalized emails available; classification task skipped.")
+        return no_rows_result
 
     try:
         model_results = run_classification_model(trace_id, normalized_emails)
@@ -217,6 +237,17 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
     rejected = []
     retry = []
 
+    if not emails:
+        logging.info(f"[{trace_id}] No emails provided to classification model.")
+        return ClassificationModelResult(
+            applied=applied,
+            interview=interview,
+            offer=offer,
+            accepted=accepted,
+            rejected=rejected,
+            retry=retry,
+        )
+
     for i in range(0, len(emails), BATCH_SIZE):
         batch = emails[i:i + BATCH_SIZE]
         batch_num = (i // BATCH_SIZE) + 1
@@ -226,7 +257,18 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
         for email in batch:
             email_text = f"Subject: {email['subject']} \nFrom: {email['sender']} \nBody: {email['body']}"
             try:
-                model_out = classify_email_stage(email_text)
+                rule_out = classify_email_stage_by_rules(
+                    subject=email["subject"],
+                    sender=email["sender"],
+                    body=email["body"],
+                    email_text=email_text,
+                )
+                if rule_out.get("matched"):
+                    model_out = rule_out
+                    source = "rules"
+                else:
+                    model_out = classify_email_stage(email_text)
+                    source = "deberta"
             except Exception as e:
                 logging.error(f"[{trace_id}] Model error for email {email['id']}: {e}")
                 retry.append({"email_id": email["id"]})
@@ -237,6 +279,11 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
                 top_score = model_out.get("score", 0)
                 second_label = model_out.get("second_stage")
                 second_score = model_out.get("second_score", 0)
+
+                logging.info(
+                    f"[{trace_id}] Classification source={source} stage={top_label} "
+                    f"score={float(top_score):.3f} provider_message_id={email['provider_message_id']}"
+                )
 
                 h_label = heuristic_labeling(email_text)
                 needs_review = False

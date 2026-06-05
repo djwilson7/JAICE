@@ -392,7 +392,7 @@ def test_classification_cpu_dtype_fix_and_heuristic_mismatch(monkeypatch):
                 "id": "offer",
                 "subject": "job offer",
                 "sender": "company",
-                "body": "formal offer",
+                "body": "next steps",
                 "provider_message_id": "msg-offer",
             }
         ],

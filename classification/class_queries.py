@@ -75,7 +75,8 @@ def update_job_app_table(trace_id: str, model_results: ClassificationModelResult
         stage_confidence_secondary = %s,
         app_stage_secondary = %s,
         needs_review = %s
-    WHERE provider_message_id = %s;
+    WHERE provider_message_id = %s
+      AND app_stage = 'staging';
     """
 
     result = execute_transfer_query(
