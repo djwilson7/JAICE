@@ -48,7 +48,7 @@ export const NavButton = ({
 
   return (
     <motion.div
-      className="flex w-full flex-row items-center justify-center gap-2"
+      className="flex w-full flex-row items-center justify-start"
     >
       <Button
         onClick={onClick}
@@ -59,10 +59,10 @@ export const NavButton = ({
         title={title}
       >
         <div className="navButtonIconSlot">
-          <img src={icon} alt={label} className="w-5 h-5 flex-shrink-0 icon" />
+          <img src={icon} alt={label} className="h-3.5 w-3.5 flex-shrink-0 icon" />
         </div>
         <motion.span
-          className="navButtonLabel text-left overflow-hidden whitespace-nowrap"
+          className="navButtonLabel overflow-hidden whitespace-nowrap text-left text-[0.67rem] font-light leading-none"
           variants={labelVariants}
           initial={false}
           animate={isExpanded ? "expanded" : "collapsed"}

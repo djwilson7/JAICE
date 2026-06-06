@@ -9,11 +9,11 @@ export function BrandBlock() {
         <img
           src={brandImg}
           alt="JAICE"
-          className="object-cover w-20 md:w-22 lg:w-24 animate-element"
+          className="h-8 w-8 object-contain md:h-9 md:w-9 lg:h-10 lg:w-10 animate-element"
         />
       </div>
       <div
-        className="brand-tag text-md md:text-xl lg:text-2xl whitespace-nowrap animate-element"
+        className="brand-tag text-xs md:text-sm lg:text-base whitespace-nowrap animate-element"
       >
         Simplify Your Job Hunt
       </div>

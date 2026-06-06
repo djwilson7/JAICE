@@ -79,9 +79,12 @@ const longestNavLabelLength = Math.max(
   ...navLabels.map((label) => label.length)
 );
 
+const NAV_CLOSED_WIDTH = "3rem";
+const navLabelWidthCh = longestNavLabelLength * 0.61;
+
 const NAV_WIDTHS = {
-  closed: "4rem",
-  open: `calc(4rem + ${longestNavLabelLength}ch + 1.5rem)`,
+  closed: NAV_CLOSED_WIDTH,
+  open: `calc(${NAV_CLOSED_WIDTH} + ${navLabelWidthCh}ch + 0.625rem)`,
 };
 
 export function NavigationBar() {
@@ -148,14 +151,14 @@ export function NavigationBar() {
           onMouseLeave={() => setNavIsHovered(false)}
         >
           <motion.div
-            className="z-50 h-full w-full flex flex-col p-2 gap-3 overflow-hidden"
+            className="z-50 h-full w-full flex flex-col gap-1.5 overflow-hidden p-1.5"
             layout
             transition={navTransition}
           >
             <div className="flex flex-col h-full w-full justify-between">
               <section aria-label="Navigation Buttons" className="flex w-full">
                 <ul
-                  className="flex w-full flex-col items-center gap-2"
+                  className="flex w-full flex-col items-center gap-1"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   {Object.entries(primaryOptions).map(([key, option]) => (
@@ -175,9 +178,9 @@ export function NavigationBar() {
               </section>
 
               <section aria-label="Settings and account">
-                <div className="flex w-full flex-col items-center justify-center overflow-hidden p-2">
+                <div className="flex w-full flex-col items-center justify-center overflow-hidden p-1.5">
                   <motion.small
-                    className="w-full text-center secondary-text whitespace-nowrap"
+                    className="w-full whitespace-nowrap text-center text-[0.625rem] font-light leading-none secondary-text"
                     animate={{ opacity: isNavExpanded ? 1 : 0 }}
                     transition={navTransition}
                   >
@@ -186,7 +189,7 @@ export function NavigationBar() {
                   <hr className="header-split" />
                 </div>
                 <ul
-                  className="flex w-full flex-col items-center gap-2"
+                  className="flex w-full flex-col items-center gap-1"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   <li key="theme-toggle" className="w-full">
