@@ -8,6 +8,9 @@ from common.security import encrypt_token, decrypt_token
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from shared_worker_library.utils.task_definitions import TaskType, EmailStatus
+from shared_worker_library.db_queries.job_application_queries import (
+    insert_processing_placeholders_from_staging,
+)
 from common.logger import get_logger
 from gmail.gmail_queries import (
     can_fetch_emails,
@@ -452,10 +455,11 @@ def fetch_content(
         encrypted_emails = prepare_staging_payload(trace_id, parsed)
         row_ids = write_to_staging(trace_id, encrypted_emails)
         if row_ids:
+            create_processing_placeholders(trace_id, row_ids)
             enqueue_model_processing(trace_id, row_ids)
         else:
             logging.info(
-                f"[{trace_id}] model: no new staging rows to process; skipping relevance stage"
+                f"[{trace_id}] model: no new staging rows to process; skipping classification"
             )
         
         if results.retry:
@@ -718,7 +722,7 @@ def prepare_staging_payload(trace_id: str, parsed_emails: List[Dict]) -> List[Di
                 "sender_enc": encrypt_token(e["sender"]),
                 "received_at": e["received_at"],
                 "body_enc": encrypt_token(e["body_text"]),
-                "status": EmailStatus.AWAIT_RELEVANCE.value,
+                "status": EmailStatus.AWAIT_CLASSIFICATION.value,
             }
         )
     logging.info(f"[{trace_id}] prepare_staging_payload: encrypted={len(encrypted)}")
@@ -746,17 +750,27 @@ def write_to_staging(trace_id: str, encrypted_emails: List[Dict]) -> List[str]:
 
 def enqueue_model_processing(trace_id: str, row_ids: List[str]) -> None:
     if not row_ids:
-        logging.info(f"[{trace_id}] model: no row IDs provided; skipping relevance stage")
+        logging.info(f"[{trace_id}] model: no row IDs provided; skipping classification")
         return
 
     logging.info(
-        f"[{trace_id}] model: enqueuing batch of {len(row_ids)} rows for relevance stage"
+        f"[{trace_id}] model: enqueuing batch of {len(row_ids)} rows for rule classification"
     )
     celery_app.send_task(
-        TaskType.RELEVANCE_MODEL.task_name,
+        TaskType.CLASSIFICATION_MODEL.task_name,
         args=[trace_id, row_ids],
-        queue=TaskType.RELEVANCE_MODEL.queue_name,
+        queue=TaskType.CLASSIFICATION_MODEL.queue_name,
     )
+
+
+def create_processing_placeholders(trace_id: str, row_ids: List[str]) -> dict:
+    result = insert_processing_placeholders_from_staging(trace_id, row_ids)
+    if result.get("status") == "failure":
+        raise RuntimeError(result.get("error", "processing placeholder insert failed"))
+    logging.info(
+        f"[{trace_id}] processing: placeholder rows affected={result.get('rows_affected', 0)}"
+    )
+    return result
 
 def _classify_error(exception: Exception) -> str:
     """
