@@ -1,63 +1,16 @@
 import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
-import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
 import undoIcon from "@/assets/icons/undo-alt.svg";
 import redoIcon from "@/assets/icons/redo-alt.svg";
-import Button from "@/global-components/button";
 import type { JobCardType } from "@/types/jobCardType";
 import { api } from "@/global-services/api";
 import { useDrag } from "@/pages/home/hooks/useDrag";
-import { useEffect, useRef, useState } from "react";
 import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 
 export function UndoRedo() {
   const { isDragging } = useDrag();
-  const { isMultiSelecting } = useIsMultiSelecting();
   const { undoCount, redoCount, undo, redo } = useUndoRedo();
-
-  const UNDO_VISIBLE_MS = 10000;
-  const [visible, setVisible] = useState(false);
-  const timeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (timeoutRef.current) {
-      window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-
-    if (undoCount === 0 && redoCount === 0) {
-      setVisible(false);
-      return;
-    }
-
-    setVisible(true);
-    timeoutRef.current = window.setTimeout(() => {
-      setVisible(false);
-      timeoutRef.current = null;
-    }, UNDO_VISIBLE_MS);
-
-    return () => {
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [undoCount, redoCount]);
-
-  const restartVisibilityTimer = () => {
-    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-
-    setVisible(true);
-    timeoutRef.current = window.setTimeout(() => {
-      setVisible(false);
-      timeoutRef.current = null;
-    }, UNDO_VISIBLE_MS);
-  };
-
-  const showUndoRedo = visible && (undoCount > 0 || redoCount > 0);
-
-  if (isDragging || isMultiSelecting || !showUndoRedo) {
-    return null;
-  }
+  const undoDisabled = isDragging || undoCount === 0;
+  const redoDisabled = isDragging || redoCount === 0;
 
   const handleSnapshot = async (snapshot: JobCardType[]) => {
     console.log("Applying snapshot with", snapshot.length, "jobs");
@@ -95,6 +48,8 @@ export function UndoRedo() {
   };
 
   const handleUndo = async () => {
+    if (undoDisabled) return;
+
     console.log("Undo action triggered");
     const snapshot = undo();
     if (!snapshot) return;
@@ -105,10 +60,11 @@ export function UndoRedo() {
       applySnapshotLocally(snapshot.before, snapshot.after);
       console.error("Undo failed", err);
     }
-    restartVisibilityTimer();
   };
 
   const handleRedo = async () => {
+    if (redoDisabled) return;
+
     console.log("Redo action triggered");
     const snapshot = redo();
     if (!snapshot) return;
@@ -119,44 +75,31 @@ export function UndoRedo() {
       applySnapshotLocally(snapshot.after, snapshot.before);
       console.error("Redo failed", err);
     }
-    restartVisibilityTimer();
   };
 
   return (
-    <div
-      className="glass"
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        title={undoCount > 0 ? "Undo (Ctrl+Z)" : "No actions to undo"}
-        className="rounded"
+    <>
+      <button
+        type="button"
+        onClick={handleUndo}
+        aria-label="Undo last action"
+        title={undoDisabled ? "No actions to undo" : "Undo last action"}
+        disabled={undoDisabled}
+        className="control-bar-container control-bar-container-compact undo-redo-control"
       >
-        <Button
-          type="button"
-          onClick={handleUndo}
-          aria-label="Undo last action"
-          disabled={undoCount === 0}
-          className="undoRedo"
-        >
-          <img src={undoIcon} alt="Undo" className="w-5 h-5 icon" />
-        </Button>
-      </span>
+        <img src={undoIcon} alt="" className="icon" />
+      </button>
 
-      <span
-        title={redoCount > 0 ? "Redo (Ctrl+Y)" : "No actions to redo"}
-        className="rounded"
+      <button
+        type="button"
+        onClick={handleRedo}
+        aria-label="Redo last action"
+        title={redoDisabled ? "No actions to redo" : "Redo last action"}
+        disabled={redoDisabled}
+        className="control-bar-container control-bar-container-compact undo-redo-control"
       >
-        <Button
-          type="button"
-          onClick={handleRedo}
-          aria-label="Redo last action"
-          disabled={redoCount === 0}
-          className="undoRedo"
-        >
-          <img src={redoIcon} alt="Redo" className="w-5 h-5 icon" />
-        </Button>
-      </span>
-    </div>
+        <img src={redoIcon} alt="" className="icon" />
+      </button>
+    </>
   );
 }

@@ -12,12 +12,11 @@ import { ArchiveModalButton } from "@/pages/home/home-components/control-bar/Arc
 import { TrashModalButton } from "@/pages/home/home-components/control-bar/TrashModalButton";
 import { MultiSelectButton } from "@/pages/home/home-components/control-bar/MultiSelectButton";
 import { FilterButton } from "@/pages/home/home-components/control-bar/FilterButton";
-import { AlertBox } from "@/pages/home/home-components/control-bar/AlertBox";
 import { NewApplicationButton } from "@/pages/home/home-components/control-bar/NewApplicationButton";
 import { KanbanContent } from "@/pages/home/home-components/page/KanbanContent";
 import { useTrashActions } from "@/pages/home/hooks/useTrashActions";
 import { useArchiveActions } from "@/pages/home/hooks/useArchiveActions";
-import { LoadingAnimation } from "@/pages/home/home-components/page/LoadingAnimation";
+import { HomeLoadingSkeleton } from "@/pages/home/home-components/page/HomeLoadingSkeleton";
 import { PageContent } from "@/pages/home/home-components/page/PageContent";
 import { useJobsLoader } from "@/pages/home/hooks/useJobsLoader";
 import { useJobSearchAndSort } from "@/pages/home/hooks/useJobSearchAndSort";
@@ -78,20 +77,13 @@ export function HomePage() {
 
   const userInfo = getCurrentUserInfo();
   const userId = userInfo?.uid || "";
-  const { newJobsCount, resetNewJobsCount } = useRealtimeJobs(userId, setJobs);
+  useRealtimeJobs(userId, setJobs);
 
   // trash/archive modal state
   const [isConnectEmailOpen, setIsConnectEmailOpen] = useState(false);
-  const [isAlertOpen, setIsAlertOpen] = useState(false); // to track if the alert box is open
-  const alertMessage =
-    newJobsCount > 0 ? `You have ${newJobsCount} new jobs` : "No Alerts"; // to hold the current alert message
 
   const [isJobAppModalOpen, setIsJobAppModalOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState<string | null>(null); // to track if a column is highlighted
-
-  useEffect(() => {
-    if (isAlertOpen) resetNewJobsCount();
-  }, [isAlertOpen, resetNewJobsCount]);
 
   useEffect(() => {
     const handleLocalJobChange = (event: Event) => {
@@ -121,7 +113,7 @@ export function HomePage() {
   return (
     <AnimatePresence mode="wait">
       {isLoading ? (
-        <LoadingAnimation />
+        <HomeLoadingSkeleton />
       ) : (
         <HomePageContentProviders>
           {/* ^ Page Container ^ */}
@@ -131,11 +123,6 @@ export function HomePage() {
               <ControlBar fitParent className="home-action-toolbar">
                 <div className="home-action-group home-action-group-left">
                   <ExpandCollapseButton compact />
-                <AlertBox
-                  isOpen={isAlertOpen}
-                  setIsOpen={setIsAlertOpen}
-                  alertMessage={alertMessage}
-                />
                   <SearchBar
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
@@ -146,6 +133,9 @@ export function HomePage() {
                     setSelectedOption={setSortOption}
                     compact
                   />
+                </div>
+                <div className="home-action-group home-action-group-center">
+                  <UndoRedo />
                 </div>
                 <div className="home-action-group home-action-group-right">
                   <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} compact />
@@ -159,6 +149,7 @@ export function HomePage() {
                 </div>
               </ControlBar>
             </div>
+            <MultiSelectBar setIsHighlighted={setIsHighlighted} />
             {/* Kan Ban Columns */}
             <KanbanContent>
               {columns.map(
@@ -179,9 +170,6 @@ export function HomePage() {
           </PageContent>
 
           {/* Modals and popups that exist outside the main page content */}
-          <MultiSelectBar setIsHighlighted={setIsHighlighted} />
-          <UndoRedo />
-
           <ConnectEmailModal
             isOpen={isConnectEmailOpen}
             onClose={() => setIsConnectEmailOpen(false)}

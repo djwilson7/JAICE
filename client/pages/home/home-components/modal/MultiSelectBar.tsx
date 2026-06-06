@@ -14,7 +14,6 @@ import { api } from "@/global-services/api";
 import { useIsMultiSelecting } from "../../hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "../../hooks/useSelectedJobs";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
-import { useDrag } from "@/pages/home/hooks/useDrag";
 
 import ConfirmModal from "@/global-components/ConfirmModal";
 
@@ -34,7 +33,6 @@ export function MultiSelectBar({
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
   const { pushUndo } = useUndoRedo();
-  const { isDragging } = useDrag();
 
   const [hoverAction, setHoverAction] = useState<HoverAction>(null);
 
@@ -49,25 +47,28 @@ export function MultiSelectBar({
     setIsEnabled(selectedCount > 0);
   }, [selectedCount]);
 
-  if (!isMultiSelecting || isDragging) return null;
+  useEffect(() => {
+    setIsHighlighted(null);
+  }, [hoverAction, setIsHighlighted]);
+
+  if (!isMultiSelecting) return null;
 
   const getStatusText = () => {
-    if (selectedCount === 0) return "Select jobs to see actions.";
+    if (selectedCount === 0) {
+      return "Select emails below, then tap a button to perform that action on all selected emails.";
+    }
     const plural = selectedCount > 1 ? "jobs" : "job";
+    const emailPlural = selectedCount > 1 ? "emails" : "email";
 
     switch (hoverAction) {
       case "archive":
-        setIsHighlighted(null);
         return `Archive ${selectedCount} ${plural}?`;
       case "delete":
-        setIsHighlighted(null);
         return `Delete ${selectedCount} ${plural}?`;
       case "review":
-        setIsHighlighted(null);
         return `Mark ${selectedCount} ${plural} as reviewed?`;
       default:
-        setIsHighlighted(null);
-        return `${selectedCount} ${plural} selected.`;
+        return `${selectedCount} ${emailPlural} selected: tap archive, delete, or review all, to perform that action on these emails.`;
     }
   };
 
@@ -144,87 +145,79 @@ export function MultiSelectBar({
     setShowDeleteConfirm(false);
   };
 
-  const dim = "w-[35px] h-[35px]";
+  const dim = "multi-select-bar-action";
 
   return (
     <>
-      <div className={className || "glass min-w-[500px] mb-10"}>
-        <div className="w-full p-2 flex flex-col">
-          <div className="w-full text-center">
-            <p className="secondary-text animate-element">{getStatusText()}</p>
-          </div>
-          <hr className="header-split my-2" />
-          {/* Button area */}
-          <div className="w-full overflow-hidden ">
-            <div className="flex w-full gap-4 py-2 items-center justify-evenly">
-                  {/* Archive */}
-                  <div
-                    onMouseEnter={() => setHoverAction("archive")}
-                    onMouseLeave={() => setHoverAction(null)}
-                    className={dim}
-                  >
-                    <HoverIconButton
-                      baseIcon={folderIcon}
-                      hoverIcon={folderAddIcon}
-                      successIcon={folderCheckIcon}
-                      failureIcon={folderXIcon}
-                      alt="Archive"
-                      onClick={onArchiveClicked}
-                      disabled={!isEnabled}
-                      className="roundSmall"
-                      style={{ background: "transparent" }}
-                      hoverClassName="purpleIcon"
-                      title="Mark selected jobs as archived"
-                    />
-                  </div>
+      <div className="home-multi-select-toolbar-wrap p-1">
+        <div className={className || "multi-select-bar"}>
+          <p className="multi-select-bar-status secondary-text animate-element">
+            {getStatusText()}
+          </p>
 
-                  {/* Mark As Reviewed */}
-                  <div
-                    onMouseEnter={() => setHoverAction("review")}
-                    onMouseLeave={() => setHoverAction(null)}
-                    className={dim}
-                  >
-                    <HoverIconButton
-                      baseIcon={reviewIcon}
-                      hoverIcon={reviewIconHover}
-                      successIcon={reviewIcon}
-                      failureIcon={reviewIcon}
-                      alt="Mark As Reviewed"
-                      onClick={onReviewClicked}
-                      disabled={
-                        !isEnabled || selectedJobs.every((j) => !j.reviewNeeded)
-                      }
-                      className="roundSmall"
-                      style={{ background: "transparent" }}
-                      hoverClassName="orangeIcon"
-                      title="Mark selected jobs as reviewed"
-                    />
-                  </div>
+          <div className="multi-select-bar-actions">
+            <div
+              onMouseEnter={() => setHoverAction("archive")}
+              onMouseLeave={() => setHoverAction(null)}
+              className={dim}
+            >
+              <HoverIconButton
+                baseIcon={folderIcon}
+                hoverIcon={folderAddIcon}
+                successIcon={folderCheckIcon}
+                failureIcon={folderXIcon}
+                alt="Archive"
+                onClick={onArchiveClicked}
+                disabled={!isEnabled}
+                className="roundSmall"
+                style={{ background: "transparent" }}
+                hoverClassName="purpleIcon"
+                title="Mark selected jobs as archived"
+              />
+            </div>
 
-                  {/* Delete */}
-                  <div
-                    onMouseEnter={() => setHoverAction("delete")}
-                    onMouseLeave={() => setHoverAction(null)}
-                    className={dim}
-                  >
-                    <HoverIconButton
-                      baseIcon={trashIcon}
-                      hoverIcon={trashAddIcon}
-                      successIcon={trashCheckIcon}
-                      failureIcon={trashXIcon}
-                      alt="Delete"
-                      onClick={onDeleteClicked}
-                      disabled={!isEnabled}
-                      className="roundSmall"
-                      style={{ background: "transparent" }}
-                      hoverClassName="redIcon"
-                      title="Delete selected jobs"
-                    />
-                  </div>
+            <div
+              onMouseEnter={() => setHoverAction("review")}
+              onMouseLeave={() => setHoverAction(null)}
+              className={dim}
+            >
+              <HoverIconButton
+                baseIcon={reviewIcon}
+                hoverIcon={reviewIconHover}
+                successIcon={reviewIcon}
+                failureIcon={reviewIcon}
+                alt="Mark As Reviewed"
+                onClick={onReviewClicked}
+                disabled={
+                  !isEnabled || selectedJobs.every((j) => !j.reviewNeeded)
+                }
+                className="roundSmall"
+                style={{ background: "transparent" }}
+                hoverClassName="orangeIcon"
+                title="Mark selected jobs as reviewed"
+              />
+            </div>
+
+            <div
+              onMouseEnter={() => setHoverAction("delete")}
+              onMouseLeave={() => setHoverAction(null)}
+              className={dim}
+            >
+              <HoverIconButton
+                baseIcon={trashIcon}
+                hoverIcon={trashAddIcon}
+                successIcon={trashCheckIcon}
+                failureIcon={trashXIcon}
+                alt="Delete"
+                onClick={onDeleteClicked}
+                disabled={!isEnabled}
+                className="roundSmall"
+                style={{ background: "transparent" }}
+                hoverClassName="redIcon"
+                title="Delete selected jobs"
+              />
             </div>
           </div>
-
-          {/* Status text */}
         </div>
       </div>
 
