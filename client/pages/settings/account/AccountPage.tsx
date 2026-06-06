@@ -52,9 +52,9 @@ export function AccountPage() {
   const [showUnlinkGmailModal, setShowUnlinkGmailModal] = useState(false);
 
   const daysToSyncOptions: DaysToSyncOption[] = [
-    { label: "1mo", days: 30 },
-    { label: "3mo", days: 90 },
-    { label: "6mo", days: 180 },
+    { label: "1 month", days: 30 },
+    { label: "3 months", days: 90 },
+    { label: "6 months", days: 180 },
   ];
 
   const { user, applyProfileUpdate } = useAuth();

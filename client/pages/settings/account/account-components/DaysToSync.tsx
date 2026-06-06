@@ -1,4 +1,3 @@
-import Button from "@/global-components/button";
 import { Modal } from "@/global-components/Modal";
 import { useEffect, useState } from "react";
 
@@ -29,6 +28,10 @@ export function DaysToSync({
     }
   }, [options, show]);
 
+  const selectedOption = options.find(
+    (option) => option.days === selectedDays
+  );
+
   return (
     <Modal
       isOpen={show}
@@ -41,33 +44,50 @@ export function DaysToSync({
         disabled: selectedDays === 0,
       }}
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="primary-text">How far back should we look?</h3>
-          <p className="secondary-text">
-            Once your Gmail is linked, JAICE will go back through your inbox for
-            the timeframe you pick. We only add emails that are job-related so
-            you decide how much history we work with.
-          </p>
+      <div className="link-gmail-modal-body">
+        <div className="link-gmail-status">
+          <span className="link-gmail-status-line" aria-hidden="true" />
+          <div className="link-gmail-status-copy">
+            <strong>Choose your initial sync window</strong>
+            <span>
+              JAICE will review job-related email from this period when Gmail
+              is first connected.
+            </span>
+          </div>
         </div>
-        <p className="primary-text">
-          Thinking about your recent job search, how far back would you like us
-          to look?
-        </p>
-        <div className="flex flex-row w-full gap-2" role="group" aria-label="Days to sync">
+
+        <fieldset className="link-gmail-sync-fieldset">
+          <legend>Inbox history</legend>
+          <div
+            className="link-gmail-segmented-control"
+            role="radiogroup"
+            aria-label="Inbox history to sync"
+          >
           {options.map((option) => (
-            <div className="w-1/3" key={option.days}>
-              <Button
+              <button
+                type="button"
+                role="radio"
+                aria-checked={selectedDays === option.days}
+                key={option.days}
+                className="link-gmail-segment"
                 onClick={() => setSelectedDays(option.days)}
-                isSelected={selectedDays === option.days}
-                className=""
               >
-                <h4 className="whitespace-nowrap">{option.label}</h4>
-              </Button>
-            </div>
+                {option.label}
+              </button>
           ))}
+          </div>
+        </fieldset>
+
+        <p className="link-gmail-selection-summary">
+          <strong>{selectedOption?.label ?? "No period"} selected.</strong>{" "}
+          Future job-related messages will continue syncing after the initial
+          import.
+        </p>
+
+        <p className="link-gmail-privacy-copy">
+          Only messages identified as job-search activity are added to JAICE.
+        </p>
         </div>
-      </div>
     </Modal>
   );
 }
