@@ -1,5 +1,7 @@
 RULE_ACCEPT_THRESHOLD = 0.78
 RULE_MARGIN_THRESHOLD = 0.18
+JOB_SIGNAL_ACCEPT_THRESHOLD = 0.45
+NOT_JOB_RELATED_THRESHOLD = 0.55
 
 STAGES = ("applied", "interview", "offer", "accepted", "rejected")
 SCORE_NORMALIZER = 10.0
@@ -7,6 +9,19 @@ SCORE_NORMALIZER = 10.0
 STRONG = 5.0
 MEDIUM = 3.0
 WEAK = 1.5
+
+INTERNAL_TO_STAGE = {
+    "APPLICATION_RECEIVED": "applied",
+    "APPLICATION_UPDATE": "applied",
+    "ASSESSMENT": "applied",
+    "RECRUITER_OUTREACH": "applied",
+    "NETWORKING": "applied",
+    "FOLLOW_UP": "applied",
+    "INTERVIEW": "interview",
+    "OFFER": "offer",
+    "ACCEPTED": "accepted",
+    "REJECTION": "rejected",
+}
 
 
 RULE_GROUPS = {
@@ -40,6 +55,15 @@ RULE_GROUPS = {
         ("applying to", MEDIUM),
         ("thank you for your interest in applying", MEDIUM),
         ("applied for", WEAK),
+        ("coding challenge", MEDIUM),
+        ("technical assessment", MEDIUM),
+        ("take home assessment", MEDIUM),
+        ("take-home assessment", MEDIUM),
+        ("complete the assessment", MEDIUM),
+        ("complete this assessment", MEDIUM),
+        ("recruiter reached out", MEDIUM),
+        ("opportunity that may be a fit", MEDIUM),
+        ("following up on your application", MEDIUM),
     ],
     "interview": [
         ("schedule an interview", STRONG),
@@ -108,6 +132,7 @@ RULE_GROUPS = {
         ("we regret to inform", STRONG),
         ("position has been filled", STRONG),
         ("position is filled", STRONG),
+        ("filled the position", STRONG),
         ("moving forward with other candidates", STRONG),
         ("pursue other candidates", STRONG),
         ("application is expired", STRONG),
@@ -115,6 +140,8 @@ RULE_GROUPS = {
         ("application expired", STRONG),
         ("position is closed", STRONG),
         ("position has closed", STRONG),
+        ("closing the role", STRONG),
+        ("closing this role", STRONG),
         ("no longer open to new applications", STRONG),
         ("no longer accepting applications", STRONG),
         ("closed to new applications", STRONG),
@@ -128,9 +155,111 @@ RULE_GROUPS = {
     ],
 }
 
+CATEGORY_GROUPS = {
+    "APPLICATION_RECEIVED": [
+        ("thank you for applying", STRONG),
+        ("we received your application", STRONG),
+        ("we recieved your application", STRONG),
+        ("application successfully submitted", STRONG),
+        ("application submitted", STRONG),
+        ("application sent", STRONG),
+        ("application received", MEDIUM),
+        ("application recieved", MEDIUM),
+    ],
+    "APPLICATION_UPDATE": [
+        ("application status", MEDIUM),
+        ("update on your application", MEDIUM),
+        ("following up on your application", MEDIUM),
+        ("your application is under review", MEDIUM),
+    ],
+    "ASSESSMENT": [
+        ("coding challenge", STRONG),
+        ("technical assessment", STRONG),
+        ("take home assessment", STRONG),
+        ("take-home assessment", STRONG),
+        ("complete the assessment", STRONG),
+        ("assessment link", MEDIUM),
+    ],
+    "INTERVIEW": RULE_GROUPS["interview"],
+    "OFFER": RULE_GROUPS["offer"],
+    "ACCEPTED": RULE_GROUPS["accepted"],
+    "REJECTION": RULE_GROUPS["rejected"],
+    "RECRUITER_OUTREACH": [
+        ("recruiter", MEDIUM),
+        ("talent acquisition", MEDIUM),
+        ("sourcing", WEAK),
+        ("opportunity that may be a fit", MEDIUM),
+        ("role that may interest you", MEDIUM),
+        ("would like to connect", WEAK),
+    ],
+    "NETWORKING": [
+        ("coffee chat", MEDIUM),
+        ("networking", MEDIUM),
+        ("connect about opportunities", MEDIUM),
+    ],
+    "FOLLOW_UP": [
+        ("following up", MEDIUM),
+        ("checking in", WEAK),
+        ("next steps", WEAK),
+    ],
+}
+
+JOB_SIGNALS = (
+    "application",
+    "applied",
+    "applying",
+    "interview",
+    "phone screen",
+    "recruiter",
+    "talent acquisition",
+    "hiring team",
+    "hiring manager",
+    "job offer",
+    "offer letter",
+    "assessment",
+    "coding challenge",
+    "position",
+    "role",
+    "candidate",
+)
+
+ATS_OR_RECRUITING_SENDERS = (
+    "greenhouse",
+    "lever",
+    "workday",
+    "ashby",
+    "smartrecruiters",
+    "bamboohr",
+    "icims",
+    "jobvite",
+    "linkedin",
+    "indeed",
+    "recruiting",
+    "talent",
+    "careers",
+)
+
+MARKETING_OR_ALERT_SIGNALS = (
+    "unsubscribe",
+    "job alert",
+    "recommended jobs",
+    "recommended job",
+    "new jobs matching",
+    "jobs you may like",
+    "newsletter",
+    "digest",
+    "sale",
+    "promotion",
+    "webinar",
+)
+
 
 def _blank_scores() -> dict:
     return {stage: 0.0 for stage in STAGES}
+
+
+def _blank_category_scores() -> dict:
+    return {category: 0.0 for category in (*CATEGORY_GROUPS.keys(), "NOT_JOB_RELATED", "UNKNOWN")}
 
 
 def _add_score(
@@ -157,6 +286,13 @@ def _apply_phrase_rules(text: str, scores: dict, matched_rules: list) -> None:
         for phrase, weight in rules:
             if phrase in text:
                 _add_score(scores, matched_rules, stage, weight, phrase)
+
+
+def _apply_category_rules(text: str, scores: dict, matched_rules: list) -> None:
+    for category, rules in CATEGORY_GROUPS.items():
+        for phrase, weight in rules:
+            if phrase in text:
+                _add_score(scores, matched_rules, category, weight, phrase)
 
 
 def _contains_any(text: str, terms: tuple) -> bool:
@@ -241,8 +377,11 @@ def _apply_corrections(text: str, scores: dict, matched_rules: list) -> None:
         (
             "position has been filled",
             "position is filled",
+            "filled the position",
             "position is closed",
             "position has closed",
+            "closing the role",
+            "closing this role",
             "no longer open to new applications",
             "no longer accepting applications",
             "closed to new applications",
@@ -296,11 +435,54 @@ def _normalize_scores(raw_scores: dict) -> dict:
     }
 
 
+def _normalize_category_scores(raw_scores: dict) -> dict:
+    return {
+        category: round(
+            min(max(float(raw_scores.get(category, 0.0)), 0.0) / SCORE_NORMALIZER, 0.99),
+            4,
+        )
+        for category in raw_scores
+    }
+
+
 def _rank_scores(stage_scores: dict) -> tuple:
     sorted_scores = sorted(stage_scores.items(), key=lambda item: item[1], reverse=True)
     top_stage, top_score = sorted_scores[0]
     second_stage, second_score = sorted_scores[1]
     return top_stage, top_score, second_stage, second_score
+
+
+def _rank_mapping(scores: dict) -> tuple:
+    sorted_scores = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+    top_key, top_score = sorted_scores[0]
+    second_key, second_score = sorted_scores[1] if len(sorted_scores) > 1 else (None, 0.0)
+    return top_key, top_score, second_key, second_score
+
+
+def _score_job_signal(text: str, sender: str, matched_rules: list) -> tuple[float, float]:
+    job_signal_raw = 0.0
+    non_job_raw = 0.0
+
+    for signal in JOB_SIGNALS:
+        if signal in text:
+            job_signal_raw += WEAK
+            matched_rules.append({"stage": "job_signal", "rule": signal, "weight": WEAK, "kind": "job_signal"})
+
+    sender_text = str(sender or "").lower()
+    for signal in ATS_OR_RECRUITING_SENDERS:
+        if signal in sender_text or signal in text:
+            job_signal_raw += MEDIUM
+            matched_rules.append({"stage": "job_signal", "rule": signal, "weight": MEDIUM, "kind": "sender"})
+
+    for signal in MARKETING_OR_ALERT_SIGNALS:
+        if signal in text:
+            non_job_raw += MEDIUM
+            matched_rules.append({"stage": "not_job_related", "rule": signal, "weight": MEDIUM, "kind": "negative"})
+
+    return (
+        round(min(max(job_signal_raw, 0.0) / SCORE_NORMALIZER, 0.99), 4),
+        round(min(max(non_job_raw, 0.0) / SCORE_NORMALIZER, 0.99), 4),
+    )
 
 
 def classify_email_stage_by_rules(
@@ -352,4 +534,120 @@ def classify_email_stage_by_rules(
         "second_score": 0.0,
         "raw": raw,
         "stage_scores": stage_scores,
+    }
+
+
+def classify_email_by_rules(
+    *,
+    subject: str,
+    sender: str,
+    body: str,
+    email_text: str,
+) -> dict:
+    text = " ".join(str(part or "").lower() for part in (subject, sender, body, email_text))
+    stage_result = classify_email_stage_by_rules(
+        subject=subject,
+        sender=sender,
+        body=body,
+        email_text=email_text,
+    )
+
+    raw_category_scores = _blank_category_scores()
+    matched_rules = list(stage_result.get("raw", {}).get("matched_rules", []))
+    _apply_category_rules(text, raw_category_scores, matched_rules)
+    category_scores = _normalize_category_scores(raw_category_scores)
+    top_category, category_score, second_category, second_score = _rank_mapping(category_scores)
+    job_signal_score, non_job_score = _score_job_signal(text, sender, matched_rules)
+
+    if stage_result.get("matched"):
+        stage = stage_result["stage"]
+        category = {
+            "applied": top_category if INTERNAL_TO_STAGE.get(top_category) == "applied" else "APPLICATION_RECEIVED",
+            "interview": "INTERVIEW",
+            "offer": "OFFER",
+            "accepted": "ACCEPTED",
+            "rejected": "REJECTION",
+        }[stage]
+        return {
+            **stage_result,
+            "matched": True,
+            "relevant": True,
+            "category": category,
+            "requires_inference": False,
+            "reason": "rule_stage_match",
+            "job_signal_score": max(job_signal_score, stage_result["score"]),
+            "non_job_score": non_job_score,
+            "category_scores": category_scores,
+            "raw": {
+                **stage_result["raw"],
+                "matched_rules": matched_rules,
+            },
+        }
+
+    mapped_stage = INTERNAL_TO_STAGE.get(top_category)
+    margin = category_score - float(second_score or 0.0)
+    if (
+        mapped_stage
+        and category_score >= RULE_ACCEPT_THRESHOLD
+        and margin >= RULE_MARGIN_THRESHOLD
+    ):
+        return {
+            "matched": True,
+            "relevant": True,
+            "category": top_category,
+            "stage": mapped_stage,
+            "score": category_score,
+            "second_stage": INTERNAL_TO_STAGE.get(second_category),
+            "second_score": second_score,
+            "requires_inference": False,
+            "reason": "rule_category_match",
+            "job_signal_score": max(job_signal_score, category_score),
+            "non_job_score": non_job_score,
+            "raw": {"source": "rules", "matched_rules": matched_rules},
+            "stage_scores": stage_result.get("stage_scores", {}),
+            "category_scores": category_scores,
+        }
+
+    if (
+        non_job_score >= NOT_JOB_RELATED_THRESHOLD
+        and job_signal_score < JOB_SIGNAL_ACCEPT_THRESHOLD
+        and category_score < RULE_ACCEPT_THRESHOLD
+    ):
+        return {
+            "matched": True,
+            "relevant": False,
+            "category": "NOT_JOB_RELATED",
+            "stage": None,
+            "score": non_job_score,
+            "second_stage": None,
+            "second_score": 0.0,
+            "requires_inference": False,
+            "reason": "rule_not_job_related",
+            "job_signal_score": job_signal_score,
+            "non_job_score": non_job_score,
+            "raw": {"source": "rules", "matched_rules": matched_rules},
+            "stage_scores": stage_result.get("stage_scores", {}),
+            "category_scores": category_scores,
+        }
+
+    if job_signal_score >= JOB_SIGNAL_ACCEPT_THRESHOLD or category_score > 0.0:
+        reason = "ambiguous_requires_inference"
+    else:
+        reason = "low_signal_requires_inference"
+
+    return {
+        "matched": False,
+        "relevant": job_signal_score >= JOB_SIGNAL_ACCEPT_THRESHOLD or category_score > 0.0,
+        "category": "UNKNOWN",
+        "stage": None,
+        "score": 0.0,
+        "second_stage": None,
+        "second_score": 0.0,
+        "requires_inference": True,
+        "reason": reason,
+        "job_signal_score": job_signal_score,
+        "non_job_score": non_job_score,
+        "raw": {"source": "rules", "matched_rules": matched_rules},
+        "stage_scores": stage_result.get("stage_scores", {}),
+        "category_scores": category_scores,
     }

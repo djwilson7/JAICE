@@ -1,4 +1,0 @@
-transformers==4.45.1
-pandas==2.2.3
-spacy==3.7.5
-beautifulsoup4==4.14.2
