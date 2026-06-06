@@ -1,4 +1,5 @@
 import React from "react";
+import { Modal } from "@/global-components/Modal";
 
 type CloneResumeModalProps = {
     isLightMode: boolean;
@@ -16,34 +17,33 @@ export const CloneResumeModal: React.FC<CloneResumeModalProps> = ({
     setDontAskClone,
     setShowCloneModal,
     handleCreateResume,
-    headerActionButtonClass,
-    headerActionIconClass
 }) => (
-        <>
-                <div className="modal-backdrop flex items-center justify-center" onClick={() => setShowCloneModal(false)}>
-                    <div 
-                        className="modal max-w-md w-full relative animate-scale-up p-4"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Title: New Resume (with vertically centered close button) */}
-                        <div className="relative mb-4 mt-2">
-                            <h3
-                                className={`text-center text-base font-bold ${isLightMode ? "text-slate-950" : "text-white"}`}
-                                style={{ fontFamily: "var(--font-title)" }}
-                            >
-                                New Resume
-                            </h3>
-                            <button
-                                onClick={() => setShowCloneModal(false)}
-                                className={`${headerActionButtonClass} absolute right-0 top-1/2 -translate-y-1/2`}
-                                title="Close"
-                            >
-                                <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
+        <Modal
+            isOpen
+            onClose={() => setShowCloneModal(false)}
+            modalTitle="New Resume"
+            closeOnBackdrop
+            className="max-w-md w-full relative animate-scale-up"
+            secondaryAction={{
+                label: "Copy",
+                onClick: () => {
+                    if (dontAskClone) {
+                        localStorage.setItem("resume_clone_preference", "clone");
+                    }
+                    handleCreateResume(true, false);
+                },
+            }}
+            primaryAction={{
+                label: "Start",
+                onClick: () => {
+                    if (dontAskClone) {
+                        localStorage.setItem("resume_clone_preference", "scratch");
+                    }
+                    handleCreateResume(false, false);
+                },
+                className: "green",
+            }}
+        >
                         {/* Descriptive Copy (Left-aligned, 6-7th grade reading level) */}
                         <p
                             className={`mb-6 pl-1 text-left text-xs leading-relaxed ${isLightMode ? "text-slate-800" : "text-slate-200"}`}
@@ -70,33 +70,5 @@ export const CloneResumeModal: React.FC<CloneResumeModalProps> = ({
                                 Don't ask again
                             </label>
                         </div>
-
-                        {/* Two buttons side-by-side: "Copy Master" (left) and "Start Fresh" (right) */}
-                        <div className="flex gap-3 justify-end" style={{ fontFamily: "var(--font-body)" }}>
-                            <button
-                                onClick={() => {
-                                    if (dontAskClone) {
-                                        localStorage.setItem("resume_clone_preference", "clone");
-                                    }
-                                    handleCreateResume(true, false);
-                                }}
-                                className="resume-clone-action resume-clone-action-primary flex-1"
-                            >
-                                Copy Master
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (dontAskClone) {
-                                        localStorage.setItem("resume_clone_preference", "scratch");
-                                    }
-                                    handleCreateResume(false, false);
-                                }}
-                                className="resume-clone-action resume-clone-action-secondary flex-1"
-                            >
-                                Start Fresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-        </>
+        </Modal>
 );

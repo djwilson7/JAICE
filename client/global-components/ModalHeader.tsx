@@ -7,10 +7,8 @@ interface ModalHeaderProps {
 
 export function ModalHeader({ title, onClose }: ModalHeaderProps) {
     return (
-        <div className="flex relative items-center mb-4">
-            <h2 className="flex w-full justify-center items-center font-semibold">
-                {title}
-            </h2>
+        <div className="modal-header">
+            <h2 className="modal-title">{title}</h2>
             <CloseButton onClick={onClose} />
         </div>
     );

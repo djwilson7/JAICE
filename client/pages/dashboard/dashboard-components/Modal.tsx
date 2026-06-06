@@ -1,6 +1,5 @@
-import Button from "@/global-components/button";
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
+import { Modal as BaseModal } from "@/global-components/Modal";
 
 type ModalProps = {
     open: boolean;
@@ -26,20 +25,7 @@ export function Modal({
     maxHeight = "min(80vh, 820px)",
     description,
 }: ModalProps) {
-    const ref = useRef<HTMLDivElement>(null);
     const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-
-    useEffect(() => {
-        if (!open) return;
-        const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-        document.addEventListener("keydown", onKey);
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.removeEventListener("keydown", onKey);
-            document.body.style.overflow = prev;
-        };
-    }, [open, onClose]);
 
     // Reset description state when modal opens/closes
     useEffect(() => {
@@ -50,46 +36,22 @@ export function Modal({
 
     if (!open) return null;
 
-    return createPortal(
-        <div
-            aria-modal="true"
-            role="dialog"
-            aria-label={title ?? "Expanded view"}
-            className="modal-backdrop"
-            onMouseDown={(e) => {
-                // click the background to close (ignores clicks inside the dialog)
-                if (e.target === e.currentTarget) onClose();
+    return (
+        <BaseModal
+            isOpen={open}
+            onClose={onClose}
+            title={title}
+            ariaLabel={title ?? "Expanded view"}
+            closeOnBackdrop
+            className=""
+            contentClassName="modal-content h-full"
+            style={{
+                width: maxWidth,
+                height: maxHeight,
+                maxHeight,
             }}
         >
-            <div
-                ref={ref}
-                className="modal"
-                style={{
-                    width: maxWidth,
-                    height: maxHeight,
-                    maxHeight,
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-            >
                 <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                    {/* Header */}
-                    {title && (
-                        <div
-                            style={{
-                                marginBottom: "1rem",
-                                flexShrink: 0,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between"
-                            }}
-                        >
-                            <h3 style={{ fontFamily: "var(--font-title)" }}>{title}</h3>
-                            <div style={{ flexShrink: 0 }}>
-                                <Button onClick={onClose}>Close</Button>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Description section */}
                     {description && (
                         <div style={{ marginBottom: "1rem", flexShrink: 0 }}>
@@ -154,8 +116,6 @@ export function Modal({
                         {children}
                     </div>
                 </div>
-            </div>
-        </div>,
-        document.body
+        </BaseModal>
     );
 }

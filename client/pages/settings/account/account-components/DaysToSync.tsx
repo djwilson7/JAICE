@@ -1,5 +1,6 @@
 import Button from "@/global-components/button";
 import { Modal } from "@/global-components/Modal";
+import { useEffect, useState } from "react";
 
 export interface DaysToSyncOption {
   label: string;
@@ -20,8 +21,26 @@ export function DaysToSync({
   onSelection,
   onCancel,
 }: DaysToSyncProps) {
+  const [selectedDays, setSelectedDays] = useState(options[0]?.days ?? 0);
+
+  useEffect(() => {
+    if (show) {
+      setSelectedDays(options[0]?.days ?? 0);
+    }
+  }, [options, show]);
+
   return (
-    <Modal isOpen={show} onClose={onCancel} modalTitle="Link Gmail">
+    <Modal
+      isOpen={show}
+      onClose={onCancel}
+      modalTitle="Link Gmail"
+      primaryAction={{
+        label: "Confirm",
+        onClick: () => onSelection(selectedDays),
+        className: "green",
+        disabled: selectedDays === 0,
+      }}
+    >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <h3 className="primary-text">How far back should we look?</h3>
@@ -35,16 +54,19 @@ export function DaysToSync({
           Thinking about your recent job search, how far back would you like us
           to look?
         </p>
-      </div>
-      <hr className="header-split" />
-      <div className="flex flex-row w-full gap-2">
-        {options.map((option) => (
-          <div className="w-1/3" key={option.days}>
-            <Button onClick={() => onSelection(option.days)} className="">
-              <h4 className="whitespace-nowrap">{option.label}</h4>
-            </Button>
-          </div>
-        ))}
+        <div className="flex flex-row w-full gap-2" role="group" aria-label="Days to sync">
+          {options.map((option) => (
+            <div className="w-1/3" key={option.days}>
+              <Button
+                onClick={() => setSelectedDays(option.days)}
+                isSelected={selectedDays === option.days}
+                className=""
+              >
+                <h4 className="whitespace-nowrap">{option.label}</h4>
+              </Button>
+            </div>
+          ))}
+        </div>
       </div>
     </Modal>
   );
