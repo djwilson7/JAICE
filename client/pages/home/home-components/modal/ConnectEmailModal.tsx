@@ -1,10 +1,6 @@
-import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
-import Button from "@/global-components/button";
-import { ModalHeader } from "@/global-components/ModalHeader";
-import linkIcon from "@/assets/icons/link.svg";
-import unlinkIcon from "@/assets/icons/unlink.svg";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Modal } from "@/global-components/Modal";
 import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 
 export default function ConnectEmailModal({
@@ -15,81 +11,94 @@ export default function ConnectEmailModal({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  
-  const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
-  const [, setGmailError] = useState<string | null>(null);
-  const [buttonHovered, setButtonHovered] = useState<boolean>(false);
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailError, setGmailError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
     checkGmailStatus({ setGmailConnected, setGmailError });
-  }, []);
-
-  const connectEmailIcon = gmailConnected ? unlinkIcon : linkIcon;
-  const connectEmailLabel = gmailConnected
-    ? "Disconnect Email"
-    : "Link Email";
-  const connectButtonIconColor = gmailConnected ? "redIcon" : "greenIcon";
-  const connectButtonColor = gmailConnected ? "red" : "green";
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal w-lg">
-        <ModalHeader title="Email Connection Status" onClose={onClose} />
-        <div className="flex w-full items-center justify-center">
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex w-full justify-center">
-              <small className="text-left w-7/8 text-sm primary-text">
-                In order to get the most out of JAICE, your email should be linked.
-                JAICE relies on email syncing to track job applications and
-                updates automatically. Without it, some functionality is
-                limited.
-              </small>
-            </div>
-
-            <div className="flex w-full justify-evenly py-6">
-              <div className="flex w-3/8 flex-col gap-2">
-                <p className="text-sm text-left font-medium">
-                  Without email syncing
-                </p>
-                <ul className="list-disc text-left pl-5 text-sm">
-                  <li>JAICE can’t scan or organize new emails</li>
-                  <li>Job updates may be missed</li>
-                  <li>Applications must be tracked manually</li>
-                </ul>
-              </div>
-
-              <div className="flex w-3/8 flex-col gap-2">
-                <p className="text-sm text-left font-medium">
-                  With email syncing
-                </p>
-                <ul className="list-disc text-left pl-5 text-sm">
-                  <li>Emails are processed and categorized automatically</li>
-                  <li>Job status changes are detected in real time</li>
-                  <li>Your job search stays up to date without extra work</li>
-                </ul>
-              </div>
-            </div>
-            <div className="flex w-7/8">
-              <Button
-                onClick={() => navigate("/settings/account")}
-                className={connectButtonColor}
-                onMouseEnter={() => setButtonHovered(true)}
-                onMouseLeave={() => setButtonHovered(false)}
-              >
-                <img
-                  src={connectEmailIcon}
-                  alt="Link Icon"
-                  className={`w-5 h-5 icon mr-2 ${buttonHovered ? connectButtonIconColor : ""}`}
-                />
-                <div className="ml-2 whitespace-nowrap">{connectEmailLabel}</div>
-              </Button>
-            </div>
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      modalTitle="Email Connection Status"
+      className="w-lg"
+      primaryAction={{
+        label: gmailConnected ? "Disconnect" : "Link",
+        onClick: () => navigate("/settings/account"),
+        className: gmailConnected ? "red" : "green",
+      }}
+    >
+      <div className="connect-email-modal-body">
+        <div
+          className={`connect-email-status ${
+            gmailConnected
+              ? "connect-email-status-connected"
+              : "connect-email-status-disconnected"
+          }`}
+        >
+          <span className="connect-email-status-indicator" aria-hidden="true" />
+          <div className="connect-email-status-copy">
+            <strong>
+              Gmail {gmailConnected ? "is connected" : "is not connected"}
+            </strong>
+            <span>
+              {gmailConnected
+                ? "JAICE can automatically keep your job activity current."
+                : "Connect Gmail to automate job tracking from your inbox."}
+            </span>
           </div>
         </div>
+
+        {gmailError && (
+          <p className="connect-email-status-error" role="alert">
+            Connection status could not be refreshed. You can still manage the
+            connection from Account Settings.
+          </p>
+        )}
+
+        <p className="connect-email-intro">
+          Email syncing lets JAICE identify application messages and organize
+          updates as they arrive. You can still add and manage jobs manually
+          when Gmail is not connected.
+        </p>
+
+        <div className="connect-email-comparison">
+          <section className="connect-email-comparison-section">
+            <div className="connect-email-comparison-heading connect-email-comparison-heading-connected">
+              <span
+                className="connect-email-comparison-icon connect-email-comparison-icon-connected"
+                aria-hidden="true"
+              />
+              <h3>When connected</h3>
+            </div>
+            <ul>
+              <li>New application emails are processed automatically.</li>
+              <li>Status changes are organized into the correct stage.</li>
+              <li>Your board stays current with less manual entry.</li>
+            </ul>
+          </section>
+
+          <section className="connect-email-comparison-section">
+            <div className="connect-email-comparison-heading connect-email-comparison-heading-disconnected">
+              <span
+                className="connect-email-comparison-icon connect-email-comparison-icon-disconnected"
+                aria-hidden="true"
+              />
+              <h3>When disconnected</h3>
+            </div>
+            <ul>
+              <li>Inbox messages are not scanned or categorized.</li>
+              <li>Email-based job updates will not appear automatically.</li>
+              <li>Applications and stage changes must be entered manually.</li>
+            </ul>
+          </section>
+        </div>
       </div>
-    </div>,
-    document.body
+    </Modal>
   );
 }
