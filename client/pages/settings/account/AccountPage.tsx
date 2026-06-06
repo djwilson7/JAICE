@@ -246,6 +246,7 @@ export function AccountPage() {
       navigate("/");
     } catch (error) {
       console.error("Delete account error:", error);
+      setBusy(false);
       setDeleteAccountError("A network error occurred. Please try again.");
     }
   }
@@ -258,11 +259,11 @@ export function AccountPage() {
           <SectionHeader title="Profile Settings" />
           <SectionBody>
             <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
-              <div className="w-24 h-24 rounded-full bg-[var(--card-border)] mb-4 aspect-square">
+              <div className="profile-picture-frame w-24 h-24 mb-4 aspect-square">
                 <img
                   src={profilePicURL || userIcon}
                   alt="Profile Picture"
-                  className="w-full h-full rounded-full object-cover p-0.5"
+                  className="w-full h-full rounded-full object-cover"
                 />
               </div>
               <div className="flex flex-col gap-2 text-center items-center jusitfy-evenly">
@@ -448,6 +449,8 @@ export function AccountPage() {
       />
       <UnlinkGmailModal
         isOpen={showUnlinkGmailModal}
+        isProcessing={gmailBusy}
+        error={gmailError}
         onClose={() => setShowUnlinkGmailModal(false)}
         onConfirm={async () => {
           await handleGmailLinking();
@@ -456,6 +459,8 @@ export function AccountPage() {
       />
       <DeleteAccountModal
         isOpen={showDeleteModal}
+        isProcessing={busy}
+        error={deleteAccountError}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={deleteAccount}
       />

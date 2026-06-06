@@ -1,52 +1,66 @@
-import Button from "@/global-components/button";
 import { Modal } from "@/global-components/Modal";
 
 interface UnlinkGmailModalProps {
   isOpen: boolean;
+  isProcessing?: boolean;
+  error?: string | null;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
 }
 
 export function UnlinkGmailModal({
   isOpen,
+  isProcessing = false,
+  error,
   onClose,
   onConfirm,
 }: UnlinkGmailModalProps) {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} modalTitle="Unlink Gmail Account">
-      <div className="flex flex-col">
-        <div className="flex flex-col text-left secondary-text gap-4">
-          <p className="">
-            Unlinking your Gmail will pause all syncing and email processing.
-            Your JAICE data stays intact — you'll just need to relink Gmail if
-            you want to continue using automatic tracking.
-          </p>
-          <p className="primary-text">
-            Once unlinked, Quick Sign-In through Gmail will also be disabled
-            until you reconnect.
-          </p>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      modalTitle="Unlink Gmail Account"
+      primaryAction={{
+        label: isProcessing ? "Unlinking..." : "Unlink",
+        onClick: onConfirm,
+        className: "red",
+        disabled: isProcessing,
+      }}
+    >
+      <div className="unlink-gmail-modal-body">
+        <div className="unlink-gmail-status">
+          <span className="unlink-gmail-status-line" aria-hidden="true" />
+          <div className="unlink-gmail-status-copy">
+            <strong>Automatic email tracking will stop</strong>
+            <span>
+              JAICE will no longer scan or process new Gmail messages after the
+              account is unlinked.
+            </span>
+          </div>
         </div>
-      </div>
-      <hr className="header-split mt-4" />
-      <div className="flex flex-row justify-center gap-4 mt-4">
-        <Button
-          onClick={() => {
-            onClose();
-          }}
-          className="green"
-        >
-          <h4>Keep Gmail Linked</h4>
-        </Button>
-        <Button
-          onClick={() => {
-            onConfirm();
-          }}
-          className="red"
-        >
-          <h4>Stop Gmail Syncing</h4>
-        </Button>
+
+        {error && (
+          <p className="unlink-gmail-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <section className="unlink-gmail-section">
+          <h3>What will change</h3>
+          <ul>
+            <li>New application emails will not be added automatically.</li>
+            <li>Email-based stage changes will no longer be detected.</li>
+            <li>Quick Sign-In through Gmail will be disabled.</li>
+          </ul>
+        </section>
+
+        <p className="unlink-gmail-retention">
+          <strong>Your JAICE data will remain available.</strong> Existing
+          applications, notes, history, and insights are not deleted. You can
+          reconnect Gmail later to resume automatic tracking.
+        </p>
       </div>
     </Modal>
   );

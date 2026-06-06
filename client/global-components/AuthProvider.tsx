@@ -12,6 +12,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     // Track loading state while checking authentication status
     const [loading, setLoading] = useState(true);
+    const [, setProfileRevision] = useState(0);
 
     useEffect(() => {
         // Subscribe to authentication state changes
@@ -34,7 +35,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                 photoURL: photoUrl
             });
 
-            await userToUpdate.reload();            
+            await userToUpdate.reload();
+            setProfileRevision((revision) => revision + 1);
         } catch (error) {
             console.error("Error updating profile:", error);
             throw error;

@@ -2,6 +2,7 @@ import { useAuth } from "@/global-components/authContext";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useGritScore } from "@/utils/useGritScore";
+import userIcon from "@/assets/icons/user.svg";
 
 export function UserBlock() {
   const { user } = useAuth();
@@ -14,22 +15,20 @@ export function UserBlock() {
   return (
     <div className="user-block">
       <motion.div
-        className="profile-picture-container animate-element h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10"
+        className="profile-picture-container profile-picture-frame animate-element h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10"
         onClick={() => navigate("/settings/account")}
         whileHover={{ cursor: "pointer", scale: 1.04 }}
         title="Change your profile picture in account settings."
       >
-        {profilePic ? (
-          <img
-            src={profilePic}
-            alt="Profile"
-            className="h-full w-full profile-picture animate-element"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-600 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold md:text-sm">{firstName?.charAt(0)}</span>
-          </div>
-        )}
+        <img
+          key={profilePic || "default-profile"}
+          src={profilePic || userIcon}
+          alt="Profile"
+          className="h-full w-full rounded-full object-cover profile-picture animate-element"
+          onError={(event) => {
+            event.currentTarget.src = userIcon;
+          }}
+        />
       </motion.div>
 
       <div className="text-container animate-element">
