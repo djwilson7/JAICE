@@ -3,14 +3,12 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import importlib
 import sys
-import types
 from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
-from classification import class_model
 from classification import class_tasks
 from client_api.api import dashboard, jobs
 from client_api.db import apply_baseline_to_new_supabase as baseline
@@ -21,7 +19,6 @@ from client_api.services import firebase_admin
 from client_api.services import supabase_client
 from client_api.services.resume_chat import prompts
 from common import security
-from relevance import relevance_norm
 from tests.conftest import AsyncConn, connection_context
 
 
@@ -64,22 +61,13 @@ def test_classification_decryption_none_text_and_unknown_label(monkeypatch):
     )
     assert normalized[0]["subject"] == ""
 
-    monkeypatch.setattr(
-        class_tasks,
-        "classify_email_stage",
-        lambda _text: {
-            "stage": "unknown",
-            "score": 0.9,
-            "second_stage": None,
-            "second_score": None,
-        },
-    )
     result = class_tasks.run_classification_model(
         "trace",
         [{"id": "unknown", "subject": "", "sender": "", "body": "", "provider_message_id": "msg"}],
     )
     assert result.applied == []
     assert result.retry == []
+    assert result.not_job_related[0]["email_id"] == "unknown"
 
 
 def test_security_import_configuration_failures(monkeypatch):
@@ -337,67 +325,43 @@ async def test_invalid_bearer_token_and_existing_firebase_health_user(monkeypatc
     assert await firebase_admin.check_firebase_auth_health() is True
 
 
-def test_classification_cpu_dtype_fix_and_heuristic_mismatch(monkeypatch):
-    class Model:
-        def __init__(self):
-            self.dtype = "wrong"
-
-        def to(self, _device):
-            return self
-
-        def eval(self):
-            return None
-
-        def float(self):
-            self.dtype = class_model.torch.float32
-            return self
-
-        def parameters(self):
-            return iter([types.SimpleNamespace(dtype=self.dtype)])
-
-    classifier_calls = []
-    model = Model()
-    monkeypatch.setattr(class_model, "CLASSIFIER", None)
-    monkeypatch.setattr(class_model.torch.cuda, "is_available", lambda: False)
-    monkeypatch.setattr(class_model.AutoTokenizer, "from_pretrained", lambda *_args: object())
-    monkeypatch.setattr(
-        class_model.AutoModelForSequenceClassification,
-        "from_pretrained",
-        lambda *_args, **_kwargs: model,
-    )
-    monkeypatch.setattr(
-        class_model,
-        "pipeline",
-        lambda *_args, **_kwargs: lambda *_a, **_k: classifier_calls.append(True),
-    )
-    class_model.init_classification_model()
-    assert model.dtype == class_model.torch.float32
-    assert classifier_calls == [True]
-
-    monkeypatch.setattr(
-        class_tasks,
-        "classify_email_stage",
-        lambda _text: {
-            "stage": "applied",
-            "score": 0.9,
-            "second_stage": "interview",
-            "second_score": 0.1,
-            "stage_scores": {},
+def test_classification_llm_result_mapping_and_rule_offer():
+    item = class_tasks.build_llm_result_item(
+        {"id": "row", "provider_message_id": "msg"},
+        {
+            "category": "INTERVIEW",
+            "confidence": 0.9,
+            "secondary_category": "APPLICATION_RECEIVED",
+            "secondary_confidence": 0.2,
+            "reason": "interview_request",
         },
     )
+    assert item["top_label"] == "interview"
+    assert item["second_label"] == "applied"
+
+    assert class_tasks.build_llm_result_item(
+        {"id": "row", "provider_message_id": "msg"},
+        {
+            "category": "INTERVIEW",
+            "confidence": 0.62,
+            "secondary_category": "APPLICATION_RECEIVED",
+            "secondary_confidence": 0.2,
+        },
+    ) is None
+
     result = class_tasks.run_classification_model(
         "trace",
         [
             {
                 "id": "offer",
-                "subject": "job offer",
+                "subject": "offer letter",
                 "sender": "company",
-                "body": "next steps",
+                "body": "pleased to offer employment offer compensation",
                 "provider_message_id": "msg-offer",
             }
         ],
     )
-    assert result.applied[0]["needs_review"] is True
+    assert result.offer[0]["top_label"] == "offer"
 
 
 def test_migration_identity_exit_baseline_bootstrap_and_main(tmp_path, monkeypatch):
@@ -473,7 +437,7 @@ def test_migration_identity_exit_baseline_bootstrap_and_main(tmp_path, monkeypat
     assert len(applied) == 4
 
 
-def test_prompt_sparse_sections_and_strip_html_decompose(monkeypatch):
+def test_prompt_sparse_sections():
     assert (
         prompts.resume_context_to_text({"skills": [{"category": "", "items": []}]})
         == "No resume content was provided."
@@ -484,37 +448,6 @@ def test_prompt_sparse_sections_and_strip_html_decompose(monkeypatch):
         )
         == "No resume content was provided."
     )
-
-    decomposed = []
-
-    class Tag:
-        def decompose(self):
-            decomposed.append(True)
-
-    class Soup:
-        def __call__(self, _names):
-            return [Tag()]
-
-        def get_text(self):
-            return " visible "
-
-    monkeypatch.setattr(relevance_norm, "BeautifulSoup", lambda *_args: Soup())
-    assert relevance_norm.strip_html("<script>hidden</script>visible") == "visible"
-    assert decomposed == [True]
-
-    redacted, counts = relevance_norm.redact_keys(
-        "abcdefghijklmnopqrstuvwxyz123456789 "
-        "ZYXWVUTSRQPONMLKJIHGFEDCBA987654321"
-    )
-    assert redacted == "[SECRET] [SECRET]"
-    assert counts["[SECRET]"] == 2
-
-    redacted, counts = relevance_norm.redact_keys(
-        "abcdefghijklmnopqrstuvwxyz123456789 " + ("a" * 24)
-    )
-    assert redacted == "[SECRET] " + ("a" * 24)
-    assert counts["[SECRET]"] == 1
-
 
 @pytest.mark.asyncio
 async def test_dashboard_full_timeline_edges(monkeypatch, user):

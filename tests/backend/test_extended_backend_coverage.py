@@ -4,18 +4,15 @@ from collections import deque
 from contextlib import contextmanager
 import types
 
-import pandas as pd
 import pytest
 
-from classification import class_model
+from classification import class_tasks, llm_classifier
 from client_api.services import firebase_admin
 from client_api.services.resume_chat import providers
 from gmail import gmail_queries, gmail_tasks
 from ner import ner_tasks
-from relevance import relevance_model, relevance_queries, relevance_tasks
 from shared_worker_library import database
 from shared_worker_library.db_queries import std_queries, transfer_query
-from shared_worker_library.utils.task_definitions import RelevanceModelResult
 
 
 class Cursor:
@@ -206,107 +203,56 @@ def test_ner_task_orchestration_and_helpers(monkeypatch):
     assert real_run_ner_model("trace", emails) == ["msg"]
 
 
-def test_relevance_query_paths(monkeypatch):
-    empty = RelevanceModelResult(relevant={}, retry=[], purge=[])
-    assert relevance_queries.update_job_app_table("trace", empty) == {"status": "no_relevant_emails"}
-
-    result = RelevanceModelResult(relevant={"1": 0.9}, retry=[], purge=[])
-    monkeypatch.setattr(relevance_queries, "get_data_from_staging", lambda *_args: [])
-    assert relevance_queries.update_job_app_table("trace", result) == {"status": "no_data"}
-
-    monkeypatch.setattr(relevance_queries, "get_data_from_staging", lambda *_args: [("1", b"user")])
-    monkeypatch.setattr(
-        relevance_queries,
-        "decrypt_token",
-        lambda *_args: (_ for _ in ()).throw(RuntimeError("decrypt")),
+def test_llm_classifier_parse_and_validation():
+    parsed = llm_classifier.parse_llm_classification_response(
+        '{"category":"interview","confidence":0.82,'
+        '"secondary_category":"application_received","secondary_confidence":0.2,'
+        '"reason":"interview_request"}'
     )
-    assert relevance_queries.update_job_app_table("trace", result) == {
-        "status": "failure",
-        "error": "decrypt",
-    }
+    assert parsed["category"] == "INTERVIEW"
+    assert parsed["secondary_category"] == "APPLICATION_RECEIVED"
 
-    staging_row = ("1", b"user", "trace", None, "msg", b"subject", b"sender", "today", b"body")
-    monkeypatch.setattr(relevance_queries, "get_data_from_staging", lambda *_args: [staging_row])
-    monkeypatch.setattr(relevance_queries, "decrypt_token", lambda value: value.decode())
-    captured = {}
-    monkeypatch.setattr(
-        relevance_queries,
-        "execute_transfer_query",
-        lambda **kwargs: captured.update(kwargs) or {"status": "success", "rows_affected": 1},
+    aliased = llm_classifier.parse_llm_classification_response(
+        '{"category":"APPLICATION_REJECTION","confidence":0.9,'
+        '"secondary_category":null,"secondary_confidence":0}'
     )
-    assert relevance_queries.update_job_app_table("trace", result)["status"] == "success"
-    assert captured["values"][0][0:6] == ("user", "subject", None, "body", "staging", "gmail")
-    assert "%s::text IS NULL" in captured["query"]
-    assert "existing.provider_thread_id = %s::text" in captured["query"]
+    assert aliased["category"] == "REJECTION"
 
-    monkeypatch.setattr(
-        relevance_queries,
-        "execute_transfer_query",
-        lambda **_kwargs: {"status": "failure", "error": "database"},
+    with pytest.raises(llm_classifier.EmailLLMClassifierError, match="Unsupported"):
+        llm_classifier.parse_llm_classification_response(
+            '{"category":"OTHER","confidence":0.9}'
+        )
+
+    with pytest.raises(llm_classifier.EmailLLMTransientError, match="malformed"):
+        llm_classifier.parse_llm_classification_response(
+            '{"category":INTERVIEW,"confidence":0.9}'
+        )
+
+
+def test_email_inference_result_mapping_and_review():
+    email = {"id": "row", "provider_message_id": "msg"}
+    item = class_tasks.build_llm_result_item(
+        email,
+        {
+            "category": "REJECTION",
+            "confidence": 0.91,
+            "secondary_category": "INTERVIEW",
+            "secondary_confidence": 0.1,
+            "reason": "rejection",
+        },
     )
-    assert relevance_queries.update_job_app_table("trace", result)["status"] == "failure"
+    assert item["top_label"] == "rejected"
+    assert item["second_label"] == "interview"
 
-    monkeypatch.setattr(
-        relevance_queries,
-        "get_data_from_staging",
-        lambda *_args: (_ for _ in ()).throw(RuntimeError("staging")),
-    )
-    assert relevance_queries.update_job_app_table("trace", result) == {
-        "status": "failure",
-        "error": "staging",
-    }
-
-
-def test_relevance_model_init_and_predict(monkeypatch):
-    monkeypatch.setattr(relevance_model, "MODEL", None)
-    monkeypatch.setattr(relevance_model, "TOKENIZER", None)
-    with pytest.raises(RuntimeError, match="not initialized"):
-        relevance_model.predict(pd.DataFrame([{"body": "job"}]))
-
-    monkeypatch.setattr(relevance_model, "MODEL", object())
-    monkeypatch.setattr(relevance_model, "TOKENIZER", object())
-    with pytest.raises(ValueError, match="body"):
-        relevance_model.predict(pd.DataFrame([{"subject": "job"}]))
-
-    model = types.SimpleNamespace(to=lambda _device: None, eval=lambda: None)
-    monkeypatch.setattr(relevance_model.DistilBertForSequenceClassification, "from_pretrained", lambda _path: model)
-    monkeypatch.setattr(relevance_model.DistilBertTokenizerFast, "from_pretrained", lambda _path: object())
-    relevance_model.init_model("model")
-    assert relevance_model.MODEL is model
-
-    monkeypatch.setattr(
-        relevance_model.DistilBertForSequenceClassification,
-        "from_pretrained",
-        lambda _path: (_ for _ in ()).throw(RuntimeError("load")),
-    )
-    with pytest.raises(RuntimeError, match="load"):
-        relevance_model.init_model("bad-model")
-    assert relevance_model.MODEL is None
-
-
-def test_classification_model_init_and_edge_outputs(monkeypatch):
-    monkeypatch.setattr(class_model, "CLASSIFIER", lambda *_args, **_kwargs: None)
-    class_model.init_classification_model()
-
-    monkeypatch.setattr(class_model, "CLASSIFIER", None)
-    class_model.init_classification_model()
-    assert class_model.CLASSIFIER is not None
-
-    monkeypatch.setattr(class_model, "CLASSIFIER", lambda *_args, **_kwargs: {"labels": ["applied"], "scores": [0.7]})
-    assert class_model.classify_email_stage("body")["second_stage"] is None
-
-    monkeypatch.setattr(class_model, "CLASSIFIER", lambda *_args, **_kwargs: object())
-    with pytest.raises(TypeError, match="Unexpected classifier output"):
-        class_model.classify_email_stage("body")
-
-    monkeypatch.setattr(
-        class_model.AutoTokenizer,
-        "from_pretrained",
-        lambda *_args: (_ for _ in ()).throw(RuntimeError("load")),
-    )
-    monkeypatch.setattr(class_model, "CLASSIFIER", None)
-    with pytest.raises(RuntimeError, match="load"):
-        class_model.init_classification_model()
+    assert class_tasks.build_llm_result_item(
+        email,
+        {
+            "category": "UNKNOWN",
+            "confidence": 0.99,
+            "secondary_category": None,
+            "secondary_confidence": 0,
+        },
+    ) is None
 
 
 def test_firebase_admin_initialization_paths(monkeypatch, tmp_path):
@@ -449,71 +395,6 @@ def test_gmail_task_dispatch_and_token_error(monkeypatch):
     )
     with pytest.raises(Exception, match="Failed to exchange"):
         real_get_access_token_from_refresh("refresh", "trace")
-
-
-def test_relevance_task_orchestration_paths(monkeypatch):
-    real_enqueue = relevance_tasks.enqueue
-    assert relevance_tasks.relevance_task("trace", [], attempt=relevance_tasks.MAX_RETRIES + 1) == {
-        "status": "failure",
-        "result": "max_retries_exceeded",
-    }
-
-    monkeypatch.setattr(
-        relevance_tasks,
-        "get_encrypted_emails",
-        lambda *_args: (_ for _ in ()).throw(RuntimeError("fetch")),
-    )
-    assert relevance_tasks.relevance_task("trace", []) == {"status": "failure", "error": "fetch"}
-
-    monkeypatch.setattr(relevance_tasks, "get_encrypted_emails", lambda *_args: [])
-    assert relevance_tasks.relevance_task("trace", []) == {
-        "status": "skipped",
-        "reason": "no_data",
-    }
-
-    monkeypatch.setattr(relevance_tasks, "get_encrypted_emails", lambda *_args: [{"id": "one"}])
-    for name, error in [
-        ("decrypt_email_content", "decrypt"),
-        ("normalized_emails_for_model", "normalize"),
-        ("run_relevance_model", "model"),
-        ("update_job_app_table", "update"),
-        ("enqueue", "enqueue"),
-    ]:
-        monkeypatch.setattr(
-            relevance_tasks,
-            "decrypt_email_content",
-            lambda *_args: [{"id": "one", "body": "body", "subject": "subject"}],
-        )
-        monkeypatch.setattr(
-            relevance_tasks,
-            "normalized_emails_for_model",
-            lambda *_args: pd.DataFrame([{"id": "one", "body": "body"}]),
-        )
-        model_result = RelevanceModelResult(relevant={"one": 0.9}, retry=[], purge=[])
-        monkeypatch.setattr(
-            relevance_tasks, "run_relevance_model", lambda *_args: model_result
-        )
-        monkeypatch.setattr(relevance_tasks, "update_job_app_table", lambda *_args: None)
-        monkeypatch.setattr(relevance_tasks, "enqueue", lambda *_args: None)
-        monkeypatch.setattr(
-            relevance_tasks,
-            name,
-            lambda *_args, error=error: (_ for _ in ()).throw(RuntimeError(error)),
-        )
-        assert relevance_tasks.relevance_task("trace", []) == {"status": "failure", "error": error}
-
-    model_result = RelevanceModelResult(relevant={"one": 0.9}, retry=[], purge=[])
-    monkeypatch.setattr(relevance_tasks, "run_relevance_model", lambda *_args: model_result)
-    monkeypatch.setattr(relevance_tasks, "update_job_app_table", lambda *_args: None)
-    monkeypatch.setattr(relevance_tasks, "enqueue", lambda *_args: None)
-    assert relevance_tasks.relevance_task("trace", [])["status"] == "success"
-
-    assert real_enqueue("trace", RelevanceModelResult({}, [], []), attempt=2) == {
-        "relevant": [],
-        "retry": [],
-        "purge": [],
-        "attempt_next": 2,
-    }
 
 
 @pytest.mark.asyncio

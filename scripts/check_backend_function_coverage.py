@@ -16,7 +16,6 @@ OMIT_PATTERNS = (
     "client_api/db/apply_migration_asyncpg.py",
     "classification/class_worker.py",
     "gmail/gmail_worker.py",
-    "relevance/relevance_worker.py",
     "ner/ner_worker.py",
     "shared_worker_library/celery_app.py",
     "OpenAI/*",

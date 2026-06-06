@@ -15,7 +15,6 @@ from shared_worker_library.utils.task_definitions import (
     ClassificationModelResult,
     EmailStage,
     EmailStatus,
-    RelevanceModelResult,
     TaskType,
 )
 
@@ -59,10 +58,9 @@ def test_to_bytes_converts_memoryview_and_postgres_hex():
 def test_task_definitions_expose_expected_metadata():
     assert TaskType.INITIAL_SYNC.task_name == "gmail.initial_sync"
     assert TaskType.CLASSIFICATION_MODEL.queue_name == "classification_model_queue"
-    assert EmailStatus.AWAIT_RELEVANCE.value == "AWAIT_RELEVANCE"
+    assert EmailStatus.AWAIT_CLASSIFICATION.value == "AWAIT_CLASSIFICATION"
     assert EmailStage.INTERVIEW.value == "Interview"
 
-    relevance = RelevanceModelResult(relevant={"1": 0.9}, retry=["2"], purge=["3"])
     classification = ClassificationModelResult(
         applied=[{"id": 1}],
         interview=[],
@@ -72,7 +70,6 @@ def test_task_definitions_expose_expected_metadata():
         retry=[],
     )
 
-    assert relevance.relevant["1"] == 0.9
     assert classification.applied[0]["id"] == 1
 
 

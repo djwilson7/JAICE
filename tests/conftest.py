@@ -57,59 +57,7 @@ def _install_bs4_stub() -> None:
     sys.modules["bs4"] = module
 
 
-def _install_transformer_stubs() -> None:
-    if "transformers" not in sys.modules and importlib.util.find_spec("transformers") is None:
-        transformers = types.ModuleType("transformers")
-        transformers.__spec__ = importlib.machinery.ModuleSpec("transformers", loader=None)
-
-        class _AutoTokenizer:
-            @classmethod
-            def from_pretrained(cls, *_args: Any, **_kwargs: Any) -> object:
-                return object()
-
-        class _Model:
-            def to(self, *_args: Any, **_kwargs: Any) -> "_Model":
-                return self
-
-            def eval(self) -> None:
-                return None
-
-            def float(self) -> "_Model":
-                return self
-
-            def parameters(self):
-                return iter([types.SimpleNamespace(dtype="float32")])
-
-        class _AutoModel:
-            @classmethod
-            def from_pretrained(cls, *_args: Any, **_kwargs: Any) -> _Model:
-                return _Model()
-
-        def pipeline(*_args: Any, **_kwargs: Any):
-            return lambda *_a, **_k: {
-                "labels": ["email confirming that the company received my job application"],
-                "scores": [1.0],
-            }
-
-        transformers.AutoTokenizer = _AutoTokenizer
-        transformers.AutoModelForSequenceClassification = _AutoModel
-        transformers.DistilBertForSequenceClassification = _AutoModel
-        transformers.DistilBertTokenizerFast = _AutoTokenizer
-        transformers.pipeline = pipeline
-        sys.modules["transformers"] = transformers
-
-    if "torch" not in sys.modules and importlib.util.find_spec("torch") is None:
-        torch = types.ModuleType("torch")
-        torch.__spec__ = importlib.machinery.ModuleSpec("torch", loader=None)
-        torch.float16 = "float16"
-        torch.float32 = "float32"
-        torch.device = lambda value: value
-        torch.cuda = types.SimpleNamespace(is_available=lambda: False)
-        sys.modules["torch"] = torch
-
-
 _install_bs4_stub()
-_install_transformer_stubs()
 
 
 class FakeCeleryApp:
@@ -133,7 +81,6 @@ def _install_worker_boot_stubs() -> None:
     for module_name in (
         "classification.class_worker",
         "gmail.gmail_worker",
-        "relevance.relevance_worker",
         "ner.ner_worker",
     ):
         module = types.ModuleType(module_name)

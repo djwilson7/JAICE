@@ -5,14 +5,11 @@ import importlib
 import os
 import types
 
-import pandas as pd
 import pytest
 
 from gmail import gmail_tasks
 from ner import ner_queries
-from relevance import relevance_model, relevance_tasks
 from shared_worker_library import database
-from shared_worker_library.utils.task_definitions import RelevanceModelResult
 
 
 class Retried(Exception):
@@ -199,80 +196,6 @@ def test_gmail_fetch_message_ids_http_failure(monkeypatch):
     )
     with pytest.raises(RuntimeError, match="network"):
         gmail_tasks.fetch_message_ids("token", "trace")
-
-
-def test_relevance_model_predict_cpu_and_cuda_paths(monkeypatch):
-    class Inputs(dict):
-        def to(self, device):
-            assert device == relevance_model.DEVICE
-            return self
-
-    class Probabilities:
-        def __getitem__(self, key):
-            assert key == (slice(None, None, None), 1)
-            return self
-
-        def cpu(self):
-            return self
-
-        def tolist(self):
-            return [0.9, 0.1]
-
-    class Model:
-        def __call__(self, **inputs):
-            assert inputs == {"tokens": [1, 2]}
-            return types.SimpleNamespace(logits="logits")
-
-    monkeypatch.setattr(
-        relevance_model,
-        "TOKENIZER",
-        lambda texts, **kwargs: Inputs(tokens=[1, 2]),
-    )
-    monkeypatch.setattr(relevance_model, "MODEL", Model())
-    monkeypatch.setattr(relevance_model.torch, "no_grad", nullcontext, raising=False)
-    monkeypatch.setattr(
-        relevance_model.torch,
-        "softmax",
-        lambda logits, dim: Probabilities(),
-        raising=False,
-    )
-    monkeypatch.setattr(relevance_model.torch.cuda, "is_available", lambda: False)
-    result = relevance_model.predict(
-        pd.DataFrame([{"body": "x" * 300}, {"body": None}]),
-        threshold=0.5,
-    )
-    assert result["prediction"].tolist() == [1, 0]
-    assert result["job_probability"].tolist() == [0.9, 0.1]
-
-    emptied = []
-    monkeypatch.setattr(relevance_model.torch.cuda, "is_available", lambda: True)
-    monkeypatch.setattr(
-        relevance_model.torch.cuda,
-        "empty_cache",
-        lambda: emptied.append(True),
-        raising=False,
-    )
-    relevance_model.predict(pd.DataFrame([{"body": "one"}, {"body": "two"}]))
-    assert emptied == [True]
-
-
-def test_relevance_decryption_and_normalization(monkeypatch):
-    monkeypatch.setattr(relevance_tasks, "decrypt_token", lambda value: value.decode())
-    decrypted = relevance_tasks.decrypt_email_content(
-        "trace",
-        [
-            {"id": "one", "body_enc": b"body", "subject_enc": b"subject"},
-            {"id": "bad", "body_enc": None, "subject_enc": None},
-        ],
-    )
-    assert decrypted == [{"id": "one", "body": "body", "subject": "subject"}]
-
-    expected = pd.DataFrame([{"id": "one", "body": "clean"}])
-    monkeypatch.setattr(relevance_tasks, "strip_pii", lambda frame: (expected, {"EMAIL": 1}))
-    normalized = relevance_tasks.normalized_emails_for_model(
-        "trace", [{"id": "one", "body": "secret"}]
-    )
-    assert normalized is expected
 
 
 def test_ner_query_placeholder_result():
