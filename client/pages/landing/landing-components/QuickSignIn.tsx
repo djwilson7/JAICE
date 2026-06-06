@@ -29,17 +29,27 @@ export function QuickSignIn() {
   };
 
   return (
-    <div className="flex flex-col gap-4 py-4">
-      <Button onClick={() => handleThirdPartyLogIn("Google")} title="Google quick sign-in">
-        <div className="flex items-center justify-center gap-4">
-          <img src={googleIcon} alt="Google" className="w-8 h-8 flex-shrink-0" />
-          <h3>Continue with Google</h3>
+    <div className="landing-provider-list">
+      <Button
+        onClick={() => handleThirdPartyLogIn("Google")}
+        title="Continue with Google"
+        className="landing-provider-button"
+      >
+        <div className="landing-provider-button-content">
+          <img src={googleIcon} alt="" aria-hidden="true" />
+          <span>Continue with Google</span>
         </div>
       </Button>
-      <Button onClick={() => handleThirdPartyLogIn("Outlook")} disabled={true} title="This feature is coming soon">
-        <div className="flex items-center justify-center gap-4">
-          <img src={outlookIcon} alt="Outlook" className="w-8 h-8 flex-shrink-0" />
-          <h3>Continue with Outlook</h3>
+      <Button
+        onClick={() => handleThirdPartyLogIn("Outlook")}
+        disabled
+        title="Outlook sign-in is coming soon"
+        className="landing-provider-button"
+      >
+        <div className="landing-provider-button-content">
+          <img src={outlookIcon} alt="" aria-hidden="true" />
+          <span>Continue with Outlook</span>
+          <small>Coming soon</small>
         </div>
       </Button>
     </div>

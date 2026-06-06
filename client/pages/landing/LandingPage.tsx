@@ -8,38 +8,31 @@ import { useBrandImage } from "@/global-services/useBrandImage";
 export function LandingPage() {
   const navigate = useNavigate();
   const brandImg = useBrandImage();
-  const sectionClassName = "flex w-full items-center justify-center p-4";
 
   return (
-    <div
-      className="flex flex-col fixed inset-0 xl:flex-row overflow-auto landing-gradient"
-    >
-    
-      {/* *Top Container */}
-      <div className={`${sectionClassName} xl:justify-end xl:pr-15`}>
-        {/* Inner Container */}
-        <div className="flex flex-col items-center gap-5 p-8 justify-center">
-          <div className="w-120 h-120">
-            <img src={brandImg} className="fit-cover" />
+    <div className="landing-page landing-gradient">
+      <section className="landing-brand-section">
+        <div className="landing-brand-stack">
+          <div className="landing-brand-image">
+            <img src={brandImg} alt="JAICE" />
           </div>
-          <div className="text-left">
+          <div className="landing-brand-copy">
             <h1 className="primary-text">Job Application Intelligence</h1>
             <h1 className="primary-text">& Career Enhancement</h1>
           </div>
-          <h2 className="secondary-text">Simplify Your Job Hunt</h2>
+          <h2 className="landing-brand-slogan secondary-text">
+            Simplify Your Job Hunt
+          </h2>
         </div>
-      </div>
+      </section>
 
-      {/* *Form Container */}
-      <div className={`${sectionClassName} xl:justify-start xl:pl-15`}>
-        {/* Inner Container */}
-        <div className="flex flex-col w-[30rem]">
+      <section className="landing-form-section">
+        <div className="landing-form-wrap">
           <LandingForm />
         </div>
-      </div>
+      </section>
 
-      {/* *Floating Button Container */}
-      <div className="fixed top-0 left-0 m-4">
+      <div className="landing-about-action">
         <Button onClick={() => navigate("/about")}>About</Button>
       </div>
     </div>
