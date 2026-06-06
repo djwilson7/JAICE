@@ -95,24 +95,6 @@ services:
     depends_on:
       - redis
 
-  relevance_worker:
-    container_name: relevance_worker
-    build:
-      context: .
-      dockerfile: ./relevance/Dockerfile.relevance
-    command: >
-      watchmedo auto-restart --directory=/app/relevance --directory=/app/shared_worker_library
-      --directory=/app/common --patterns=*.py --recursive --
-      celery -A relevance.relevance_worker worker -Q relevance_model_queue -l info -E -n relevance_model -c 3
-    env_file:
-      - .env
-    volumes:
-      - ./relevance:/app/relevance
-      - ./shared_worker_library:/app/shared_worker_library
-      - ./common:/app/common
-    depends_on:
-      - redis
-
   classification_worker:
     container_name: classification_worker
     build:
@@ -130,6 +112,32 @@ services:
       - ./common:/app/common
     depends_on:
       - redis
+
+  email_inference_worker:
+    container_name: email_inference_worker
+    build:
+      context: .
+      dockerfile: ./classification/Dockerfile.classification
+    command: >
+      watchmedo auto-restart --directory=/app/classification --directory=/app/shared_worker_library
+      --directory=/app/common --patterns=*.py --recursive --
+      celery -A classification.class_worker worker -Q email_inference_queue -l info -E -n email_inference -c ${EMAIL_INFERENCE_CONCURRENCY:-1}
+    env_file:
+      - .env
+    environment:
+      EMAIL_LLM_MODEL: ${EMAIL_LLM_MODEL:-qwen2.5:1.5b}
+      EMAIL_LLM_TIMEOUT_SECONDS: ${EMAIL_LLM_TIMEOUT_SECONDS:-45}
+      EMAIL_LLM_KEEP_ALIVE: ${EMAIL_LLM_KEEP_ALIVE:-30m}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://local_llm:11434}
+    volumes:
+      - ./classification:/app/classification
+      - ./shared_worker_library:/app/shared_worker_library
+      - ./common:/app/common
+    depends_on:
+      redis:
+        condition: service_started
+      local_llm:
+        condition: service_healthy
 
   ner_worker:
     container_name: ner_worker
@@ -178,7 +186,7 @@ services:
   local_llm_model_loader:
     container_name: local_llm_model_loader
     image: ollama/ollama:0.5.7
-    command: ["pull", "${RESUME_LLM_MODEL:-qwen2.5:1.5b}"]
+    command: ["pull", "${EMAIL_LLM_MODEL:-qwen2.5:1.5b}"]
     volumes:
       - local_llm_data:/root/.ollama
     environment:

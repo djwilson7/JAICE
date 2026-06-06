@@ -13,12 +13,12 @@ Starts every backend container:
 - `gmail_request_intake`
 - `gmail_fetch_content`
 - `gmail_pubsub_listener`
-- `relevance_worker`
 - `classification_worker`
 - `ner_worker`
 - `flower`
 - `local_llm`
 - `local_llm_model_loader`
+- `email_inference_worker`
 
 For Gmail Pub/Sub, use short resource names in `.env`:
 

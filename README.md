@@ -91,7 +91,6 @@ OpenAI is a configurable alternative only. Resume data, chat history, and job co
 - **Natural Language Processing (NLP)**:
 > - [spaCy](https://spacy.io/api/doc)
 > - [scikit-learn](https://scikit-learn.org/stable/)
-> -  [Hugging Face Transformers](https://huggingface.co/docs/transformers/en/index)
 
 - **Tooling**:
 > - [Docker](https://docs.docker.com/)
@@ -244,14 +243,12 @@ JAICE_PROJECT/
 │  │  ├─ classification_queries.py
 │  │  ├─ gmail_queries.py
 │  │  ├─ ner_queries.py
-│  │  ├─ relevance_queries.py
 │  │  └─ std_queries.py
 │  ├─ tasks/
 │  │  ├─ __init__.py
 │  │  ├─ classification_tasks.py
 │  │  ├─ gmail_tasks.py
 │  │  ├─ ner_tasks.py
-│  │  ├─ relevance_tasks.py
 │  ├─ utils/
 │  │  ├─ __init__.py
 │  │  ├─ task_definitions.py
@@ -260,7 +257,6 @@ JAICE_PROJECT/
 │  │  ├─ classification_worker.py
 │  │  ├─ gmail_worker.py
 │  │  ├─ ner_worker.py
-│  │  ├─ relevance_worker.py
 │  ├─ __init__.py
 │  ├─ celery_app.py
 │  ├─ database.py
