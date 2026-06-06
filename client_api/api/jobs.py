@@ -396,7 +396,7 @@ async def get_trashed_jobs(user: dict = Depends(get_current_user)):
     SELECT *
     FROM public.job_applications
     WHERE user_uid = $1 AND is_deleted = TRUE
-    ORDER BY received_at DESC
+    ORDER BY updated_at DESC
     """
 
     try:

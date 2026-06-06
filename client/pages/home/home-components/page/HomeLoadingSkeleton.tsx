@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { kanBanColumns } from "@/pages/home/home-components/column/KanBanColumn";
+import { ControlBar } from "@/pages/home/home-components/control-bar/ControlBar";
 import { PageContent } from "@/pages/home/home-components/page/PageContent";
 
 const SKELETON_CARDS_PER_COLUMN = 3;
@@ -19,7 +20,7 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
 function HomeControlBarSkeleton() {
   return (
     <div className="home-action-toolbar-wrap p-1" aria-hidden="true">
-      <div className="control-bar home-action-toolbar home-skeleton-toolbar">
+      <ControlBar fitParent className="home-action-toolbar home-skeleton-toolbar">
         <div className="home-action-group home-action-group-left">
           <SkeletonBlock className="home-skeleton-control-square" />
           <SkeletonBlock className="home-skeleton-control-search" />
@@ -36,7 +37,7 @@ function HomeControlBarSkeleton() {
           <SkeletonBlock className="home-skeleton-control-square" />
           <SkeletonBlock className="home-skeleton-control-square" />
         </div>
-      </div>
+      </ControlBar>
     </div>
   );
 }

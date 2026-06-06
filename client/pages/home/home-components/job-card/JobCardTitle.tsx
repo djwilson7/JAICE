@@ -15,6 +15,7 @@ interface JobCardTitleProps {
   isHovered: boolean;
   setLocalOpen: Dispatch<SetStateAction<boolean | null>>;
   job: JobCardType;
+  allowSelection?: boolean;
 }
 
 function getDateParts(job: JobCardType) {
@@ -57,6 +58,7 @@ export function JobCardTitle({
   isHovered,
   setLocalOpen,
   job,
+  allowSelection = true,
 }: JobCardTitleProps) {
   const { isMultiSelecting } = useIsMultiSelecting();
   const { toggleJobSelection } = useSelectedJobs();
@@ -80,7 +82,7 @@ export function JobCardTitle({
   };
 
   const handleTitleTap = () => {
-    if (isMultiSelecting) {
+    if (allowSelection && isMultiSelecting) {
       toggleJobSelection(job);
       setIsSelected(!isSelected);
     } else {

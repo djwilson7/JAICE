@@ -184,6 +184,7 @@ export function HomePage() {
 
           <TrashArchiveModal
             isOpen={trash.isOpen}
+            isLoading={trash.isLoading}
             onClose={trash.close}
             mode="trash"
             items={trash.items}
@@ -192,6 +193,7 @@ export function HomePage() {
 
           <TrashArchiveModal
             isOpen={archive.isOpen}
+            isLoading={archive.isLoading}
             onClose={archive.close}
             mode="archive"
             items={archive.items}
