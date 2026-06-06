@@ -4,6 +4,4 @@ export type DragTarget =
   | "offer"
   | "accepted"
   | "rejected"
-  | "archive"
-  | "delete"
   | null;

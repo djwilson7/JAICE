@@ -48,14 +48,7 @@ export function useDragEndHandler({ job }: UseDragEndHandlerArgs) {
     const updatedJob: JobCardType = { ...job };
     updatedJob.reviewNeeded =
       job.reviewNeeded && dragTarget !== dragStart ? false : job.reviewNeeded;
-    updatedJob.column =
-      dragTarget !== "archive" && dragTarget !== "delete"
-        ? dragTarget
-        : job.column;
-    updatedJob.isArchived =
-      dragTarget === "archive" ? !job.isArchived : job.isArchived;
-    updatedJob.isDeleted =
-      dragTarget === "delete" ? !job.isDeleted : job.isDeleted;
+    updatedJob.column = dragTarget;
 
     try {
       await writeJobsToDB({ jobs_to_update: [updatedJob] });

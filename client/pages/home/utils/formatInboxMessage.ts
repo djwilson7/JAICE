@@ -39,6 +39,14 @@ function stripReplyTail(value: string): string {
   return replyPatterns.reduce((text, pattern) => text.replace(pattern, ""), value);
 }
 
+function stripLinkText(value: string): string {
+  return value
+    .replace(/\[([^\]]+)\]\((?:https?:\/\/|www\.)[^)\s]+[^)]*\)/gi, "$1")
+    .replace(/\b(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi, "")
+    .replace(/\b[a-z0-9.-]+\.[a-z]{2,}(?:\/[^\s<>"')\]]*)+/gi, "")
+    .replace(/[ \t\f\v]+([,.;:!?])/g, "$1");
+}
+
 export function formatInboxMessage(message?: string | null): string {
   if (!message) return "";
 
@@ -54,8 +62,9 @@ export function formatInboxMessage(message?: string | null): string {
 
   const decoded = decodeHtmlEntities(withTextLayout);
   const withoutReplyTail = stripReplyTail(decoded);
+  const withoutLinks = stripLinkText(withoutReplyTail);
 
-  return withoutReplyTail
+  return withoutLinks
     .replace(/\r\n?/g, "\n")
     .split("\n")
     .map((line) => line.replace(/[ \t\f\v]+/g, " ").trim())

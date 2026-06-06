@@ -1,20 +1,19 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import plusIcon from "@/assets/icons/plus.svg";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/column/EmptyColumnPlaceholder";
-import Button from "@/global-components/button";
 import { ColumnTitle } from "@/pages/home/home-components/column/ColumnTitle";
 import { useDrag } from "@/pages/home/hooks/useDrag";
 import type { DragTarget } from "@/types/dragTarget";
 import type { KanBanColumn } from "@/pages/home/home-components/column/KanBanColumn";
 import { getCSSVar } from "@/utils/getCSSVar";
 
+const SCROLL_EDGE_THRESHOLD = 8;
+
 interface ColumnProps {
   column: KanBanColumn;
   children: React.ReactNode;
   count: number;
   isHighlighted: string | null;
-  openJobAppModal: (columnId: string) => void;
 }
 
 export function Column({
@@ -22,19 +21,50 @@ export function Column({
   children,
   count,
   isHighlighted,
-  openJobAppModal,
 }: ColumnProps) {
   const { setDragTarget, isDragging } = useDrag();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollContentRef = useRef<HTMLDivElement | null>(null);
+  const [scrollShadow, setScrollShadow] = useState({
+    top: false,
+    bottom: false,
+  });
   const hasChildren = count > 0;
 
   const highlightColumn =
     isHighlighted === column.id || isHighlighted === "all";
 
-  const [addButtonStyle, setAddButtonStyle] = useState("w-5 h-5");
+  const updateScrollShadow = useCallback(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
 
-  const shouldHideAddButton =
-    column.title === "Processing" || column.title === "Review";
-  
+    const maxScrollTop = scrollEl.scrollHeight - scrollEl.clientHeight;
+    const hasOverflow = maxScrollTop > SCROLL_EDGE_THRESHOLD;
+
+    setScrollShadow({
+      top: hasOverflow && scrollEl.scrollTop > SCROLL_EDGE_THRESHOLD,
+      bottom:
+        hasOverflow &&
+        scrollEl.scrollTop < maxScrollTop - SCROLL_EDGE_THRESHOLD,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateScrollShadow();
+
+    const scrollEl = scrollRef.current;
+    const scrollContentEl = scrollContentRef.current;
+    if (!scrollEl || !scrollContentEl || typeof ResizeObserver === "undefined") return;
+
+    const resizeObserver = new ResizeObserver(updateScrollShadow);
+    resizeObserver.observe(scrollEl);
+    resizeObserver.observe(scrollContentEl);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [children, count, updateScrollShadow]);
+
   if (column.visible === false) {
     return null;
   }
@@ -50,55 +80,55 @@ export function Column({
           background: column.bg,
           width: "100%",
         }}
-        className={`flex h-full min-h-full flex-col p-2 corner-radius shadow ${
+        className={`kanban-column-surface flex h-full min-h-full flex-col px-2 py-4 corner-radius ${
           highlightColumn ? "highlighted" : ""
         }`}
+        data-drag-target={column.id}
         onPointerEnter={() => setDragTarget(column.id as DragTarget)}
         onPointerLeave={() => setDragTarget(null)}
       >
         {/* Header */}
-        <div className="flex relative items-center justify-between w-full h-[4rem] select-none">
-          <div className="absolute left-2 mx-2 w-8 h-8 justify-center items-center hidden 2xl:flex">
-            {!shouldHideAddButton && (
-              <Button
-                type="button"
-                className="roundSmall"
-                aria-label={`Add new application to ${column.title} stage`}
-                title={`Add new application to ${column.title} stage`}
-                onClick={() => openJobAppModal(column.id)}
-                onMouseEnter={() => setAddButtonStyle("w-7 h-7")}
-                onMouseLeave={() => setAddButtonStyle("w-5 h-5")}
-              >
-                <img
-                  src={plusIcon}
-                  alt="Add Application"
-                  className={`flex ${addButtonStyle} icon animate-element`}
-                />
-              </Button>
-            )}
-          </div>
-
-          <ColumnTitle title={column.title} />
-
-          <div className="flex absolute right-2 mx-2 h-full items-center justify-center hidden 2xl:flex">
-            <h3>{count}</h3>
-          </div>
+        <div className="flex relative w-full items-center justify-between select-none">
+          <ColumnTitle title={column.title} count={count} />
         </div>
 
-        <div className="flex border-b mx-4 mb-2" />
+        <div className="flex w-full py-4">
+          <div className="column-divider w-full" />
+        </div>
 
         <div
-          className={`kanban-column-scroll ${
-            isDragging ? "kanban-column-scroll-dragging" : ""
-          } flex min-h-0 w-full flex-1 flex-col items-center gap-4 py-0 pl-0 pr-0.5`}
+          className={`kanban-column-scroll-frame ${
+            scrollShadow.top && !isDragging ? "kanban-column-scroll-shadow-top" : ""
+          } ${
+            scrollShadow.bottom && !isDragging
+              ? "kanban-column-scroll-shadow-bottom"
+              : ""
+          } flex min-h-0 w-full flex-1`}
         >
-          {hasChildren ? (
-            children
-          ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <EmptyColumnPlaceholder title={column.title} />
-            </motion.div>
-          )}
+          <div
+            ref={scrollRef}
+            onScroll={updateScrollShadow}
+            className={`kanban-column-scroll ${
+              isDragging ? "kanban-column-scroll-dragging" : ""
+            } flex h-full min-h-0 w-full flex-col items-center gap-2 py-0 pl-0 pr-0.5`}
+          >
+            <div
+              ref={scrollContentRef}
+              className="flex w-full flex-col items-center gap-2"
+            >
+              {hasChildren ? (
+                children
+              ) : (
+                <motion.div
+                  className="w-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <EmptyColumnPlaceholder title={column.title} />
+                </motion.div>
+              )}
+            </div>
+          </div>
         </div>
       </motion.div>
     </motion.div>

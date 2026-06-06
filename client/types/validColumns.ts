@@ -4,6 +4,4 @@ export const ValidColumns = [
   "offer",
   "accepted",
   "rejected",
-  "archive",
-  "delete",
 ];

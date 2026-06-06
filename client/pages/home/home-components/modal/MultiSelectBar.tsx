@@ -6,14 +6,11 @@ import folderIcon from "@/assets/icons/folder.svg";
 import folderXIcon from "@/assets/icons/folder-x.svg";
 import folderCheckIcon from "@/assets/icons/folder-check.svg";
 import folderAddIcon from "@/assets/icons/folder-add.svg";
-import replaceIcon from "@/assets/icons/replace.svg";
 import reviewIcon from "@/assets/icons/review.svg";
 import reviewIconHover from "@/assets/icons/review_hover.svg";
-import upIcon from "@/assets/icons/angle-small-up.svg";
-import Button, { HoverIconButton } from "@/global-components/button";
+import { HoverIconButton } from "@/global-components/button";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
-import { AnimatePresence, motion } from "framer-motion";
 import { useIsMultiSelecting } from "../../hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "../../hooks/useSelectedJobs";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
@@ -22,25 +19,10 @@ import { useDrag } from "@/pages/home/hooks/useDrag";
 import ConfirmModal from "@/global-components/ConfirmModal";
 
 type HoverAction =
-  | "move"
   | "archive"
   | "delete"
-  | "applied"
-  | "interview"
-  | "offer"
-  | "accepted"
-  | "rejected"
   | "review"
-  | "back"
   | null;
-
-const MOVE_STAGES = [
-  "Applied",
-  "Interview",
-  "Offer",
-  "Accepted",
-  "Rejected",
-] as const;
 
 export function MultiSelectBar({
   className,
@@ -56,43 +38,8 @@ export function MultiSelectBar({
 
   const [hoverAction, setHoverAction] = useState<HoverAction>(null);
 
-  const [showMoveOptions, setShowMoveOptions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
-
-  const handleMove = async (targetStage: string) => {
-    try {
-      const jobIds = selectedJobs.map((j) => j.id);
-      const beforeJobState = [...selectedJobs]; // Capture state before move
-      const afterActionJobState = selectedJobs.map((job) => ({
-        ...job,
-        column: targetStage,
-        applicationStage: targetStage,
-        reviewNeeded: false,
-      })); // Capture state after move
-
-      await api("/api/jobs/update-stage", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-          app_stage: targetStage,
-        }),
-      });
-
-      pushUndo({
-        label: "moveMultiple",
-        before: beforeJobState,
-        after: afterActionJobState,
-      });
-      console.log(`Moved ${selectedCount} jobs to ${targetStage}.`);
-      setSelectedJobs([]);
-      setShowMoveOptions(false);
-      setIsMultiSelecting(false);
-      setIsHighlighted(null);
-    } catch (err) {
-      console.error("Failed to move jobs:", err);
-    }
-  };
 
   const selectedCount = selectedJobs.length ?? 0;
 
@@ -109,36 +56,15 @@ export function MultiSelectBar({
     const plural = selectedCount > 1 ? "jobs" : "job";
 
     switch (hoverAction) {
-      case "move":
-        setIsHighlighted("all");
-        return `Move ${selectedCount} ${plural} to a new column?`;
       case "archive":
         setIsHighlighted(null);
         return `Archive ${selectedCount} ${plural}?`;
       case "delete":
         setIsHighlighted(null);
         return `Delete ${selectedCount} ${plural}?`;
-      case "applied":
-        setIsHighlighted("applied");
-        return `Move ${selectedCount} ${plural} to applied?`;
-      case "interview":
-        setIsHighlighted("interview");
-        return `Move ${selectedCount} ${plural} to interview?`;
-      case "offer":
-        setIsHighlighted("offer");
-        return `Move ${selectedCount} ${plural} to offer?`;
-      case "accepted":
-        setIsHighlighted("accepted");
-        return `Move ${selectedCount} ${plural} to accepted?`;
-      case "rejected":
-        setIsHighlighted("rejected");
-        return `Move ${selectedCount} ${plural} to rejected?`;
       case "review":
         setIsHighlighted(null);
         return `Mark ${selectedCount} ${plural} as reviewed?`;
-      case "back":
-        setIsHighlighted(null);
-        return `Back to main actions.`;
       default:
         setIsHighlighted(null);
         return `${selectedCount} ${plural} selected.`;
@@ -219,7 +145,6 @@ export function MultiSelectBar({
   };
 
   const dim = "w-[35px] h-[35px]";
-  const labelDim = "w-[90px] h-[50px]";
 
   return (
     <>
@@ -231,37 +156,7 @@ export function MultiSelectBar({
           <hr className="header-split my-2" />
           {/* Button area */}
           <div className="w-full overflow-hidden ">
-            <AnimatePresence mode="wait">
-              {!showMoveOptions ? (
-                // Default actions
-                <motion.div
-                  key="default"
-                  initial={{ y: 0, rotateX: 0, opacity: 1 }}
-                  exit={{ y: -40, opacity: 0, rotateX: 90 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className="flex w-full gap-4 py-2 items-center justify-evenly"
-                >
-                  {/* Move */}
-                  <div className={dim}>
-                    <Button
-                      onClick={() => setShowMoveOptions(true)}
-                      className="group roundSmall"
-                      onMouseEnter={() => setHoverAction("move")}
-                      onMouseLeave={() => setHoverAction(null)}
-                      disabled={!isEnabled}
-                      style={{ background: "transparent" }}
-                      title="Move selected jobs to a different column"
-                    >
-                      <img
-                        src={replaceIcon}
-                        alt="Move to new column"
-                        className={`flex w-full h-full icon animate-element group-hover:-rotate-90 ${
-                          hoverAction === "move" ? "greenIcon" : ""
-                        }`}
-                      />
-                    </Button>
-                  </div>
-
+            <div className="flex w-full gap-4 py-2 items-center justify-evenly">
                   {/* Archive */}
                   <div
                     onMouseEnter={() => setHoverAction("archive")}
@@ -326,55 +221,7 @@ export function MultiSelectBar({
                       title="Delete selected jobs"
                     />
                   </div>
-                </motion.div>
-              ) : (
-                // Move options
-                <motion.div
-                  key="move"
-                  initial={{ y: 40, opacity: 0, rotateX: -90 }}
-                  animate={{ y: 0, opacity: 1, rotateX: 0 }}
-                  exit={{ y: 40, opacity: 0, rotateX: 90 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className="flex flex-col sm:flex-row justify-around items-center gap-4 py-2 px-4"
-                >
-                  {MOVE_STAGES.map((stage) => (
-                    <div
-                      onMouseEnter={() =>
-                        setHoverAction(stage.toLowerCase() as HoverAction)
-                      }
-                      onMouseLeave={() => setHoverAction(null)}
-                      className={`${labelDim} ${
-                        hoverAction === `${stage}`.toLowerCase()
-                          ? "highlighted"
-                          : ""
-                      }`}
-                    >
-                      <Button
-                        key={stage}
-                        onClick={() => handleMove(stage)}
-                        className={`ovalSmall`}
-                        style={{ background: "transparent" }}
-                      >
-                        <p className="animate-element primary-text">{stage}</p>
-                      </Button>
-                    </div>
-                  ))}
-                  <div className={dim}>
-                    <Button
-                      onClick={() => setShowMoveOptions(false)}
-                      className="roundSmall"
-                      style={{ background: "transparent" }}
-                    >
-                      <img
-                        src={upIcon}
-                        alt="Move to new column"
-                        className="icon transition-transform duration-300 ease-in-out group-hover:-rotate-90"
-                      />
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            </div>
           </div>
 
           {/* Status text */}

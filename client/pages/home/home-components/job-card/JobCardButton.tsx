@@ -26,8 +26,7 @@ export function JobCardButton({
     <motion.button
       onClick={onClick}
       type="button"
-      className="small w-full"
-      style={{ background: "transparent" }}
+      className="job-card-action-button"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       aria-label={label}
@@ -36,7 +35,7 @@ export function JobCardButton({
       <motion.img
         src={icon}
         alt="Edit Icon"
-        className={`inline w-4 h-4 icon ${isHovered ? iconHoverColor : ""}`}
+        className={`job-card-action-icon icon ${isHovered ? iconHoverColor : ""}`}
       />
     </motion.button>
   );

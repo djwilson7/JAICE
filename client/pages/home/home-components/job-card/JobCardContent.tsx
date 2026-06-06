@@ -22,16 +22,16 @@ export function JobCardContent({ isOpen, job }: JobCardContentProps) {
       transition={{ duration: parseFloat(getCSSVar("--animation-duration")) }}
       exit={{ height: 0, opacity: 0 }}
     >
-      <div className="justify-center items-center w-[80%] whitespace-nowrap text-ellipsis overflow-hidden">
+      <div className="w-full justify-center items-center whitespace-nowrap text-ellipsis overflow-hidden">
         <hr className="header-split" />
       </div>
-      <div className="flex flex-col text-left w-[80%] gap-3 py-4">
-        <p className="primary-text whitespace-pre-wrap leading-relaxed">
+      <div className="flex w-full flex-col gap-3 p-3 text-left">
+        <p className="job-card-body-text whitespace-pre-wrap">
           {inboxMessage || "No email content available."}
         </p>
 
         {job.notes && (
-          <small className="secondary-text whitespace-pre-wrap">
+          <small className="job-card-body-note whitespace-pre-wrap">
             {formatInboxMessage(job.notes)}
           </small>
         )}

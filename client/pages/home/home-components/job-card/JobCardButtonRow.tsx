@@ -28,7 +28,7 @@ export function JobCardButtonRow({
     >
       <motion.hr className="header-split" />
       <motion.div
-        className="flex flex-row gap-2 py-2 w-[80%]"
+        className="flex w-full flex-row justify-start gap-1 px-2 py-1"
         initial={{ opacity: 0, height: "auto" }}
         animate={{ opacity: 1 }}
         transition={{ duration: parseFloat(getCSSVar("--animation-duration")) }}

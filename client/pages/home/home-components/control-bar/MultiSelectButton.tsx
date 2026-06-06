@@ -12,7 +12,7 @@ export function MultiSelectButton({ compact = false }: MultiSelectButtonProps) {
       label={"Multi-Select"}
       inactiveIcon={uncheckIcon}
       activeIcon={checkIcon}
-      hoverIconColor={"goldIcon"}
+      hoverIconColor={"greenIcon"}
       compact={compact}
     />
   );

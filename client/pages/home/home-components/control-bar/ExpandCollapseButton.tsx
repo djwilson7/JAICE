@@ -16,12 +16,14 @@ export function ExpandCollapseButton({ compact = false }: ExpandCollapseButtonPr
   const handleClick = showCollapse ? collapseAllCards : expandAllCards;
 
   return (
-    <div className={`flex control-bar-container ${compact ? "control-bar-container-compact" : ""}`}>
+    <div
+      className={`flex control-bar-container ${compact ? "control-bar-container-compact" : ""}`}
+      onClick={handleClick}
+      role="button"
+      aria-label={text + " All"}
+    >
       <div
         className="flex flex-row gap-2 items-center justify-center"
-        onClick={handleClick}
-        role="button"
-        aria-label={text + " All"}
       >
         <img
           src={icon}

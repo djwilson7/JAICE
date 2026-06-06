@@ -15,4 +15,5 @@ export type JobCardType = {
   providerSource?: string;
   reviewNeeded?: boolean;
   applicationStage?: string;
+  recentlyAdded?: boolean;
 };

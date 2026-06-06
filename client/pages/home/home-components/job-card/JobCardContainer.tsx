@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useJobCardDrag } from "@/pages/home/hooks/useJobCardDrag";
 import type { JobCardType } from "@/types/jobCardType";
-import { useDeleteConfirm } from "@/pages/home/hooks/useDeleteConfirm";
-import { useJobMutation } from "@/pages/home/hooks/useJobMutation";
 import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
-import ConfirmModal from "@/global-components/ConfirmModal";
+import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { useDrag } from "@/pages/home/hooks/useDrag";
+
+const DRAG_OVERLAY_Z_INDEX = 100000;
 
 interface JobCardContainerProps {
   job: JobCardType;
@@ -21,41 +24,111 @@ export function JobCardContainer({
   children,
   isSelected,
 }: JobCardContainerProps) {
-  const { mutateJob } = useJobMutation();
   const { isMultiSelecting } = useIsMultiSelecting();
+  const { selectedJobs } = useSelectedJobs();
+  const { isDragging, draggedId, dragPoint } = useDrag();
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [dragCloneRect, setDragCloneRect] = useState<DOMRect | null>(null);
 
-  const deleteConfirm = useDeleteConfirm(async () => {
-    await mutateJob(job, { type: "delete" });
-  });
+  const { onPointerDown } = useJobCardDrag(job);
+  const selectedJobIndex = selectedJobs.findIndex(
+    (selectedJob) => selectedJob.id === job.id
+  );
+  const draggedSelectedJobIndex = selectedJobs.findIndex(
+    (selectedJob) => selectedJob.id === draggedId
+  );
+  const isGroupDrag =
+    isMultiSelecting && draggedSelectedJobIndex >= 0 && selectedJobs.length > 1;
+  const draggedGroupSize = isGroupDrag ? selectedJobs.length : 1;
+  const isDragSource = isDragging && draggedId === job.id;
+  const isDraggedGroupMember =
+    isDragging && isGroupDrag && selectedJobIndex >= 0;
+  const isDraggedCard = isDragSource || isDraggedGroupMember;
+  const stackOrder = isDragSource
+    ? 0
+    : selectedJobs
+        .filter((selectedJob) => selectedJob.id !== draggedId)
+        .findIndex((selectedJob) => selectedJob.id === job.id) + 1;
+  const stackOffset =
+    Math.min(stackOrder, 12) * 8 + Math.max(0, stackOrder - 12) * 1.5;
+  const overlayZIndex = DRAG_OVERLAY_Z_INDEX + draggedGroupSize - stackOrder;
+  const shouldShowStackClone = isDraggedCard && dragPoint;
+  const shouldDimOriginal = isDraggedCard && !!dragCloneRect;
+  const cardTransition = {
+    layout: { duration: 0.58 },
+    opacity: { duration: 0.32 },
+    y: { duration: 0.48 },
+    scale: { duration: 0.42 },
+  };
 
-  const { onDragStart, onDragEnd } = useJobCardDrag(job, async () => {
-    return new Promise((resolve) => {
-      deleteConfirm.requestDelete(resolve);
-    });
-  });
+  useLayoutEffect(() => {
+    if (!isDraggedCard) {
+      setDragCloneRect(null);
+      return;
+    }
+
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragCloneRect(rect);
+    }
+  }, [isDraggedCard]);
 
   const variants = {
     dimmed: {
-      opacity: 0.35,
+      opacity: shouldDimOriginal ? 0.22 : 0.35,
       scale: 0.98,
-      filter: "grayscale(40%) brightness(80%)",
+      y: 0,
+      filter: shouldDimOriginal
+        ? "grayscale(80%) brightness(58%)"
+        : "grayscale(40%) brightness(80%)",
     },
-    normal: { opacity: 1, scale: 1, filter: "none" },
-    selected: {
+    normal: {
+      opacity: 1,
       scale: 1,
-      boxShadow: "0 2px 8px rgba(var(--gold-rgb), 0.8)",
-      border: "1px solid rgba(var(--gold-rgb), 0.8)",
+      y: 0,
+      filter: "none",
+      boxShadow: "none",
+      border: "1px solid rgba(var(--primary-five-rgb), 0.14)",
+      background: "var(--job-card-bg)",
+    },
+    selected: {
+      opacity: shouldDimOriginal ? 0.28 : 1,
+      scale: 1,
+      y: 0,
+      filter: shouldDimOriginal ? "grayscale(80%) brightness(58%)" : "none",
+      boxShadow: "none",
+      border: "1px solid rgba(74, 222, 128, 0.68)",
+      background: "rgba(34, 197, 94, 0.24)",
+      backdropFilter: "blur(10px)",
     },
 
     unselected: {
-      scale: 0.9,
+      opacity: shouldDimOriginal ? 0.22 : 1,
+      scale: 1,
+      y: 0,
+      filter: shouldDimOriginal ? "grayscale(80%) brightness(58%)" : "none",
+      boxShadow: "none",
+      border: "1px solid rgba(var(--primary-five-rgb), 0.14)",
+      background: "var(--job-card-bg)",
     },
 
     hoverUnselected: {
-      scale: 0.95,
-      boxShadow: "0 2px 6px rgba(var(--gold-rgb), 0.5)",
-      border: "1px solid rgba(var(--gold-rgb), 0.5)",
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      boxShadow: "none",
+      border: "1px solid rgba(74, 222, 128, 0.28)",
+      background: "rgba(34, 197, 94, 0.1)",
       cursor: "pointer",
+    },
+    dragPlaceholder: {
+      opacity: 0.24,
+      scale: 1,
+      y: 0,
+      filter: "grayscale(85%) brightness(55%)",
+      boxShadow: "none",
+      border: "1px solid rgba(var(--primary-five-rgb), 0.16)",
+      background: "rgba(var(--job-card-background-rgb), 0.36)",
     },
   };
 
@@ -64,20 +137,25 @@ export function JobCardContainer({
     : isSelected
     ? "selected"
     : "unselected";
+  const visualState = shouldDimOriginal
+    ? "dragPlaceholder"
+    : dimmed
+    ? "dimmed"
+    : cardState;
 
-  const reviewClass = job.reviewNeeded ? "review" : "shadow";
+  const reviewClass = job.reviewNeeded ? "review" : "";
 
   return (
     <>
       <motion.div
+        ref={cardRef}
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
-        className={`flex w-full shrink-0 items-center flex-col job-card min-h-[2rem] overflow-hidden ${reviewClass}`}
-        drag
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
+        className={`flex w-full shrink-0 select-none items-center flex-col job-card min-h-[2rem] overflow-hidden p-0 ${reviewClass}`}
+        initial={{ opacity: 0, y: 18, scale: 0.96 }}
+        onPointerDown={onPointerDown}
         variants={variants}
-        animate={dimmed ? "dimmed" : cardState}
+        animate={visualState}
         whileHover={
           isMultiSelecting && !isSelected
             ? "hoverUnselected"
@@ -87,26 +165,50 @@ export function JobCardContainer({
         onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
         
         whileTap={{ cursor: "grabbing" }}
-        whileDrag={{
-          cursor: "grabbing",
-          scale: 1.05,
-          pointerEvents: "none",
-          zIndex: 1000,
-        }}
-        dragSnapToOrigin
         layout
+        transition={cardTransition}
       >
         {children}
       </motion.div>
-      <ConfirmModal
-        isOpen={deleteConfirm.open}
-        title="Confirm Deletion"
-        message="Are you sure you want to delete the selected item/s? You can undo this action from the Trash however it will be permanently deleted after 30 days."
-        confirmLabel="Delete"
-        isProcessing={deleteConfirm.processing}
-        onCancel={deleteConfirm.cancel}
-        onConfirm={deleteConfirm.confirm}
-      />
+      {shouldShowStackClone && dragCloneRect && createPortal(
+        <motion.div
+          className={`fixed flex shrink-0 select-none items-center flex-col job-card min-h-[2rem] overflow-hidden p-0 ${reviewClass}`}
+          style={{
+            zIndex: overlayZIndex,
+            pointerEvents: "none",
+            border: "1px solid rgba(74, 222, 128, 0.68)",
+            background: "rgba(34, 197, 94, 0.24)",
+            boxShadow: "none",
+            backdropFilter: "blur(10px)",
+          }}
+          initial={{
+            left: dragCloneRect.left + dragCloneRect.width / 2,
+            top: dragCloneRect.top + dragCloneRect.height / 2,
+            width: dragCloneRect.width,
+            opacity: 1,
+            scale: 1,
+            x: "-50%",
+            y: `calc(-50% + ${stackOffset}px)`,
+          }}
+          animate={{
+            left: dragPoint.x,
+            top: dragPoint.y,
+            width: dragCloneRect.width,
+            opacity: 1,
+            scale: stackOrder === 0 ? 1.05 : 1,
+            x: "-50%",
+            y: `calc(-50% + ${stackOffset}px)`,
+          }}
+          transition={{
+            left: { duration: 0.24 },
+            top: { duration: 0.24 },
+            scale: { duration: 0.18 },
+          }}
+        >
+          {children}
+        </motion.div>,
+        document.body
+      )}
     </>
   );
 }

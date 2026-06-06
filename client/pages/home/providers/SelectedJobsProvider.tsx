@@ -11,7 +11,9 @@ export function SelectedJobsProvider({ children }: SelectedJobsProviderProps) {
 
   const toggleJobSelection = (job: JobCardType) => {
     setSelectedJobs((prev) =>
-      prev.includes(job) ? prev.filter((j) => j !== job) : [...prev, job]
+      prev.some((selectedJob) => selectedJob.id === job.id)
+        ? prev.filter((selectedJob) => selectedJob.id !== job.id)
+        : [...prev, job]
     );
   };
 

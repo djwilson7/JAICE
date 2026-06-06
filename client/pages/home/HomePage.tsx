@@ -4,10 +4,8 @@ import { Column } from "@/pages/home/home-components/column/Column";
 import type { JobCardType } from "@/types/jobCardType";
 import { getCurrentUserInfo } from "@/global-services/auth";
 import { MultiSelectBar } from "@/pages/home/home-components/modal/MultiSelectBar";
-import { DropArea } from "@/pages/home/home-components/column/DropArea";
 import { AnimatePresence } from "framer-motion";
 import { UndoRedo } from "@/pages/home/home-components/modal/UndoRedo";
-import { PageShadow } from "@/pages/home/home-components/page/PageShadow";
 import { ConnectEmailButton } from "@/pages/home/home-components/control-bar/ConnectEmailButton";
 import { SearchBar } from "@/global-components/SearchBar";
 import { ArchiveModalButton } from "@/pages/home/home-components/control-bar/ArchiveModalButton";
@@ -15,6 +13,7 @@ import { TrashModalButton } from "@/pages/home/home-components/control-bar/Trash
 import { MultiSelectButton } from "@/pages/home/home-components/control-bar/MultiSelectButton";
 import { FilterButton } from "@/pages/home/home-components/control-bar/FilterButton";
 import { AlertBox } from "@/pages/home/home-components/control-bar/AlertBox";
+import { NewApplicationButton } from "@/pages/home/home-components/control-bar/NewApplicationButton";
 import { KanbanContent } from "@/pages/home/home-components/page/KanbanContent";
 import { useTrashActions } from "@/pages/home/hooks/useTrashActions";
 import { useArchiveActions } from "@/pages/home/hooks/useArchiveActions";
@@ -150,6 +149,10 @@ export function HomePage() {
                 </div>
                 <div className="home-action-group home-action-group-right">
                   <ConnectEmailButton setIsOpen={setIsConnectEmailOpen} compact />
+                  <NewApplicationButton
+                    onClick={() => openJobAppModal("applied")}
+                    compact
+                  />
                   <ArchiveModalButton setIsOpen={archive.open} compact />
                   <TrashModalButton setIsOpen={trash.open} compact />
                   <MultiSelectButton compact />
@@ -167,7 +170,6 @@ export function HomePage() {
                     key={column.id} // unique key for React
                     count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
                     isHighlighted={isHighlighted}
-                    openJobAppModal={openJobAppModal}
                   >
                     {jobsByColumn[column.id]}
                   </Column>
@@ -179,14 +181,11 @@ export function HomePage() {
           {/* Modals and popups that exist outside the main page content */}
           <MultiSelectBar setIsHighlighted={setIsHighlighted} />
           <UndoRedo />
-          <PageShadow />
 
           <ConnectEmailModal
             isOpen={isConnectEmailOpen}
             onClose={() => setIsConnectEmailOpen(false)}
           />
-
-          <DropArea />
 
           <NewApplication
             isOpen={isJobAppModalOpen}

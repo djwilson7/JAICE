@@ -9,6 +9,9 @@ interface DragProviderProps {
 export function DragProvider({ children }: DragProviderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(
+    null
+  );
   const [dragTarget, setDragTarget] = useState<DragTarget>(null);
   const [dragStart, setDragStart] = useState<string | null>(null);
   return (
@@ -16,9 +19,11 @@ export function DragProvider({ children }: DragProviderProps) {
       value={{
         isDragging,
         draggedId,
+        dragPoint,
         dragTarget,
         setIsDragging,
         setDraggedId,
+        setDragPoint,
         setDragTarget,
         dragStart,
         setDragStart,

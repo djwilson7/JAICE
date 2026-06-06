@@ -70,6 +70,7 @@ export function JobCard({
         isSelected={isSelected}
         setIsSelected={setIsSelected}
         isOpen={isOpen}
+        isHovered={isHovered}
         setLocalOpen={setLocalOpen}
       />
 

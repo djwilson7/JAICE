@@ -33,7 +33,9 @@ export function CheckBoxToggle({
 
   return (
     <motion.div
-      className={`control-bar-container ${compact ? "control-bar-container-compact" : ""}`}
+      className={`control-bar-container ${
+        isMultiSelecting ? "control-bar-container-selected-green" : ""
+      } ${compact ? "control-bar-container-compact" : ""}`}
       transition={{
         type: "spring",
         stiffness: 300,
