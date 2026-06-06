@@ -30,12 +30,6 @@ export function useJobsLoader() {
         const cards = convertToJobCardArray(res.jobs);
         setJobs(cards);
         hasLoadedRef.current = true;
-        showBanner({
-          id: "home-jobs-load-success",
-          message: "Content loaded successfully.",
-          tone: "success",
-          timeoutMs: 4000,
-        });
       } catch (err) {
         console.error("Failed to load jobs:", err);
         showBanner({
