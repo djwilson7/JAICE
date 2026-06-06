@@ -7,6 +7,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "@/global-services/router";
 import AuthProvider from "@/global-components/AuthProvider";
 import { SettingsProvider } from "@/pages/settings/provider/SettingsProvider";
+import { BannerNotificationProvider } from "@/global-components/BannerNotificationProvider";
 
 const root = document.getElementById("root");
 
@@ -14,7 +15,9 @@ ReactDOM.createRoot(root!).render(
   <React.StrictMode>
     <SettingsProvider>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <BannerNotificationProvider>
+          <RouterProvider router={router} />
+        </BannerNotificationProvider>
       </AuthProvider>
     </SettingsProvider>
   </React.StrictMode>

@@ -8,6 +8,7 @@ import { writeJobsToDB } from "@/global-services/writeJobsToDB";
 import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 import type { DragTarget } from "@/types/dragTarget";
 import type { PointerEvent as ReactPointerEvent } from "react";
+import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
 
 const DRAG_START_THRESHOLD = 4;
 
@@ -34,6 +35,7 @@ export function useJobCardDrag(job: JobCardType) {
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
   const { pushUndo } = useUndoRedo();
+  const { showBanner } = useBannerNotifications();
   const {
     setIsDragging,
     setDraggedId,
@@ -85,11 +87,28 @@ export function useJobCardDrag(job: JobCardType) {
         setSelectedJobs([]);
         setIsMultiSelecting(false);
       }
+
+      showBanner({
+        message:
+          jobsToMove.length > 1
+            ? `${jobsToMove.length} jobs moved to ${formatColumnName(targetColumn)}.`
+            : `${job.title} moved to ${formatColumnName(targetColumn)}.`,
+        tone: "success",
+        timeoutMs: 4000,
+      });
     } catch (error) {
       before.forEach((beforeJob, index) => {
         dispatchJobLocalChange({ before: after[index], after: beforeJob });
       });
       console.error("Failed to move dragged job group:", error);
+      showBanner({
+        message:
+          jobsToMove.length > 1
+            ? "Failed to move selected jobs. Try again."
+            : "Failed to move job. Try again.",
+        tone: "error",
+        timeoutMs: 10000,
+      });
     } finally {
       cleanup();
     }
@@ -165,4 +184,12 @@ export function useJobCardDrag(job: JobCardType) {
   };
 
   return { onPointerDown };
+}
+
+function formatColumnName(column: string) {
+  return column
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
