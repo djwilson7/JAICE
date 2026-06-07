@@ -285,7 +285,9 @@ def test_firebase_admin_initialization_paths(monkeypatch, tmp_path):
     assert certs[-1] == str(cert_file)
 
     monkeypatch.setattr(firebase_admin.auth, "verify_id_token", lambda token, **kwargs: (token, kwargs))
-    assert firebase_admin.verify_id_token("token")[0] == "token"
+    token, kwargs = firebase_admin.verify_id_token("token")
+    assert token == "token"
+    assert kwargs == {"check_revoked": True, "clock_skew_seconds": 15}
 
 
 def test_gmail_task_lock_batch_and_wrappers(monkeypatch):

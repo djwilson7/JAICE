@@ -1,8 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { createBrowserRouter, redirect } from "react-router-dom";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "@/global-services/firebase";
+import { createBrowserRouter, replace } from "react-router-dom";
+import { hasValidAuthenticatedSession } from "@/global-services/auth";
 
 import { LandingRoute } from "@/pages/landing/landing.meta";
 import { NavigationBarRoute } from "@/app/layouts/navigation.meta";
@@ -15,36 +14,14 @@ import { NotificationsRoute } from "@/pages/settings/notifications/notification.
 import { AuthAboutRoute } from "@/pages/auth-about/authabout.meta";
 import { ResumeRoute } from "@/pages/Resume/resume.meta";
 
-// Wait until Firebasse Auth initializes and sets the current user
-function waitForAuth(timeoutMs = 5000): Promise<User | null> {
-  // If Firebase already has a current user, resolve immediately
-  if (auth.currentUser) return Promise.resolve(auth.currentUser);
-
-  return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe();
-      resolve(user);
-    });
-    // Safety timeout
-    setTimeout(() => {
-      try {
-        unsubscribe();
-      } catch {
-        // Auth may already be unsubscribed if initialization resolved first.
-      }
-      resolve(auth.currentUser);
-    }, timeoutMs);
-  });
-}
-
 // Loader for protected routes that require authentication
 async function requireAuth() {
-  const user = await waitForAuth();
-  if (!user) throw redirect(LandingRoute.path);
+  const isAuthenticated = await hasValidAuthenticatedSession();
+  if (!isAuthenticated) throw replace(LandingRoute.path);
   return null;
 }
 
-// All routes with 'loade: requireAuth' are protected and require authentication
+// All routes under the authenticated layout require a valid Firebase session.
 // Public routes (no authentication required) do not have this loader
 export const router = createBrowserRouter([
   {
@@ -57,41 +34,35 @@ export const router = createBrowserRouter([
   },
   {
     element: NavigationBarRoute.element,
+    loader: requireAuth,
     children: [
       {
         path: HomeRoute.path,
         element: HomeRoute.element,
-        loader: requireAuth,
       },
       {
         path: AuthAboutRoute.path,
         element: AuthAboutRoute.element,
-        loader: requireAuth,
       },
       {
         path: DashboardRoute.path,
         element: DashboardRoute.element,
-        loader: requireAuth,
       },
       {
         path: AccountRoute.path,
         element: AccountRoute.element,
-        loader: requireAuth,
       },
       {
         path: DisplayRoute.path,
         element: DisplayRoute.element,
-        loader: requireAuth,
       },
       {
         path: NotificationsRoute.path,
         element: NotificationsRoute.element,
-        loader: requireAuth,
       },
       {
         path: ResumeRoute.path,
         element: ResumeRoute.element,
-        loader: requireAuth,
       },
     ],
   },

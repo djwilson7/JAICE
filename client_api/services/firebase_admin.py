@@ -58,7 +58,11 @@ def initialize_firebase_sdk():
 # Function to verify Firebase ID tokens    
 def verify_id_token(id_token: str):
     logging.info("Verifying Firebase ID token.")
-    return auth.verify_id_token(id_token, clock_skew_seconds=15)
+    return auth.verify_id_token(
+        id_token,
+        check_revoked=True,
+        clock_skew_seconds=15,
+    )
 
 # Health check for Firebase Auth connectivity
 async def check_firebase_auth_health():
@@ -81,4 +85,4 @@ async def check_firebase_auth_health():
         return False
     # If a user for the uid "non-existent-user-check-id" somehow exists, that's unexpected but still means connectivity is fine.
     logging.warning("Health check passed, but user was found for arbitrary uid 'non-existent-user-check-id'.")
-    return True 
+    return True

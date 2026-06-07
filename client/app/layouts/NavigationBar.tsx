@@ -122,8 +122,18 @@ export function NavigationBar() {
     setSelectedButton(buttonId);
     if (route === "/") {
       console.log("Logging out...");
-      await api("/api/auth/logout", { method: "POST" });
-      await logOut();
+      try {
+        await api("/api/auth/logout", { method: "POST" });
+      } catch (error) {
+        console.error("Backend logout failed:", error);
+      } finally {
+        try {
+          await logOut();
+        } finally {
+          navigate(route, { replace: true });
+        }
+      }
+      return;
     }
     navigate(route);
   };

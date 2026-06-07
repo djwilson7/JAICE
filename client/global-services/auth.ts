@@ -16,6 +16,11 @@ import
 import type { User } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 
+function clearLocalAuthData() {
+  localStorage.removeItem("google_access_token");
+  localStorage.removeItem("gmail_consent_granted");
+}
+
 function getAuthErrorCode(error: unknown): string | undefined {
   if (typeof error !== "object" || error === null || !("code" in error)) {
     return undefined;
@@ -38,7 +43,7 @@ export async function emailSignUp(email: string, password: string)
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     // clear any existing google tokens
-    localStorage.removeItem('google_access_token');
+    clearLocalAuthData();
 
     return userCredential.user;
 }
@@ -49,13 +54,14 @@ export async function emailSignIn(email: string, password: string)
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
     // clear any existing google tokens
-    localStorage.removeItem('google_access_token');
+    clearLocalAuthData();
 
     return userCredential.user;
 }
 
 export async function googleSignIn() {
     const userCredential = await signInWithPopup(auth, googleProvider);
+    clearLocalAuthData();
     return userCredential.user;
 }
 
@@ -64,9 +70,34 @@ export async function googleSignIn() {
 // Sign out the current user
 export async function logOut() 
 {
-    // clear any existing google tokens
-    localStorage.removeItem('google_access_token');
+    clearLocalAuthData();
     await signOut(auth);
+}
+
+export async function hasValidAuthenticatedSession(): Promise<boolean> {
+  try {
+    await auth.authStateReady();
+
+    const user = auth.currentUser;
+    if (!user) {
+      clearLocalAuthData();
+      return false;
+    }
+
+    await user.getIdToken(true);
+    return true;
+  } catch (error) {
+    console.error("Authentication validation failed:", error);
+
+    try {
+      await logOut();
+    } catch (signOutError) {
+      console.error("Failed to clear the invalid Firebase session:", signOutError);
+      clearLocalAuthData();
+    }
+
+    return false;
+  }
 }
 
 // Get a 'fresh' ID token for the current user

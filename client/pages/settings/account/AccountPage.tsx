@@ -187,11 +187,19 @@ export function AccountPage() {
         return { status: "error" };
       }
 
-      await api("/api/auth/logout", { method: "POST" });
-      await logOut();
+      try {
+        await api("/api/auth/logout", { method: "POST" });
+      } catch (error) {
+        console.error("Backend logout failed after unlinking Gmail:", error);
+      } finally {
+        try {
+          await logOut();
+        } finally {
+          navigate("/", { replace: true });
+        }
+      }
 
       setGmailConnected(false);
-      navigate("/");
       return { status: "success" };
     } catch (err) {
       console.error("Unlink Gmail error:", err);
@@ -241,9 +249,11 @@ export function AccountPage() {
         return;
       }
 
-      await logOut();
-
-      navigate("/");
+      try {
+        await logOut();
+      } finally {
+        navigate("/", { replace: true });
+      }
     } catch (error) {
       console.error("Delete account error:", error);
       setBusy(false);

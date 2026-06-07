@@ -1,11 +1,23 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { getIdToken, getGoogleAccessToken, hasGmailAccess } from "./auth";
+import { getIdToken, getGoogleAccessToken, hasGmailAccess, logOut } from "./auth";
 
 
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
+
+async function handleUnauthorizedResponse() {
+    try {
+        await logOut();
+    } catch (error) {
+        console.error("Failed to clear the unauthorized Firebase session:", error);
+    } finally {
+        if (window.location.pathname !== "/") {
+            window.location.replace("/");
+        }
+    }
+}
 
 export async function api(path: string, init: RequestInit = {}) 
 {
@@ -36,6 +48,10 @@ export async function api(path: string, init: RequestInit = {})
     });
 
     if (!response.ok) {
+        if (response.status === 401) {
+            await handleUnauthorizedResponse();
+        }
+
         let detail = `${response.status} ${response.statusText}`;
         try {
             const errorBody = await response.json();
@@ -64,7 +80,13 @@ export async function apiBlob(path: string, init: RequestInit = {}) {
         headers,
     });
 
-    if (!response.ok) throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+        if (response.status === 401) {
+            await handleUnauthorizedResponse();
+        }
+
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
 
     const previewPath = response.headers.get("X-PDF-Preview-Path");
     return {
