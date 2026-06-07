@@ -58,8 +58,8 @@ export function DeleteAccountModal({
         </section>
 
         <p className="delete-account-alternative">
-          <strong>Need a break instead?</strong> Unlink Gmail from Account
-          Settings to pause automatic syncing while keeping your applications,
+          <strong>Need a break instead?</strong> Unlink Gmail from Settings to
+          pause automatic syncing while keeping your applications,
           history, and insights available for later.
         </p>
       </div>

@@ -1164,15 +1164,122 @@ to an element (className="example").
   height: 100%;
 }
 
-.account-section {
+.settings-page {
+  min-height: 100%;
+  overflow-y: auto;
+  background: var(--page-gradient);
+}
+
+.settings-shell {
+  display: flex;
+  width: min(92rem, 100%);
+  flex-direction: column;
+  gap: 2.5rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.settings-page-header {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.settings-page-header h1,
+.settings-page-header p,
+.settings-group-header h2,
+.settings-group-header p {
+  margin: 0;
+}
+
+.settings-page-header > p:last-child,
+.settings-group-header p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.settings-eyebrow {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings-group {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-align: left;
+}
+
+.settings-group-icon {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+}
+
+.settings-card-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.settings-profile-summary {
+  display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 2rem;
-  background: var(--primary-gradient);
-  border-radius: var(--corner-radius);
-  box-shadow: var(--shadow);
+}
+
+.settings-profile-picture {
+  width: 6rem;
+  height: 6rem;
+  flex: 0 0 auto;
+}
+
+.settings-profile-photo-action,
+.settings-profile-form,
+.settings-account-rows {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-profile-photo-action {
+  align-items: flex-start;
+}
+
+.settings-inline-error {
+  width: 100%;
+  text-align: left;
+}
+
+@media (min-width: 900px) {
+  .settings-card-grid-account,
+  .settings-card-grid-appearance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .settings-card-grid-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-card-grid-layout > :last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .profile-picture-container {

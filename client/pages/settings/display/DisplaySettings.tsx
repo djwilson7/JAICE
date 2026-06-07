@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { DemoReview } from "@/pages/settings/display/display-components/DemoReview";
 import { ContrastDetails } from "@/pages/settings/display/display-components/ContrastDetails";
@@ -5,9 +6,6 @@ import { MotionDetails } from "@/pages/settings/display/display-components/Motio
 import { NavigationDetails } from "@/pages/settings/display/display-components/NavigationDetails";
 import { ThemeDetails } from "@/pages/settings/display/display-components/ThemeDetails";
 import { TextSizeDetails } from "@/pages/settings/display/display-components/TextSizeDetails";
-import accessibilityIcon from "@/assets/icons/accessibility.svg";
-import layoutIcon from "@/assets/icons/layout.svg";
-
 import {
   SettingCard,
   ButtonRow,
@@ -37,7 +35,13 @@ import type {
 
 import { PrimaryColumnDetails } from "./display-components/PrimaryColumnDetails";
 
-export function DisplayPage() {
+export function DisplaySettings({
+  appearanceHeader,
+  layoutHeader,
+}: {
+  appearanceHeader: ReactNode;
+  layoutHeader: ReactNode;
+}) {
   const {
     theme,
     setTheme,
@@ -64,28 +68,10 @@ export function DisplayPage() {
   const primaryColumnOptions = PRIMARY_COLUMN_BEHAVIOR_OPTIONS;
 
   return (
-    <div className="flex flex-col xl:flex-row w-full overflow-y-auto">
-      <div className="w-full h-full flex flex-col">
-        <div className="flex w-full items-center justify-center p-4 mt-4 gap-4">
-          <div className="flex items-center">
-            <img
-              src={accessibilityIcon}
-              alt="Accessibility"
-              className="w-10 h-10 flex-shrink-0 icon"
-            />
-          </div>
-          <h1>Accessibility Settings</h1>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            width: "100%",
-            height: "fit-content",
-            gap: "2rem",
-            padding: "24px",
-            gridTemplateColumns: "repeat(auto-fit, minmax(500px, 1fr))",
-          }}
-        >
+    <>
+      <section className="settings-group">
+        {appearanceHeader}
+        <div className="settings-card-grid settings-card-grid-appearance">
           <SettingCard>
             <SettingHeader
               title="Text Size"
@@ -164,25 +150,11 @@ export function DisplayPage() {
             <ContrastDetails />
           </SettingCard>
         </div>
-      </div>
-      <div className="w-full h-full flex flex-col">
-        <div className="flex w-full items-center justify-center p-4 mt-4 gap-4">
-          <img
-            src={layoutIcon}
-            alt="Layout"
-            className="w-10 h-10 flex-shrink-0 icon"
-          />
-          <h1>Layout Settings</h1>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            width: "100%",
-            gap: "24px",
-            padding: "24px",
-            gridTemplateColumns: "1fr",
-          }}
-        >
+      </section>
+
+      <section className="settings-group">
+        {layoutHeader}
+        <div className="settings-card-grid settings-card-grid-layout">
           <SettingCard>
             <SettingHeader
               title="Navigation Bar Behavior"
@@ -242,7 +214,7 @@ export function DisplayPage() {
             <DemoReview />
           </SettingCard>
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }

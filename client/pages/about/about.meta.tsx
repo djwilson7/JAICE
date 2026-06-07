@@ -4,5 +4,5 @@ import { AboutPage } from "@/pages/about/AboutPage";
 
 export const AboutRoute = {
   path: "/about",
-  element: <AboutPage variant="public" />,
+  element: <AboutPage />,
 };

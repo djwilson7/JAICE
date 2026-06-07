@@ -12,12 +12,13 @@ import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 import { UnlinkGmailModal } from "@/pages/settings/account/account-components/UnlinkGmailModal";
 import { DeleteAccountModal } from "./account-components/DeleteAccountModal";
 import {
-  Section,
-  SectionBody,
-  SectionHeader,
   RowItem,
   Row
 } from "./account-components/AccountSections";
+import {
+  SettingCard,
+  SettingHeader,
+} from "@/pages/settings/display/display-components/Cards";
 import linkIcon from "@/assets/icons/link.svg";
 import unlinkIcon from "@/assets/icons/unlink.svg";
 // If Local (using docker, use the local url) else use prod url
@@ -27,14 +28,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
 const GMAIL_CONSENT_URL =
   import.meta.env.VITE_GMAIL_CONSENT_URL ?? "/api/auth/consent";
 
-export function AccountPage() {
+export function AccountSettings() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [busy, setBusy] = useState(false);
   const [gmailError, setGmailError] = useState<string | null>(null);
-  // const [passwordError, setPasswordError] = useState<string | null>(null);
-  // const [twoFAError, setTwoFAError] = useState<string | null>(null);
   const [saveProfileError, setSaveProfileError] = useState<string | null>(null);
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
     null
@@ -59,7 +58,6 @@ export function AccountPage() {
 
   const { user, applyProfileUpdate } = useAuth();
 
-  // const phoneNumber: string = user?.phoneNumber || "";
   const profilePicURL: string = user?.photoURL || "";
 
   const [firstNameField, setFirstNameField] = useState(
@@ -68,8 +66,6 @@ export function AccountPage() {
   const [lastNameField, setLastNameField] = useState(
     user?.displayName?.split(" ").slice(1).join(" ") || "Enter your last name"
   );
-  // const [phoneNumberField, setPhoneNumberField] = useState<string>(phoneNumber);
-
   const handleFirstNameInput = (value: string) => {
     setFirstNameField(value);
   };
@@ -77,11 +73,6 @@ export function AccountPage() {
   const handleLastNameInput = (value: string) => {
     setLastNameField(value);
   };
-
-  // const handlePhoneNumberInput = (value: string) => {
-  //   setPhoneNumberField(value);
-  //   console.log("Phone number input:", phoneNumberField);
-  // };
 
   const handleSaveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -261,85 +252,61 @@ export function AccountPage() {
     }
   }
 
-  // This was refactored for better readability on the page. It still needs updated to present on mobile devices.
   return (
-    <div className="page-style bg-[var(--page-gradient)]">
-      <div className="flex flex-col items-center p-8 gap-8 lg:flex-row lg:items-start">
-        <Section>
-          <SectionHeader title="Profile Settings" />
-          <SectionBody>
-            <div className="flex flex-row items-center justify-evenly mt-6 mb-2">
-              <div className="profile-picture-frame w-24 h-24 mb-4 aspect-square">
-                <img
-                  src={profilePicURL || userIcon}
-                  alt="Profile Picture"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-              <div className="flex flex-col gap-2 text-center items-center jusitfy-evenly">
-                <div className="flex gap-4">
-                  <Button onClick={() => handleShowChangePhotoModal()}>
-                    Change
-                  </Button>
-                </div>
-                <div className="text-sm font-light">
-                  <small className="text-sm opacity-80 font-light">
-                    Update your profile picture URL.
-                  </small>
-                </div>
-              </div>
+    <>
+      <div className="settings-card-grid settings-card-grid-account">
+        <SettingCard>
+          <SettingHeader
+            title="Profile"
+            description="Manage the name and profile image shown throughout JAICE."
+          />
+          <div className="settings-profile-summary">
+            <div className="profile-picture-frame settings-profile-picture">
+              <img
+                src={profilePicURL || userIcon}
+                alt="Profile"
+                className="h-full w-full rounded-full object-cover"
+              />
             </div>
-
-            <div className="flex flex-col w-full my-4 gap-4">
-              <form
-                className="flex flex-col gap-4"
-                onSubmit={handleSaveProfile}
-              >
-                <FloatingInputField
-                  label="First Name"
-                  type="text"
-                  value={firstNameField}
-                  action={handleFirstNameInput}
-                  isValid={true}
-                />
-                <FloatingInputField
-                  label="Last Name"
-                  type="text"
-                  value={lastNameField}
-                  action={handleLastNameInput}
-                  isValid={true}
-                />
-                <Button style={{ minWidth: "50%" }} type="submit">
-                  Save Profile
-                </Button>
-              </form>
-              {/* <FloatingInputField
-                label="Phone Number"
-                type="text"
-                value={phoneNumberField}
-                action={handlePhoneNumberInput}
-                isValid={true}
-              /> */}
-              <div className="flex w-full justify-between items-center gap-4">
-                <small
-                  className="flex w-full text-sm text-red-400 text-left"
-                  role="alert"
-                >
-                  {saveProfileError}
-                </small>
-              </div>
-              <div className="flex w-full items-center justify-center my-2">
-                <small className="text-sm text-red-400" role="alert"></small>
-              </div>
+            <div className="settings-profile-photo-action">
+              <Button onClick={handleShowChangePhotoModal}>Change Photo</Button>
+              <small className="secondary-text">
+                Use a publicly accessible image URL.
+              </small>
             </div>
-          </SectionBody>
-        </Section>
+          </div>
 
-        <Section>
-          <SectionHeader title="Account Settings" />
+          <form className="settings-profile-form" onSubmit={handleSaveProfile}>
+            <FloatingInputField
+              label="First Name"
+              type="text"
+              value={firstNameField}
+              action={handleFirstNameInput}
+              isValid={true}
+            />
+            <FloatingInputField
+              label="Last Name"
+              type="text"
+              value={lastNameField}
+              action={handleLastNameInput}
+              isValid={true}
+            />
+            <Button type="submit">Save Profile</Button>
+          </form>
 
-          {/*Gmail Integration*/}
-          <SectionBody>
+          {saveProfileError && (
+            <small className="red-text settings-inline-error" role="alert">
+              {saveProfileError}
+            </small>
+          )}
+        </SettingCard>
+
+        <SettingCard>
+          <SettingHeader
+            title="Connected Services & Account"
+            description="Manage Gmail automation and permanent account actions."
+          />
+          <div className="settings-account-rows">
             <Row rowError={gmailError || ""}>
               <RowItem>
                 <div className="flex flex-col">
@@ -353,8 +320,8 @@ export function AccountPage() {
                 </div>
               </RowItem>
               <RowItem>
-                <Button onClick={handleShowModal} className={`${gmailButtonColor}`} >
-                  <img 
+                <Button onClick={handleShowModal} className={gmailButtonColor}>
+                  <img
                     src={gmailButtonIcon}
                     alt="Gmail Link Icon"
                     className="w-5 h-5 icon mr-2"
@@ -364,60 +331,6 @@ export function AccountPage() {
               </RowItem>
             </Row>
 
-            {/* <Row rowError={passwordError || ""}>
-              <RowItem>
-                <FloatingInputField
-                  label="Reset Password"
-                  type="password"
-                  value=""
-                  action={() => console.log("User is entering new password.")}
-                  isValid={true}
-                  style={{ minWidth: "100%" }}
-                />
-              </RowItem>
-              <RowItem>
-                <Button
-                  onClick={() => console.log("Change Password clicked")}
-                  style={{ minWidth: "100%" }}
-                >
-                  Change
-                </Button>
-              </RowItem>
-            </Row> */}
-
-            {/* 2FA */}
-            {/* <Row rowError={twoFAError || ""}>
-              <RowItem>
-                <div className="flex flex-col w-3/4">
-                  <h3 className="text-lg text-left font-medium mt-4">
-                    Two-Factor Authentication (2FA)
-                  </h3>
-                  <small className="text-sm text-left opacity-60 mb-4">
-                    Enable 2FA to add an extra layer of security to your
-                    account.
-                  </small>
-                </div>
-              </RowItem>
-
-              <RowItem>
-                <div className="flex items-center justify-center w-1/4">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      onChange={() => console.log("2FA toggled")}
-                    />
-                    <div
-                      className="w-11 h-6 bg-gray-600 
-                    rounded-full peer peer-focus:ring-blue-300 peer-checked:bg-blue-600 
-                    after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 
-                    after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
-                    ></div>
-                  </label>
-                </div>
-              </RowItem>
-            </Row> */}
-            {/* Delete Account */}
             <Row rowError={deleteAccountError || ""}>
               <RowItem>
                 <div className="flex flex-col">
@@ -434,19 +347,17 @@ export function AccountPage() {
               <RowItem>
                 <Button
                   onClick={handleDelete}
-                  // disabled={busy}
                   aria-busy={busy}
-                  // className="red"
                   className="red"
                 >
                   {busy ? "Deleting..." : "Delete Account"}
                 </Button>
               </RowItem>
             </Row>
-          </SectionBody>
-        </Section>
+          </div>
+        </SettingCard>
       </div>
-      {/*Modals Overlays*/}
+
       <DaysToSync
         show={showDaysToSync}
         options={daysToSyncOptions}
@@ -474,6 +385,6 @@ export function AccountPage() {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={deleteAccount}
       />
-    </div>
+    </>
   );
 }

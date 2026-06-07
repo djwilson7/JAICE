@@ -11,9 +11,7 @@ import { logOut } from "@/global-services/auth";
 import homeIcon from "@/assets/icons/home.svg";
 import aboutIcon from "@/assets/icons/book-open-cover.svg";
 import dashboardIcon from "@/assets/icons/chart-pie-alt.svg";
-import accountIcon from "@/assets/icons/user.svg";
-import displayIcon from "@/assets/icons/display.svg";
-//import notificationIcon from "@/assets/icons/bell-notification-social-media.svg";
+import settingsIcon from "@/assets/icons/settings.svg";
 import quitIcon from "@/assets/icons/user-logout.svg";
 
 import resumeIcon from "@/assets/icons/resume.svg";
@@ -26,7 +24,7 @@ import { useSettings } from "@/pages/settings/provider/settingsContext";
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
   about: {
-    route: "/auth-about",
+    route: "/about",
     label: "About",
     icon: aboutIcon,
     title: "Go to About",
@@ -46,24 +44,12 @@ const primaryOptions = {
 };
 
 const settingsOptions = {
-  account: {
-    route: "/settings/account",
-    label: "Account",
-    icon: accountIcon,
-    title: "Go to Account Settings",
+  settings: {
+    route: "/settings",
+    label: "Settings",
+    icon: settingsIcon,
+    title: "Go to Settings",
   },
-  display: {
-    route: "/settings/display",
-    label: "Display",
-    icon: displayIcon,
-    title: "Go to Display Settings",
-  },
-  // notification: {
-  //   route: "/settings/notification",
-  //   label: "Notification",
-  //   icon: notificationIcon,
-  //   title: "Go to Notification Settings",
-  // },
   quit: { route: "/", label: "Quit", icon: quitIcon, title: "Logout" },
 };
 
@@ -103,18 +89,14 @@ export function NavigationBar() {
 
     if (path === "/home") {
       setSelectedButton("home");
-    } else if (path === "/auth-about") {
+    } else if (path === "/about") {
       setSelectedButton("about");
     } else if (path === "/dashboard") {
       setSelectedButton("dashboard");
     } else if (path === "/resume") {
       setSelectedButton("resume");
-    } else if (path === "/settings/account") {
-      setSelectedButton("account");
-    } else if (path === "/settings/display") {
-      setSelectedButton("display");
-    // } else if (path === "/settings/notification") {
-    //   setSelectedButton("notification");
+    } else if (path === "/settings") {
+      setSelectedButton("settings");
     } else setSelectedButton("");
   }, [location.pathname]);
 
@@ -189,13 +171,6 @@ export function NavigationBar() {
 
               <section aria-label="Settings and account">
                 <div className="flex w-full flex-col items-center justify-center overflow-hidden p-1.5">
-                  <motion.small
-                    className="w-full whitespace-nowrap text-center text-[0.625rem] font-light leading-none secondary-text"
-                    animate={{ opacity: isNavExpanded ? 1 : 0 }}
-                    transition={navTransition}
-                  >
-                    Settings
-                  </motion.small>
                   <hr className="header-split" />
                 </div>
                 <ul

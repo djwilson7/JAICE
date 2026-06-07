@@ -16,7 +16,7 @@ export function UserBlock() {
     <div className="user-block">
       <motion.div
         className="profile-picture-container profile-picture-frame animate-element h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10"
-        onClick={() => navigate("/settings/account")}
+        onClick={() => navigate("/settings")}
         whileHover={{ cursor: "pointer", scale: 1.04 }}
         title="Change your profile picture in account settings."
       >
@@ -33,7 +33,7 @@ export function UserBlock() {
 
       <div className="text-container animate-element">
         <motion.div 
-          onClick={() => navigate("/settings/account")}
+          onClick={() => navigate("/settings")}
           className="user-name animate-element text-xs leading-tight md:text-sm lg:text-base"
           whileHover={{ cursor: "pointer", scale: 1.04 }}
           title="View and edit your name in account settings."

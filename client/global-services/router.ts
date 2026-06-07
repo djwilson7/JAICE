@@ -8,10 +8,7 @@ import { NavigationBarRoute } from "@/app/layouts/navigation.meta";
 import { HomeRoute } from "@/pages/home/home.meta";
 import { AboutRoute } from "@/pages/about/about.meta";
 import { DashboardRoute } from "@/pages/dashboard/dashboard.meta";
-import { AccountRoute } from "@/pages/settings/account/account.meta";
-import { DisplayRoute } from "@/pages/settings/display/display.meta";
-import { NotificationsRoute } from "@/pages/settings/notifications/notification.meta";
-import { AuthAboutRoute } from "@/pages/auth-about/authabout.meta";
+import { SettingsRoute } from "@/pages/settings/settings.meta";
 import { ResumeRoute } from "@/pages/Resume/resume.meta";
 
 // Loader for protected routes that require authentication
@@ -19,6 +16,13 @@ async function requireAuth() {
   const isAuthenticated = await hasValidAuthenticatedSession();
   if (!isAuthenticated) throw replace(LandingRoute.path);
   return null;
+}
+
+function redirectToCanonical(path: string) {
+  return ({ request }: { request: Request }) => {
+    const url = new URL(request.url);
+    return replace(`${path}${url.search}`);
+  };
 }
 
 // All routes under the authenticated layout require a valid Firebase session.
@@ -33,6 +37,18 @@ export const router = createBrowserRouter([
     element: AboutRoute.element,
   },
   {
+    path: `${AboutRoute.path}/*`,
+    loader: redirectToCanonical(AboutRoute.path),
+  },
+  {
+    path: "/auth-about/*",
+    loader: redirectToCanonical(AboutRoute.path),
+  },
+  {
+    path: "/auth-about",
+    loader: redirectToCanonical(AboutRoute.path),
+  },
+  {
     element: NavigationBarRoute.element,
     loader: requireAuth,
     children: [
@@ -41,28 +57,44 @@ export const router = createBrowserRouter([
         element: HomeRoute.element,
       },
       {
-        path: AuthAboutRoute.path,
-        element: AuthAboutRoute.element,
+        path: `${HomeRoute.path}/*`,
+        loader: redirectToCanonical(HomeRoute.path),
       },
       {
         path: DashboardRoute.path,
         element: DashboardRoute.element,
       },
       {
-        path: AccountRoute.path,
-        element: AccountRoute.element,
+        path: `${DashboardRoute.path}/*`,
+        loader: redirectToCanonical(DashboardRoute.path),
       },
       {
-        path: DisplayRoute.path,
-        element: DisplayRoute.element,
+        path: SettingsRoute.path,
+        element: SettingsRoute.element,
       },
       {
-        path: NotificationsRoute.path,
-        element: NotificationsRoute.element,
+        path: `${SettingsRoute.path}/*`,
+        loader: redirectToCanonical(SettingsRoute.path),
       },
       {
         path: ResumeRoute.path,
         element: ResumeRoute.element,
+        caseSensitive: true,
+      },
+      {
+        path: `${ResumeRoute.path}/*`,
+        loader: redirectToCanonical(ResumeRoute.path),
+        caseSensitive: true,
+      },
+      {
+        path: "/Resume/*",
+        loader: redirectToCanonical(ResumeRoute.path),
+        caseSensitive: true,
+      },
+      {
+        path: "/Resume",
+        loader: redirectToCanonical(ResumeRoute.path),
+        caseSensitive: true,
       },
     ],
   },

@@ -177,9 +177,6 @@ JAICE_PROJECT/
 │  │  ├─ about/
 │  │  │  ├─ AboutPage.tsx
 │  │  │  ├─ about.meta.tsx
-│  │  ├─ auth-about/
-│  │  │  ├─ AuthAboutPage.tsx
-│  │  │  └─ authabout.meta.tsx
 │  │  ├─ dashboard/
 │  │  │  ├─ DashboardPage.tsx
 │  │  │  ├─ DashboardStageCards.tsx
@@ -204,15 +201,15 @@ JAICE_PROJECT/
 │  │  │     ├─ QuickSignIn.tsx
 │  │  │     └─ SignUp.tsx
 │  │  ├─ settings/
-│  │  │  ├─ accessibility/
-│  │  │  │  ├─ AccessibilityPage.tsx
-│  │  │  │  └─ accessibility.meta.tsx
+│  │  │  ├─ SettingsPage.tsx
+│  │  │  ├─ settings.meta.tsx
 │  │  │  ├─ account/
-│  │  │  │  ├─ AccountPage.tsx
-│  │  │  │  └─ account.meta.tsx
-│  │  │  └─ notifications/
-│  │  │     ├─ NotificationPage.tsx
-│  │  │     └─ notification.meta.tsx
+│  │  │  │  ├─ AccountSettings.tsx
+│  │  │  │  └─ account-components/
+│  │  │  ├─ display/
+│  │  │  │  ├─ DisplaySettings.tsx
+│  │  │  │  └─ display-components/
+│  │  │  └─ provider/
 │  └─ Dockerfile.client
 ├─ client_api/                                  # Backend (FastAPI Services)
 │  ├─ api/

@@ -29,7 +29,7 @@ export default function ConnectEmailModal({
       className="w-lg"
       primaryAction={{
         label: gmailConnected ? "Disconnect" : "Link",
-        onClick: () => navigate("/settings/account"),
+        onClick: () => navigate("/settings"),
         className: gmailConnected ? "red" : "green",
       }}
     >
@@ -57,7 +57,7 @@ export default function ConnectEmailModal({
         {gmailError && (
           <p className="connect-email-status-error" role="alert">
             Connection status could not be refreshed. You can still manage the
-            connection from Account Settings.
+            connection from Settings.
           </p>
         )}
 

@@ -2,10 +2,6 @@ import { useNavigate } from "react-router";
 import Button from "@/global-components/button";
 import { useBrandImage } from "@/global-services/useBrandImage";
 
-type AboutPageProps = {
-  variant?: "public" | "authenticated";
-};
-
 const features = [
   {
     title: "Track each opportunity",
@@ -32,31 +28,20 @@ const team = [
   { name: "Sephen", role: "Developer", avatar: "/team/Sephen.jpg" },
 ];
 
-export function AboutPage({ variant = "public" }: AboutPageProps) {
+export function AboutPage() {
   const navigate = useNavigate();
   const brandImg = useBrandImage();
-  const showPublicNavigation = variant === "public";
-  const isAuthenticated = variant === "authenticated";
-  const pageBackgroundClass =
-    variant === "public" ? "landing-gradient" : "page-gradient";
-  const pageVariantClass = isAuthenticated
-    ? "about-page--authenticated"
-    : "about-page--public";
 
   return (
-    <div
-      className={`about-page ${pageVariantClass} ${pageBackgroundClass}`}
-    >
-      {showPublicNavigation && (
-        <div className="about-public-nav-action">
-          <Button
-            className="route-text-button"
-            onClick={() => navigate("/")}
-          >
-            Home
-          </Button>
-        </div>
-      )}
+    <div className="about-page about-page--public landing-gradient">
+      <div className="about-public-nav-action">
+        <Button
+          className="route-text-button"
+          onClick={() => navigate("/")}
+        >
+          Home
+        </Button>
+      </div>
 
       <main className="about-shell">
         <section className="about-hero about-surface">
