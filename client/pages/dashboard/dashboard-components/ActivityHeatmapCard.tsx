@@ -323,7 +323,7 @@ export function ActivityHeatmapCard({
       subtitle="12-week application pattern"
       infoDescription={chartDescText.activityHeatmap}
       className={className}
-      height={height ?? "18rem"}
+      height={height ?? "16rem"}
     >
       <ChartHost>{content()}</ChartHost>
     </Card>

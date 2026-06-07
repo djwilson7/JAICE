@@ -223,7 +223,7 @@ export function AppsByStageCard({
       subtitle="Total distribution"
       infoDescription={chartDescText.appsByStage}
       className={className}
-      height={height ?? "18rem"}
+      height={height ?? "16rem"}
     >
       <ChartHost>{renderContent()}</ChartHost>
     </Card>

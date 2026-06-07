@@ -227,7 +227,7 @@ export function AvgTimeInStageCard({
       subtitle="Rolling 90-day averages"
       infoDescription={chartDescText.avgTimeInStage}
       className={className}
-      height={height ?? "18rem"}
+      height={height ?? "16rem"}
     >
       <ChartHost>{renderSquares()}</ChartHost>
     </Card>

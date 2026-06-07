@@ -3349,7 +3349,7 @@ button.landing-provider-button:disabled {
 .cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 1.5rem;
   justify-content: center;
   align-items: stretch;
   width: 100%;
@@ -3560,6 +3560,7 @@ button.landing-provider-button:disabled {
 @media (max-width: 640px) {
   .cards {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 

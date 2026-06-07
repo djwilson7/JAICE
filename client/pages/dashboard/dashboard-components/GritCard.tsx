@@ -4,6 +4,7 @@ import { useGritScore } from "@/utils/useGritScore";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
+import downChevron from "@/assets/icons/angle-small-down.svg";
 
 // Export RANK_TIERS for use in the progress bar
 // eslint-disable-next-line react-refresh/only-export-components
@@ -34,26 +35,66 @@ const tierBreakpoints = RANK_TIERS.slice(0, -1).map((rankTier) =>
   scoreToPercent(rankTier.max + 1)
 );
 
+const getTierIndexForScore = (scoreValue: number) => {
+  const safeScore = scoreToPercent(scoreValue);
+  const tierIndex = RANK_TIERS.findIndex(
+    (rankTier) => safeScore >= rankTier.min && safeScore <= rankTier.max
+  );
+  return tierIndex >= 0 ? tierIndex : RANK_TIERS.length - 1;
+};
+
+const getTierCenterPercent = (tierIndex: number) =>
+  ((tierIndex + 0.5) / RANK_TIERS.length) * 100;
+
 export function GritCard({
   className = "",
-  height = "auto",
+  height = "16rem",
 }: {
   className?: string;
   height?: number | string;
 }) {
   const { theme } = useSettings();
   const chartTheme = getDashboardChartTheme(theme);
-  const { score, weeklyApps, followups, consistency, tier, tierColor, loading } = useGritScore();
+  const { score, weeklyApps, followups, consistency, loading } = useGritScore();
 
   // Progress bar animation - starts at 0 and animates to actual score
   const [animatedScore, setAnimatedScore] = useState(0);
+  const animatedScorePercent = scoreToPercent(animatedScore);
+  const activeTierIndex = getTierIndexForScore(animatedScore);
+  const activeTier = RANK_TIERS[activeTierIndex];
+  const activeTierCenterPercent = getTierCenterPercent(activeTierIndex);
 
   // Trigger bar animation once data loads - delay for visual effect
   useEffect(() => {
-    if (score !== undefined && score > 0) {
-      // Small delay before starting animation so user sees it fill up
-      setTimeout(() => setAnimatedScore(score), 150);
-    }
+    if (score === undefined) return;
+
+    setAnimatedScore(0);
+
+    const targetScore = scoreToPercent(score);
+    const durationMs = 4200;
+    let animationFrame = 0;
+
+    const delayTimeout = window.setTimeout(() => {
+      const startTime = performance.now();
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / durationMs);
+
+        setAnimatedScore(targetScore * progress);
+
+        if (progress < 1) {
+          animationFrame = window.requestAnimationFrame(animate);
+        }
+      };
+
+      animationFrame = window.requestAnimationFrame(animate);
+    }, 150);
+
+    return () => {
+      window.clearTimeout(delayTimeout);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
   }, [score]);
 
   if (loading) {
@@ -78,50 +119,53 @@ export function GritCard({
       className={className}
       height={height}
     >
-        <div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-3 items-center content-center gap-2">
-        
-        {/* BIG NUMBER */}
-        <div className="flex items-center justify-center">
-          <div className="text-center leading-tight">
-            <div
-              style={{
-                fontFamily: "var(--font-title)",
-                fontWeight: 700,
-                lineHeight: 0.9,
-                fontSize: "clamp(4.5rem, 12vw, 14rem)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {score}
-            </div>
-
-            <div
-              style={{
-                marginTop: 8,
-                opacity: 0.9,
-                fontWeight: 600,
-                fontSize: "clamp(1.25rem, 3.2vw, 3.5rem)",
-                letterSpacing: "0.01em",
-                color: tierColor,
-              }}
-            >
-              {tier}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT SECTION */}
-        <div className="lg:col-span-2 flex flex-col justify-center">
-          <div className="mb-3 flex items-center justify-between text-sm sm:text-base opacity-85">
-            <span>Overall Progress</span>
-            <span>{score}%</span>
-          </div>
-
+        <div className="flex h-full w-full flex-col justify-center gap-3">
+        <div>
           {/* Diagonal Striped Progress Bar with Rank Milestones */}
-          <div className="relative">
+          <div>
+            <div
+              className="relative min-h-[4.35rem]"
+            >
+              <div
+                className="absolute bottom-0 flex min-w-0 -translate-x-1/2 flex-col items-center text-center"
+                style={{
+                  left: `${activeTierCenterPercent}%`,
+                  transition: "left 1100ms linear",
+                }}
+              >
+                <div className="text-[0.68rem] leading-none opacity-75">
+                  Rating
+                </div>
+                <div
+                  className="mt-1 whitespace-nowrap"
+                  style={{
+                    fontWeight: 600,
+                    fontSize: "clamp(1.2rem, 2vw, 1.9rem)",
+                    lineHeight: 1.05,
+                    letterSpacing: 0,
+                    color: activeTier.color,
+                  }}
+                >
+                  {activeTier.name}
+                </div>
+                <img
+                  src={downChevron}
+                  alt=""
+                  aria-hidden="true"
+                  className="mt-2.5 h-5 w-5"
+                  style={{
+                    filter: chartTheme.isLight
+                      ? "brightness(0) saturate(100%)"
+                      : "var(--icon-filter)",
+                    opacity: 0.9,
+                  }}
+                />
+              </div>
+            </div>
+
             {/* Background container with diagonal stripes */}
             <div 
-              className="relative h-8 w-full rounded-lg overflow-hidden"
+              className="relative h-6 w-full overflow-hidden rounded-md"
               style={{
                 background: chartTheme.isLight
                   ? "linear-gradient(180deg, rgba(255,255,255,0.78), rgba(226,232,240,0.52))"
@@ -138,9 +182,9 @@ export function GritCard({
                 }}
               />
               <div
-                className="absolute inset-0 transition-[clip-path] duration-[1500ms] ease-out"
+                className="absolute inset-0"
                 style={{
-                  clipPath: `inset(0 ${100 - scoreToPercent(animatedScore)}% 0 0)`,
+                  clipPath: `inset(0 ${100 - animatedScorePercent}% 0 0)`,
                   background: `linear-gradient(to right, ${tierGlassGradient})`,
                   boxShadow: chartTheme.isLight
                     ? "inset 0 1px 0 rgba(255,255,255,0.56), inset 0 -1px 0 rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.12)"
@@ -174,7 +218,7 @@ export function GritCard({
 
             {/* Rank labels below */}
             <div
-              className="mt-2 grid text-xs opacity-70"
+              className="mt-2 grid text-[0.68rem] opacity-70"
               style={{ gridTemplateColumns: tierColumns }}
             >
               {RANK_TIERS.map((rankTier, index) => (
@@ -182,8 +226,13 @@ export function GritCard({
                   key={index}
                   className="text-center"
                   style={{
-                    color: score >= rankTier.min ? rankTier.color : 'inherit',
-                    fontWeight: score >= rankTier.min && score <= rankTier.max ? 600 : 400,
+                    color: animatedScorePercent >= rankTier.min ? rankTier.color : 'inherit',
+                    fontWeight:
+                      animatedScorePercent >= rankTier.min &&
+                      animatedScorePercent <= rankTier.max
+                        ? 600
+                        : 400,
+                    visibility: index === activeTierIndex ? "hidden" : "visible",
                   }}
                 >
                   {rankTier.name}
@@ -193,30 +242,30 @@ export function GritCard({
           </div>
 
           {/* KPI Row */}
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
             <div className={`rounded-xl border ${chartTheme.tile.border} ${
               chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
-            } px-4 py-3 text-center`}>
-              <div className="text-xs sm:text-sm opacity-80">Weekly Apps</div>
-              <div className="mt-1 text-lg sm:text-xl font-medium">
+            } px-3 py-2 text-center`}>
+              <div className="text-[0.68rem] sm:text-xs opacity-80">Weekly Apps</div>
+              <div className="mt-1 text-base sm:text-lg font-medium">
                 {weeklyApps}
               </div>
             </div>
 
             <div className={`rounded-xl border ${chartTheme.tile.border} ${
               chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
-            } px-4 py-3 text-center`}>
-              <div className="text-xs sm:text-sm opacity-80">Follow-ups</div>
-              <div className="mt-1 text-lg sm:text-xl font-medium">
+            } px-3 py-2 text-center`}>
+              <div className="text-[0.68rem] sm:text-xs opacity-80">Follow-ups</div>
+              <div className="mt-1 text-base sm:text-lg font-medium">
                 {followups}
               </div>
             </div>
 
             <div className={`rounded-xl border ${chartTheme.tile.border} ${
               chartTheme.isLight ? "bg-white/45" : "bg-white/[0.045]"
-            } px-4 py-3 text-center`}>
-              <div className="text-xs sm:text-sm opacity-80">Consistency</div>
-              <div className="mt-1 text-lg sm:text-xl font-medium">
+            } px-3 py-2 text-center`}>
+              <div className="text-[0.68rem] sm:text-xs opacity-80">Consistency</div>
+              <div className="mt-1 text-base sm:text-lg font-medium">
                 {consistency} days
               </div>
             </div>

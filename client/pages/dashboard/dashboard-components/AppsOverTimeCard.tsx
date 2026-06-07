@@ -331,7 +331,7 @@ export function AppsOverTimeCard({
       subtitle={`${range}-day trend`}
       infoDescription={chartDescText.stagesOverTime}
       className={className}
-      height={height ?? "18rem"}
+      height={height ?? "16rem"}
     >
       <ChartHost>
         {loading && <ChartSkeleton variant="line" />}

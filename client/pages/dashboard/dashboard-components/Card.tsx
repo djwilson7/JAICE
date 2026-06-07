@@ -30,17 +30,17 @@ export type CardProps = {
     onExpand?: () => void;
 };
 
-function useCardStyles(variant: Variant, rounded: boolean, isLightMode: boolean) {
+function useCardStyles(variant: Variant, rounded: boolean) {
     const base: React.CSSProperties = {
         position: "relative",
-        borderRadius: rounded ? 22 : 16,
-        padding: 20,
+        borderRadius: rounded ? 8 : 6,
+        padding: 16,
         color: "var(--primary-five)",
-        border: "1px solid rgba(var(--primary-five-rgb), 0.35)",
-        boxShadow: isLightMode
-            ? "0 10px 24px rgba(15,23,42,0.12), inset 0 0 0 1px rgba(255,255,255,0.42)"
-            : "0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)",
-        transition: "box-shadow 0.2s ease, transform 0.2s ease",
+        border: "1px solid rgba(var(--primary-five-rgb), 0.14)",
+        borderTopColor: "rgba(var(--primary-five-rgb), 0.22)",
+        borderLeftColor: "rgba(var(--primary-five-rgb), 0.18)",
+        boxShadow: "none",
+        backgroundClip: "padding-box",
     };
 
     if (variant === "teal") {
@@ -56,9 +56,7 @@ export function Card({
     title, subtitle, titleIcon, infoDescription, className = "", children, footer,
     variant = "teal", size = "md", height, rounded = true,
     expandable, onExpand }: CardProps) {
-    const { theme } = useSettings();
-    const isLightMode = theme === "light";
-    const style = useCardStyles(variant, rounded, isLightMode);
+    const style = useCardStyles(variant, rounded);
     const [showInfo, setShowInfo] = React.useState(false);
     const infoButtonRef = React.useRef<HTMLButtonElement>(null);
 
@@ -102,25 +100,15 @@ export function Card({
             className={`card ${className}`}
             style={{ ...style, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}
             onClick={expandable ? onExpand : undefined}
-            onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = isLightMode
-                    ? "0 14px 28px rgba(15,23,42,0.16), inset 0 0 0 1px rgba(255,255,255,0.58)"
-                    : "0 14px 28px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = String(style.boxShadow);
-                (e.currentTarget as HTMLElement).style.transform = "none";
-            }}
         >
             {(title || subtitle) && (
-                <header style={{ marginBottom: 16, paddingRight: expandable ? 84 : 0, textAlign: "left" }}>
+                <header style={{ marginBottom: 12, paddingRight: expandable ? 84 : 0, textAlign: "left" }}>
                     {title && (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8 }}>
                             <h2 style={{
                                 fontFamily: "var(--font-title)",
-                                fontSize: "var(--fs-headline)",
-                                letterSpacing: "0.5px",
+                                fontSize: "clamp(1rem, 1.35vw, 1.25rem)",
+                                letterSpacing: 0,
                                 lineHeight: 1.05,
                                 margin: 0,
                             }}

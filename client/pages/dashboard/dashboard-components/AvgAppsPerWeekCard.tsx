@@ -152,7 +152,7 @@ export function AvgAppsPerWeekCard({
         subtitle="12-week trend"
         infoDescription={chartDescText.avgAppsPerWeek}
         className={className}
-        height={height ?? "18rem"}
+        height={height ?? "16rem"}
       >
         <ChartHost>
           <ChartSkeleton variant="line" />
@@ -231,7 +231,7 @@ export function AvgAppsPerWeekCard({
       subtitle="12-week trend"
       infoDescription={chartDescText.avgAppsPerWeek}
       className={className}
-      height={height ?? "18rem"}
+      height={height ?? "16rem"}
     >
       <ChartHost>
         {error ? <ChartError message={error} /> : <Line data={data} options={options} />}

@@ -256,7 +256,7 @@ export function SplitByStageCard({
       subtitle="Monthly counts"
       infoDescription={chartDescText.splitByStage}
       className={className}
-      height={height ?? "18rem"}
+      height={height ?? "16rem"}
     >
       <ChartHost>{content()}</ChartHost>
     </Card>
