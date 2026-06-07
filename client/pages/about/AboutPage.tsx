@@ -36,67 +36,76 @@ export function AboutPage({ variant = "public" }: AboutPageProps) {
   const navigate = useNavigate();
   const brandImg = useBrandImage();
   const showPublicNavigation = variant === "public";
+  const isAuthenticated = variant === "authenticated";
+  const pageBackgroundClass =
+    variant === "public" ? "landing-gradient" : "page-gradient";
+  const pageVariantClass = isAuthenticated
+    ? "about-page--authenticated"
+    : "about-page--public";
 
   return (
     <div
-      className="min-h-screen w-full overflow-x-hidden"
-      style={{ background: "var(--primary-gradient)" }}
+      className={`about-page ${pageVariantClass} ${pageBackgroundClass}`}
     >
-      <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-14 px-4 py-8 md:gap-18 md:px-8 md:py-14">
-        <section className="grid items-center gap-8 border-b border-white/10 pb-10 md:grid-cols-[minmax(0,1fr)_auto] md:pb-14">
-          <div className="text-left">
-            <h1 className="primary-text mt-3 text-5xl font-bold md:text-7xl">
-              JAICE
-            </h1>
-            <p className="secondary-text mt-5 max-w-2xl text-base leading-relaxed md:text-lg">
+      {showPublicNavigation && (
+        <div className="about-public-nav-action">
+          <Button
+            className="route-text-button"
+            onClick={() => navigate("/")}
+          >
+            Home
+          </Button>
+        </div>
+      )}
+
+      <main className="about-shell">
+        <section className="about-hero about-surface">
+          <div className="about-hero-copy">
+            <p className="about-eyebrow secondary-text">About JAICE</p>
+            <h1 className="about-title primary-text">JAICE</h1>
+            <p className="about-lede secondary-text">
               Job Application Intelligence & Career Enhancement (JAICE), is a
               workspace for turning scattered job-search updates into a clear
               application pipeline. It helps users track where they applied,
               what changed, and what needs a follow-up.
             </p>
-
-            {showPublicNavigation && (
-              <div className="mt-6 w-fit">
-                <Button onClick={() => navigate("/")}>Home</Button>
-              </div>
-            )}
           </div>
 
-          <div className="flex justify-center md:justify-end">
+          <div className="about-brand-mark">
             <img
               src={brandImg}
               alt="JAICE logo"
-              className="h-36 w-auto select-none object-contain drop-shadow-[0_18px_36px_rgba(0,0,0,0.28)] md:h-52"
+              className="about-brand-image"
               draggable={false}
             />
           </div>
         </section>
 
-        <section className="space-y-6 border-b border-white/10 pb-10 text-left md:pb-14">
-          <div>
-            <p className="secondary-text text-sm font-semibold uppercase tracking-wide">
+        <section className="about-section about-surface">
+          <div className="about-section-heading">
+            <p className="about-eyebrow secondary-text">
               What is JAICE
             </p>
-            <h2 className="primary-text mt-2 text-2xl font-semibold md:text-3xl">
+            <h2 className="about-section-title primary-text">
               A clearer application workflow
             </h2>
-            <p className="secondary-text mt-3 max-w-3xl text-base leading-relaxed">
+            <p className="about-copy secondary-text">
               JAICE is built around the practical work of searching: collecting
               applications, keeping status current, and making sure important
               follow-ups do not disappear into scattered notes.
             </p>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="about-feature-grid">
             {features.map((feature) => (
               <article
                 key={feature.title}
-                className="rounded-md border border-white/10 bg-white/5 p-4 shadow-sm"
+                className="about-feature-item"
               >
-                <h3 className="primary-text text-base font-semibold">
+                <h3 className="about-feature-title primary-text">
                   {feature.title}
                 </h3>
-                <p className="secondary-text mt-2 text-sm leading-relaxed">
+                <p className="about-feature-copy secondary-text">
                   {feature.copy}
                 </p>
               </article>
@@ -104,16 +113,16 @@ export function AboutPage({ variant = "public" }: AboutPageProps) {
           </div>
         </section>
 
-        <section className="grid gap-6 border-b border-white/10 pb-10 text-left lg:grid-cols-[0.75fr_1fr] lg:items-start md:pb-14">
+        <section className="about-purpose about-surface">
           <div>
-            <p className="secondary-text text-sm font-semibold uppercase tracking-wide">
+            <p className="about-eyebrow secondary-text">
               Our Purpose
             </p>
-            <h2 className="primary-text mt-2 text-2xl font-semibold md:text-3xl">
+            <h2 className="about-section-title primary-text">
               Job searching should feel less scattered
             </h2>
           </div>
-          <p className="secondary-text max-w-3xl text-base leading-relaxed">
+          <p className="about-copy secondary-text">
             Tracking job applications manually usually means chasing updates
             across job boards, company portals, calendars, spreadsheets, and
             inboxes. JAICE focuses on email because that is where status changes,
@@ -124,15 +133,15 @@ export function AboutPage({ variant = "public" }: AboutPageProps) {
           </p>
         </section>
 
-        <section className="space-y-6 text-left">
-          <div>
-            <p className="secondary-text text-sm font-semibold uppercase tracking-wide">
+        <section className="about-section about-surface">
+          <div className="about-section-heading">
+            <p className="about-eyebrow secondary-text">
               Meet the Devs
             </p>
-            <h2 className="primary-text mt-2 text-2xl font-semibold md:text-3xl">
+            <h2 className="about-section-title primary-text">
               Built by a small developer team
             </h2>
-            <p className="secondary-text mt-3 max-w-3xl text-base leading-relaxed">
+            <p className="about-copy secondary-text">
               As recent graduates and college students, we know the job hunt is
               more than a numbers game. It often means balancing job boards,
               email threads, calendar reminders, and notes while trying not to
@@ -140,27 +149,27 @@ export function AboutPage({ variant = "public" }: AboutPageProps) {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+          <div className="about-team-grid">
             {team.map((member) => (
               <article
                 key={member.name}
                 tabIndex={0}
-                className="group overflow-hidden rounded-md border border-white/10 bg-white/5 shadow-sm transition-colors duration-200 hover:border-white/25 focus:outline-none focus-visible:border-white/40 focus-visible:ring-2 focus-visible:ring-white/45"
+                className="about-team-card group"
               >
-                <div className="aspect-[4/5] w-full overflow-hidden bg-black/15">
+                <div className="about-team-image-wrap">
                   <img
                     src={member.avatar}
                     alt={`${member.name}, ${member.role}`}
-                    className="h-full w-full object-cover grayscale transition duration-300 ease-out group-hover:scale-[1.02] group-hover:grayscale-0 group-focus-visible:scale-[1.02] group-focus-visible:grayscale-0"
+                    className="about-team-image"
                     loading="lazy"
                     decoding="async"
                   />
                 </div>
-                <div className="p-4">
-                  <h3 className="primary-text text-base font-semibold">
+                <div className="about-team-meta">
+                  <h3 className="about-team-name primary-text">
                     {member.name}
                   </h3>
-                  <p className="secondary-text mt-1 text-sm">{member.role}</p>
+                  <p className="about-team-role secondary-text">{member.role}</p>
                 </div>
               </article>
             ))}

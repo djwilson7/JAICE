@@ -33,7 +33,12 @@ export function LandingPage() {
       </section>
 
       <div className="landing-about-action">
-        <Button onClick={() => navigate("/about")}>About</Button>
+        <Button
+          className="route-text-button"
+          onClick={() => navigate("/about")}
+        >
+          About
+        </Button>
       </div>
     </div>
   );
