@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import type { ContactFieldKey, ContactRenderField, DocumentSectionId, EducationItem, ExperienceItem, ExperienceRewriteSuggestion, FontPreviewTarget, PageSize, PaperLayoutFormat, ResumeData, ResumeRewriteActionHover, SummaryRewriteSuggestion, ZoomMode } from "../types";
 import { ZOOM_STEP, clampZoom } from "../formatting";
 import { ResumeAlerts } from "./ResumeAlerts";
@@ -50,6 +51,10 @@ type ResumeWorkspaceProps = {
     resumeDocumentContentRef: React.RefObject<HTMLDivElement | null>;
     canvasNeedsHorizontalScroll: boolean;
     canvasNeedsVerticalScroll: boolean;
+    canvasViewportStyle: React.CSSProperties;
+    pdfPreviewViewportStyle: React.CSSProperties;
+    bottomControlsViewportStyle: React.CSSProperties;
+    canvasHorizontalOverflow: number;
     scaledCanvasWidth: number;
     scaledCanvasHeight: number;
     paperMetrics: import("../types").PaperMetrics;
@@ -119,22 +124,22 @@ type ResumeWorkspaceProps = {
     addSkillCategory: () => void; updateSkillCategoryName: (id: string, value: string) => void; updateSkillCategoryItems: (id: string, value: string) => void; removeSkillCategory: (id: string) => void;
     handleAnalyzeSummary: () => void; handleImproveSummary: () => void | Promise<void>; handleImproveExperience: (experience: ExperienceItem) => void | Promise<void>; acceptSummaryRewriteSuggestion: () => void; rejectSummaryRewriteSuggestion: () => void; acceptExperienceRewriteSuggestion: (experienceId: string, bulletId: string) => void; rejectExperienceRewriteSuggestion: (experienceId: string, bulletId: string) => void;
     setResumeData: React.Dispatch<React.SetStateAction<ResumeData>>; setChangeMetadata: React.Dispatch<React.SetStateAction<{ path: string; before: string; after: string; reason: string }[]>>;
-    isPageStyleShelfOpen: boolean; isPageStyleShelfCompact: boolean; shelfSurfaceStyle: React.CSSProperties; shelfSectionClass: string; shelfSectionTitleClass: string; shelfControlLabelClass: string; shelfDividerClass: string; shelfSegmentGroupClass: string; shelfSegmentButtonClass: string; shelfSegmentIndicatorClass: string; shelfStepperControlClass: string; shelfStepperLabelClass: string; shelfStepperRowClass: string; shelfStepperButtonClass: string; shelfStepperValueClass: string;
+    isPageStyleShelfOpen: boolean; isPageStyleShelfCompact: boolean; shelfSurfaceStyle: React.CSSProperties; shelfControlLabelClass: string; shelfSegmentGroupClass: string; shelfSegmentButtonClass: string; shelfSegmentIndicatorClass: string; shelfStepperControlClass: string; shelfStepperLabelClass: string; shelfStepperRowClass: string; shelfStepperButtonClass: string; shelfStepperValueClass: string;
     pageSize: PageSize; setPageSize: React.Dispatch<React.SetStateAction<PageSize>>; setTitleFontSize: React.Dispatch<React.SetStateAction<number>>; headerFontSize: number; setHeaderFontSize: React.Dispatch<React.SetStateAction<number>>; setBodyFontSize: React.Dispatch<React.SetStateAction<number>>; setPageMarginPt: React.Dispatch<React.SetStateAction<number>>; paperLayoutFormat: PaperLayoutFormat; setPaperLayoutFormat: React.Dispatch<React.SetStateAction<PaperLayoutFormat>>; setFontPreviewTarget: React.Dispatch<React.SetStateAction<FontPreviewTarget | null>>; setIsMarginPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsPageFormatPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsSectionGapPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
     toolbarSurfaceStyle: React.CSSProperties; documentToolButtonClass: string; handleTogglePageStyleShelf: () => void; handleFitZoom: () => void; zoomMode: ZoomMode; manualZoom: number; setZoomMode: React.Dispatch<React.SetStateAction<ZoomMode>>; setManualZoom: React.Dispatch<React.SetStateAction<number>>; zoomPercent: number;
-    isPdfPreviewOpen: boolean; pdfPreviewUrl: string | null; pdfPreviewFilename: string; isGeneratingPdfPreview: boolean; canDownloadPdfPreview: boolean; closePdfPreview: () => void; downloadPdfPreview: () => void; openPdfPreview: () => void | Promise<void>;
+    isPdfPreviewOpen: boolean; pdfPreviewUrl: string | null; resumeName: string; isGeneratingPdfPreview: boolean; closePdfPreview: () => void;
     loadingList: boolean;
 };
 
 export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
     const {
         isLightMode, error, successMessage, setError, setSuccessMessage, headerActionButtonClass, headerActionIconClass,
-        canvasViewportRef, resumeDocumentContentRef, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, resumePageStride, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
+        canvasViewportRef, resumeDocumentContentRef, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, bottomControlsViewportStyle, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, resumePageStride, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
         resumeData, headerContactRows, showHeaderContactEditors, changeMetadata, originalResumeDataBeforeDraft, summaryRewriteSuggestion, experienceRewriteSuggestions, titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, experienceMarginClearClass, experienceMarginDeleteClass, summaryMarginImproveClass,
         activeDocumentSection, setActiveDocumentSection, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId,
         renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, isFieldChanged, getSuggestionReviewClass, updateField, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, updateBulletText, removeBullet, updateEducationField, addEducation, removeEducation, addEducationDetailWithText, updateEducationDetailText, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleAnalyzeSummary, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setResumeData, setChangeMetadata,
-        isPageStyleShelfOpen, isPageStyleShelfCompact, shelfSurfaceStyle, shelfSectionClass, shelfSectionTitleClass, shelfControlLabelClass, shelfDividerClass, shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass, shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass, pageSize, setPageSize, setTitleFontSize, headerFontSize, setHeaderFontSize, setBodyFontSize, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible, setIsPageFormatPreviewVisible, setIsSectionGapPreviewVisible, toolbarSurfaceStyle, documentToolButtonClass, handleTogglePageStyleShelf, handleFitZoom, zoomMode, manualZoom, setZoomMode, setManualZoom, zoomPercent,
-        isPdfPreviewOpen, pdfPreviewUrl, pdfPreviewFilename, isGeneratingPdfPreview, canDownloadPdfPreview, closePdfPreview, downloadPdfPreview, openPdfPreview, loadingList
+        isPageStyleShelfOpen, isPageStyleShelfCompact, shelfSurfaceStyle, shelfControlLabelClass, shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass, shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass, pageSize, setPageSize, setTitleFontSize, headerFontSize, setHeaderFontSize, setBodyFontSize, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible, setIsPageFormatPreviewVisible, setIsSectionGapPreviewVisible, toolbarSurfaceStyle, documentToolButtonClass, handleTogglePageStyleShelf, handleFitZoom, zoomMode, manualZoom, setZoomMode, setManualZoom, zoomPercent,
+        isPdfPreviewOpen, pdfPreviewUrl, resumeName, isGeneratingPdfPreview, closePdfPreview, loadingList
     } = props;
     const lastPostedRenderDiagnosticsFingerprintRef = React.useRef<string | null>(null);
     const renderDiagnosticsFingerprint = JSON.stringify({
@@ -243,7 +248,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
     ]);
 
     return (
-            <main className="h-full flex-1 flex flex-col min-w-0 overflow-hidden print:p-0 relative z-10">
+            <main className="absolute inset-0 z-0 flex min-h-0 min-w-0 flex-col overflow-hidden print:p-0">
                 
                 <ResumeAlerts
                     error={error}
@@ -258,14 +263,12 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     <ResumePdfPreview
                         isLightMode={isLightMode}
                         pdfPreviewUrl={pdfPreviewUrl}
-                        pdfPreviewFilename={pdfPreviewFilename}
+                        documentTitle={resumeName}
                         isGeneratingPdfPreview={isGeneratingPdfPreview}
-                        canDownloadPdfPreview={canDownloadPdfPreview}
+                        viewportStyle={pdfPreviewViewportStyle}
                         headerActionButtonClass={headerActionButtonClass}
                         headerActionIconClass={headerActionIconClass}
                         onBackToEdit={closePdfPreview}
-                        onDownload={downloadPdfPreview}
-                        onRefresh={openPdfPreview}
                     />
                 ) : (
                     <>
@@ -274,6 +277,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     resumeDocumentContentRef={resumeDocumentContentRef}
                     canvasNeedsHorizontalScroll={canvasNeedsHorizontalScroll}
                     canvasNeedsVerticalScroll={canvasNeedsVerticalScroll}
+                    canvasViewportStyle={canvasViewportStyle}
+                    canvasHorizontalOverflow={canvasHorizontalOverflow}
                     scaledCanvasWidth={scaledCanvasWidth}
                     scaledCanvasHeight={scaledCanvasHeight}
                     paperMetrics={paperMetrics}
@@ -401,15 +406,23 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                 }}
                             />
                     </ResumeCanvas>
+                    <div
+                        className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center print:hidden transition-[padding] duration-300"
+                        style={bottomControlsViewportStyle}
+                    >
+                    <motion.div
+                    className={`resume-edit-control pointer-events-auto flex max-w-full flex-col items-center overflow-hidden rounded-md border ${
+                        isLightMode
+                            ? "border-slate-300/80 bg-white/82 shadow-[0_12px_28px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.86)]"
+                            : "border-white/18 bg-slate-950/58 shadow-[0_12px_28px_rgba(2,6,23,0.38),inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-1px_0_rgba(15,23,42,0.56)]"
+                    }`}
+                    style={{ ...toolbarSurfaceStyle, ...shelfSurfaceStyle }}
+                >
                     <PageStyleShelf
                     isLightMode={isLightMode}
                     isPageStyleShelfOpen={isPageStyleShelfOpen}
                     isPageStyleShelfCompact={isPageStyleShelfCompact}
-                    shelfSurfaceStyle={shelfSurfaceStyle}
-                    shelfSectionClass={shelfSectionClass}
-                    shelfSectionTitleClass={shelfSectionTitleClass}
                     shelfControlLabelClass={shelfControlLabelClass}
-                    shelfDividerClass={shelfDividerClass}
                     shelfSegmentGroupClass={shelfSegmentGroupClass}
                     shelfSegmentButtonClass={shelfSegmentButtonClass}
                     shelfSegmentIndicatorClass={shelfSegmentIndicatorClass}
@@ -435,14 +448,10 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     setIsPageFormatPreviewVisible={setIsPageFormatPreviewVisible}
                     setIsSectionGapPreviewVisible={setIsSectionGapPreviewVisible}
                     />
-                    <div
-                    className={`resume-edit-control absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-px rounded-md border px-1.5 py-0.5 print:hidden ${
-                        isLightMode
-                            ? "border-slate-300/80 bg-white/82 shadow-[0_12px_28px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.86)]"
-                            : "border-white/18 bg-slate-950/58 shadow-[0_12px_28px_rgba(2,6,23,0.38),inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-1px_0_rgba(15,23,42,0.56)]"
-                    }`}
-                    style={toolbarSurfaceStyle}
-                >
+                    {isPageStyleShelfOpen && (
+                        <div className={`h-px w-full shrink-0 ${isLightMode ? "bg-slate-300/80" : "bg-white/14"}`} />
+                    )}
+                    <div className="flex items-center gap-px px-1.5 py-0.5">
                     <button
                         type="button"
                         onClick={handleTogglePageStyleShelf}
@@ -513,6 +522,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                             </svg>
                         </button>
                     </div>
+                    </div>
+                    </motion.div>
                     </div>
                     </>
                 )}

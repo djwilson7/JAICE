@@ -39,6 +39,8 @@ export const useResumePersistence = ({
     const [isDirty, setIsDirty] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [resumeSearchFocusSignal] = useState(0);
+    const [pendingDeleteResume, setPendingDeleteResume] = useState<SavedResume | null>(null);
+    const [isDeletingResume, setIsDeletingResume] = useState(false);
 
     const activeSavedResume = useMemo(() => {
         return resumesList.find((r) => r.id === activeResumeId) || null;
@@ -224,15 +226,27 @@ export const useResumePersistence = ({
         }
     };
 
-    const handleDeleteResume = async (id: string, e: React.MouseEvent) => {
+    const handleDeleteResume = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm("Are you sure you want to delete this resume?")) return;
+        const resume = resumesList.find((item) => item.id === id);
+        if (resume) setPendingDeleteResume(resume);
+    };
 
+    const cancelDeleteResume = () => {
+        if (!isDeletingResume) setPendingDeleteResume(null);
+    };
+
+    const confirmDeleteResume = async () => {
+        if (!pendingDeleteResume || isDeletingResume) return;
+
+        const id = pendingDeleteResume.id;
+        setIsDeletingResume(true);
         setError(null);
         setSuccessMessage(null);
         try {
             const resp = await deleteSavedResume(id);
             if (resp.status === "success") {
+                setPendingDeleteResume(null);
                 setSuccessMessage("Resume deleted.");
                 if (activeResumeId === id) {
                     setActiveResumeId(null);
@@ -240,11 +254,13 @@ export const useResumePersistence = ({
                     setResumeData(nextData);
                     applyResumeFormatting(nextData.formatting);
                 }
-                fetchResumes();
+                await fetchResumes();
             }
         } catch (err) {
             console.error(err);
             setError((err as Error).message || "Failed to delete resume.");
+        } finally {
+            setIsDeletingResume(false);
         }
     };
 
@@ -308,10 +324,14 @@ export const useResumePersistence = ({
         setSearchQuery,
         resumeSearchFocusSignal,
         filteredResumes,
+        pendingDeleteResume,
+        isDeletingResume,
         loadResumeIntoWorkspace,
         handleCreateNewClick,
         handleCreateResume,
         handleSaveResume,
-        handleDeleteResume
+        handleDeleteResume,
+        cancelDeleteResume,
+        confirmDeleteResume
     };
 };

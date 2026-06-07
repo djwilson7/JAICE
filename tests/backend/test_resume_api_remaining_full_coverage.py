@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import builtins
+import os
 import sys
+import time
 import types
 import uuid
 from contextlib import asynccontextmanager
@@ -289,15 +291,42 @@ def install_playwright(monkeypatch, async_playwright):
 
 
 @pytest.mark.asyncio
-async def test_export_resume_pdf_without_debug(monkeypatch):
+async def test_export_resume_pdf_without_debug(monkeypatch, tmp_path):
     install_playwright(monkeypatch, lambda: PlaywrightContext())
+    monkeypatch.setenv("RESUME_PDF_PREVIEW_DIR", str(tmp_path))
 
     response = await resume.export_resume_pdf(
-        resume_data(fullName=" !!! "), types.SimpleNamespace(query_params={}), USER
+        resume_data(fullName=" !!! "),
+        types.SimpleNamespace(query_params={"document_title": "Named Resume"}),
+        USER,
     )
 
     assert response.body == b"%PDF-FAKE"
-    assert 'filename="resume.pdf"' in response.headers["Content-Disposition"]
+    assert 'filename="Named_Resume.pdf"' in response.headers["Content-Disposition"]
+    preview_path = response.headers["X-PDF-Preview-Path"]
+    assert preview_path.endswith("/Named_Resume.pdf")
+
+    token = preview_path.split("/")[-2]
+    preview_response = await resume.get_resume_pdf_preview(token, "Named_Resume.pdf")
+    assert preview_response.filename == "Named_Resume.pdf"
+    assert preview_response.path == tmp_path / f"{token}.pdf"
+    assert 'filename="Named_Resume.pdf"' in preview_response.headers["content-disposition"]
+
+
+@pytest.mark.asyncio
+async def test_expired_resume_pdf_preview_is_removed(monkeypatch, tmp_path):
+    monkeypatch.setenv("RESUME_PDF_PREVIEW_DIR", str(tmp_path))
+    token = "expired-preview"
+    preview_path = tmp_path / f"{token}.pdf"
+    preview_path.write_bytes(b"%PDF")
+    expired_time = time.time() - resume.PDF_PREVIEW_TTL_SECONDS - 1
+    os.utime(preview_path, (expired_time, expired_time))
+
+    with pytest.raises(HTTPException) as exc:
+        await resume.get_resume_pdf_preview(token, "Expired.pdf")
+
+    assert exc.value.status_code == 404
+    assert not preview_path.exists()
 
 
 @pytest.mark.asyncio

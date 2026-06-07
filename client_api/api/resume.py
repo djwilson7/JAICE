@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Body, Request
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel, field_validator
 from typing import Any, List, Optional
 import uuid
@@ -7,6 +7,9 @@ import json
 import base64
 import html
 import os
+import secrets
+import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 from common.logger import get_logger
@@ -28,6 +31,32 @@ from client_api.services.resume_chat.service import (
 
 router = APIRouter(tags=["resume"])
 logging = get_logger()
+
+PDF_PREVIEW_TTL_SECONDS = 10 * 60
+
+
+def _resume_pdf_preview_dir() -> Path:
+    configured_dir = os.getenv("RESUME_PDF_PREVIEW_DIR")
+    return Path(configured_dir) if configured_dir else Path(tempfile.gettempdir()) / "jaice-resume-pdf-previews"
+
+
+def _cleanup_expired_resume_pdf_previews(preview_dir: Path) -> None:
+    expires_before = time.time() - PDF_PREVIEW_TTL_SECONDS
+    for preview_path in preview_dir.glob("*.pdf"):
+        try:
+            if preview_path.stat().st_mtime < expires_before:
+                preview_path.unlink()
+        except OSError:
+            continue
+
+
+def _store_resume_pdf_preview(pdf_bytes: bytes) -> str:
+    preview_dir = _resume_pdf_preview_dir()
+    preview_dir.mkdir(parents=True, exist_ok=True)
+    _cleanup_expired_resume_pdf_previews(preview_dir)
+    token = secrets.token_urlsafe(24)
+    (preview_dir / f"{token}.pdf").write_bytes(pdf_bytes)
+    return token
 
 
 def _resume_pdf_debug_enabled(request: Request) -> bool:
@@ -368,7 +397,10 @@ def _render_contact_html(payload: ResumeData) -> str:
     return f"<div class='contact-strip'>{''.join(rows)}</div>"
 
 
-def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str, float]:
+def _render_resume_pdf_html(
+    payload: ResumeData,
+    document_title: Optional[str] = None,
+) -> tuple[str, str, str, str, float]:
     formatting = payload.formatting or ResumeFormatting()
     page_size = formatting.pageSize if formatting.pageSize in {"a4", "letter"} else "a4"
     page_width, page_height, page_name = _paper_dimensions(page_size)
@@ -745,6 +777,7 @@ def _render_resume_pdf_html(payload: ResumeData) -> tuple[str, str, str, str, fl
         <html>
             <head>
                 <meta charset="utf-8" />
+                <title>{html.escape(document_title or payload.fullName or "resume")}</title>
                 <style>{css}</style>
             </head>
             <body>
@@ -1188,7 +1221,16 @@ async def export_resume_pdf(
                 detail="Playwright is not installed for the client API service."
             ) from import_error
 
-        document_html, page_width, page_height, page_name, page_padding_pt = _render_resume_pdf_html(payload)
+        document_title = request.query_params.get("document_title") or payload.fullName or "resume"
+        filename_safe = "".join(
+            char if char.isalnum() or char in {"-", "_"} else "_"
+            for char in document_title.strip()
+        ).strip("_") or "resume"
+        pdf_filename = f"{filename_safe}.pdf"
+        document_html, page_width, page_height, page_name, page_padding_pt = _render_resume_pdf_html(
+            payload,
+            pdf_filename,
+        )
         viewport = _paper_viewport_dimensions(page_name)
         debug_enabled = _resume_pdf_debug_enabled(request)
         debug_dir = _resume_pdf_debug_dir()
@@ -1545,16 +1587,15 @@ async def export_resume_pdf(
             finally:
                 await browser.close()
 
-        filename_safe = "".join(
-            char if char.isalnum() or char in {"-", "_"} else "_"
-            for char in (payload.fullName or "resume").strip()
-        ).strip("_") or "resume"
+        preview_token = _store_resume_pdf_preview(pdf_bytes)
+        preview_path = f"/api/resume/pdf-preview/{preview_token}/{pdf_filename}"
 
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename_safe}.pdf"'
+                "Content-Disposition": f'attachment; filename="{pdf_filename}"',
+                "X-PDF-Preview-Path": preview_path,
             },
         )
 
@@ -1563,3 +1604,40 @@ async def export_resume_pdf(
     except Exception as e:
         logging.error("Error generating resume PDF", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {e}")
+
+
+@router.get(
+    "/pdf-preview/{token}/{filename}",
+    summary="Open a short-lived generated resume PDF preview",
+)
+async def get_resume_pdf_preview(token: str, filename: str) -> FileResponse:
+    if not token or any(char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for char in token):
+        raise HTTPException(status_code=404, detail="PDF preview not found.")
+
+    preview_path = _resume_pdf_preview_dir() / f"{token}.pdf"
+    try:
+        preview_age = time.time() - preview_path.stat().st_mtime
+    except OSError as error:
+        raise HTTPException(status_code=404, detail="PDF preview not found.") from error
+
+    if preview_age > PDF_PREVIEW_TTL_SECONDS:
+        try:
+            preview_path.unlink()
+        except OSError:
+            pass
+        raise HTTPException(status_code=404, detail="PDF preview expired.")
+
+    safe_filename = "".join(
+        char if char.isalnum() or char in {"-", "_", "."} else "_"
+        for char in filename
+    ).strip("._") or "resume.pdf"
+    if not safe_filename.lower().endswith(".pdf"):
+        safe_filename = f"{safe_filename}.pdf"
+
+    return FileResponse(
+        preview_path,
+        media_type="application/pdf",
+        filename=safe_filename,
+        content_disposition_type="inline",
+        headers={"Cache-Control": "private, no-store"},
+    )

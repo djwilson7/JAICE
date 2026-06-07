@@ -6,6 +6,7 @@ import { isResumeDebugEnabled } from "../resumeDiagnostics";
 
 type UseResumePdfPreviewParams = {
     resumeData: ResumeData;
+    resumeName: string;
     currentResumeFormatting: ResumeFormatting;
     setError: (message: string | null) => void;
     setSuccessMessage: (message: string | null) => void;
@@ -14,6 +15,7 @@ type UseResumePdfPreviewParams = {
 
 export const useResumePdfPreview = ({
     resumeData,
+    resumeName,
     currentResumeFormatting,
     setError,
     setSuccessMessage,
@@ -50,20 +52,23 @@ export const useResumePdfPreview = ({
             ...resumeData,
             formatting: currentResumeFormatting
         });
-        const filenameBase = (exportData.fullName || "resume").trim().replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, "_") || "resume";
+        const filenameBase = (resumeName || "resume").trim().replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, "_") || "resume";
+        const requestedFilename = `${filenameBase}.pdf`;
 
         setIsPdfPreviewOpen(true);
         setIsGeneratingPdfPreview(true);
 
         try {
-            const { blob, filename } = await exportResumePdf(exportData, isResumeDebugEnabled());
-            const objectUrl = URL.createObjectURL(blob);
+            const { blob, filename, previewUrl } = await exportResumePdf(exportData, resumeName, isResumeDebugEnabled());
+            const resolvedFilename = filename || requestedFilename;
+            const pdfFile = new File([blob], resolvedFilename, { type: "application/pdf" });
+            const objectUrl = previewUrl || URL.createObjectURL(pdfFile);
             setPdfPreviewUrl((currentUrl) => {
                 revokePdfPreviewUrl(currentUrl);
                 return objectUrl;
             });
-            setPdfPreviewBlob(blob);
-            setPdfPreviewFilename(filename || `${filenameBase}.pdf`);
+            setPdfPreviewBlob(pdfFile);
+            setPdfPreviewFilename(resolvedFilename);
         } catch (err) {
             console.error(err);
             closePdfPreview();

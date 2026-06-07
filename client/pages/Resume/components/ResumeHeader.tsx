@@ -32,20 +32,18 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
     loadingSave, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview
 }) => (
             <header 
-                className={`border-b px-6 py-2.5 flex flex-col items-stretch gap-1 print:hidden shrink-0 z-20 ${
-                    isLightMode ? "shadow-[0_12px_34px_rgba(15,23,42,0.12)]" : "shadow-[0_16px_45px_rgba(0,0,0,0.24)]"
-                }`}
+                className="absolute inset-x-0 top-0 z-40 mx-3 mt-3 flex flex-col items-stretch gap-1 rounded-md border px-4 py-2 print:hidden"
                 style={headerShellStyle}
             >
-                <div className="flex items-center justify-between gap-4">
+                <div className="relative flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         <button
                             type="button"
                             onClick={() => setIsLeftRailCollapsed((value) => !value)}
                             className={`${headerActionButtonClass} ${
-                                isLeftRailCollapsed
-                                    ? isLightMode ? "text-slate-500 hover:text-slate-900" : "text-slate-500 hover:text-slate-100"
-                                    : isLightMode ? "text-sky-700 hover:text-sky-900" : "text-sky-300 hover:text-sky-100"
+                                !isLeftRailCollapsed
+                                    ? "!border-sky-500/35 !bg-sky-500/15 !text-sky-500"
+                                    : ""
                             }`}
                             title={isLeftRailCollapsed ? "Open resume drawer" : "Close resume drawer"}
                             aria-label={isLeftRailCollapsed ? "Open resume drawer" : "Close resume drawer"}
@@ -97,17 +95,26 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         </div>
                     </div>
 
+                    <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-2 select-none">
+                        {(isDirty || isDraft) ? (
+                            <>
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_7px_rgba(251,191,36,0.55)]" />
+                                <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-600" : "text-slate-400"} whitespace-nowrap font-medium tracking-wide`}>
+                                    {isDraft ? "Unsaved AI draft" : "Unsaved changes"}
+                                </span>
+                            </>
+                        ) : (
+                            <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-500" : "text-slate-500"} whitespace-nowrap font-medium tracking-wide`}>Saved</span>
+                        )}
+                    </div>
+
                     <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={() => {
                                 setIsMaster(!isMaster);
                                 setIsDirty(true);
                             }}
-                            className={`${headerActionButtonClass} ${
-                                isMaster
-                                    ? "text-amber-400 hover:text-amber-300"
-                                    : "text-slate-500 hover:text-amber-400"
-                            }`}
+                            className={headerActionButtonClass}
                             title={isMaster ? "Active Master Profile (Click to unset)" : "Set as Master Profile"}
                         >
                             {isMaster ? (
@@ -124,11 +131,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         <button
                             onClick={handleSaveResume}
                             disabled={loadingSave || (!isDirty && activeResumeId !== null)}
-                            className={`${headerActionButtonClass} ${
-                                isDirty || activeResumeId === null
-                                    ? isLightMode ? "text-sky-700 hover:text-sky-900" : "text-sky-300 hover:text-sky-100"
-                                    : isLightMode ? "text-slate-500" : "text-slate-400"
-                            } disabled:!cursor-default disabled:!opacity-100`}
+                            className={`${headerActionButtonClass} disabled:!cursor-default disabled:!opacity-100`}
                             title="Save current resume changes"
                             aria-label="Save current resume changes"
                         >
@@ -145,11 +148,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             type="button"
                             onClick={togglePdfPreview}
                             disabled={isGeneratingPdfPreview}
-                            className={`${headerActionButtonClass} ${
-                                isPdfPreviewOpen
-                                    ? isLightMode ? "text-sky-700 hover:text-sky-900" : "text-sky-300 hover:text-sky-100"
-                                    : isLightMode ? "text-slate-600 hover:text-slate-950" : "text-slate-400 hover:text-slate-100"
-                            }`}
+                            className={headerActionButtonClass}
                             title={isPdfPreviewOpen ? "Back to editing" : "Preview PDF"}
                             aria-label={isPdfPreviewOpen ? "Back to editing" : "Preview PDF"}
                             aria-pressed={isPdfPreviewOpen}
@@ -166,7 +165,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         <button
                             onClick={openPdfPreview}
                             disabled={isGeneratingPdfPreview}
-                            className={`${headerActionButtonClass} ${isLightMode ? "text-slate-600 hover:text-slate-950" : "text-slate-400 hover:text-slate-100"}`}
+                            className={headerActionButtonClass}
                             title="Preview PDF before download"
                             aria-label="Preview PDF before download"
                         >
@@ -182,9 +181,9 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             type="button"
                             onClick={() => setIsRightRailCollapsed((value) => !value)}
                             className={`${headerActionButtonClass} ${
-                                isRightRailCollapsed
-                                    ? isLightMode ? "text-slate-500 hover:text-slate-900" : "text-slate-500 hover:text-slate-100"
-                                    : isLightMode ? "text-sky-700 hover:text-sky-900" : "text-sky-300 hover:text-sky-100"
+                                !isRightRailCollapsed
+                                    ? "!border-sky-500/35 !bg-sky-500/15 !text-sky-500"
+                                    : ""
                             }`}
                             title={isRightRailCollapsed ? "Open Jaice drawer" : "Close Jaice drawer"}
                             aria-label={isRightRailCollapsed ? "Open Jaice drawer" : "Close Jaice drawer"}
@@ -196,18 +195,6 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             </svg>
                         </button>
                     </div>
-                </div>
-                <div className="flex h-4 items-center justify-center gap-2 select-none">
-                    {(isDirty || isDraft) ? (
-                        <>
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_7px_rgba(251,191,36,0.55)]" />
-                            <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-600" : "text-slate-400"} font-medium tracking-wide`}>
-                                {isDraft ? "Unsaved AI draft" : "Unsaved changes"}
-                            </span>
-                        </>
-                    ) : (
-                        <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-500" : "text-slate-500"} font-medium tracking-wide`}>Saved</span>
-                    )}
                 </div>
             </header>
 

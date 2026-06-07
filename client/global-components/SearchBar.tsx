@@ -14,6 +14,7 @@ interface SearchBarProps {
   focusSignal?: number;
   collapsed?: boolean;
   onCollapsedActivate?: () => void;
+  alwaysShowInput?: boolean;
   className?: string;
   variant?: "standard" | "premium";
 }
@@ -27,6 +28,7 @@ export function SearchBar({
   focusSignal,
   collapsed = false,
   onCollapsedActivate,
+  alwaysShowInput = false,
   className = "",
   variant = "standard",
 }: SearchBarProps) {
@@ -35,7 +37,7 @@ export function SearchBar({
   const [isExpanded, setIsExpanded] = useState(false);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const showInput = !collapsed && (isExpanded || searchQuery !== "");
+  const showInput = !collapsed && (alwaysShowInput || isExpanded || searchQuery !== "");
 
   const focusInput = useCallback(() => {
     setIsExpanded(true);

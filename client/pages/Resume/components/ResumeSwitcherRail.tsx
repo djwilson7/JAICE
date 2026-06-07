@@ -1,6 +1,7 @@
 import React from "react";
 import { SearchBar } from "@/global-components/SearchBar";
 import type { SavedResume } from "../types";
+import { ResumeRailDivider } from "./ResumeRailDivider";
 
 type ResumeSwitcherRailProps = {
     isLightMode: boolean;
@@ -26,21 +27,49 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
     isLightMode, isLeftRailCollapsed, railShellStyle, railHeaderRowClass, railTitleClass, railTitleStyle,
     headerActionButtonClass, headerActionIconClass, handleCreateNewClick, searchQuery, setSearchQuery,
     resumeSearchFocusSignal, loadingList, filteredResumes, activeResumeId, loadResumeIntoWorkspace, handleDeleteResume
-}) => (
+}) => {
+    const listContainerRef = React.useRef<HTMLDivElement>(null);
+    const [showBottomScrollShadow, setShowBottomScrollShadow] = React.useState(false);
+
+    const updateBottomScrollShadow = React.useCallback(() => {
+        const container = listContainerRef.current;
+        if (!container) return;
+
+        const maxScrollTop = container.scrollHeight - container.clientHeight;
+        setShowBottomScrollShadow(
+            maxScrollTop > 8 && container.scrollTop < maxScrollTop - 8
+        );
+    }, []);
+
+    React.useEffect(() => {
+        const container = listContainerRef.current;
+        if (!container) return;
+
+        updateBottomScrollShadow();
+
+        const resizeObserver = typeof ResizeObserver === "undefined"
+            ? null
+            : new ResizeObserver(updateBottomScrollShadow);
+        resizeObserver?.observe(container);
+
+        return () => resizeObserver?.disconnect();
+    }, [filteredResumes, loadingList, updateBottomScrollShadow]);
+
+    return (
             <aside 
-                className={`h-full min-h-0 self-stretch border-r flex flex-col print:hidden shrink-0 z-10 overflow-hidden transition-[width,border-color,box-shadow] duration-300 ${
-                    isLeftRailCollapsed ? "w-0 border-transparent shadow-none" : isLightMode ? "w-72 shadow-[18px_0_50px_rgba(15,23,42,0.12)]" : "w-72 shadow-[18px_0_60px_rgba(0,0,0,0.22)]"
+                className={`absolute bottom-0 left-0 top-16 z-30 mb-3 mt-1 min-h-0 rounded-md border flex flex-col print:hidden overflow-hidden transition-[width,margin,opacity,border-color,box-shadow] duration-300 ${
+                    isLeftRailCollapsed ? "ml-0 w-0 border-0 opacity-0 shadow-none pointer-events-none" : "ml-3 w-72 opacity-100"
                 }`}
-                style={{ ...railShellStyle, borderColor: isLeftRailCollapsed ? "transparent" : railShellStyle.borderColor }}
+                style={isLeftRailCollapsed ? { borderColor: "transparent" } : railShellStyle}
             >
                 <div
-                    className={`flex h-full min-h-0 w-72 flex-col gap-5 p-5 transition-opacity duration-150 ${
+                    className={`flex h-full min-h-0 w-72 flex-col gap-5 p-2.5 transition-opacity duration-150 ${
                         isLeftRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
                     }`}
                     style={{ fontFamily: "var(--font-body)" }}
                 >
-                    <div>
-                    <div className={`${railHeaderRowClass} mb-3 justify-between items-center w-full`}>
+                    <div className="flex flex-col">
+                    <div className={`${railHeaderRowClass} justify-between items-center w-full`}>
                         <div className="min-w-0 overflow-hidden">
                             <div className={railTitleClass} style={railTitleStyle}>Resumes</div>
                         </div>
@@ -55,7 +84,8 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                             </svg>
                         </button>
                     </div>
-                    <div className="mt-3.5">
+                    <ResumeRailDivider />
+                    <div className="mt-2.5">
                         <SearchBar
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}
@@ -63,14 +93,20 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                             searchTitle={isLeftRailCollapsed ? "Expand and search resumes" : "Search resumes"}
                             inputTitle="Search by resume name or candidate name."
                             focusSignal={resumeSearchFocusSignal}
-                            className="!w-full"
+                            alwaysShowInput
+                            className="resume-rail-search !w-full !shadow-none focus-within:!shadow-none"
                             variant="premium"
                         />
                     </div>
                 </div>
 
                 {/* List container */}
-                <div className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-2.5 pr-1 scrollbar-thin">
+                <div className="relative min-h-0 flex-1">
+                <div
+                    ref={listContainerRef}
+                    onScroll={updateBottomScrollShadow}
+                    className="scrollbar-thin flex min-h-0 h-full flex-col gap-2.5 overflow-y-auto pr-1"
+                >
                     {loadingList ? (
                         <div className="flex flex-col items-center justify-center gap-2 text-slate-500 text-xs py-8">
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-500"></div>
@@ -97,8 +133,8 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                                     className={`group relative flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 cursor-pointer transition-all duration-300 ${
                                         isActive
                                             ? isLightMode
-                                                ? "bg-white/82 border-sky-500/45 text-slate-900 shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
-                                                : "bg-slate-950/60 border-sky-400/45 text-slate-100 shadow-[0_10px_32px_rgba(0,0,0,0.34)]"
+                                                ? "bg-white/82 border-sky-500/45 text-slate-900"
+                                                : "bg-slate-950/60 border-sky-400/45 text-slate-100"
                                             : isLightMode
                                                 ? "hover:bg-white/60 border-transparent text-slate-600 hover:text-slate-900"
                                                 : "hover:bg-slate-800/30 border-transparent text-slate-400 hover:text-slate-200"
@@ -106,7 +142,7 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                                 >
                                     {/* Selection left stripe */}
                                     {isActive && (
-                                        <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-sky-400 to-blue-500 rounded-r shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
+                                        <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-sky-400 to-blue-500 rounded-r" />
                                     )}
                                     
                                     <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-1">
@@ -150,8 +186,18 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                         })
                     )}
                 </div>
+                <div
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 transition-opacity duration-200 ${
+                        isLightMode
+                            ? "bg-gradient-to-t from-slate-400/30 via-slate-300/12 to-transparent"
+                            : "bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+                    } ${showBottomScrollShadow ? "opacity-100" : "opacity-0"}`}
+                />
+                </div>
                 </div>
             </aside>
 
 
-);
+    );
+};

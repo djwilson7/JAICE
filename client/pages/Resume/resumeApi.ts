@@ -78,8 +78,10 @@ export const deleteSavedResume = (id: string) => {
     }) as Promise<{ status: "success" }>;
 };
 
-export const exportResumePdf = (resumeData: ResumeData, debugPdf = false) => {
-    const path = debugPdf ? "/api/resume/export-pdf?debug_pdf=1" : "/api/resume/export-pdf";
+export const exportResumePdf = (resumeData: ResumeData, documentTitle: string, debugPdf = false) => {
+    const params = new URLSearchParams({ document_title: documentTitle });
+    if (debugPdf) params.set("debug_pdf", "1");
+    const path = `/api/resume/export-pdf?${params.toString()}`;
     return apiBlob(path, {
         method: "POST",
         body: JSON.stringify(resumeData)

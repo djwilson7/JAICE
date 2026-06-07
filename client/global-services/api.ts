@@ -66,8 +66,10 @@ export async function apiBlob(path: string, init: RequestInit = {}) {
 
     if (!response.ok) throw new Error(`API request failed: ${response.status} ${response.statusText}`);
 
+    const previewPath = response.headers.get("X-PDF-Preview-Path");
     return {
         blob: await response.blob(),
         filename: response.headers.get("Content-Disposition")?.match(/filename="?([^"]+)"?/)?.[1] || null,
+        previewUrl: previewPath ? `${BASE_URL}${previewPath}` : null,
     };
 }

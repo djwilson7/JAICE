@@ -7,6 +7,8 @@ type ResumeCanvasProps = {
     resumeDocumentContentRef: React.RefObject<HTMLDivElement | null>;
     canvasNeedsHorizontalScroll: boolean;
     canvasNeedsVerticalScroll: boolean;
+    canvasViewportStyle: React.CSSProperties;
+    canvasHorizontalOverflow: number;
     scaledCanvasWidth: number;
     scaledCanvasHeight: number;
     paperMetrics: PaperMetrics;
@@ -27,6 +29,8 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     resumeDocumentContentRef,
     canvasNeedsHorizontalScroll,
     canvasNeedsVerticalScroll,
+    canvasViewportStyle,
+    canvasHorizontalOverflow,
     scaledCanvasWidth,
     scaledCanvasHeight,
     paperMetrics,
@@ -40,11 +44,23 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     isMarginPreviewVisible,
     pageMarginPt,
     children
-}) => (
+}) => {
+    React.useEffect(() => {
+        const viewport = canvasViewportRef.current;
+        if (!viewport) return;
+
+        viewport.scrollTo({
+            left: canvasHorizontalOverflow / 2,
+            behavior: "auto"
+        });
+    }, [canvasHorizontalOverflow, canvasViewportRef]);
+
+    return (
                 <div
                     ref={canvasViewportRef}
-                    className="min-h-0 flex-1 overscroll-contain px-8 py-10 print:p-0 relative"
+                    className="no-scrollbar relative box-border min-h-0 flex-1 overscroll-contain print:p-0"
                     style={{
+                        ...canvasViewportStyle,
                         overflowX: canvasNeedsHorizontalScroll ? "auto" : "hidden",
                         overflowY: canvasNeedsVerticalScroll ? "auto" : "hidden"
                     }}
@@ -122,4 +138,5 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
 
                 </div>
 
-);
+    );
+};

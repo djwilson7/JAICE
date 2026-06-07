@@ -1,6 +1,7 @@
 import React from "react";
 import { ChatMarkdown } from "@/global-components/ChatMarkdown";
 import type { ResumeChatMessage } from "../types";
+import { ResumeRailDivider } from "./ResumeRailDivider";
 
 type ResumeChatRailProps = {
     isLightMode: boolean;
@@ -9,6 +10,8 @@ type ResumeChatRailProps = {
     railHeaderRowClass: string;
     railTitleClass: string;
     railTitleStyle: React.CSSProperties;
+    headerActionButtonClass: string;
+    headerActionIconClass: string;
     chatContainerRef: React.RefObject<HTMLDivElement | null>;
     chatInputRef: React.RefObject<HTMLTextAreaElement | null>;
     chatMessages: ResumeChatMessage[];
@@ -17,6 +20,10 @@ type ResumeChatRailProps = {
     isChatResponding: boolean;
     isAssistantGenerating: boolean;
     showBackToBottom: boolean;
+    chatScrollShadow: {
+        top: boolean;
+        bottom: boolean;
+    };
     scrollChatToBottom: () => void;
     isChatInputCollapsed: boolean;
     setIsChatInputCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
@@ -28,30 +35,49 @@ type ResumeChatRailProps = {
 
 export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
     isLightMode, isRightRailCollapsed, rightRailShellStyle, railHeaderRowClass,
-    railTitleClass, railTitleStyle, chatContainerRef, chatInputRef,
+    railTitleClass, railTitleStyle, headerActionButtonClass, headerActionIconClass, chatContainerRef, chatInputRef,
     chatMessages, copiedChatMessageIndex, handleCopyAssistantMessage, isChatResponding, isAssistantGenerating,
-    showBackToBottom, scrollChatToBottom, isChatInputCollapsed, setIsChatInputCollapsed, chatInput, setChatInput,
+    showBackToBottom, chatScrollShadow, scrollChatToBottom, isChatInputCollapsed, setIsChatInputCollapsed, chatInput, setChatInput,
     handleSendChatMessage, handleStopChatMessage
 }) => (
             <aside 
-                    className={`relative h-full min-h-0 self-stretch border-l flex flex-col print:hidden overflow-hidden shrink-0 animate-slide-left transition-[width,border-color,box-shadow] duration-300 ${
-                        isRightRailCollapsed ? "w-0 border-transparent shadow-none" : isLightMode ? "w-88 shadow-[-18px_0_50px_rgba(15,23,42,0.12)]" : "w-88 shadow-[-18px_0_60px_rgba(0,0,0,0.22)]"
+                    className={`absolute bottom-0 right-0 top-16 z-30 mb-3 mt-1 min-h-0 rounded-md border flex flex-col print:hidden overflow-hidden animate-slide-left transition-[width,margin,opacity,border-color,box-shadow] duration-300 ${
+                        isRightRailCollapsed ? "mr-0 w-0 border-0 opacity-0 shadow-none pointer-events-none" : "mr-3 w-72 opacity-100"
                     }`}
-                    style={{ ...rightRailShellStyle, borderColor: isRightRailCollapsed ? "transparent" : rightRailShellStyle.borderColor }}
+                    style={isRightRailCollapsed ? { borderColor: "transparent" } : rightRailShellStyle}
                 >
-                    <div className={`absolute inset-0 flex min-h-0 w-88 flex-col gap-4 p-5 pb-0 transition-opacity duration-150 ${
+                    <div className={`absolute inset-0 flex min-h-0 w-72 flex-col gap-2.5 p-2.5 transition-opacity duration-150 ${
                         isRightRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
                     }`}>
                     <div className={`${railHeaderRowClass} justify-between shrink-0`}>
                         <div className="flex items-center gap-2">
                             <div className={railTitleClass} style={railTitleStyle}>Jaice</div>
                         </div>
+                        <button
+                            type="button"
+                            onClick={scrollChatToBottom}
+                            className={`${headerActionButtonClass} transition-opacity ${
+                                showBackToBottom
+                                    ? "opacity-100"
+                                    : "pointer-events-none opacity-0"
+                            }`}
+                            title="Back to bottom"
+                            aria-label="Back to bottom"
+                            aria-hidden={!showBackToBottom}
+                            tabIndex={showBackToBottom ? 0 : -1}
+                        >
+                            <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M12 19l7-7M12 19l-7-7" />
+                            </svg>
+                        </button>
                     </div>
+                    <ResumeRailDivider />
 
                     {/* Chat Messages Thread */}
-                    <div 
+                    <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-b-xl">
+                    <div
                         ref={chatContainerRef}
-                        className="flex-1 min-h-0 overflow-y-auto pr-1 py-1 pb-44 space-y-4 no-scrollbar flex flex-col"
+                        className="no-scrollbar flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto py-1 pb-44 pr-1"
                     >
                         {chatMessages.map((msg, i) => {
                             if (msg.sender === "assistant" && msg.text === "") return null;
@@ -64,16 +90,16 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                         style={{
                                             borderRadius: "16px"
                                         }}
-                                        className={`relative w-full px-5 py-3.5 text-xs text-left leading-relaxed break-words ${
+                                        className={`group/message relative w-full px-5 py-3.5 text-xs text-left leading-relaxed break-words ${
                                             msg.sender === "user" 
                                                 ? `whitespace-pre-wrap ${
                                                     isLightMode
-                                                        ? "bg-white/76 text-slate-900 border border-slate-300/80 shadow-[0_10px_24px_rgba(15,23,42,0.10)]"
-                                                        : "bg-slate-100/[0.075] text-slate-50 border border-slate-400/20 shadow-[0_10px_28px_rgba(2,6,23,0.32)]" 
+                                                        ? "bg-white/76 text-slate-900 border border-slate-300/80"
+                                                        : "bg-slate-100/[0.075] text-slate-50 border border-slate-400/20"
                                                   }`
                                                 : isLightMode
-                                                    ? "bg-sky-50/90 pr-12 text-slate-900 border border-sky-300/70 shadow-lg shadow-sky-600/5"
-                                                    : "bg-slate-950/45 pr-12 text-slate-100 border border-sky-500/40 shadow-lg shadow-sky-600/5"
+                                                    ? "bg-sky-50/90 text-slate-900 border border-sky-300/70"
+                                                    : "bg-slate-950/45 text-slate-100 border border-sky-500/40"
                                         }`}
                                     >
                                         {msg.sender === "assistant" ? (
@@ -81,7 +107,7 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                                 <button
                                                     type="button"
                                                     onClick={() => handleCopyAssistantMessage(msg, i)}
-                                                    className={`absolute right-3 top-3 !inline-flex h-7 !h-7 w-7 !w-7 items-center justify-center rounded-md border !p-0 transition-[background,border-color,color,transform] active:scale-95 ${
+                                                    className={`absolute right-3 top-3 !inline-flex h-7 !h-7 w-7 !w-7 translate-x-[calc(100%+0.75rem)] items-center justify-center rounded-md border !p-0 opacity-0 transition-[background,border-color,color,opacity,transform] group-hover/message:translate-x-0 group-hover/message:opacity-100 focus:translate-x-0 focus:opacity-100 active:scale-95 ${
                                                         isLightMode
                                                             ? "border-sky-200/80 bg-white/70 text-slate-500 hover:border-sky-300 hover:bg-white hover:text-slate-900"
                                                             : "border-white/12 bg-slate-900/70 text-slate-400 hover:border-sky-300/35 hover:bg-slate-800/80 hover:text-slate-100"
@@ -181,35 +207,26 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                             </div>
                         )}
                     </div>
-
                     <div
                         aria-hidden="true"
-                        className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-px bg-transparent ${
-                            isLightMode ? "shadow-[0_-28px_44px_28px_rgba(226,232,240,0.72)]" : "shadow-[0_-28px_44px_28px_rgba(2,6,23,0.36)]"
-                        }`}
+                        className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-10 transition-opacity duration-200 ${
+                            isLightMode
+                                ? "bg-gradient-to-b from-slate-400/30 via-slate-300/12 to-transparent"
+                                : "bg-gradient-to-b from-black/55 via-black/20 to-transparent"
+                        } ${chatScrollShadow.top ? "opacity-100" : "opacity-0"}`}
                     />
+                    <div
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 transition-opacity duration-200 ${
+                            isLightMode
+                                ? "bg-gradient-to-t from-slate-400/30 via-slate-300/12 to-transparent"
+                                : "bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+                        } ${chatScrollShadow.bottom ? "opacity-100" : "opacity-0"}`}
+                    />
+                    </div>
 
                     {/* Bottom Chat Input & Send Button Container */}
-                    <div className="absolute bottom-5 left-5 right-5 z-20 flex flex-col gap-2">
-                        <button
-                            type="button"
-                            onClick={scrollChatToBottom}
-                            className={`absolute -top-11 right-0 !inline-flex h-8 !h-8 w-8 !w-8 items-center justify-center rounded-full border !p-0 backdrop-blur-md transition-all duration-200 ${
-                                isLightMode
-                                    ? "border-slate-300/80 bg-white/86 text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.14)] hover:border-sky-400/60 hover:bg-white hover:text-slate-950"
-                                    : "border-white/14 bg-slate-950/70 text-slate-300 shadow-[0_10px_28px_rgba(2,6,23,0.45)] hover:border-sky-300/40 hover:bg-slate-900/80 hover:text-white"
-                            } ${
-                                showBackToBottom
-                                    ? "translate-y-0 opacity-100"
-                                    : "pointer-events-none translate-y-2 opacity-0"
-                            }`}
-                            title="Back to bottom"
-                            aria-label="Back to bottom"
-                        >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M12 19l7-7M12 19l-7-7" />
-                            </svg>
-                        </button>
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex flex-col gap-2">
                         <div 
                             style={{
                                 background: isLightMode
@@ -221,8 +238,12 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                             }}
                             className={`flex flex-col w-full rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-sky-300/12 transition-all ${
                                 isLightMode
-                                    ? "border-slate-300/80 focus-within:border-sky-500/45 shadow-[0_12px_32px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.86)]"
-                                    : "border-white/18 focus-within:border-sky-200/45 shadow-[0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(15,23,42,0.42)]"
+                                    ? `border-slate-300/80 focus-within:border-sky-500/45 ${
+                                        chatScrollShadow.bottom ? "shadow-[0_-18px_32px_rgba(15,23,42,0.18)]" : "shadow-none"
+                                    }`
+                                    : `border-white/18 focus-within:border-sky-200/45 ${
+                                        chatScrollShadow.bottom ? "shadow-[0_-20px_36px_rgba(0,0,0,0.55)]" : "shadow-none"
+                                    }`
                             }`}
                         >
                              <textarea

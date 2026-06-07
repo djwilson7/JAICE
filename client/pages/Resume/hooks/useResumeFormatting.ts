@@ -8,7 +8,26 @@ import {
     normalizeResumeFormatting
 } from "../formatting";
 
-export const useResumeFormatting = (isLightMode: boolean) => {
+type UseResumeFormattingParams = {
+    isLightMode: boolean;
+    isLeftRailCollapsed: boolean;
+    isRightRailCollapsed: boolean;
+};
+
+const CANVAS_EDGE_GUTTER = 32;
+const OVERLAY_EDGE_INSET = 12;
+const CANVAS_HEADER_INSET = 80;
+const CANVAS_TOOLBAR_INSET = 88;
+const CANVAS_OPEN_SHELF_FULL_INSET = 146;
+const CANVAS_OPEN_SHELF_COMPACT_INSET = 200;
+const CANVAS_RAIL_INSET = 300;
+const PAGE_STYLE_SHELF_EXPANDED_MIN_WIDTH = 860;
+
+export const useResumeFormatting = ({
+    isLightMode,
+    isLeftRailCollapsed,
+    isRightRailCollapsed
+}: UseResumeFormattingParams) => {
     const canvasViewportRef = useRef<HTMLDivElement>(null);
     const resumeDocumentContentRef = useRef<HTMLDivElement>(null);
     const [canvasViewportSize, setCanvasViewportSize] = useState({ width: 0, height: 0 });
@@ -96,27 +115,63 @@ export const useResumeFormatting = (isLightMode: boolean) => {
     const resumePageCount = Math.max(1, Math.ceil(resumeDocumentBodyHeight / resumePageContentHeight));
     const resumePageStride = paperMetrics.height;
     const resumeCanvasHeight = resumePageCount * paperMetrics.height;
+    const canvasHorizontalInsets = {
+        right: isRightRailCollapsed ? CANVAS_EDGE_GUTTER : CANVAS_RAIL_INSET,
+        left: isLeftRailCollapsed ? CANVAS_EDGE_GUTTER : CANVAS_RAIL_INSET
+    };
+    const viewableCanvasWidth = Math.max(
+        0,
+        canvasViewportSize.width - canvasHorizontalInsets.left - canvasHorizontalInsets.right
+    );
+    const isPageStyleShelfCompact =
+        viewableCanvasWidth > 0 &&
+        viewableCanvasWidth < PAGE_STYLE_SHELF_EXPANDED_MIN_WIDTH;
+    const openShelfBottomInset = isPageStyleShelfCompact
+        ? CANVAS_OPEN_SHELF_COMPACT_INSET
+        : CANVAS_OPEN_SHELF_FULL_INSET;
+    const canvasInsets = {
+        top: CANVAS_HEADER_INSET,
+        right: canvasHorizontalInsets.right,
+        bottom: isPageStyleShelfOpen ? openShelfBottomInset : CANVAS_TOOLBAR_INSET,
+        left: canvasHorizontalInsets.left
+    };
+    const viewableCanvasHeight = Math.max(
+        0,
+        canvasViewportSize.height - canvasInsets.top - canvasInsets.bottom
+    );
     const fitZoom = useMemo(() => {
-        if (!canvasViewportSize.width || !canvasViewportSize.height) return 1;
-
-        const closedToolbarChromeHeight = 88;
-        const openShelfChromeHeight = 200;
-        const availableWidth = Math.max(0, canvasViewportSize.width - 64);
-        const availableHeight = Math.max(
-            0,
-            canvasViewportSize.height - (isPageStyleShelfOpen ? openShelfChromeHeight : closedToolbarChromeHeight)
-        );
-        return clampFitZoom(Math.min(availableWidth / paperMetrics.width, availableHeight / paperMetrics.height));
-    }, [canvasViewportSize.height, canvasViewportSize.width, isPageStyleShelfOpen, paperMetrics.height, paperMetrics.width]);
+        if (!viewableCanvasWidth || !viewableCanvasHeight) return 1;
+        return clampFitZoom(Math.min(
+            viewableCanvasWidth / paperMetrics.width,
+            viewableCanvasHeight / paperMetrics.height
+        ));
+    }, [
+        paperMetrics.height,
+        paperMetrics.width,
+        viewableCanvasHeight,
+        viewableCanvasWidth
+    ]);
     const canvasZoom = zoomMode === "fit" ? fitZoom : manualZoom;
     const zoomPercent = Math.round(animatedCanvasZoom * 100);
     const scaledCanvasWidth = paperMetrics.width * animatedCanvasZoom;
     const scaledCanvasHeight = resumeCanvasHeight * animatedCanvasZoom;
-    const canvasHorizontalPadding = 64;
-    const canvasVerticalPadding = 80;
-    const canvasNeedsHorizontalScroll = scaledCanvasWidth + canvasHorizontalPadding > canvasViewportSize.width + 1;
+    const canvasHorizontalOverflow = Math.max(0, scaledCanvasWidth - viewableCanvasWidth);
+    const canvasVerticalPadding = canvasInsets.top + canvasInsets.bottom;
+    const canvasNeedsHorizontalScroll = canvasHorizontalOverflow > 1;
     const canvasNeedsVerticalScroll = scaledCanvasHeight + canvasVerticalPadding > canvasViewportSize.height + 1;
-    const isPageStyleShelfCompact = canvasViewportSize.width > 0 && canvasViewportSize.width <= 1000;
+    const canvasViewportStyle: React.CSSProperties = {
+        paddingTop: `${canvasInsets.top}px`,
+        paddingRight: `${canvasInsets.right}px`,
+        paddingBottom: `${canvasInsets.bottom}px`,
+        paddingLeft: `${canvasInsets.left}px`
+    };
+    const pdfPreviewViewportStyle: React.CSSProperties = {
+        padding: `${OVERLAY_EDGE_INSET}px`
+    };
+    const bottomControlsViewportStyle: React.CSSProperties = {
+        paddingRight: `${canvasInsets.right}px`,
+        paddingLeft: `${canvasInsets.left}px`
+    };
     const printWidth = pageSize === "a4" ? "210mm" : "8.5in";
     const printHeight = pageSize === "a4" ? "297mm" : "11in";
     const documentSectionGapPx = SECTION_GAP_PX[paperLayoutFormat] ?? SECTION_GAP_PX.standard;
@@ -174,31 +229,41 @@ export const useResumeFormatting = (isLightMode: boolean) => {
         });
     };
 
+    const closePageStyleShelf = () => {
+        setIsPageStyleShelfOpen(false);
+    };
+
     const resumeChromeRootClass = isLightMode
         ? "flex h-full min-h-0 w-full flex-col text-slate-900 relative overflow-hidden select-none"
         : "flex h-full min-h-0 w-full flex-col text-slate-100 relative overflow-hidden select-none";
-    const resumeChromeBackground = isLightMode
-        ? "radial-gradient(circle at 45% 0%, rgba(14, 116, 144, 0.10), transparent 34%), linear-gradient(135deg, #e5e7eb, #d1d5db 48%, #e2e8f0)"
-        : "radial-gradient(circle at 45% 0%, rgba(14, 116, 144, 0.18), transparent 34%), linear-gradient(135deg, rgba(2, 6, 23, 0.94), rgba(15, 23, 42, 0.98) 46%, rgba(2, 6, 23, 0.96))";
+    const resumeChromeBackground = "var(--page-gradient)";
     const headerShellStyle: React.CSSProperties = {
-        background: isLightMode ? "rgba(248, 250, 252, 0.86)" : "rgba(2, 6, 23, 0.72)",
-        borderColor: isLightMode ? "rgba(100, 116, 139, 0.24)" : "rgba(148, 163, 184, 0.14)",
-        backdropFilter: "blur(18px)",
+        background: "rgba(var(--primary-one-rgb), 1)",
+        borderColor: "rgba(var(--primary-five-rgb), 0.14)",
+        borderTopColor: "rgba(var(--primary-five-rgb), 0.22)",
+        borderLeftColor: "rgba(var(--primary-five-rgb), 0.18)",
+        boxShadow: "none",
+        backdropFilter: "blur(22px) saturate(145%)",
+        WebkitBackdropFilter: "blur(22px) saturate(145%)",
         fontFamily: "var(--font-body)"
     };
     const railShellStyle: React.CSSProperties = {
-        background: isLightMode
-            ? "linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(226, 232, 240, 0.82))"
-            : "linear-gradient(180deg, rgba(2, 6, 23, 0.84), rgba(15, 23, 42, 0.72))",
-        borderColor: isLightMode ? "rgba(100, 116, 139, 0.24)" : "rgba(148, 163, 184, 0.14)",
-        backdropFilter: "blur(18px)"
+        background: "rgba(var(--primary-one-rgb), 1)",
+        borderColor: "rgba(var(--primary-five-rgb), 0.14)",
+        borderTopColor: "rgba(var(--primary-five-rgb), 0.22)",
+        borderLeftColor: "rgba(var(--primary-five-rgb), 0.18)",
+        boxShadow: "none",
+        backdropFilter: "blur(22px) saturate(145%)",
+        WebkitBackdropFilter: "blur(22px) saturate(145%)"
     };
     const rightRailShellStyle: React.CSSProperties = {
-        background: isLightMode
-            ? "linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(226, 232, 240, 0.86))"
-            : "linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.78))",
-        borderColor: isLightMode ? "rgba(100, 116, 139, 0.24)" : "rgba(148, 163, 184, 0.14)",
-        backdropFilter: "blur(18px)",
+        background: "rgba(var(--primary-one-rgb), 1)",
+        borderColor: "rgba(var(--primary-five-rgb), 0.14)",
+        borderTopColor: "rgba(var(--primary-five-rgb), 0.22)",
+        borderLeftColor: "rgba(var(--primary-five-rgb), 0.18)",
+        boxShadow: "none",
+        backdropFilter: "blur(22px) saturate(145%)",
+        WebkitBackdropFilter: "blur(22px) saturate(145%)",
         fontFamily: "var(--font-body)"
     };
     const toolbarSurfaceStyle: React.CSSProperties = {
@@ -214,17 +279,12 @@ export const useResumeFormatting = (isLightMode: boolean) => {
     const railTitleClass = `whitespace-nowrap ${isLightMode ? "text-slate-700" : "text-slate-300"} font-semibold transition-opacity duration-150`;
     const railTitleStyle = { fontSize: "14px", letterSpacing: "0.025em", fontFamily: "var(--font-body)" };
     const railHeaderRowClass = "flex h-9 shrink-0 items-center";
-    const headerActionButtonClass = `!inline-flex h-8 !h-8 w-8 !w-8 shrink-0 items-center justify-center rounded-lg border border-transparent !bg-transparent !p-0 transition-colors duration-200 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-        isLightMode ? "hover:border-slate-300/70 hover:!bg-slate-900/[0.055]" : "hover:border-white/10 hover:!bg-white/[0.055]"
-    }`;
+    const headerActionButtonClass = `!inline-flex h-8 !h-8 w-8 !w-8 shrink-0 items-center justify-center !rounded-md border border-transparent !bg-transparent !p-0 !text-[var(--text-primary)] !shadow-none transition-[background,border-color,color] duration-200 hover:!rounded-md hover:border-[rgba(var(--primary-five-rgb),0.14)] hover:!bg-[rgba(var(--primary-five-rgb),0.08)] hover:!text-[var(--text-primary)] hover:!shadow-none hover:!transform-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-30`;
     const headerActionIconClass = "h-4 w-4";
     const documentToolButtonClass = `resume-edit-control !inline-flex h-5 !h-5 w-7 !w-7 min-w-7 shrink-0 items-center justify-center rounded-none border border-transparent !bg-transparent !p-0 shadow-none transition-[background,border-color,color,transform] active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 ${
         isLightMode ? "text-slate-600 hover:border-slate-300 hover:!bg-slate-900/[0.06] hover:text-slate-950" : "text-slate-400 hover:border-white/14 hover:!bg-white/[0.08] hover:text-slate-100"
     }`;
-    const shelfSectionClass = "flex h-full w-fit min-w-max flex-col justify-between py-3";
-    const shelfSectionTitleClass = `resume-page-style-shelf-title self-center text-center !text-[10px] font-semibold leading-none ${isLightMode ? "text-slate-800" : "text-slate-200/95"}`;
     const shelfControlLabelClass = `!text-[10px] font-medium leading-none ${isLightMode ? "text-slate-500" : "text-slate-400"}`;
-    const shelfDividerClass = `my-3 w-px bg-gradient-to-b from-transparent ${isLightMode ? "via-slate-300" : "via-white/16"} to-transparent`;
     const shelfSegmentGroupClass = `flex !h-7 !max-h-none items-center gap-0.5 rounded-md border p-0.5 ${
         isLightMode ? "border-slate-300/80 bg-slate-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]" : "border-white/10 bg-white/[0.035] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
     }`;
@@ -282,6 +342,10 @@ export const useResumeFormatting = (isLightMode: boolean) => {
         scaledCanvasHeight,
         canvasNeedsHorizontalScroll,
         canvasNeedsVerticalScroll,
+        canvasViewportStyle,
+        pdfPreviewViewportStyle,
+        bottomControlsViewportStyle,
+        canvasHorizontalOverflow,
         isPageStyleShelfCompact,
         printWidth,
         printHeight,
@@ -290,6 +354,7 @@ export const useResumeFormatting = (isLightMode: boolean) => {
         currentResumeFormatting,
         handleFitZoom,
         handleTogglePageStyleShelf,
+        closePageStyleShelf,
         resumeChromeRootClass,
         resumeChromeBackground,
         headerShellStyle,
@@ -303,10 +368,7 @@ export const useResumeFormatting = (isLightMode: boolean) => {
         headerActionButtonClass,
         headerActionIconClass,
         documentToolButtonClass,
-        shelfSectionClass,
-        shelfSectionTitleClass,
         shelfControlLabelClass,
-        shelfDividerClass,
         shelfSegmentGroupClass,
         shelfSegmentButtonClass,
         shelfSegmentIndicatorClass,

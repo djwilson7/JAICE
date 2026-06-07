@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ApiError, ResumeChatMessage, ResumeChatStreamEvent, ResumeData, ResumeFormatting } from "../types";
 import { CHAT_UNAVAILABLE_MESSAGE, buildAssistantCopyText, writePlainTextToClipboard } from "../chatUtils";
 import { normalizeResumeDataForPayload } from "../resumeData";
@@ -10,6 +10,8 @@ type UseResumeChatParams = {
     setError: (message: string | null) => void;
     openChatRail: () => void;
 };
+
+const CHAT_SCROLL_EDGE_THRESHOLD = 8;
 
 export const getChatErrorMessage = (err: ApiError) => {
     if (err.status === 503) {
@@ -41,6 +43,10 @@ export const useResumeChat = ({
     const copyStatusTimeoutRef = useRef<number | null>(null);
     const [isChatInputCollapsed, setIsChatInputCollapsed] = useState(false);
     const [showBackToBottom, setShowBackToBottom] = useState(false);
+    const [chatScrollShadow, setChatScrollShadow] = useState({
+        top: false,
+        bottom: false
+    });
     const [isChatResponding, setIsChatResponding] = useState(false);
     const [copiedChatMessageIndex, setCopiedChatMessageIndex] = useState<number | null>(null);
 
@@ -52,6 +58,29 @@ export const useResumeChat = ({
         };
     }, []);
 
+    const updateChatScrollState = useCallback(() => {
+        const container = chatContainerRef.current;
+        if (!container) return;
+
+        const maxScrollTop = container.scrollHeight - container.clientHeight;
+        const hasOverflow = maxScrollTop > CHAT_SCROLL_EDGE_THRESHOLD;
+        const isScrolledAwayFromBottom = hasOverflow && container.scrollTop < maxScrollTop - 30;
+
+        setShowBackToBottom(isScrolledAwayFromBottom);
+        setChatScrollShadow({
+            top: hasOverflow && container.scrollTop > CHAT_SCROLL_EDGE_THRESHOLD,
+            bottom: hasOverflow && container.scrollTop < maxScrollTop - CHAT_SCROLL_EDGE_THRESHOLD
+        });
+
+        if (!chatInput.trim()) {
+            setIsChatInputCollapsed(isScrolledAwayFromBottom);
+        } else {
+            setIsChatInputCollapsed(false);
+        }
+
+        lastScrollTopRef.current = container.scrollTop;
+    }, [chatInput]);
+
     useEffect(() => {
         if (chatContainerRef.current) {
             const container = chatContainerRef.current;
@@ -59,35 +88,27 @@ export const useResumeChat = ({
             if (!lastMsg || lastMsg.sender === "user" || !showBackToBottom) {
                 container.scrollTop = container.scrollHeight;
             }
+            window.requestAnimationFrame(updateChatScrollState);
         }
-    }, [chatMessages, showBackToBottom]);
+    }, [chatMessages, showBackToBottom, updateChatScrollState]);
 
     useEffect(() => {
         const container = chatContainerRef.current;
         if (!container) return;
 
-        const handleScroll = () => {
-            const currentScrollTop = container.scrollTop;
-            const maxScrollTop = container.scrollHeight - container.clientHeight;
-            const isScrolledAwayFromBottom = currentScrollTop < maxScrollTop - 30;
-            setShowBackToBottom(isScrolledAwayFromBottom);
+        updateChatScrollState();
+        container.addEventListener("scroll", updateChatScrollState, { passive: true });
 
-            if (!chatInput.trim()) {
-                if (isScrolledAwayFromBottom) {
-                    setIsChatInputCollapsed(true);
-                } else {
-                    setIsChatInputCollapsed(false);
-                }
-            } else {
-                setIsChatInputCollapsed(false);
-            }
+        const resizeObserver = typeof ResizeObserver === "undefined"
+            ? null
+            : new ResizeObserver(updateChatScrollState);
+        resizeObserver?.observe(container);
 
-            lastScrollTopRef.current = currentScrollTop;
+        return () => {
+            container.removeEventListener("scroll", updateChatScrollState);
+            resizeObserver?.disconnect();
         };
-
-        container.addEventListener("scroll", handleScroll, { passive: true });
-        return () => container.removeEventListener("scroll", handleScroll);
-    }, [chatInput]);
+    }, [updateChatScrollState]);
 
     useEffect(() => {
         const textarea = chatInputRef.current;
@@ -110,6 +131,7 @@ export const useResumeChat = ({
         });
         setShowBackToBottom(false);
         setIsChatInputCollapsed(false);
+        window.requestAnimationFrame(updateChatScrollState);
     };
 
     const updateLastAssistantMessage = (updater: (message: ResumeChatMessage) => ResumeChatMessage) => {
@@ -266,6 +288,7 @@ export const useResumeChat = ({
         isChatInputCollapsed,
         setIsChatInputCollapsed,
         showBackToBottom,
+        chatScrollShadow,
         isChatResponding,
         copiedChatMessageIndex,
         isAssistantGenerating,

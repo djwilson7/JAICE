@@ -67,6 +67,27 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
             #print-canvas::-webkit-scrollbar-thumb:hover {
                 background-color: #94a3b8;
             }
+            .resume-rail-search {
+                box-shadow: none !important;
+            }
+            .resume-rail-search:focus-within {
+                box-shadow: none !important;
+            }
+            .resume-rail-search input {
+                box-shadow: none !important;
+            }
+            .resume-rail-search .search-bar-icon-slot {
+                width: 0.875rem !important;
+                height: 0.875rem !important;
+            }
+            .resume-rail-search .search-bar-icon {
+                width: 0.875rem !important;
+                height: 0.875rem !important;
+                min-width: 0.875rem !important;
+                min-height: 0.875rem !important;
+                max-width: 0.875rem !important;
+                max-height: 0.875rem !important;
+            }
             #print-canvas[data-font-preview="title"] .resume-title-font-target,
             #print-canvas[data-font-preview="header"] .resume-header-font-target,
             #print-canvas[data-font-preview="body"] .resume-body-font-target {
@@ -233,10 +254,8 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
                 color: #0c4a6e !important;
             }
             .resume-page-style-shelf.is-compact {
-                bottom: 4.5rem !important;
-                height: 142px !important;
                 width: fit-content !important;
-                max-width: calc(100% - 3rem) !important;
+                max-width: 100% !important;
                 padding-top: 0.75rem !important;
                 padding-bottom: 0.75rem !important;
             }
@@ -244,140 +263,35 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
                 display: grid !important;
                 width: max-content !important;
                 max-width: 100% !important;
-                grid-template-columns: repeat(4, max-content);
-                grid-template-rows: max-content max-content;
-                justify-content: center;
+                grid-template-columns: repeat(2, minmax(max-content, 1fr));
+                grid-template-rows: max-content;
                 align-content: center;
-                column-gap: 1rem;
+                column-gap: 0;
+            }
+            .resume-page-style-shelf.is-compact .resume-page-style-shelf-left-controls,
+            .resume-page-style-shelf.is-compact .resume-page-style-shelf-right-controls {
+                display: grid !important;
+                min-width: 0;
+                align-content: center;
+                justify-items: center;
                 row-gap: 0.75rem;
+                padding-inline: 1rem;
             }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-font {
-                display: contents !important;
+            .resume-page-style-shelf.is-compact .resume-page-style-shelf-left-controls {
+                grid-template-columns: repeat(2, max-content);
+                grid-template-rows: repeat(2, max-content);
+                justify-content: space-evenly;
+                column-gap: 1rem;
             }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-page-format {
-                grid-column: 1 / span 2;
-                grid-row: 2;
-                justify-self: center;
-                align-items: flex-start !important;
+            .resume-page-style-shelf.is-compact .resume-page-style-shelf-right-controls {
+                grid-template-columns: max-content;
+                grid-template-rows: repeat(2, max-content);
+                justify-content: center;
+                border-left: 1px solid rgba(148, 163, 184, 0.38);
             }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-spacing {
-                grid-column: 2;
-                grid-row: 1 / span 2;
-                display: contents !important;
-                justify-self: end;
-                align-items: flex-end !important;
+            html:not([data-theme="light"]) .resume-page-style-shelf.is-compact .resume-page-style-shelf-right-controls {
+                border-left-color: rgba(255, 255, 255, 0.14);
             }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-spacing-controls {
-                display: contents !important;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-font-controls {
-                display: contents !important;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-title-size {
-                grid-column: 1;
-                grid-row: 1;
-                justify-self: start;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-header-size {
-                grid-column: 2;
-                grid-row: 1;
-                justify-self: start;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-body-size {
-                grid-column: 3;
-                grid-row: 1;
-                justify-self: start;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-margins {
-                grid-column: 4;
-                grid-row: 1;
-                justify-self: start;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-section-gap {
-                grid-column: 3 / span 2;
-                grid-row: 2;
-                justify-self: center;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-divider {
-                display: none !important;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-section {
-                height: auto !important;
-                padding-top: 0 !important;
-                padding-bottom: 0 !important;
-            }
-            .resume-page-style-shelf.is-compact .resume-page-style-shelf-title {
-                display: none !important;
-            }
-            @media (max-width: 1000px) {
-                .resume-page-style-shelf {
-                    bottom: 4.5rem !important;
-                    height: 142px !important;
-                    padding-top: 0.75rem !important;
-                    padding-bottom: 0.75rem !important;
-                }
-                .resume-page-style-shelf-layout {
-                    display: grid !important;
-                    width: max-content !important;
-                    max-width: 100% !important;
-                    grid-template-columns: repeat(4, max-content);
-                    grid-template-rows: max-content max-content;
-                    justify-content: center;
-                    align-content: center;
-                    column-gap: 1rem;
-                    row-gap: 0.75rem;
-                }
-                .resume-page-style-shelf-font {
-                    display: contents !important;
-                }
-                .resume-page-style-shelf-page-format {
-                    grid-column: 1 / span 2;
-                    grid-row: 2;
-                    justify-self: center;
-                }
-                .resume-page-style-shelf-spacing {
-                    grid-column: 2;
-                    grid-row: 1 / span 2;
-                    display: contents !important;
-                }
-                .resume-page-style-shelf-spacing-controls,
-                .resume-page-style-shelf-font-controls {
-                    display: contents !important;
-                }
-                .resume-page-style-shelf-title-size {
-                    grid-column: 1;
-                    grid-row: 1;
-                }
-                .resume-page-style-shelf-header-size {
-                    grid-column: 2;
-                    grid-row: 1;
-                }
-                .resume-page-style-shelf-body-size {
-                    grid-column: 3;
-                    grid-row: 1;
-                }
-                .resume-page-style-shelf-margins {
-                    grid-column: 4;
-                    grid-row: 1;
-                }
-                .resume-page-style-shelf-section-gap {
-                    grid-column: 3 / span 2;
-                    grid-row: 2;
-                    justify-self: center;
-                }
-                .resume-page-style-shelf-divider {
-                    display: none !important;
-                }
-                .resume-page-style-shelf-section {
-                    height: auto !important;
-                    padding-top: 0 !important;
-                    padding-bottom: 0 !important;
-                }
-                .resume-page-style-shelf-title {
-                    display: none !important;
-                }
-            }
-            
             /* Contact strip: allow trash pop-up to overflow downward */
             .contact-meta-field {
                 overflow: visible !important;

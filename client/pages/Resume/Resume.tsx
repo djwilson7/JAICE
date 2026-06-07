@@ -5,6 +5,7 @@ import { ResumeGlobalStyles } from "./components/ResumeGlobalStyles";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
 import { ResumeDocumentSurface } from "./components/ResumeDocumentSurface";
 import { CloneResumeModal } from "./components/CloneResumeModal";
+import { DeleteResumeModal } from "./components/DeleteResumeModal";
 import { ResumeHeader } from "./components/ResumeHeader";
 import { ResumeSwitcherRail } from "./components/ResumeSwitcherRail";
 import { ResumeChatRail } from "./components/ResumeChatRail";
@@ -22,8 +23,14 @@ export function Resume() {
     const { theme } = useSettings();
     const isLightMode = theme === "light";
     const resumeDebugEnabled = isResumeDebugEnabled();
+    const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(false);
+    const [isRightRailCollapsed, setIsRightRailCollapsed] = useState(true);
 
-    const formatting = useResumeFormatting(isLightMode);
+    const formatting = useResumeFormatting({
+        isLightMode,
+        isLeftRailCollapsed,
+        isRightRailCollapsed
+    });
     const {
         canvasViewportRef,
         resumeDocumentContentRef,
@@ -63,6 +70,10 @@ export function Resume() {
         scaledCanvasHeight,
         canvasNeedsHorizontalScroll,
         canvasNeedsVerticalScroll,
+        canvasViewportStyle,
+        pdfPreviewViewportStyle,
+        bottomControlsViewportStyle,
+        canvasHorizontalOverflow,
         isPageStyleShelfCompact,
         printWidth,
         printHeight,
@@ -71,6 +82,7 @@ export function Resume() {
         currentResumeFormatting,
         handleFitZoom,
         handleTogglePageStyleShelf,
+        closePageStyleShelf,
         resumeChromeRootClass,
         resumeChromeBackground,
         headerShellStyle,
@@ -84,10 +96,7 @@ export function Resume() {
         headerActionButtonClass,
         headerActionIconClass,
         documentToolButtonClass,
-        shelfSectionClass,
-        shelfSectionTitleClass,
         shelfControlLabelClass,
-        shelfDividerClass,
         shelfSegmentGroupClass,
         shelfSegmentButtonClass,
         shelfSegmentIndicatorClass,
@@ -217,15 +226,20 @@ export function Resume() {
         setSearchQuery,
         resumeSearchFocusSignal,
         filteredResumes,
+        pendingDeleteResume,
+        isDeletingResume,
         loadResumeIntoWorkspace,
         handleCreateNewClick,
         handleCreateResume,
         handleSaveResume,
-        handleDeleteResume
+        handleDeleteResume,
+        cancelDeleteResume,
+        confirmDeleteResume
     } = persistence;
 
     const pdfPreview = useResumePdfPreview({
         resumeData,
+        resumeName,
         currentResumeFormatting,
         setError,
         setSuccessMessage,
@@ -240,18 +254,18 @@ export function Resume() {
         isPdfPreviewOpen,
         isGeneratingPdfPreview,
         pdfPreviewUrl,
-        pdfPreviewFilename,
-        canDownloadPdfPreview,
         openPdfPreview,
         togglePdfPreview,
-        closePdfPreview,
-        downloadPdfPreview
+        closePdfPreview
     } = pdfPreview;
 
+    const handleOpenPdfPreview = () => {
+        setIsLeftRailCollapsed(true);
+        setIsRightRailCollapsed(true);
+        closePageStyleShelf();
+        return openPdfPreview();
+    };
 
-    // UI state for rail collapse toggles
-    const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(false);
-    const [isRightRailCollapsed, setIsRightRailCollapsed] = useState(true);
 
     const chat = useResumeChat({
         resumeData,
@@ -268,6 +282,7 @@ export function Resume() {
         isChatInputCollapsed,
         setIsChatInputCollapsed,
         showBackToBottom,
+        chatScrollShadow,
         isChatResponding,
         copiedChatMessageIndex,
         isAssistantGenerating,
@@ -377,7 +392,14 @@ export function Resume() {
                 />
             )}
 
-            <ResumeHeader
+            <DeleteResumeModal
+                resume={pendingDeleteResume}
+                isDeleting={isDeletingResume}
+                onCancel={cancelDeleteResume}
+                onConfirm={confirmDeleteResume}
+            />
+
+            {!isPdfPreviewOpen && <ResumeHeader
                 isLightMode={isLightMode}
                 headerShellStyle={headerShellStyle}
                 headerActionButtonClass={headerActionButtonClass}
@@ -399,10 +421,10 @@ export function Resume() {
                 isPdfPreviewOpen={isPdfPreviewOpen}
                 isGeneratingPdfPreview={isGeneratingPdfPreview}
                 togglePdfPreview={togglePdfPreview}
-                openPdfPreview={openPdfPreview}
-            />
+                openPdfPreview={handleOpenPdfPreview}
+            />}
 
-            <div className="flex min-h-0 flex-1 items-stretch">
+            <div className="absolute inset-0">
 
             <ResumeSwitcherRail
                 isLightMode={isLightMode}
@@ -437,6 +459,10 @@ export function Resume() {
                 resumeDocumentContentRef={resumeDocumentContentRef}
                 canvasNeedsHorizontalScroll={canvasNeedsHorizontalScroll}
                 canvasNeedsVerticalScroll={canvasNeedsVerticalScroll}
+                canvasViewportStyle={canvasViewportStyle}
+                pdfPreviewViewportStyle={pdfPreviewViewportStyle}
+                bottomControlsViewportStyle={bottomControlsViewportStyle}
+                canvasHorizontalOverflow={canvasHorizontalOverflow}
                 scaledCanvasWidth={scaledCanvasWidth}
                 scaledCanvasHeight={scaledCanvasHeight}
                 paperMetrics={paperMetrics}
@@ -552,10 +578,7 @@ export function Resume() {
                 isPageStyleShelfOpen={isPageStyleShelfOpen}
                 isPageStyleShelfCompact={isPageStyleShelfCompact}
                 shelfSurfaceStyle={shelfSurfaceStyle}
-                shelfSectionClass={shelfSectionClass}
-                shelfSectionTitleClass={shelfSectionTitleClass}
                 shelfControlLabelClass={shelfControlLabelClass}
-                shelfDividerClass={shelfDividerClass}
                 shelfSegmentGroupClass={shelfSegmentGroupClass}
                 shelfSegmentButtonClass={shelfSegmentButtonClass}
                 shelfSegmentIndicatorClass={shelfSegmentIndicatorClass}
@@ -588,12 +611,9 @@ export function Resume() {
                 zoomPercent={zoomPercent}
                 isPdfPreviewOpen={isPdfPreviewOpen}
                 pdfPreviewUrl={pdfPreviewUrl}
-                pdfPreviewFilename={pdfPreviewFilename}
+                resumeName={resumeName}
                 isGeneratingPdfPreview={isGeneratingPdfPreview}
-                canDownloadPdfPreview={canDownloadPdfPreview}
                 closePdfPreview={closePdfPreview}
-                downloadPdfPreview={downloadPdfPreview}
-                openPdfPreview={openPdfPreview}
                 loadingList={loadingList}
             />
             <ResumeChatRail
@@ -603,6 +623,8 @@ export function Resume() {
                 railHeaderRowClass={railHeaderRowClass}
                 railTitleClass={railTitleClass}
                 railTitleStyle={railTitleStyle}
+                headerActionButtonClass={headerActionButtonClass}
+                headerActionIconClass={headerActionIconClass}
                 chatContainerRef={chatContainerRef}
                 chatInputRef={chatInputRef}
                 chatMessages={chatMessages}
@@ -611,6 +633,7 @@ export function Resume() {
                 isChatResponding={isChatResponding}
                 isAssistantGenerating={isAssistantGenerating}
                 showBackToBottom={showBackToBottom}
+                chatScrollShadow={chatScrollShadow}
                 scrollChatToBottom={scrollChatToBottom}
                 isChatInputCollapsed={isChatInputCollapsed}
                 setIsChatInputCollapsed={setIsChatInputCollapsed}
