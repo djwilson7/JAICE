@@ -1,6 +1,6 @@
 import type { JobCardType } from "@/types/jobCardType";
 import { useDrag } from "@/pages/home/hooks/useDrag";
-import { ValidColumns } from "@/types/validColumns";
+import { isValidColumn } from "@/types/validColumns";
 import { useIsMultiSelecting } from "@/pages/home/hooks/useIsMultiSelecting";
 import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
 import { useUndoRedo } from "@/pages/home/hooks/useUndoRedo";
@@ -9,6 +9,11 @@ import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 import type { DragTarget } from "@/types/dragTarget";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
+import {
+  getJobDisplayColumn,
+  getJobsMovingToColumn,
+} from "@/pages/home/utils/jobDisplayColumn";
 
 const DRAG_START_THRESHOLD = 4;
 
@@ -17,9 +22,7 @@ function getDragTargetFromPoint(x: number, y: number): DragTarget {
   const target = element?.closest<HTMLElement>("[data-drag-target]");
   const targetId = target?.dataset.dragTarget;
 
-  return targetId && ValidColumns.includes(targetId)
-    ? (targetId as DragTarget)
-    : null;
+  return targetId && isValidColumn(targetId) ? targetId : null;
 }
 
 function isInteractiveDragOrigin(target: EventTarget | null) {
@@ -36,30 +39,50 @@ export function useJobCardDrag(job: JobCardType) {
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
   const { pushUndo } = useUndoRedo();
   const { showBanner } = useBannerNotifications();
+  const { reviewBehavior } = useSettings();
   const {
     setIsDragging,
     setDraggedId,
+    setDraggedJobs,
     setDragPoint,
     setDragTarget,
     setDragStart,
   } = useDrag();
 
-  const startDrag = (point: { x: number; y: number }) => {
-    setIsDragging(true);
-    setDraggedId(job.id);
-    setDragPoint(point);
-    setDragStart(job.reviewNeeded ? "review" : job.column.toLowerCase());
-  };
-
-  const finishDrag = async (targetColumn: DragTarget) => {
-    setIsDragging(false);
-    if (!targetColumn || !ValidColumns.includes(targetColumn)) return cleanup();
-
+  const getDraggedJobs = () => {
     const selectedJobIds = new Set(
       selectedJobs.map((selectedJob) => selectedJob.id)
     );
-    const jobsToMove =
-      isMultiSelecting && selectedJobIds.has(job.id) ? selectedJobs : [job];
+
+    return isMultiSelecting && selectedJobIds.has(job.id)
+      ? selectedJobs
+      : [job];
+  };
+
+  const startDrag = (
+    point: { x: number; y: number },
+    draggedJobs: JobCardType[]
+  ) => {
+    setIsDragging(true);
+    setDraggedId(job.id);
+    setDraggedJobs(draggedJobs);
+    setDragPoint(point);
+    setDragStart(getJobDisplayColumn(job, reviewBehavior));
+  };
+
+  const finishDrag = async (
+    targetColumn: DragTarget,
+    draggedJobs: JobCardType[]
+  ) => {
+    setIsDragging(false);
+    if (!targetColumn) return cleanup();
+
+    const jobsToMove = getJobsMovingToColumn(
+      draggedJobs,
+      targetColumn,
+      reviewBehavior
+    );
+    if (jobsToMove.length === 0) return cleanup();
 
     const before = jobsToMove;
     const after = jobsToMove.map((jobToMove) => ({
@@ -78,19 +101,19 @@ export function useJobCardDrag(job: JobCardType) {
       await writeJobsToDB({ jobs_to_update: after });
 
       pushUndo({
-        label: jobsToMove.length > 1 ? "moveMultiple" : "Drag & Drop",
+        label: draggedJobs.length > 1 ? "moveMultiple" : "Drag & Drop",
         before,
         after,
       });
 
-      if (jobsToMove.length > 1) {
+      if (draggedJobs.length > 1) {
         setSelectedJobs([]);
         setIsMultiSelecting(false);
       }
 
       showBanner({
         message:
-          jobsToMove.length > 1
+          draggedJobs.length > 1
             ? `${jobsToMove.length} jobs moved to ${formatColumnName(targetColumn)}.`
             : `${job.title} moved to ${formatColumnName(targetColumn)}.`,
         tone: "success",
@@ -103,7 +126,7 @@ export function useJobCardDrag(job: JobCardType) {
       console.error("Failed to move dragged job group:", error);
       showBanner({
         message:
-          jobsToMove.length > 1
+          draggedJobs.length > 1
             ? "Failed to move selected jobs. Try again."
             : "Failed to move job. Try again.",
         tone: "error",
@@ -117,6 +140,7 @@ export function useJobCardDrag(job: JobCardType) {
   const cleanup = () => {
     setIsDragging(false);
     setDraggedId(null);
+    setDraggedJobs([]);
     setDragPoint(null);
     setDragTarget(null);
     setDragStart(null);
@@ -127,6 +151,7 @@ export function useJobCardDrag(job: JobCardType) {
 
     const pointerId = event.pointerId;
     const startPoint = { x: event.clientX, y: event.clientY };
+    const draggedJobs = getDraggedJobs();
     let hasStartedDrag = false;
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
@@ -140,7 +165,7 @@ export function useJobCardDrag(job: JobCardType) {
 
       if (!hasStartedDrag && movedEnough) {
         hasStartedDrag = true;
-        startDrag(point);
+        startDrag(point, draggedJobs);
       }
 
       if (!hasStartedDrag) return;
@@ -164,7 +189,7 @@ export function useJobCardDrag(job: JobCardType) {
         upEvent.clientX,
         upEvent.clientY
       );
-      void finishDrag(targetColumn);
+      void finishDrag(targetColumn, draggedJobs);
     };
 
     const handlePointerCancel = (cancelEvent: PointerEvent) => {

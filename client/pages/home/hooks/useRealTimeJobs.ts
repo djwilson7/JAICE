@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/global-services/api";
 import { useJobRealtime } from "@/pages/home/hooks/useJobRealtime";
-import { applyJobChange } from "@/pages/home/utils/applyJobChange";
+import { convertToJobCardArray } from "@/pages/home/utils/convertToJobCard";
 import type { JobCardType } from "@/types/jobCardType";
 import type { JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
 
@@ -12,6 +12,8 @@ export function useRealtimeJobs(
   const [rlsToken, setRlsToken] = useState<string | null>(null);
   const [newJobsCount, setNewJobsCount] = useState(0);
   const lastSeenCountRef = useRef(0);
+  const refreshInFlightRef = useRef(false);
+  const refreshPendingRef = useRef(false);
 
   // mint token
   useEffect(() => {
@@ -54,12 +56,38 @@ export function useRealtimeJobs(
     return () => clearInterval(id);
   }, [userId]);
 
-  const handleRealtimeChange = useCallback((event: JobRealtimeEvent) => {
-    if (event.type === "INSERT") {
-      setNewJobsCount((n) => n + 1);
+  const refreshJobs = useCallback(async () => {
+    refreshPendingRef.current = true;
+    if (refreshInFlightRef.current) return;
+
+    refreshInFlightRef.current = true;
+    try {
+      while (refreshPendingRef.current) {
+        refreshPendingRef.current = false;
+        try {
+          const response = await api("/api/jobs/latest-jobs");
+          if (response?.status === "success") {
+            setJobs(convertToJobCardArray(response.jobs));
+          }
+        } catch (error) {
+          console.error("Failed to refresh jobs after realtime update:", error);
+        }
+      }
+    } finally {
+      refreshInFlightRef.current = false;
     }
-    setJobs((prev) => applyJobChange(prev, event));
   }, [setJobs]);
+
+  const handleRealtimeChange = useCallback(
+    (event: JobRealtimeEvent) => {
+      if (event.type === "INSERT" || event.event === "INSERT") {
+        setNewJobsCount((n) => n + 1);
+      }
+
+      void refreshJobs();
+    },
+    [refreshJobs]
+  );
 
   useJobRealtime(userId, rlsToken, handleRealtimeChange);
 

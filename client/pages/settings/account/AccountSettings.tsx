@@ -14,10 +14,7 @@ import {
   SettingCard,
   SettingHeader,
 } from "@/pages/settings/display/display-components/Cards";
-import linkIcon from "@/assets/icons/link.svg";
-// If Local (using docker, use the local url) else use prod url
-// const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
-const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
+import { API_BASE_URL } from "@/global-services/apiBaseUrl";
 
 const GMAIL_CONSENT_URL =
   import.meta.env.VITE_GMAIL_CONSENT_URL ?? "/api/auth/consent";
@@ -154,7 +151,7 @@ export function AccountSettings() {
     console.log("Setup RLS session response:", res);
     const token = await getIdToken();
     console.log(`Redirecting to Gmail consent flow for ${days} days of email sync.`);
-    window.location.href = `${BASE_URL}${GMAIL_CONSENT_URL}?token=${token}&days=${days}`;
+    window.location.href = `${API_BASE_URL}${GMAIL_CONSENT_URL}?token=${token}&days=${days}`;
     return res;
   }
 
@@ -340,14 +337,6 @@ export function AccountSettings() {
                   onClick={handleShowModal}
                   className={`settings-page-button settings-action-button settings-account-action-button ${gmailButtonColor}`}
                 >
-                  {!gmailConnected && (
-                    <img
-                      src={linkIcon}
-                      alt=""
-                      aria-hidden="true"
-                      className="w-4 h-4 icon mr-2"
-                    />
-                  )}
                   {gmailButtonText}
                 </Button>
               </div>

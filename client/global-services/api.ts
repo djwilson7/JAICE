@@ -1,11 +1,7 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
 import { getIdToken, getGoogleAccessToken, hasGmailAccess, logOut } from "./auth";
-
-
-// If Local (using docker, use the local url) else use prod url
-// const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
-const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
+import { API_BASE_URL } from "./apiBaseUrl";
 
 async function handleUnauthorizedResponse() {
     try {
@@ -41,7 +37,7 @@ export async function api(path: string, init: RequestInit = {})
     if (token) headers.set("Authorization", `Bearer ${token}`);
     headers.set("Content-Type", headers.get("Content-Type") || "application/json");
 
-    const response = await fetch(`${BASE_URL}${path}`, 
+    const response = await fetch(`${API_BASE_URL}${path}`,
     {
         ...init,
         headers,
@@ -75,7 +71,7 @@ export async function apiBlob(path: string, init: RequestInit = {}) {
         headers.set("Content-Type", "application/json");
     }
 
-    const response = await fetch(`${BASE_URL}${path}`, {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
         ...init,
         headers,
     });
@@ -92,6 +88,6 @@ export async function apiBlob(path: string, init: RequestInit = {}) {
     return {
         blob: await response.blob(),
         filename: response.headers.get("Content-Disposition")?.match(/filename="?([^"]+)"?/)?.[1] || null,
-        previewUrl: previewPath ? `${BASE_URL}${previewPath}` : null,
+        previewUrl: previewPath ? `${API_BASE_URL}${previewPath}` : null,
     };
 }

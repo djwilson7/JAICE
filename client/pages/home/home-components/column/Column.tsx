@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/column/EmptyColumnPlaceholder";
 import { ColumnTitle } from "@/pages/home/home-components/column/ColumnTitle";
 import { useDrag } from "@/pages/home/hooks/useDrag";
-import type { DragTarget } from "@/types/dragTarget";
 import type { KanBanColumn } from "@/pages/home/home-components/column/KanBanColumn";
 import { getCSSVar } from "@/utils/getCSSVar";
+import { isValidColumn } from "@/types/validColumns";
+import { useSettings } from "@/pages/settings/provider/settingsContext";
+import { getJobsMovingToColumn } from "@/pages/home/utils/jobDisplayColumn";
 
 const SCROLL_EDGE_THRESHOLD = 8;
 
@@ -22,7 +24,8 @@ export function Column({
   count,
   isHighlighted,
 }: ColumnProps) {
-  const { setDragTarget, isDragging } = useDrag();
+  const { setDragTarget, isDragging, dragTarget, draggedJobs } = useDrag();
+  const { reviewBehavior } = useSettings();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollContentRef = useRef<HTMLDivElement | null>(null);
   const [scrollShadow, setScrollShadow] = useState({
@@ -30,6 +33,11 @@ export function Column({
     bottom: false,
   });
   const hasChildren = count > 0;
+  const previewCount = isValidColumn(column.id)
+    ? getJobsMovingToColumn(draggedJobs, column.id, reviewBehavior).length
+    : 0;
+  const showDropPreview =
+    isDragging && dragTarget === column.id && previewCount > 0;
 
   const highlightColumn =
     isHighlighted === column.id || isHighlighted === "all";
@@ -84,7 +92,9 @@ export function Column({
           highlightColumn ? "highlighted" : ""
         }`}
         data-drag-target={column.id}
-        onPointerEnter={() => setDragTarget(column.id as DragTarget)}
+        onPointerEnter={() =>
+          setDragTarget(isValidColumn(column.id) ? column.id : null)
+        }
         onPointerLeave={() => setDragTarget(null)}
       >
         {/* Header */}
@@ -116,6 +126,23 @@ export function Column({
               ref={scrollContentRef}
               className="flex w-full flex-col items-center gap-2"
             >
+              <AnimatePresence initial={false}>
+                {showDropPreview && (
+                  <motion.div
+                    className="kanban-drop-preview job-card flex min-h-[4.5rem] w-full shrink-0 items-center justify-center px-4 py-3 text-center"
+                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                  >
+                    <span>
+                      Add {previewCount}{" "}
+                      {previewCount === 1 ? "Email" : "Emails"} to the &quot;
+                      {column.title}&quot; column?
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {hasChildren ? (
                 children
               ) : (

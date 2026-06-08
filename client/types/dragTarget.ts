@@ -1,7 +1,3 @@
-export type DragTarget =
-  | "applied"
-  | "interview"
-  | "offer"
-  | "accepted"
-  | "rejected"
-  | null;
+import type { ValidColumn } from "@/types/validColumns";
+
+export type DragTarget = ValidColumn | null;

@@ -1632,25 +1632,34 @@ button.settings-account-action-button {
 }
 
 button.settings-account-action-button.green {
-  border-color: color-mix(in srgb, var(--green-color) 58%, transparent);
-  background: color-mix(in srgb, var(--green-color) 10%, transparent);
+  --settings-account-accent-rgb: 74, 180, 112;
+  border-color: rgba(var(--settings-account-accent-rgb), 0.62);
+  background: rgba(var(--settings-account-accent-rgb), 0.17);
   color: var(--text-primary);
 }
 
 button.settings-account-action-button.red {
-  border-color: color-mix(in srgb, var(--red-color) 62%, transparent);
-  background: color-mix(in srgb, var(--red-color) 10%, transparent);
-  color: var(--text-primary);
-}
-
-button.settings-account-action-button.red:hover,
-button.settings-account-action-button.red:focus-visible {
+  --settings-account-accent-rgb: 224, 91, 101;
+  border-color: rgba(var(--settings-account-accent-rgb), 0.62);
+  background: rgba(var(--settings-account-accent-rgb), 0.17);
   color: var(--text-primary);
 }
 
 button.settings-account-action-button.green:hover,
-button.settings-account-action-button.green:focus-visible {
+button.settings-account-action-button.green:focus-visible,
+button.settings-account-action-button.red:hover,
+button.settings-account-action-button.red:focus-visible {
+  border-color: rgba(var(--settings-account-accent-rgb), 0.78);
+  background: rgba(var(--settings-account-accent-rgb), 0.24);
   color: var(--text-primary);
+}
+
+html[data-theme="light"] button.settings-account-action-button.green {
+  --settings-account-accent-rgb: 31, 132, 74;
+}
+
+html[data-theme="light"] button.settings-account-action-button.red {
+  --settings-account-accent-rgb: 190, 54, 61;
 }
 
 .settings-control-row-preview {
@@ -3146,6 +3155,17 @@ button.settings-account-action-button.green:focus-visible {
 
 .kanban-column-scroll-dragging {
   overflow: visible;
+}
+
+.kanban-drop-preview {
+  border: 1px dashed rgba(74, 222, 128, 0.62);
+  background: rgba(34, 197, 94, 0.12);
+  color: rgba(var(--primary-five-rgb), 0.78);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.45;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
 }
 
 .kanban-column-scroll::-webkit-scrollbar {

@@ -1,4 +1,5 @@
 import { api, apiBlob } from "@/global-services/api";
+import { API_BASE_URL } from "@/global-services/apiBaseUrl";
 import { getIdToken } from "@/global-services/auth";
 import type {
     ApiError,
@@ -106,8 +107,7 @@ export const streamResumeTailorSuggestion = async (
     onEvent: (event: ResumeRewriteStreamEvent) => void
 ): Promise<{ assistantMessage: string; tailorSuggestions: ResumeChatTailorSuggestions | null }> => {
     const token = await getIdToken();
-    const baseUrl = import.meta.env.VITE_API_BASE_URL_LOCAL;
-    const response = await fetch(`${baseUrl}/api/resume/rewrite-suggestion/stream`, {
+    const response = await fetch(`${API_BASE_URL}/api/resume/rewrite-suggestion/stream`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -190,8 +190,7 @@ export const streamResumeChatResponse = async (
     onTextFallback: (text: string) => void
 ) => {
     const token = await getIdToken();
-    const baseUrl = import.meta.env.VITE_API_BASE_URL_LOCAL;
-    const response = await fetch(`${baseUrl}/api/resume/chat/stream`, {
+    const response = await fetch(`${API_BASE_URL}/api/resume/chat/stream`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

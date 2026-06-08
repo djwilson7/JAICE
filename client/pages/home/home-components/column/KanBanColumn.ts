@@ -7,6 +7,18 @@ export type KanBanColumn = {
 
 export const kanBanColumns: KanBanColumn[] =  [
   {
+    id: "staging",
+    title: "Processing",
+    bg: "var(--processing-column-bg)",
+    visible: true,
+  },
+  {
+    id: "review",
+    title: "Review",
+    bg: "var(--review-column-bg)",
+    visible: true,
+  },
+  {
     id: "applied",
     title: "Applied",
     bg: "var(--applied-column-bg)",
@@ -34,18 +46,6 @@ export const kanBanColumns: KanBanColumn[] =  [
     id: "rejected",
     title: "Rejected",
     bg: "var(--rejected-column-bg)",
-    visible: true,
-  },
-  {
-    id: "review",
-    title: "Review",
-    bg: "var(--review-column-bg)",
-    visible: true,
-  },
-  {
-    id: "staging",
-    title: "Processing",
-    bg: "var(--processing-column-bg)",
     visible: true,
   },
 ];
