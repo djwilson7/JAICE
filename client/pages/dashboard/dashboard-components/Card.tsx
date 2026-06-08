@@ -44,7 +44,7 @@ function useCardStyles(variant: Variant, rounded: boolean) {
     };
 
     if (variant === "teal") {
-        base.background = `var(--primary-gradient)`;
+        base.background = "var(--card-surface)";
     } else {
         base.background = "rgb(var(--primary-one-rgb))";
     }

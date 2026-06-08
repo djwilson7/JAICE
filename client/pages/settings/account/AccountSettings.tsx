@@ -3,7 +3,6 @@ import { getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
-import { FloatingInputField } from "@/global-components/FloatingInputField";
 import { DaysToSync, type DaysToSyncOption } from "./account-components/DaysToSync";
 import { useAuth } from "@/global-components/authContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -12,15 +11,10 @@ import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
 import { UnlinkGmailModal } from "@/pages/settings/account/account-components/UnlinkGmailModal";
 import { DeleteAccountModal } from "./account-components/DeleteAccountModal";
 import {
-  RowItem,
-  Row
-} from "./account-components/AccountSections";
-import {
   SettingCard,
   SettingHeader,
 } from "@/pages/settings/display/display-components/Cards";
 import linkIcon from "@/assets/icons/link.svg";
-import unlinkIcon from "@/assets/icons/unlink.svg";
 // If Local (using docker, use the local url) else use prod url
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL_LOCAL;
@@ -206,7 +200,6 @@ export function AccountSettings() {
     ? "Unlink Gmail"
     : "Link Gmail";
 
-  const gmailButtonIcon = gmailConnected ? unlinkIcon : linkIcon;
   const gmailButtonColor = gmailConnected ? "red" : "green";
 
   async function handleDelete() {
@@ -254,109 +247,138 @@ export function AccountSettings() {
 
   return (
     <>
-      <div className="settings-card-grid settings-card-grid-account">
+      <section className="settings-group">
         <SettingCard>
           <SettingHeader
-            title="Profile"
-            description="Manage the name and profile image shown throughout JAICE."
+            title="Account"
+            description="Profile identity, connected services, and account-level actions."
           />
-          <div className="settings-profile-summary">
-            <div className="profile-picture-frame settings-profile-picture">
-              <img
-                src={profilePicURL || userIcon}
-                alt="Profile"
-                className="h-full w-full rounded-full object-cover"
-              />
-            </div>
-            <div className="settings-profile-photo-action">
-              <Button onClick={handleShowChangePhotoModal}>Change Photo</Button>
-              <small className="secondary-text">
-                Use a publicly accessible image URL.
-              </small>
-            </div>
-          </div>
 
-          <form className="settings-profile-form" onSubmit={handleSaveProfile}>
-            <FloatingInputField
-              label="First Name"
-              type="text"
-              value={firstNameField}
-              action={handleFirstNameInput}
-              isValid={true}
-            />
-            <FloatingInputField
-              label="Last Name"
-              type="text"
-              value={lastNameField}
-              action={handleLastNameInput}
-              isValid={true}
-            />
-            <Button type="submit">Save Profile</Button>
-          </form>
-
-          {saveProfileError && (
-            <small className="red-text settings-inline-error" role="alert">
-              {saveProfileError}
-            </small>
-          )}
-        </SettingCard>
-
-        <SettingCard>
-          <SettingHeader
-            title="Connected Services & Account"
-            description="Manage Gmail automation and permanent account actions."
-          />
-          <div className="settings-account-rows">
-            <Row rowError={gmailError || ""}>
-              <RowItem>
-                <div className="flex flex-col">
-                  <h3 className="text-lg text-left font-medium">
-                    Gmail Integration
-                  </h3>
-                  <small className="text-sm text-left opacity-60 ">
-                    Connect your Gmail account to allow email parsing and
-                    analysis.
-                  </small>
-                </div>
-              </RowItem>
-              <RowItem>
-                <Button onClick={handleShowModal} className={gmailButtonColor}>
+          <div className="settings-account-layout">
+            <form
+              className="settings-profile-stack"
+              onSubmit={handleSaveProfile}
+            >
+              <div className="settings-profile-content">
+                <div className="profile-picture-frame settings-profile-picture">
                   <img
-                    src={gmailButtonIcon}
-                    alt="Gmail Link Icon"
-                    className="w-5 h-5 icon mr-2"
+                    src={profilePicURL || userIcon}
+                    alt="Profile"
+                    className="h-full w-full rounded-full object-cover"
                   />
+                </div>
+                <div className="settings-profile-heading">
+                  <h3>Profile</h3>
+                  <p>Update the name and profile shown in JAICE.</p>
+                </div>
+              </div>
+
+              <div className="settings-field-grid">
+                <label className="settings-profile-field">
+                  <span>First Name</span>
+                  <input
+                    id="settings-first-name"
+                    name="firstName"
+                    autoComplete="given-name"
+                    aria-label="First Name"
+                    className="settings-profile-input"
+                    placeholder="First name"
+                    type="text"
+                    value={firstNameField}
+                    onChange={(event) =>
+                      handleFirstNameInput(event.target.value)
+                    }
+                  />
+                </label>
+                <label className="settings-profile-field">
+                  <span>Last Name</span>
+                  <input
+                    id="settings-last-name"
+                    name="lastName"
+                    autoComplete="family-name"
+                    aria-label="Last Name"
+                    className="settings-profile-input"
+                    placeholder="Last name"
+                    type="text"
+                    value={lastNameField}
+                    onChange={(event) =>
+                      handleLastNameInput(event.target.value)
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="settings-profile-actions">
+                <Button
+                  className="settings-page-button settings-action-button"
+                  onClick={handleShowChangePhotoModal}
+                >
+                  Change Photo
+                </Button>
+                <Button
+                  className="settings-page-button settings-action-button"
+                  type="submit"
+                >
+                  Update Profile
+                </Button>
+              </div>
+
+              {saveProfileError && (
+                <small className="red-text settings-inline-error" role="alert">
+                  {saveProfileError}
+                </small>
+              )}
+            </form>
+
+            <div className="settings-action-list settings-account-actions">
+              <div className="settings-action-row">
+                <div>
+                  <h3>Gmail Integration</h3>
+                  <p>Sync job-search activity from your inbox.</p>
+                </div>
+                <Button
+                  onClick={handleShowModal}
+                  className={`settings-page-button settings-action-button settings-account-action-button ${gmailButtonColor}`}
+                >
+                  {!gmailConnected && (
+                    <img
+                      src={linkIcon}
+                      alt=""
+                      aria-hidden="true"
+                      className="w-4 h-4 icon mr-2"
+                    />
+                  )}
                   {gmailButtonText}
                 </Button>
-              </RowItem>
-            </Row>
+              </div>
+              {gmailError && (
+                <small className="red-text settings-inline-error" role="alert">
+                  {gmailError}
+                </small>
+              )}
 
-            <Row rowError={deleteAccountError || ""}>
-              <RowItem>
-                <div className="flex flex-col">
-                  <h3 className="text-lg text-left font-medium">
-                    Delete your JAICE account?
-                  </h3>
-                  <small className="text-sm text-left opacity-60 ">
-                    This will permanently delete your account and all associated
-                    data.
-                  </small>
+              <div className="settings-action-row settings-action-row-danger">
+                <div>
+                  <h3>Delete Account</h3>
+                  <p>Permanently remove your account and stored JAICE data.</p>
                 </div>
-              </RowItem>
-
-              <RowItem>
                 <Button
                   onClick={handleDelete}
                   aria-busy={busy}
-                  className="red"
+                  className="settings-page-button settings-action-button settings-account-action-button red"
                 >
                   {busy ? "Deleting..." : "Delete Account"}
                 </Button>
-              </RowItem>
-            </Row>
+              </div>
+              {deleteAccountError && (
+                <small className="red-text settings-inline-error" role="alert">
+                  {deleteAccountError}
+                </small>
+              )}
+            </div>
           </div>
         </SettingCard>
-      </div>
+      </section>
 
       <DaysToSync
         show={showDaysToSync}

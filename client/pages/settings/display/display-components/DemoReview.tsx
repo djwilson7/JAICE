@@ -19,7 +19,7 @@ export function DemoReview() {
     reviewBehavior === "dynamic" ? "demo-column-dynamic" : "demo-column";
 
   return (
-    <div>
+    <div className="settings-layout-preview">
       <div className="detail-text">
         {reviewBehavior === "inline" ? (
           <small>

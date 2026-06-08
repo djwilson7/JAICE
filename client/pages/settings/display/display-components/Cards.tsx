@@ -2,9 +2,7 @@ import Button from "@/global-components/button";
 
 export function SettingCard({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex flex-col w-full card shadow"
-    >
+    <div className="settings-card flex w-full flex-col card">
       {children}
     </div>
   );
@@ -12,7 +10,7 @@ export function SettingCard({ children }: { children: React.ReactNode }) {
 
 export function ButtonRow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col lg:flex-row w-full justify-evenly px-1 gap-1 lg:gap-4">
+    <div className="settings-button-row">
       {children}
     </div>
   );
@@ -32,7 +30,13 @@ export function SettingButton({
   title?: string;
 }) {
   return (
-    <Button className="w-full" isSelected={isSelected} style={style} onClick={onClick} title={title}>
+    <Button
+      className="settings-page-button w-full"
+      isSelected={isSelected}
+      style={style}
+      onClick={onClick}
+      title={title}
+    >
       {label}
     </Button>
   );
@@ -46,12 +50,11 @@ export function SettingHeader({
   description: string;
 }) {
   return (
-    <div className="flex flex-col w-full gap-4">
+    <div className="settings-card-header">
       <h2 className="primary-text">{title}</h2>
-      <small className="flex w-full text-center secondary-text justify-center">
+      <small className="secondary-text">
         {description}
       </small>
-        <hr className="header-split"/>
     </div>
   );
 }

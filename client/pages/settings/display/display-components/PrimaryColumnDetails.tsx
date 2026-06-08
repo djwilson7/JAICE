@@ -40,7 +40,7 @@ export function PrimaryColumnDetails() {
   };
 
   return (
-    <div>
+    <div className="settings-layout-preview">
       <div className="detail-text">
         {isSeparate ? (
           <small>
