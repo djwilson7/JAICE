@@ -3416,14 +3416,18 @@ button.settings-account-action-button.green:focus-visible {
 }
 
 .about-page {
-  min-height: 100vh;
+  min-height: 100%;
   width: 100%;
   overflow-x: hidden;
 }
 
+.about-page--public {
+  min-height: 100vh;
+}
+
 .about-shell {
   display: flex;
-  min-height: 100vh;
+  min-height: 100%;
   width: min(72rem, 100%);
   flex-direction: column;
   gap: 1rem;
@@ -3432,6 +3436,7 @@ button.settings-account-action-button.green:focus-visible {
 }
 
 .about-page--public .about-shell {
+  min-height: 100vh;
   gap: 1.25rem;
   padding-block: 3.25rem 1.25rem;
 }
@@ -3449,7 +3454,8 @@ button.settings-account-action-button.green:focus-visible {
   -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
-.about-page--public .about-surface {
+.about-page--public .about-surface,
+.about-page--app .about-surface {
   background: rgba(var(--primary-one-rgb), 0.58);
 }
 

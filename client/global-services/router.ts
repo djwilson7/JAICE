@@ -6,7 +6,7 @@ import { hasValidAuthenticatedSession } from "@/global-services/auth";
 import { LandingRoute } from "@/pages/landing/landing.meta";
 import { NavigationBarRoute } from "@/app/layouts/navigation.meta";
 import { HomeRoute } from "@/pages/home/home.meta";
-import { AboutRoute } from "@/pages/about/about.meta";
+import { AboutRoute, AuthAboutRoute } from "@/pages/about/about.meta";
 import { DashboardRoute } from "@/pages/dashboard/dashboard.meta";
 import { SettingsRoute } from "@/pages/settings/settings.meta";
 import { ResumeRoute } from "@/pages/Resume/resume.meta";
@@ -15,6 +15,12 @@ import { ResumeRoute } from "@/pages/Resume/resume.meta";
 async function requireAuth() {
   const isAuthenticated = await hasValidAuthenticatedSession();
   if (!isAuthenticated) throw replace(LandingRoute.path);
+  return null;
+}
+
+async function redirectAuthenticatedAbout() {
+  const isAuthenticated = await hasValidAuthenticatedSession();
+  if (isAuthenticated) throw replace(AuthAboutRoute.path);
   return null;
 }
 
@@ -35,23 +41,24 @@ export const router = createBrowserRouter([
   {
     path: AboutRoute.path,
     element: AboutRoute.element,
+    loader: redirectAuthenticatedAbout,
   },
   {
     path: `${AboutRoute.path}/*`,
     loader: redirectToCanonical(AboutRoute.path),
   },
   {
-    path: "/auth-about/*",
-    loader: redirectToCanonical(AboutRoute.path),
-  },
-  {
-    path: "/auth-about",
-    loader: redirectToCanonical(AboutRoute.path),
-  },
-  {
     element: NavigationBarRoute.element,
     loader: requireAuth,
     children: [
+      {
+        path: AuthAboutRoute.path,
+        element: AuthAboutRoute.element,
+      },
+      {
+        path: `${AuthAboutRoute.path}/*`,
+        loader: redirectToCanonical(AuthAboutRoute.path),
+      },
       {
         path: HomeRoute.path,
         element: HomeRoute.element,

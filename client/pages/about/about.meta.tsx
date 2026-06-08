@@ -6,3 +6,8 @@ export const AboutRoute = {
   path: "/about",
   element: <AboutPage />,
 };
+
+export const AuthAboutRoute = {
+  path: "/auth-about",
+  element: <AboutPage isPublic={false} />,
+};

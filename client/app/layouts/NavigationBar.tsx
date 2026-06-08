@@ -24,7 +24,7 @@ import { useSettings } from "@/pages/settings/provider/settingsContext";
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
   about: {
-    route: "/about",
+    route: "/auth-about",
     label: "About",
     icon: aboutIcon,
     title: "Go to About",
@@ -89,7 +89,7 @@ export function NavigationBar() {
 
     if (path === "/home") {
       setSelectedButton("home");
-    } else if (path === "/about") {
+    } else if (path === "/auth-about") {
       setSelectedButton("about");
     } else if (path === "/dashboard") {
       setSelectedButton("dashboard");

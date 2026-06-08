@@ -28,20 +28,30 @@ const team = [
   { name: "Sephen", role: "Developer", avatar: "/team/Sephen.jpg" },
 ];
 
-export function AboutPage() {
+type AboutPageProps = {
+  isPublic?: boolean;
+};
+
+export function AboutPage({ isPublic = true }: AboutPageProps) {
   const navigate = useNavigate();
   const brandImg = useBrandImage();
 
   return (
-    <div className="about-page about-page--public landing-gradient">
-      <div className="about-public-nav-action">
-        <Button
-          className="route-text-button"
-          onClick={() => navigate("/")}
-        >
-          Home
-        </Button>
-      </div>
+    <div
+      className={`about-page ${
+        isPublic ? "about-page--public landing-gradient" : "about-page--app"
+      }`}
+    >
+      {isPublic && (
+        <div className="about-public-nav-action">
+          <Button
+            className="route-text-button"
+            onClick={() => navigate("/")}
+          >
+            Home
+          </Button>
+        </div>
+      )}
 
       <main className="about-shell">
         <section className="about-hero about-surface">
