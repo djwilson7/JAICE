@@ -339,7 +339,7 @@ def test_classification_llm_result_mapping_and_rule_offer():
     assert item["top_label"] == "interview"
     assert item["second_label"] == "applied"
 
-    assert class_tasks.build_llm_result_item(
+    review_item = class_tasks.build_llm_result_item(
         {"id": "row", "provider_message_id": "msg"},
         {
             "category": "INTERVIEW",
@@ -347,7 +347,9 @@ def test_classification_llm_result_mapping_and_rule_offer():
             "secondary_category": "APPLICATION_RECEIVED",
             "secondary_confidence": 0.2,
         },
-    ) is None
+    )
+    assert review_item["top_label"] == "interview"
+    assert review_item["needs_review"] is True
 
     result = class_tasks.run_classification_model(
         "trace",

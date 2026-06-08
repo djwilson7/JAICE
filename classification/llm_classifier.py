@@ -15,9 +15,6 @@ SUPPORTED_CATEGORIES = {
     "OFFER",
     "ACCEPTED",
     "REJECTION",
-    "RECRUITER_OUTREACH",
-    "NETWORKING",
-    "FOLLOW_UP",
     "NOT_JOB_RELATED",
     "UNKNOWN",
 }
@@ -112,10 +109,15 @@ def parse_llm_classification_response(text: str) -> dict:
 def classify_email_with_ollama(email_text: str) -> dict:
     system = (
         "Classify a Gmail message for a job application tracker. "
+        "Only mark a message job-application-related when it describes a submitted "
+        "application lifecycle event: application received/submitted/update, "
+        "assessment, interview, offer, accepted offer, or rejection. "
+        "Generic job posts, now-hiring campaigns, apply-now CTAs, recruiter outreach, "
+        "networking messages, newsletters, blog posts, and job recommendations are "
+        "NOT_JOB_RELATED. "
         "Return strict JSON only. Use category values only from: "
         "APPLICATION_RECEIVED, APPLICATION_UPDATE, INTERVIEW, ASSESSMENT, OFFER, "
-        "ACCEPTED, REJECTION, RECRUITER_OUTREACH, NETWORKING, FOLLOW_UP, "
-        "NOT_JOB_RELATED, UNKNOWN. "
+        "ACCEPTED, REJECTION, NOT_JOB_RELATED, UNKNOWN. "
         "Schema: {\"category\": string, \"confidence\": number, "
         "\"secondary_category\": string|null, \"secondary_confidence\": number, "
         "\"reason\": string}. Do not include email text in the reason."

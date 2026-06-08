@@ -44,7 +44,16 @@ function stripLinkText(value: string): string {
     .replace(/\[([^\]]+)\]\((?:https?:\/\/|www\.)[^)\s]+[^)]*\)/gi, "$1")
     .replace(/\b(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi, "")
     .replace(/\b[a-z0-9.-]+\.[a-z]{2,}(?:\/[^\s<>"')\]]*)+/gi, "")
+    .replace(/\[\s*\]\s*\(\s*\)/g, "")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\[\s*\]/g, "")
     .replace(/[ \t\f\v]+([,.;:!?])/g, "$1");
+}
+
+function isArtifactLine(line: string): boolean {
+  const normalized = line.trim();
+  return /^[-_*=•·]+$/.test(normalized)
+    || /^(?:[A-Z][\w&'.-]*(?:\s+[A-Z][\w&'.-]*){0,4}\s+)?(?:logo|icon)$/i.test(normalized);
 }
 
 export function formatInboxMessage(message?: string | null): string {
@@ -68,6 +77,7 @@ export function formatInboxMessage(message?: string | null): string {
     .replace(/\r\n?/g, "\n")
     .split("\n")
     .map((line) => line.replace(/[ \t\f\v]+/g, " ").trim())
+    .filter((line) => !isArtifactLine(line))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();

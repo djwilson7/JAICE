@@ -5,6 +5,7 @@ import os, base64, time, requests, random, redis, uuid
 from gmail.gmail_worker import celery_app
 from google.oauth2.credentials import Credentials
 from common.security import encrypt_token, decrypt_token
+from common.email_text import EmailBodyCleanupResult, clean_email_body
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from shared_worker_library.utils.task_definitions import TaskType, EmailStatus
@@ -559,7 +560,7 @@ def gmail_fetch_batch(
                 userId="me",
                 id=msg_id,
                 format="full",
-                fields="id,threadId,historyId,internalDate,payload",
+                fields="id,threadId,historyId,internalDate,snippet,payload",
             ),
             request_id=msg_id,
         )
@@ -594,7 +595,9 @@ def parse_successful_fetches(
             sender = _get_header(headers, "From")
             recipient = _get_header(headers, "To")
 
-            body_text = extract_plain_text_from_payload(payload)
+            body_text = extract_plain_text_from_payload(payload, trace_id=trace_id)
+            if not body_text:
+                body_text = _normalize_extracted_text(resp.get("snippet", ""))
 
             parsed_emails.append(
                 {
@@ -624,58 +627,101 @@ def _get_header(headers: List[Dict], name: str) -> str:
     return ""
 
 
-def extract_plain_text_from_payload(payload: Dict, depth: int = 0) -> str:
+def extract_plain_text_from_payload(
+    payload: Dict,
+    depth: int = 0,
+    trace_id: Optional[str] = None,
+) -> str:
     """
     Attempts to extract plaintext body.
     Priority:
-        1. text/plain
-        2. stripped text/html
+        1. text/plain, unless it is clearly a skeletal fallback
+        2. readable text/html
         3. fallback ""
     """
     if depth > 10:
         return ""
-    
-    # If payload has a simple body
-    if "body" in payload and payload.get("body", {}).get("data"):
-        if payload.get("mimeType") == "text/plain":
-            return _decode_gmail_body(payload["body"]["data"])
 
-    # Multipart
-    parts = payload.get("parts", [])
-    plain_text = None
-    html_text = None
+    plain_candidates: List[str] = []
+    html_candidates: List[str] = []
+    _collect_body_candidates(payload, depth, plain_candidates, html_candidates, trace_id)
+    return _select_best_body_text(plain_candidates, html_candidates)
 
-    for part in parts:
-        mime = part.get("mimeType", "")
-        body = part.get("body", {}).get("data")
 
-        if mime == "text/plain" and body:
-            plain_text = _decode_gmail_body(body)
+def _collect_body_candidates(
+    payload: Dict,
+    depth: int,
+    plain_candidates: List[str],
+    html_candidates: List[str],
+    trace_id: Optional[str],
+) -> None:
+    if depth > 10 or not payload:
+        return
 
-        elif mime == "text/html" and body:
-            html_text = strip_html(_decode_gmail_body(body))
+    mime = str(payload.get("mimeType") or "").lower()
+    body = payload.get("body", {}).get("data")
 
-        # Recursively walk nested parts
-        if "parts" in part:
-            nested = extract_plain_text_from_payload(part, depth + 1)
-            if nested and not plain_text:
-                plain_text = nested
+    if body:
+        decoded = _decode_gmail_body(body)
+        if mime == "text/plain":
+            plain_candidates.append(_normalize_extracted_text(decoded))
+        elif mime == "text/html":
+            result = clean_email_body(decoded, mime, return_debug=True)
+            _log_cleanup_debug(trace_id, result)
+            html_candidates.append(result.text)
 
-    if plain_text:
-        return plain_text
-    if html_text:
+    for part in payload.get("parts", []) or []:
+        _collect_body_candidates(part, depth + 1, plain_candidates, html_candidates, trace_id)
+
+
+def _select_best_body_text(
+    plain_candidates: List[str],
+    html_candidates: List[str],
+) -> str:
+    plain_text = _longest_text(plain_candidates)
+    html_text = _longest_text(html_candidates)
+
+    if not plain_text:
         return html_text
-    return ""
+    if not html_text:
+        return plain_text
+
+    if len(html_text) >= max(len(plain_text) * 2, len(plain_text) + 200):
+        return html_text
+    return plain_text
+
+
+def _longest_text(candidates: List[str]) -> str:
+    return max((candidate for candidate in candidates if candidate), key=len, default="")
+
+
+def _normalize_extracted_text(text: str) -> str:
+    return str(clean_email_body(text, "text/plain"))
 
 
 def _decode_gmail_body(b64data: str) -> str:
-    return base64.urlsafe_b64decode(b64data).decode("utf-8", errors="ignore")
+    padded = b64data + ("=" * (-len(b64data) % 4))
+    return base64.urlsafe_b64decode(padded).decode("utf-8", errors="ignore")
 
 
 def strip_html(html: str) -> str:
-    import re
+    return str(clean_email_body(html, "text/html"))
 
-    return re.sub(r"<[^>]+>", "", html).strip()
+
+def _log_cleanup_debug(
+    trace_id: Optional[str],
+    result: EmailBodyCleanupResult,
+) -> None:
+    if not trace_id or os.getenv("EMAIL_CLEANUP_DEBUG", "").lower() not in {"1", "true", "yes"}:
+        return
+    logging.debug(
+        f"[{trace_id}] email cleanup content_type={result.content_type_used} "
+        f"raw_len={result.raw_text_length} cleaned_len={result.cleaned_text_length} "
+        f"html_nodes_removed={result.html_nodes_removed} "
+        f"boilerplate_lines_removed={result.boilerplate_lines_removed} "
+        f"preview={result.preview!r}"
+    )
+
 
 
 def log_and_skip(trace_id: str, skipped_ids: List[str]) -> None:

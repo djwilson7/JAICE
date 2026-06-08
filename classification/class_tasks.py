@@ -1,8 +1,8 @@
-import html
 import os
 import re
 import unicodedata
 from classification.class_worker import celery_app
+from common.email_text import clean_email_body
 from common.logger import get_logger
 from shared_worker_library.utils.task_definitions import TaskType, ClassificationModelResult
 from typing import List, Dict, Optional
@@ -46,7 +46,7 @@ def classification_task(trace_id: str, row_ids: list, attempt: int = 1):
     Steps:
     1.  Fetches encrypted emails from the staging table using `row_ids`.
     2.  Decrypts the email content.
-    3.  Normalizes the text for the model (HTML stripping, etc.).
+    3.  Normalizes the text for the model (HTML-to-text formatting, masking, etc.).
     4.  Runs rule filtering and classification to determine the application stage.
     5.  Writes the results to the `job_applications` table.
 
@@ -158,7 +158,7 @@ def normalized_emails_for_model(trace_id: str, emails: list[dict]) -> list[dict]
     Prepares email text for the classification model.
 
     Performs normalization:
-    - HTML unescaping and tag removal.
+    - HTML-to-plain-text formatting.
     - URL and Email masking.
     - Unicode normalization.
     - Whitespace collapsing.
@@ -177,8 +177,7 @@ def normalized_emails_for_model(trace_id: str, emails: list[dict]) -> list[dict]
         if text is None:
             return ""
         text = str(text)
-        text = html.unescape(text)
-        text = re.sub(r'<[^>]+>', ' ', text)
+        text = str(clean_email_body(text))
         text = re.sub(r'http\S+|www\S+|https\S+', ' URL ', text, flags=re.IGNORECASE)
         text = re.sub(r"\b[\w.-]+?@\w+?\.\w+?\b", " EMAIL_ADDRESS ", text, flags=re.IGNORECASE)
         text = unicodedata.normalize('NFKC', text)
@@ -329,7 +328,6 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
                     f"score={float(top_score):.3f} provider_message_id={email['provider_message_id']}"
                 )
 
-                h_label = heuristic_labeling(email_text)
                 needs_review = False
 
                 if top_score < CONFIDENCE_THRESHOLD:
@@ -338,19 +336,6 @@ def run_classification_model(trace_id: str, emails: list[dict]) -> Classificatio
                     needs_review = True
 
                 final_label = top_label
-
-                if h_label:
-                    if h_label == top_label:
-                        final_label = top_label
-                    elif h_label == second_label:
-                        final_label = second_label
-                        needs_review = True
-                    else:
-                        needs_review = True
-
-                if final_label == second_label and second_label is not None:
-                    top_label, second_label = second_label, top_label
-                    top_score, second_score = second_score, top_score
 
                 logging.debug(f"[{trace_id}] Email {email['id']}: {top_label} (confidence: {top_score:.3f})")
                     
@@ -611,12 +596,12 @@ def build_llm_result_item(email: dict, llm_out: dict) -> Optional[dict]:
 
     if category == "UNKNOWN":
         return None
-    if confidence < LLM_CONFIDENCE_THRESHOLD:
-        return None
-    if confidence - secondary_confidence < LLM_MARGIN_THRESHOLD:
-        return None
+    low_confidence = confidence < LLM_CONFIDENCE_THRESHOLD
+    low_margin = confidence - secondary_confidence < LLM_MARGIN_THRESHOLD
 
     if category == "NOT_JOB_RELATED":
+        if low_confidence or low_margin:
+            return None
         return {
             "email_id": email["id"],
             "provider_message_id": email["provider_message_id"],
@@ -636,7 +621,7 @@ def build_llm_result_item(email: dict, llm_out: dict) -> Optional[dict]:
         "top_score": confidence,
         "second_label": INTERNAL_TO_STAGE.get(secondary_category),
         "second_score": secondary_confidence,
-        "needs_review": False,
+        "needs_review": bool(low_confidence or low_margin),
         "stage_scores": None,
         "category": category,
     }

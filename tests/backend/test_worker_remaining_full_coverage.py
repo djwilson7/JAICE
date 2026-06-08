@@ -174,7 +174,7 @@ def test_gmail_remaining_lock_batch_and_payload_branches(monkeypatch):
     encoded_plain = gmail_tasks.base64.urlsafe_b64encode(b"plain").decode()
     assert gmail_tasks.extract_plain_text_from_payload(
         {"mimeType": "text/html", "body": {"data": encoded_html}}
-    ) == ""
+    ) == "html"
     assert gmail_tasks.extract_plain_text_from_payload(
         {
             "parts": [

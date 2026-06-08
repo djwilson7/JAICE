@@ -223,6 +223,11 @@ def test_llm_classifier_parse_and_validation():
             '{"category":"OTHER","confidence":0.9}'
         )
 
+    with pytest.raises(llm_classifier.EmailLLMClassifierError, match="Unsupported"):
+        llm_classifier.parse_llm_classification_response(
+            '{"category":"RECRUITER_OUTREACH","confidence":0.9}'
+        )
+
     with pytest.raises(llm_classifier.EmailLLMTransientError, match="malformed"):
         llm_classifier.parse_llm_classification_response(
             '{"category":INTERVIEW,"confidence":0.9}'

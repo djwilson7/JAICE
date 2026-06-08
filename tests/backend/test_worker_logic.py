@@ -10,6 +10,10 @@ import pytest
 from classification import class_queries, class_tasks
 from classification import class_rules
 from gmail import gmail_tasks
+from common.email_text import clean_email_body, html_to_clean_text, strip_email_boilerplate
+from common.job_application_crypto import decrypt_job_application_value
+from common.security import encrypt_token
+from shared_worker_library.db_queries import job_application_queries
 from shared_worker_library.utils.task_definitions import ClassificationModelResult
 
 
@@ -92,6 +96,53 @@ def test_classification_query_helpers(monkeypatch):
     ) == {"status": "failure", "error": "database down"}
 
 
+def test_processing_placeholder_encrypts_public_job_content(monkeypatch):
+    captured = {}
+
+    monkeypatch.setattr(
+        job_application_queries,
+        "get_data_from_staging",
+        lambda *_args: [
+            (
+                "staging-1",
+                encrypt_token("user-1"),
+                "trace",
+                "gmail",
+                "provider-1",
+                encrypt_token("Application update"),
+                encrypt_token("Recruiting <jobs@example.com>"),
+                "2026-06-08T00:00:00Z",
+                encrypt_token("Private email body"),
+                None,
+                None,
+            )
+        ],
+    )
+    monkeypatch.setattr(
+        job_application_queries,
+        "execute_transfer_query",
+        lambda **kwargs: captured.update(kwargs)
+        or {"status": "success", "rows_affected": 1},
+    )
+
+    result = job_application_queries.insert_processing_placeholders_from_staging(
+        "trace",
+        ["staging-1"],
+    )
+
+    assert result == {"status": "success", "rows_affected": 1}
+    assert "title_enc" in captured["query"]
+    assert "description_enc" in captured["query"]
+    assert "title," not in captured["query"]
+
+    values = captured["values"][0]
+    assert isinstance(values[1], bytes)
+    assert isinstance(values[3], bytes)
+    assert decrypt_job_application_value(values[1]) == "Application update"
+    assert decrypt_job_application_value(values[3]) == "Private email body"
+    assert decrypt_job_application_value(values[7]) == "Recruiting <jobs@example.com>"
+
+
 def test_classification_normalizes_email_text_and_skips_bad_rows():
     normalized = class_tasks.normalized_emails_for_model(
         "trace",
@@ -110,8 +161,144 @@ def test_classification_normalizes_email_text_and_skips_bad_rows():
     assert len(normalized) == 1
     assert normalized[0]["subject"] == "hello world"
     assert normalized[0]["sender"] == "email_address"
-    assert "url" in normalized[0]["body"]
+    assert "https://example.com" not in normalized[0]["body"]
     assert "email_address" in normalized[0]["body"]
+
+
+def test_classification_formats_html_body_before_rule_matching():
+    normalized = class_tasks.normalized_emails_for_model(
+        "trace",
+        [
+            {
+                "id": "html-application",
+                "subject": "Update",
+                "sender": "no-reply@example.com",
+                "body": """
+                    <html>
+                      <body>
+                        <p>Thank you for applying.</p>
+                        <p>We received your application and we'll review your application soon.</p>
+                        <a href="https://example.com/jobs/123">Software Engineer at Kalderos</a>
+                        <a href="https://tracking.example.com/status">View application status</a>
+                      </body>
+                    </html>
+                """,
+                "provider_message_id": "msg-html",
+            },
+        ],
+    )
+
+    assert normalized[0]["body"] == (
+        "thank you for applying. we received your application and we'll "
+        "review your application soon. software engineer at kalderos "
+        "view application status"
+    )
+
+    result = class_tasks.run_classification_model("trace", normalized)
+
+    assert [item["email_id"] for item in result.applied] == ["html-application"]
+    assert result.not_job_related == []
+
+
+def test_email_body_cleanup_removes_template_noise_and_preserves_content():
+    html = """
+        <html>
+          <body>
+            <div class="email-preheader">Preview text that should not show</div>
+            <header><img alt="Company Logo">Careers Header</header>
+            <main>
+              <p>Interview Invitation</p>
+              <p>Please schedule your interview for the Software Engineer role.</p>
+              <a href="https://tracking.example.com/click?id=123">Schedule interview</a>
+            </main>
+            <img class="logo" alt="Brand Logo">
+            <div class="social-links"><a>LinkedIn</a><a>Twitter</a></div>
+            <footer>
+              <p>Unsubscribe</p>
+              <p>Privacy Policy</p>
+            </footer>
+          </body>
+        </html>
+    """
+
+    result = html_to_clean_text(html, return_debug=True)
+
+    assert result.text == (
+        "Interview Invitation\n"
+        "\n"
+        "Please schedule your interview for the Software Engineer role.\n"
+        "\n"
+        "Schedule interview"
+    )
+    assert "Logo" not in result.text
+    assert "LinkedIn" not in result.text
+    assert "Unsubscribe" not in result.text
+    assert result.html_nodes_removed > 0
+
+
+def test_email_body_cleanup_handles_plain_text_and_boilerplate_conservatively():
+    text = """
+        Application Received
+
+        Your application status has been updated.
+        View this email in your browser
+        Manage preferences
+        Offer Letter
+        © 2026 Example Inc. All rights reserved.
+    """
+
+    cleaned = clean_email_body(text, "text/plain")
+
+    assert cleaned == (
+        "Application Received\n"
+        "\n"
+        "Your application status has been updated.\n"
+        "Offer Letter"
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Apply here (https://tracking.example.com/apply)", "Apply here"),
+        ("Schedule interview [https://tracking.example.com/schedule]", "Schedule interview"),
+        ("Status: [](https://tracking.example.com/status)", "Status:"),
+        ("Offer Letter ()", "Offer Letter"),
+    ],
+)
+def test_email_body_cleanup_removes_empty_link_artifacts(text, expected):
+    assert clean_email_body(text, "text/plain") == expected
+
+
+def test_email_body_cleanup_removes_separator_and_logo_artifact_lines():
+    cleaned = clean_email_body(
+        """
+        Indeed Logo
+        -
+        -
+        -
+        Application Received
+        Your application status has changed.
+        Company Icon
+        Offer Letter
+        """,
+        "text/plain",
+    )
+
+    assert cleaned == (
+        "Application Received\n"
+        "Your application status has changed.\n"
+        "Offer Letter"
+    )
+
+
+def test_strip_email_boilerplate_keeps_short_job_lines():
+    cleaned, removed = strip_email_boilerplate(
+        "Action Required\nUnsubscribe\nComplete your assessment\nDownload the app"
+    )
+
+    assert cleaned == "Action Required\nComplete your assessment"
+    assert removed == 2
 
 
 @pytest.mark.parametrize(
@@ -136,6 +323,11 @@ def test_classification_heuristics(text, expected):
         (
             "Application confirmation",
             "Thank you for applying. We received your application and we'll review your application soon.",
+            "applied",
+        ),
+        (
+            "Thank you for your application to Example Corp",
+            "Our recruiting team will review your materials and contact you with any updates.",
             "applied",
         ),
         (
@@ -230,6 +422,303 @@ def test_rule_classifier_corrections_and_low_confidence():
     assert ambiguous["raw"]["reason"] == "low_confidence_or_low_margin"
 
 
+@pytest.mark.parametrize(
+    "subject",
+    [
+        "Find your dream job",
+        "Your dream job is waiting",
+        "New job",
+        "12 new jobs for you",
+        "New match",
+        "You have new matches",
+        "New position available",
+        "New roles selected for you",
+        "New opportunity near you",
+        "Explore new possibilities",
+        "Explore new possiblities",
+        "Your latest job matches",
+        "Recommended positions for you",
+        "Jobs you may like",
+        "Opportunities you may like",
+    ],
+)
+def test_rule_classifier_filters_marketing_alert_subjects(subject):
+    result = class_rules.classify_email_by_rules(
+        subject=subject,
+        sender="LinkedIn Jobs <jobs-noreply@linkedin.com>",
+        body="Review this recommendation and unsubscribe from future alerts.",
+        email_text=f"Subject: {subject} Body: Review this recommendation.",
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is False
+    assert result["category"] == "NOT_JOB_RELATED"
+    assert result["stage"] is None
+    assert result["requires_inference"] is False
+    assert result["reason"] == "rule_marketing_alert_subject"
+
+
+def test_run_classification_model_filters_marketing_alert_subjects():
+    result = class_tasks.run_classification_model(
+        "trace",
+        [
+            {
+                "id": "marketing-1",
+                "subject": "New job matches for you",
+                "sender": "LinkedIn Jobs",
+                "body": "See the positions selected for you.",
+                "provider_message_id": "msg-marketing",
+            }
+        ],
+    )
+
+    assert result.applied == []
+    assert result.inference == []
+    assert result.not_job_related == [
+        {
+            "email_id": "marketing-1",
+            "provider_message_id": "msg-marketing",
+            "reason": "rule_marketing_alert_subject",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "marketing_text",
+    [
+        "Do you want to get more jobs like this?",
+        "Keep your profile up to date to receive better recommendations.",
+        "You received this job match email based on your profile.",
+        "Apply Now",
+        "Apply on website",
+        "Apply with your profile",
+        "Quick Apply",
+    ],
+)
+def test_rule_classifier_filters_marketing_ctas_anywhere_in_body(marketing_text):
+    result = class_rules.classify_email_by_rules(
+        subject="Software Engineer opportunity",
+        sender="Job Recommendations <alerts@example.com>",
+        body=(
+            "This role could be a match for your experience. "
+            f"{marketing_text} We received your application."
+        ),
+        email_text=(
+            "Body: This role could be a match for your experience. "
+            f"{marketing_text} We received your application."
+        ),
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is False
+    assert result["category"] == "NOT_JOB_RELATED"
+    assert result["stage"] is None
+    assert result["requires_inference"] is False
+    assert result["reason"] == "rule_marketing_body_exclusion"
+
+
+def test_run_classification_model_filters_marketing_apply_cta():
+    result = class_tasks.run_classification_model(
+        "trace",
+        [
+            {
+                "id": "marketing-apply",
+                "subject": "This role could be a match",
+                "sender": "Indeed <alert@indeed.com>",
+                "body": "Review this recommended job and Quick Apply with your profile.",
+                "provider_message_id": "msg-marketing-apply",
+            }
+        ],
+    )
+
+    assert result.applied == []
+    assert result.inference == []
+    assert result.not_job_related == [
+        {
+            "email_id": "marketing-apply",
+            "provider_message_id": "msg-marketing-apply",
+            "reason": "rule_marketing_body_exclusion",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "feedback_text",
+    [
+        "This is a bad match",
+        "This isn't a good match",
+        "This is not a good match",
+        "Not a good match for me",
+    ],
+)
+def test_rule_classifier_filters_indeed_marketing_feedback_controls(feedback_text):
+    result = class_rules.classify_email_by_rules(
+        subject="Senior Software Engineer at Example Corp",
+        sender="Indeed <alert@indeed.com>",
+        body=f"View job. {feedback_text}.",
+        email_text=f"From: alert@indeed.com Body: View job. {feedback_text}.",
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is False
+    assert result["category"] == "NOT_JOB_RELATED"
+    assert result["stage"] is None
+    assert result["reason"] == "rule_indeed_marketing_feedback"
+
+
+@pytest.mark.parametrize(
+    "campaign_text",
+    [
+        "Do you want to get more jobs like this?",
+        "Keep your profile up to date to improve your matches.",
+        "You received this job match email based on your activity.",
+    ],
+)
+def test_rule_classifier_filters_indeed_match_marketing_campaigns(campaign_text):
+    result = class_rules.classify_email_by_rules(
+        subject="FirstNow could be a match",
+        sender="Indeed <alert@indeed.com>",
+        body=(
+            "This employer's job could be a match based on your profile. "
+            f"{campaign_text}"
+        ),
+        email_text=(
+            "From: alert@indeed.com "
+            "Body: This employer's job could be a match based on your profile. "
+            f"{campaign_text}"
+        ),
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is False
+    assert result["category"] == "NOT_JOB_RELATED"
+    assert result["stage"] is None
+    assert result["requires_inference"] is False
+    assert result["reason"] == "rule_marketing_body_exclusion"
+
+
+def test_indeed_application_match_disclaimer_remains_applied():
+    result = class_rules.classify_email_by_rules(
+        subject="Your application to Example Corp was sent",
+        sender="Indeed Applications <applications@indeed.com>",
+        body=(
+            "Your application was sent to Example Corp. If your application "
+            "could be a match, the employer will follow up with you."
+        ),
+        email_text=(
+            "Subject: Your application to Example Corp was sent. "
+            "Body: Your application was sent to Example Corp. If your "
+            "application could be a match, the employer will follow up with you."
+        ),
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is True
+    assert result["category"] == "APPLICATION_RECEIVED"
+    assert result["stage"] == "applied"
+    assert result["reason"] == "rule_stage_match"
+
+
+def test_bad_match_language_without_indeed_sender_is_not_marketing_override():
+    result = class_rules.classify_email_by_rules(
+        subject="Update on your application",
+        sender="Recruiter <recruiter@example.com>",
+        body="This is not a good match, so we are not moving forward.",
+        email_text="Body: This is not a good match, so we are not moving forward.",
+    )
+
+    assert result["category"] == "REJECTION"
+    assert result["stage"] == "rejected"
+    assert result["relevant"] is True
+
+
+def test_important_application_information_rejection_is_classified():
+    result = class_rules.classify_email_by_rules(
+        subject="Important information about your application",
+        sender="Hiring Team <no-reply@example.com>",
+        body=(
+            "Thank you for your interest. Unfortunately, we have decided "
+            "to move forward with other candidates."
+        ),
+        email_text=(
+            "Subject: Important information about your application "
+            "Body: Unfortunately, we have decided to move forward with "
+            "other candidates."
+        ),
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is True
+    assert result["category"] == "REJECTION"
+    assert result["stage"] == "rejected"
+
+
+def test_important_application_information_without_stage_routes_to_inference():
+    result = class_rules.classify_email_by_rules(
+        subject="Important information regarding your application",
+        sender="notifications@example.com",
+        body="Please sign in to review this important update.",
+        email_text=(
+            "Subject: Important information regarding your application "
+            "Body: Please sign in to review this important update."
+        ),
+    )
+
+    assert result["matched"] is False
+    assert result["relevant"] is True
+    assert result["requires_inference"] is True
+    assert result["reason"] == "application_update_requires_inference"
+
+
+@pytest.mark.parametrize(
+    ("subject", "sender", "body", "reason"),
+    [
+        (
+            "Inside Outlier: what our experts are building",
+            "Outlier <news@outlier.ai>",
+            "Read more from the Outlier blog about AI training work and platform updates.",
+            "rule_content_marketing",
+        ),
+        (
+            "Now hiring: AI trainers",
+            "Outlier <jobs@outlier.ai>",
+            "We are hiring remote contributors. Apply now to start earning.",
+            "rule_marketing_alert_subject",
+        ),
+        (
+            "Senior Software Engineer opportunity",
+            "Indeed <alert@indeed.com>",
+            "This company is hiring now. View open roles and apply today.",
+            "rule_marketing_body_exclusion",
+        ),
+        (
+            "Role that may interest you",
+            "Recruiter <recruiter@example.com>",
+            "I found a role that may interest you and would like to connect.",
+            "rule_no_application_lifecycle_context",
+        ),
+    ],
+)
+def test_rule_classifier_blocks_job_marketing_and_generic_outreach(
+    subject,
+    sender,
+    body,
+    reason,
+):
+    result = class_rules.classify_email_by_rules(
+        subject=subject,
+        sender=sender,
+        body=body,
+        email_text=f"Subject: {subject} From: {sender} Body: {body}",
+    )
+
+    assert result["matched"] is True
+    assert result["relevant"] is False
+    assert result["category"] == "NOT_JOB_RELATED"
+    assert result["requires_inference"] is False
+    assert result["reason"] == reason
+
+
 def test_run_classification_model_uses_rules_without_model_fallback():
     result = class_tasks.run_classification_model(
         "trace",
@@ -249,7 +738,64 @@ def test_run_classification_model_uses_rules_without_model_fallback():
     assert result.inference == []
 
 
-def test_run_classification_model_routes_ambiguous_to_inference():
+@pytest.mark.parametrize(
+    ("subject", "sender", "body"),
+    [
+        (
+            "Important information about your application to Backstroke",
+            "careers@highalpha.com",
+            (
+                "Thank you for the time and effort you dedicated to your application "
+                "for the Software Engineer at Backstroke. After careful consideration, "
+                "we've decided to move forward with other candidates at this time."
+            ),
+        ),
+        (
+            "An update on your application for Senior Software Engineer at Mastercard",
+            "MasterCard People Services <mastercard@myworkday.com>",
+            (
+                "Thank you for applying to the Senior Software Engineer position. "
+                "We've decided to move forward with other candidates whose expertise "
+                "more closely aligns with our needs at this time."
+            ),
+        ),
+        (
+            "An update from Softrip, Shoken and 6 others",
+            "Wellfound <team@hi.wellfound.com>",
+            (
+                "An update about your application. Your applications to the following "
+                "companies have expired. We expire applications when a company does "
+                "not process the application in time."
+            ),
+        ),
+    ],
+)
+def test_run_classification_model_keeps_clear_rejections_out_of_review(
+    subject,
+    sender,
+    body,
+):
+    result = class_tasks.run_classification_model(
+        "trace",
+        [
+            {
+                "id": "rejection",
+                "subject": subject,
+                "sender": sender,
+                "body": body,
+                "provider_message_id": "msg-rejection",
+            }
+        ],
+    )
+
+    assert result.applied == []
+    assert result.inference == []
+    assert len(result.rejected) == 1
+    assert result.rejected[0]["top_label"] == "rejected"
+    assert result.rejected[0]["needs_review"] is False
+
+
+def test_run_classification_model_filters_generic_quick_updates():
     result = class_tasks.run_classification_model(
         "trace",
         [
@@ -264,11 +810,12 @@ def test_run_classification_model_routes_ambiguous_to_inference():
     )
 
     assert result.applied == []
-    assert result.inference == [
+    assert result.inference == []
+    assert result.not_job_related == [
             {
                 "email_id": "fallback-1",
                 "provider_message_id": "msg-fallback",
-                "reason": "ambiguous_requires_inference",
+                "reason": "rule_no_application_lifecycle_context",
             }
         ]
 
@@ -290,12 +837,12 @@ def test_run_classification_model_groups_rule_results():
         {
             "email_id": "id-2",
             "provider_message_id": "msg-2",
-            "reason": "rule_not_job_related",
+            "reason": "rule_content_marketing",
         },
         {
             "email_id": "id-4",
             "provider_message_id": "msg-4",
-            "reason": "low_signal_requires_inference",
+            "reason": "rule_no_application_lifecycle_context",
         },
     ]
     assert result.inference == []
@@ -489,9 +1036,52 @@ def test_gmail_parsing_helpers_and_payload(monkeypatch):
     encoded = base64.urlsafe_b64encode(b"plain body").decode("ascii")
     assert gmail_tasks._decode_gmail_body(encoded) == "plain body"
     assert gmail_tasks.strip_html("<p>Hello</p>") == "Hello"
+    assert (
+        gmail_tasks.strip_html(
+            "<style>.hidden{}</style><p>Infrastructure Engineer</p><p>Kalderos</p>"
+        )
+        == "Infrastructure Engineer\nKalderos"
+    )
+    assert (
+        gmail_tasks.strip_html(
+            "<p>Application status</p><form><input aria-label='Hidden input'>"
+            "<button>Template button</button></form>"
+        )
+        == "Application status"
+    )
+    assert (
+        gmail_tasks.strip_html(
+            "<html><head><title>Ignored</title></head><body>"
+            "<div class='email-preheader'><p>Preview text</p></div>"
+            "<p>Application received</p>"
+            "<div aria-hidden='true'><p>Tracking copy</p></div>"
+            "<div class='social-links'><a aria-label='Twitter'></a></div>"
+            "</body></html>"
+        )
+        == "Application received"
+    )
     assert gmail_tasks.extract_plain_text_from_payload({"mimeType": "text/plain", "body": {"data": encoded}}) == "plain body"
+    assert gmail_tasks.extract_plain_text_from_payload({"mimeType": "text/html", "body": {"data": base64.urlsafe_b64encode(b"<p>Top level HTML</p>").decode("ascii")}}) == "Top level HTML"
     assert gmail_tasks.extract_plain_text_from_payload({"parts": [{"mimeType": "text/html", "body": {"data": base64.urlsafe_b64encode(b"<b>HTML</b>").decode("ascii")}}]}) == "HTML"
     assert gmail_tasks.extract_plain_text_from_payload({"parts": [{"parts": [{"mimeType": "text/plain", "body": {"data": encoded}}]}]}) == "plain body"
+    slim_plain = base64.urlsafe_b64encode(b"View this email in your browser.").decode("ascii")
+    rich_html = base64.urlsafe_b64encode(
+        (
+            b"<html><body><p>Infrastructure Engineer at Kalderos</p>"
+            b"<p>Your application was received by the hiring team. "
+            b"They will follow up after reviewing your background.</p>"
+            + (b"<p>Additional role context.</p>" * 20)
+            + b"</body></html>"
+        )
+    ).decode("ascii")
+    assert "Infrastructure Engineer at Kalderos" in gmail_tasks.extract_plain_text_from_payload(
+        {
+            "parts": [
+                {"mimeType": "text/plain", "body": {"data": slim_plain}},
+                {"mimeType": "text/html", "body": {"data": rich_html}},
+            ]
+        }
+    )
     assert gmail_tasks.extract_plain_text_from_payload({"parts": []}, depth=11) == ""
 
     parsed = gmail_tasks.parse_successful_fetches(
@@ -504,6 +1094,7 @@ def test_gmail_parsing_helpers_and_payload(monkeypatch):
                     "threadId": "t1",
                     "historyId": "h1",
                     "internalDate": "123",
+                    "snippet": "fallback snippet",
                     "payload": {
                         "headers": [
                             {"name": "Subject", "value": "Job"},
@@ -521,6 +1112,28 @@ def test_gmail_parsing_helpers_and_payload(monkeypatch):
     )
     assert parsed[0]["body_text"] == "plain body"
     assert len(parsed) == 1
+
+    parsed_with_snippet = gmail_tasks.parse_successful_fetches(
+        "trace",
+        [
+            {
+                "msg_id": "snippet-only",
+                "response": {
+                    "id": "snippet-only",
+                    "threadId": "t2",
+                    "historyId": "h2",
+                    "internalDate": "456",
+                    "snippet": "Infrastructure Engineer at Kalderos &amp; application update",
+                    "payload": {"headers": [], "parts": []},
+                },
+            }
+        ],
+        "user-123",
+    )
+    assert (
+        parsed_with_snippet[0]["body_text"]
+        == "Infrastructure Engineer at Kalderos & application update"
+    )
 
     assert gmail_tasks._classify_error(Exception("404 notFound")) == "SKIP"
     assert gmail_tasks._classify_error(Exception("rateLimitExceeded 429")) == "RETRY"
