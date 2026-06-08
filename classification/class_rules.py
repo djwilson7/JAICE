@@ -233,7 +233,7 @@ HARD_LIFECYCLE_RULES: tuple[Rule, ...] = (
     Rule("interview confirmed", "interview", STRONG, category="INTERVIEW", hard=True),
     Rule("interview scheduled", "interview", STRONG, category="INTERVIEW", hard=True),
     Rule("offer letter", "offer", STRONG, category="OFFER", hard=True),
-    Rule("employment offer", "offer", STRONG, category="OFFER", hard=True),
+    Rule("employment offer", "offer", STRONG, category="OFFER", hard=True, excludes_any=("webinar", "salary trends", "benefits trends", "market trends", "career planning", "open to anyone", "register below")),
     Rule("formal offer", "offer", STRONG, category="OFFER", hard=True),
     Rule("we are pleased to offer", "offer", STRONG, category="OFFER", hard=True),
     Rule("pleased to offer", "offer", STRONG, category="OFFER", hard=True),
@@ -296,7 +296,48 @@ CONTEXTUAL_STAGE_RULES: tuple[Rule, ...] = (
     Rule("schedule a call", "interview", MEDIUM, category="INTERVIEW", requires_any=("interview", "recruiter", "hiring manager", "hiring team", "talent acquisition", "phone screen")),
     Rule("schedule a meeting", "interview", MEDIUM, category="INTERVIEW", requires_any=("interview", "recruiter", "hiring manager", "hiring team", "talent acquisition", "phone screen")),
     Rule("introductory call", "interview", MEDIUM, category="INTERVIEW", requires_any=("role", "position", "opportunity", "recruiter", "hiring")),
-    Rule("recruiter call", "interview", MEDIUM, category="INTERVIEW"),
+    # A recruiter call is only an interview-stage event when the surrounding
+    # context shows this is part of an active application/hiring process.
+    # Keep this contextual so generic recruiter outreach does not become an
+    # interview by phrase alone.
+    Rule(
+        "recruiter call",
+        "interview",
+        STRONG,
+        category="INTERVIEW",
+        requires_any=(
+            "application",
+            "applying",
+            "applied",
+            "role",
+            "position",
+            "next steps",
+            "interview process",
+            "hiring process",
+            "talent acquisition",
+            "discuss your background",
+        ),
+        hard=True,
+    ),
+    Rule(
+        "schedule a recruiter call",
+        "interview",
+        STRONG,
+        category="INTERVIEW",
+        requires_any=(
+            "application",
+            "applying",
+            "applied",
+            "role",
+            "position",
+            "next steps",
+            "interview process",
+            "hiring process",
+            "talent acquisition",
+            "discuss your background",
+        ),
+        hard=True,
+    ),
     Rule("salary", "offer", WEAK, category="OFFER", requires_any=("offer", "offer letter", "employment", "compensation package")),
     Rule("compensation", "offer", MEDIUM, category="OFFER", requires_any=("offer", "offer letter", "employment", "salary")),
     Rule("benefits", "offer", WEAK, category="OFFER", requires_any=("offer", "offer letter", "employment", "onboarding")),
@@ -386,6 +427,56 @@ CONTENT_MARKETING_SIGNALS = (
     "follow us",
     "unsubscribe",
     "manage preferences",
+)
+
+# Educational/career-content emails can contain offer-adjacent words such as
+# salary, compensation, benefits, or employment offer without being a lifecycle
+# event. These terms should be treated as content marketing unless the email
+# contains clear user-specific offer language.
+OFFER_CONTENT_MARKETING_CONTEXT_SIGNALS = (
+    "webinar",
+    "register",
+    "register below",
+    "attend",
+    "upcoming webinar",
+    "event",
+    "market trends",
+    "salary trends",
+    "benefits trends",
+    "compensation trends",
+    "career planning",
+    "open to anyone",
+    "technology industry",
+)
+
+OFFER_ADJACENT_TERMS = (
+    "salary",
+    "benefits",
+    "compensation",
+    "employment offer",
+    "offer",
+)
+
+TRUE_OFFER_LIFECYCLE_CONTEXT_SIGNALS = (
+    "offer letter",
+    "formal offer",
+    "your offer",
+    "pleased to offer",
+    "we are pleased to offer",
+    "we're pleased to offer",
+    "excited to offer",
+    "we are excited to offer",
+    "we're excited to offer",
+    "extend an offer",
+    "extending an offer",
+    "contingent employment offer",
+    "accept this offer",
+    "offer details for your review",
+    "attached offer",
+    "offer letter is attached",
+    "review the offer",
+    "following your final interview",
+    "after completing the interview process",
 )
 
 GENERIC_JOB_TERMS = (
@@ -541,6 +632,55 @@ def _detect_hard_lifecycle(ctx: EmailContext, matched_rules: list) -> tuple[dict
     matches = _match_rules(ctx, HARD_LIFECYCLE_RULES)
     _apply_stage_matches(stage_scores, category_scores, matched_rules, matches)
     return stage_scores, category_scores, matches
+
+
+def _detect_offer_content_marketing_exclusion(ctx: EmailContext, matched_rules: list) -> tuple[bool, str | None, str | None]:
+    """Reject educational/content marketing that uses offer-adjacent terms.
+
+    Example: "Learn about salary and benefits trends" should not classify as an
+    offer simply because it contains salary/benefits/compensation or even a
+    negated phrase like "employment offer". The decision is based on marketing
+    event/content structure, not on a single disclaimer sentence.
+    """
+    has_offer_adjacent_language = _context_contains_any(
+        ctx,
+        OFFER_ADJACENT_TERMS,
+        fields=("subject", "body", "email_text", "full_text"),
+    )
+    if not has_offer_adjacent_language:
+        return False, None, None
+
+    has_content_marketing_context = _context_contains_any(
+        ctx,
+        OFFER_CONTENT_MARKETING_CONTEXT_SIGNALS,
+        fields=("subject", "body", "email_text", "full_text"),
+    )
+    if not has_content_marketing_context:
+        return False, None, None
+
+    has_true_offer_lifecycle_context = _context_contains_any(
+        ctx,
+        TRUE_OFFER_LIFECYCLE_CONTEXT_SIGNALS,
+        fields=("subject", "body", "email_text", "full_text"),
+    )
+    if has_true_offer_lifecycle_context:
+        return False, None, None
+
+    signal = next(
+        (signal for signal in OFFER_CONTENT_MARKETING_CONTEXT_SIGNALS if signal in ctx.full_text),
+        "offer_adjacent_content_marketing",
+    )
+    _add_score(
+        {},
+        matched_rules,
+        "not_job_related",
+        SCORE_NORMALIZER,
+        signal,
+        kind="offer_content_marketing",
+        field="subject/body/email_text",
+        hard=True,
+    )
+    return True, "rule_offer_content_marketing", signal
 
 
 def _detect_marketing_exclusion(ctx: EmailContext, matched_rules: list, *, has_hard_lifecycle: bool) -> tuple[bool, str | None, str | None]:
@@ -980,10 +1120,15 @@ def classify_email_by_rules(
     sender_job_raw, sender_non_job_raw = _score_sender(ctx, matched_rules)
     generic_job_raw, generic_non_job_raw = _score_generic_job_signals(ctx, matched_rules)
 
+    offer_content_excluded, offer_content_reason, offer_content_signal = _detect_offer_content_marketing_exclusion(
+        ctx,
+        matched_rules,
+    )
+
     marketing_excluded, marketing_reason, marketing_signal = _detect_marketing_exclusion(
         ctx,
         matched_rules,
-        has_hard_lifecycle=has_hard_lifecycle,
+        has_hard_lifecycle=has_hard_lifecycle and not offer_content_excluded,
     )
 
     _score_contextual_rules(ctx, raw_stage_scores, raw_category_scores, matched_rules)
@@ -1001,6 +1146,17 @@ def classify_email_by_rules(
     non_job_raw = sender_non_job_raw + generic_non_job_raw
     job_signal_score = round(min(max(job_signal_raw, 0.0) / SCORE_NORMALIZER, 0.99), 4)
     non_job_score = round(min(max(non_job_raw, 0.0) / SCORE_NORMALIZER, 0.99), 4)
+
+    if offer_content_excluded:
+        return _build_not_job_result(
+            reason=offer_content_reason or "rule_offer_content_marketing",
+            signal=offer_content_signal,
+            matched_rules=matched_rules,
+            stage_scores=stage_scores,
+            category_scores=category_scores,
+            job_signal_score=job_signal_score,
+            non_job_score=0.99,
+        )
 
     if marketing_excluded:
         return _build_not_job_result(
