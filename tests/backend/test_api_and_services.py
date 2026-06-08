@@ -154,13 +154,14 @@ async def test_auth_api_setup_rls_uses_existing_token(monkeypatch):
 async def test_jobs_endpoints_success_and_current_error_behavior(monkeypatch, user):
     from client_api.api import jobs
 
+    encrypted_title = jobs.encrypt_job_application_value("Engineer")
     conn = AsyncConn(
         fetch=[
-            [{"provider_message_id": "msg-1", "title": "Engineer"}],
+            [{"provider_message_id": "msg-1", "title_enc": encrypted_title}],
             [{"provider_message_id": "msg-1", "app_stage": "Interview"}],
             [],
         ],
-        fetchrow=[{"provider_message_id": "created", "title": "Engineer"}],
+        fetchrow=[{"provider_message_id": "created", "title_enc": encrypted_title}],
     )
     monkeypatch.setattr(jobs, "get_connection", lambda: connection_context(conn))
     monkeypatch.setattr(jobs.uuid, "uuid4", lambda: "uuid-1")
@@ -170,14 +171,18 @@ async def test_jobs_endpoints_success_and_current_error_behavior(monkeypatch, us
         user,
     )
     assert created["job_application"]["provider_message_id"] == "created"
+    assert created["job_application"]["title"] == "Engineer"
+    assert "title_enc" not in created["job_application"]
     assert conn.fetchrow_calls[0][1][3] == "Applied"
     assert conn.fetchrow_calls[0][1][4] == 100.0
+    assert isinstance(conn.fetchrow_calls[0][1][1], bytes)
 
     updated = await jobs.update_job_application(
         {"provider_message_id": ["msg-1"], "job_title": "Engineer", "app_stage": "interview"},
         user,
     )
     assert updated["updated_jobs"][0]["title"] == "Engineer"
+    assert "title_enc" not in updated["updated_jobs"][0]
     assert conn.fetch_calls[0][1][-1] == user["uid"]
 
     staged = await jobs.update_job_stage({"provider_message_ids": ["msg-1"], "app_stage": "interview"}, user)
@@ -204,14 +209,15 @@ async def test_jobs_endpoints_success_and_current_error_behavior(monkeypatch, us
 async def test_jobs_collection_endpoints(monkeypatch, user):
     from client_api.api import jobs
 
+    encrypted_title = jobs.encrypt_job_application_value("Loaded")
     conn = AsyncConn(
         fetch=[
             [{"provider_message_id": "r1", "needs_review": False}],
             [{"provider_message_id": "a1", "is_archived": True}],
             [{"provider_message_id": "d1", "is_deleted": True}],
-            [{"provider_message_id": "latest"}],
-            [{"provider_message_id": "trash"}],
-            [{"provider_message_id": "archive"}],
+            [{"provider_message_id": "latest", "title_enc": encrypted_title}],
+            [{"provider_message_id": "trash", "title_enc": encrypted_title}],
+            [{"provider_message_id": "archive", "title_enc": encrypted_title}],
             [{"provider_message_id": "delete-me"}],
         ],
         fetchrow=[{"provider_message_id": "snap-1"}],
@@ -221,7 +227,9 @@ async def test_jobs_collection_endpoints(monkeypatch, user):
     assert (await jobs.set_review_needed({"provider_message_ids": ["r1"], "needs_review": False}, user))["count"] == 1
     assert (await jobs.flip_archived_state({"provider_message_ids": ["a1"]}, user))["count"] == 1
     assert (await jobs.flip_deleted_state({"provider_message_ids": ["d1"]}, user))["count"] == 1
-    assert (await jobs.get_latest_jobs(user))["jobs"][0]["provider_message_id"] == "latest"
+    latest = await jobs.get_latest_jobs(user)
+    assert latest["jobs"][0]["provider_message_id"] == "latest"
+    assert latest["jobs"][0]["title"] == "Loaded"
     assert (await jobs.get_trashed_jobs(user))["jobs"][0]["provider_message_id"] == "trash"
     assert (await jobs.get_archive(user))["jobs"][0]["provider_message_id"] == "archive"
     assert (await jobs.permanent_delete_jobs({"provider_message_ids": ["delete-me"], "confirm": True}, user))["deleted"] == ["delete-me"]

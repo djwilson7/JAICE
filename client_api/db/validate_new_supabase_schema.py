@@ -41,6 +41,12 @@ REQUIRED_COLUMNS = {
     ("public", "app_events", "event_type"),
     ("public", "job_applications", "id"),
     ("public", "job_applications", "user_uid"),
+    ("public", "job_applications", "title_enc"),
+    ("public", "job_applications", "company_name_enc"),
+    ("public", "job_applications", "description_enc"),
+    ("public", "job_applications", "recruiter_name_enc"),
+    ("public", "job_applications", "recruiter_email_enc"),
+    ("public", "job_applications", "note_enc"),
     ("public", "job_applications", "app_stage"),
     ("public", "job_applications", "provider_message_id"),
     ("public", "job_applications", "updated_at"),
@@ -81,10 +87,6 @@ REQUIRED_FUNCTIONS = {
     ("public", "update_updated_at_column"),
 }
 REQUIRED_TABLE_GRANTS = {
-    ("public", "job_applications", "authenticated", "SELECT"),
-    ("public", "job_applications", "authenticated", "INSERT"),
-    ("public", "job_applications", "authenticated", "UPDATE"),
-    ("public", "job_applications", "authenticated", "DELETE"),
     ("public", "user_account", "authenticated", "SELECT"),
     ("public", "user_account", "authenticated", "INSERT"),
     ("public", "app_events", "authenticated", "SELECT"),

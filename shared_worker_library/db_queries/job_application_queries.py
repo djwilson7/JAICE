@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
 
+from common.job_application_crypto import encrypt_job_application_value
 from common.logger import get_logger
 from common.security import decrypt_token
 from shared_worker_library.db_queries.std_queries import get_data_from_staging
@@ -41,7 +42,7 @@ def insert_processing_placeholders_from_staging(
             provider,
             provider_message_id,
             subject_enc,
-            _sender_enc,
+            sender_enc,
             received_at,
             body_enc,
             provider_thread_id,
@@ -50,8 +51,15 @@ def insert_processing_placeholders_from_staging(
 
         try:
             user_uid = decrypt_token(to_bytes(user_id_enc))
-            subject = decrypt_token(to_bytes(subject_enc)) if subject_enc else ""
-            body = decrypt_token(to_bytes(body_enc)) if body_enc else ""
+            title_enc = encrypt_job_application_value(
+                decrypt_token(to_bytes(subject_enc)) if subject_enc else ""
+            )
+            description_enc = encrypt_job_application_value(
+                decrypt_token(to_bytes(body_enc)) if body_enc else ""
+            )
+            recruiter_email_enc = encrypt_job_application_value(
+                decrypt_token(to_bytes(sender_enc)) if sender_enc else ""
+            )
         except Exception as exc:
             logging.error(
                 f"[{trace_id}] Failed to decrypt staging row {staging_id} "
@@ -63,13 +71,13 @@ def insert_processing_placeholders_from_staging(
         values.append(
             (
                 user_uid,
-                subject,
+                title_enc,
                 None,
-                body,
+                description_enc,
                 "staging",
                 provider_source,
                 None,
-                None,
+                recruiter_email_enc,
                 None,
                 False,
                 False,
@@ -94,13 +102,13 @@ def insert_processing_placeholders_from_staging(
     query = """
     INSERT INTO public.job_applications (
         user_uid,
-        title,
-        company_name,
-        description,
+        title_enc,
+        company_name_enc,
+        description_enc,
         app_stage,
         provider_source,
-        recruiter_name,
-        recruiter_email,
+        recruiter_name_enc,
+        recruiter_email_enc,
         stage_confidence,
         is_archived,
         is_deleted,

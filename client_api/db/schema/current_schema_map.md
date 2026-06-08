@@ -1,6 +1,6 @@
 # Current Supabase Schema Discovery
 
-- Generated at: `2026-05-28T13:55:39.171743+00:00`
+- Generated at: `2026-06-08T17:11:56.392729+00:00`
 - Source: current `CLIENT_DATABASE_URL` from `.env`
 - Scope: schema only; no table data copied
 - Schemas: `public`, `internal_staging`
@@ -11,11 +11,11 @@
 - `internal_staging.email_staging`: present
 
 ## Tables
-- `internal_staging.email_staging`: 10 columns, RLS=off
+- `internal_staging.email_staging`: 12 columns, RLS=off
 - `public.app_events`: 8 columns, RLS=on
-- `public.job_applications`: 22 columns, RLS=on
+- `public.job_applications`: 24 columns, RLS=on
 - `public.resumes`: 11 columns, RLS=on
-- `public.user_account`: 13 columns, RLS=on
+- `public.user_account`: 19 columns, RLS=on
 - `public.user_notification_settings`: 15 columns, RLS=on
 
 ## Functions

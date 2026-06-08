@@ -3,6 +3,11 @@ from starlette import status
 import uuid
 
 from common.logger import get_logger
+from common.job_application_crypto import (
+    encrypt_job_application_value,
+    serialize_job_application,
+    serialize_job_applications,
+)
 from client_api.services.supabase_client import get_connection
 from client_api.deps.auth import get_current_user
 
@@ -49,12 +54,12 @@ async def update_job_application(
     inex = 1
 
     if job_title is not None:
-        set_clauses.append(f"title = ${inex}")
-        params.append(job_title)
+        set_clauses.append(f"title_enc = ${inex}")
+        params.append(encrypt_job_application_value(job_title))
         inex += 1
     if company_name is not None:
-        set_clauses.append(f"company_name = ${inex}")
-        params.append(company_name)
+        set_clauses.append(f"company_name_enc = ${inex}")
+        params.append(encrypt_job_application_value(company_name))
         inex += 1
     if app_stage is not None:
         set_clauses.append(f"app_stage = ${inex}")
@@ -69,8 +74,8 @@ async def update_job_application(
         params.append(received_at)
         inex += 1
     if notes is not None:
-        set_clauses.append(f"note = ${inex}")
-        params.append(notes)
+        set_clauses.append(f"note_enc = ${inex}")
+        params.append(encrypt_job_application_value(notes))
         inex += 1
 
     if not set_clauses:
@@ -94,7 +99,10 @@ async def update_job_application(
             raise HTTPException(status_code=404, detail="No matching jobs found")
 
         logging.info(f"[{trace_id}] Updated {count} job(s) for user {uid}.")
-        return {"status": "success", "updated_jobs": [dict(r) for r in results]}
+        return {
+            "status": "success",
+            "updated_jobs": serialize_job_applications(results),
+        }
 
     except Exception as e:
         logging.error(f"[{trace_id}] Error updating job application: {e}")
@@ -149,12 +157,12 @@ async def create_job_application(
     query = """
         INSERT INTO public.job_applications (
             user_uid,
-            title,
-            company_name,
+            title_enc,
+            company_name_enc,
             app_stage,
             salary,
             received_at,
-            note,
+            note_enc,
             provider_message_id,
             provider_source,
             updated_at
@@ -167,12 +175,12 @@ async def create_job_application(
             row = await conn.fetchrow(
                 query,
                 uid,
-                job_title,
-                company_name,
+                encrypt_job_application_value(job_title),
+                encrypt_job_application_value(company_name),
                 stage,
                 salary,
                 received_at,
-                notes,
+                encrypt_job_application_value(notes),
                 provider_message_id,
                 provider_source,
             )
@@ -185,7 +193,10 @@ async def create_job_application(
         logging.info(
             f"[{trace_id}] Created job application {provider_message_id} for user {uid}."
         )
-        return {"status": "success", "job_application": dict(row)}
+        return {
+            "status": "success",
+            "job_application": serialize_job_application(row),
+        }
 
     except Exception as e:
         logging.error(f"[{trace_id}] Error creating job application: {e}")
@@ -256,7 +267,7 @@ async def get_latest_jobs(user: dict = Depends(get_current_user)):
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
             logging.info(f"Fetched {len(rows)} job applications for user.")
-            return {"status": "success", "jobs": [dict(r) for r in rows]}
+            return {"status": "success", "jobs": serialize_job_applications(rows)}
 
     except Exception as e:
         logging.error(f"Error fetching latest jobs for user: {e}")
@@ -402,7 +413,7 @@ async def get_trashed_jobs(user: dict = Depends(get_current_user)):
     try:
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
-            return {"status": "success", "jobs": [dict(r) for r in rows]}
+            return {"status": "success", "jobs": serialize_job_applications(rows)}
 
     except Exception as e:
         logging.error(f"Error fetching trash jobs for user {uid}: {e}")
@@ -422,7 +433,7 @@ async def get_archive(user: dict = Depends(get_current_user)):
     try:
         async with get_connection() as conn:
             rows = await conn.fetch(query, uid)
-            return {"status": "success", "jobs": [dict(r) for r in rows]}
+            return {"status": "success", "jobs": serialize_job_applications(rows)}
     except Exception as e:
         logging.error(f"Error fetching archived jobs for user {uid}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -512,7 +523,6 @@ async def snapshot_update_jobs(
     try:
         async with get_connection() as conn:
             for job in jobs:
-                logging.info("Updating job snapshot:", job)
                 pid = job.get("provider_message_id")
                 if not pid:
                     raise HTTPException(
@@ -522,12 +532,12 @@ async def snapshot_update_jobs(
                 query = """
                     UPDATE public.job_applications
                     SET
-                        title = $1,
-                        company_name = $2,
+                        title_enc = $1,
+                        company_name_enc = $2,
                         app_stage = $3,
                         salary = $4,
                         received_at = $5,
-                        note = $6,
+                        note_enc = $6,
                         is_deleted = $7,
                         is_archived = $8,
                         needs_review = $9,
@@ -539,12 +549,12 @@ async def snapshot_update_jobs(
 
                 row = await conn.fetchrow(
                     query,
-                    job.get("title"),
-                    job.get("company_name"),
+                    encrypt_job_application_value(job.get("title")),
+                    encrypt_job_application_value(job.get("company_name")),
                     job.get("app_stage"),
                     job.get("salary"),
                     job.get("received_at"),
-                    job.get("note"),
+                    encrypt_job_application_value(job.get("note")),
                     job.get("is_deleted", False),
                     job.get("is_archived", False),
                     job.get("needs_review", False),
@@ -552,7 +562,7 @@ async def snapshot_update_jobs(
                     uid,
                 )
                 if row:
-                    updated_rows.append(dict(row))
+                    updated_rows.append(serialize_job_application(row))
 
         logging.info(f"[{trace_id}] Updated {len(updated_rows)} job(s) for user {uid}")
 
@@ -599,18 +609,18 @@ async def write_jobs_to_db(
             for job in jobs:
                 pid = job.get("id")
                 if not pid:
-                    logging.warning(f"[{trace_id}] Skipping job with missing id: {job}")
+                    logging.warning(f"[{trace_id}] Skipping job with missing id")
                     continue
 
                 query = """
                     UPDATE public.job_applications
                     SET
-                        title = $1,
-                        company_name = $2,
+                        title_enc = $1,
+                        company_name_enc = $2,
                         app_stage = $3,
                         salary = $4,
                         received_at = $5,
-                        note = $6,
+                        note_enc = $6,
                         is_deleted = $7,
                         is_archived = $8,
                         needs_review = $9,
@@ -621,12 +631,12 @@ async def write_jobs_to_db(
 
                 await conn.execute(
                     query,
-                    job.get("title"),
-                    job.get("companyName"),
+                    encrypt_job_application_value(job.get("title")),
+                    encrypt_job_application_value(job.get("companyName")),
                     job.get("column"),
                     job.get("salary"),
                     job.get("date"),
-                    job.get("notes"),
+                    encrypt_job_application_value(job.get("notes")),
                     job.get("isDeleted", False),
                     job.get("isArchived", False),
                     job.get("reviewNeeded", False),

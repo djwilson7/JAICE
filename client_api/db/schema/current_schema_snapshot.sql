@@ -1,5 +1,5 @@
 -- JAICE current Supabase schema baseline
--- Generated at: 2026-05-28T13:55:39.171743+00:00
+-- Generated at: 2026-06-08T17:11:56.392729+00:00
 -- Scope: schema-only; no table data is included.
 -- Source schemas: public, internal_staging
 
@@ -28,7 +28,9 @@ create table if not exists "internal_staging"."email_staging" (
     "sender_enc" text,
     "received_at" text,
     "body_enc" text,
-    "created_at" timestamp with time zone default now() not null
+    "created_at" timestamp with time zone default now() not null,
+    "provider_thread_id" text,
+    "provider_history_id" text
 );
 
 create table if not exists "public"."app_events" (
@@ -45,13 +47,8 @@ create table if not exists "public"."app_events" (
 create table if not exists "public"."job_applications" (
     "id" bigint default nextval('job_applications_id_seq'::regclass) not null,
     "user_uid" text not null,
-    "title" text default 'Title'::text,
-    "company_name" text default 'Company'::text,
-    "description" text,
     "app_stage" text not null,
     "provider_source" text,
-    "recruiter_name" text,
-    "recruiter_email" text,
     "stage_confidence" double precision,
     "is_archived" boolean default false not null,
     "is_deleted" boolean default false not null,
@@ -63,8 +60,15 @@ create table if not exists "public"."job_applications" (
     "provider_message_id" text,
     "relevance_model_confidence" double precision,
     "job_category" text,
-    "note" text,
-    "salary" numeric
+    "salary" numeric,
+    "provider_thread_id" text,
+    "provider_history_id" text,
+    "title_enc" bytea,
+    "company_name_enc" bytea,
+    "description_enc" bytea,
+    "recruiter_name_enc" bytea,
+    "recruiter_email_enc" bytea,
+    "note_enc" bytea
 );
 
 create table if not exists "public"."resumes" (
@@ -94,7 +98,13 @@ create table if not exists "public"."user_account" (
     "outlook_connected_at" timestamp with time zone,
     "backend_rls_jwt" text not null,
     "created_at" timestamp with time zone default now(),
-    "updated_at" timestamp with time zone default now()
+    "updated_at" timestamp with time zone default now(),
+    "gmail_history_id" text,
+    "gmail_watch_expiration" timestamp with time zone,
+    "last_pubsub_message_id" text,
+    "gmail_sync_status" text,
+    "gmail_last_sync_at" timestamp with time zone,
+    "gmail_last_sync_error" text
 );
 
 create table if not exists "public"."user_notification_settings" (
@@ -130,10 +140,13 @@ alter table only "public"."user_notification_settings" add constraint "user_noti
 alter table only "public"."user_notification_settings" add constraint "user_notification_settings_user_uid_fkey" FOREIGN KEY (user_uid) REFERENCES user_account(user_id) ON DELETE CASCADE;
 
 -- Indexes
+CREATE UNIQUE INDEX email_staging_provider_message_unique ON internal_staging.email_staging USING btree (provider, provider_message_id);
 CREATE INDEX idx_email_staging_provider_msg ON internal_staging.email_staging USING btree (provider_message_id);
+CREATE INDEX idx_email_staging_provider_thread ON internal_staging.email_staging USING btree (provider, provider_thread_id);
 CREATE INDEX idx_email_staging_user ON internal_staging.email_staging USING btree (user_id_enc);
 CREATE INDEX app_events_job_fk_idx ON public.app_events USING btree (job_fk);
 CREATE INDEX app_events_user_uid_idx ON public.app_events USING btree (user_uid);
+CREATE INDEX job_applications_provider_thread_idx ON public.job_applications USING btree (provider_source, provider_thread_id);
 CREATE INDEX job_applications_user_uid_idx ON public.job_applications USING btree (user_uid);
 CREATE UNIQUE INDEX one_master_resume_per_user ON public.resumes USING btree (user_uid) WHERE (is_master = true);
 CREATE INDEX resumes_user_uid_idx ON public.resumes USING btree (user_uid);
@@ -442,8 +455,6 @@ grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "pu
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."app_events" to "authenticated";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."app_events" to "postgres";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."app_events" to "service_role";
-grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "anon";
-grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "authenticated";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "postgres";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."job_applications" to "service_role";
 grant DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE on table "public"."resumes" to "anon";

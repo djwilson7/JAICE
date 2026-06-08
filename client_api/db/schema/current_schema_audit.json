@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T13:55:39.171743+00:00",
+  "generated_at": "2026-06-08T17:11:56.392729+00:00",
   "schemas": [
     "public",
     "internal_staging"
@@ -166,6 +166,28 @@
       "comment": null
     },
     {
+      "schema_name": "internal_staging",
+      "table_name": "email_staging",
+      "attnum": 11,
+      "column_name": "provider_thread_id",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "internal_staging",
+      "table_name": "email_staging",
+      "attnum": 12,
+      "column_name": "provider_history_id",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
       "schema_name": "public",
       "table_name": "app_events",
       "attnum": 1,
@@ -278,39 +300,6 @@
     {
       "schema_name": "public",
       "table_name": "job_applications",
-      "attnum": 3,
-      "column_name": "title",
-      "data_type": "text",
-      "not_null": false,
-      "default_expr": "'Title'::text",
-      "identity_kind": null,
-      "comment": null
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "attnum": 4,
-      "column_name": "company_name",
-      "data_type": "text",
-      "not_null": false,
-      "default_expr": "'Company'::text",
-      "identity_kind": null,
-      "comment": null
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "attnum": 5,
-      "column_name": "description",
-      "data_type": "text",
-      "not_null": false,
-      "default_expr": null,
-      "identity_kind": null,
-      "comment": null
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
       "attnum": 6,
       "column_name": "app_stage",
       "data_type": "text",
@@ -324,28 +313,6 @@
       "table_name": "job_applications",
       "attnum": 7,
       "column_name": "provider_source",
-      "data_type": "text",
-      "not_null": false,
-      "default_expr": null,
-      "identity_kind": null,
-      "comment": null
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "attnum": 8,
-      "column_name": "recruiter_name",
-      "data_type": "text",
-      "not_null": false,
-      "default_expr": null,
-      "identity_kind": null,
-      "comment": null
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "attnum": 9,
-      "column_name": "recruiter_email",
       "data_type": "text",
       "not_null": false,
       "default_expr": null,
@@ -476,8 +443,19 @@
     {
       "schema_name": "public",
       "table_name": "job_applications",
-      "attnum": 21,
-      "column_name": "note",
+      "attnum": 22,
+      "column_name": "salary",
+      "data_type": "numeric",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 23,
+      "column_name": "provider_thread_id",
       "data_type": "text",
       "not_null": false,
       "default_expr": null,
@@ -487,9 +465,75 @@
     {
       "schema_name": "public",
       "table_name": "job_applications",
-      "attnum": 22,
-      "column_name": "salary",
-      "data_type": "numeric",
+      "attnum": 24,
+      "column_name": "provider_history_id",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 25,
+      "column_name": "title_enc",
+      "data_type": "bytea",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 26,
+      "column_name": "company_name_enc",
+      "data_type": "bytea",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 27,
+      "column_name": "description_enc",
+      "data_type": "bytea",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 28,
+      "column_name": "recruiter_name_enc",
+      "data_type": "bytea",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 29,
+      "column_name": "recruiter_email_enc",
+      "data_type": "bytea",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "attnum": 30,
+      "column_name": "note_enc",
+      "data_type": "bytea",
       "not_null": false,
       "default_expr": null,
       "identity_kind": null,
@@ -756,6 +800,72 @@
       "data_type": "timestamp with time zone",
       "not_null": false,
       "default_expr": "now()",
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_account",
+      "attnum": 14,
+      "column_name": "gmail_history_id",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_account",
+      "attnum": 15,
+      "column_name": "gmail_watch_expiration",
+      "data_type": "timestamp with time zone",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_account",
+      "attnum": 16,
+      "column_name": "last_pubsub_message_id",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_account",
+      "attnum": 17,
+      "column_name": "gmail_sync_status",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_account",
+      "attnum": 18,
+      "column_name": "gmail_last_sync_at",
+      "data_type": "timestamp with time zone",
+      "not_null": false,
+      "default_expr": null,
+      "identity_kind": null,
+      "comment": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_account",
+      "attnum": 19,
+      "column_name": "gmail_last_sync_error",
+      "data_type": "text",
+      "not_null": false,
+      "default_expr": null,
       "identity_kind": null,
       "comment": null
     },
@@ -1041,8 +1151,20 @@
     {
       "schema_name": "internal_staging",
       "table_name": "email_staging",
+      "indexname": "email_staging_provider_message_unique",
+      "indexdef": "CREATE UNIQUE INDEX email_staging_provider_message_unique ON internal_staging.email_staging USING btree (provider, provider_message_id)"
+    },
+    {
+      "schema_name": "internal_staging",
+      "table_name": "email_staging",
       "indexname": "idx_email_staging_provider_msg",
       "indexdef": "CREATE INDEX idx_email_staging_provider_msg ON internal_staging.email_staging USING btree (provider_message_id)"
+    },
+    {
+      "schema_name": "internal_staging",
+      "table_name": "email_staging",
+      "indexname": "idx_email_staging_provider_thread",
+      "indexdef": "CREATE INDEX idx_email_staging_provider_thread ON internal_staging.email_staging USING btree (provider, provider_thread_id)"
     },
     {
       "schema_name": "internal_staging",
@@ -1079,6 +1201,12 @@
       "table_name": "job_applications",
       "indexname": "job_applications_provider_message_id_key",
       "indexdef": "CREATE UNIQUE INDEX job_applications_provider_message_id_key ON public.job_applications USING btree (provider_message_id)"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "job_applications",
+      "indexname": "job_applications_provider_thread_idx",
+      "indexdef": "CREATE INDEX job_applications_provider_thread_idx ON public.job_applications USING btree (provider_source, provider_thread_id)"
     },
     {
       "schema_name": "public",
@@ -1647,90 +1775,6 @@
       "schema_name": "public",
       "table_name": "app_events",
       "grantee": "service_role",
-      "privilege_type": "UPDATE"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "DELETE"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "INSERT"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "REFERENCES"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "SELECT"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "TRIGGER"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "TRUNCATE"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "anon",
-      "privilege_type": "UPDATE"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
-      "privilege_type": "DELETE"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
-      "privilege_type": "INSERT"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
-      "privilege_type": "REFERENCES"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
-      "privilege_type": "SELECT"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
-      "privilege_type": "TRIGGER"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
-      "privilege_type": "TRUNCATE"
-    },
-    {
-      "schema_name": "public",
-      "table_name": "job_applications",
-      "grantee": "authenticated",
       "privilege_type": "UPDATE"
     },
     {
