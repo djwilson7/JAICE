@@ -624,9 +624,10 @@ async def write_jobs_to_db(
                         is_deleted = $7,
                         is_archived = $8,
                         needs_review = $9,
+                        recently_added = $10,
                         updated_at = now()
-                    WHERE provider_message_id = $10
-                    AND user_uid = $11
+                    WHERE provider_message_id = $11
+                    AND user_uid = $12
                 """
 
                 await conn.execute(
@@ -640,6 +641,7 @@ async def write_jobs_to_db(
                     job.get("isDeleted", False),
                     job.get("isArchived", False),
                     job.get("reviewNeeded", False),
+                    job.get("recentlyAdded", False),
                     pid,
                     uid
                 )
