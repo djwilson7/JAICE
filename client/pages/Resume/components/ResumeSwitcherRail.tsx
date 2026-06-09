@@ -152,7 +152,7 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                                             </svg>
                                         )}
                                         <p
-                                            className={`min-w-0 flex-1 overflow-hidden truncate whitespace-nowrap font-semibold leading-snug ${
+                                            className={`min-w-0 flex-1 overflow-hidden text-left truncate whitespace-nowrap font-semibold leading-snug ${
                                                 isActive
                                                     ? isLightMode ? "text-slate-900" : "text-slate-100"
                                                     : isLightMode ? "text-slate-700" : "text-slate-300"
