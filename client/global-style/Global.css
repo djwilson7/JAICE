@@ -3145,16 +3145,7 @@ html[data-theme="light"] button.settings-account-action-button.red {
   opacity: 1;
 }
 
-.kanban-content-scroll {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
 
-.kanban-content-scroll::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
 
 .kanban-column-scroll-dragging {
   overflow: visible;

@@ -28,6 +28,7 @@ import { HomePageContentProviders } from "@/pages/home/home-components/page/Home
 import TrashArchiveModal from "@/pages/home/home-components/modal/TrashArchiveModal";
 import NewApplication from "@/pages/home/home-components/modal/ApplicationModal";
 import ConnectEmailModal from "@/pages/home/home-components/modal/ConnectEmailModal";
+import { ReadAllButton } from "@/pages/home/home-components/control-bar/ReadAllButton";
 import { ExpandCollapseButton } from "@/pages/home/home-components/control-bar/ExpandCollapseButton";
 import {
   JOB_LOCAL_CHANGE_EVENT,
@@ -123,6 +124,7 @@ export function HomePage() {
               <ControlBar fitParent className="home-action-toolbar">
                 <div className="home-action-group home-action-group-left">
                   <ExpandCollapseButton compact />
+                  <ReadAllButton jobs={jobs} compact />
                   <SearchBar
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}

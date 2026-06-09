@@ -80,7 +80,7 @@ export const Column = forwardRef<HTMLDivElement, ColumnProps>(({
       className={
         column.id === "processing"
           ? "flex h-full min-h-full shrink-0 overflow-hidden"
-          : "flex h-full min-h-full min-w-[19rem] flex-[0_0_19rem] self-stretch 2xl:min-w-[21rem] 2xl:flex-[1_0_21rem]"
+          : "flex h-full min-h-full min-w-[16.5rem] flex-[0_0_16.5rem] self-stretch 2xl:min-w-[18.5rem] 2xl:flex-[1_0_18.5rem]"
       }
       initial={column.id === "processing" ? { width: 0, opacity: 0 } : false}
       animate={column.id === "processing" ? { width: "auto", opacity: 1 } : false}
@@ -94,7 +94,7 @@ export const Column = forwardRef<HTMLDivElement, ColumnProps>(({
       <div
         className={
           column.id === "processing"
-            ? "flex h-full min-h-full min-w-[19rem] flex-[0_0_19rem] self-stretch w-full 2xl:min-w-[21rem] 2xl:flex-[1_0_21rem]"
+            ? "flex h-full min-h-full min-w-[16.5rem] flex-[0_0_16.5rem] self-stretch w-full 2xl:min-w-[18.5rem] 2xl:flex-[1_0_18.5rem]"
             : "flex h-full w-full min-w-0"
         }
       >

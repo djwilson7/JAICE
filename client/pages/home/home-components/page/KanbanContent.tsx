@@ -61,7 +61,7 @@ export function KanbanContent({ children }: { children: ReactNode }) {
       >
         <div
           ref={scrollContentRef}
-          className="flex min-h-0 min-w-full items-stretch gap-4 p-1"
+          className="flex min-h-0 min-w-full items-stretch gap-2 p-1"
         >
           {children}
         </div>
