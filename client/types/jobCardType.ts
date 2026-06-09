@@ -9,6 +9,7 @@ export type JobCardType = {
   date?: string;
   salary?: number;
   receivedAtRaw?: string | null;
+  updatedAtRaw?: string | null;
   isArchived?: boolean;
   isDeleted?: boolean;
   notes?: string;

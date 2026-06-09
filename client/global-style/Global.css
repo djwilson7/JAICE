@@ -263,7 +263,8 @@
   /* Fonts and Text*/
   --text-primary: var(--white-color);
   --text-secondary: var(--gray-color);
-  --text-red: var(--red-color);
+  --text-red: #ff8a80;
+  --text-purple: #d591f2;
   --text-orange: var(--orange-color);
 
   --font-title: "Libre Baskerville", serif;
@@ -431,7 +432,8 @@ html[data-theme="light"] {
   /* Fonts and Text*/
   --text-primary: var(--black-color);
   --text-secondary: var(--gray-color);
-  --text-red: var(--red-color);
+  --text-red: #a9362c;
+  --text-purple: #6c238a;
   --text-orange: var(--orange-color);
 
   --font-title: "Libre Baskerville", serif;
@@ -688,7 +690,8 @@ html[data-contrast="bw"] {
   /* Fonts and Text*/
   --text-primary: var(--white-color);
   --text-secondary: var(--gray-color);
-  --text-red: var(--red-color);
+  --text-red: #ff8a80;
+  --text-purple: #d591f2;
   --text-orange: var(--orange-color);
 
   --font-title: "Libre Baskerville", serif;

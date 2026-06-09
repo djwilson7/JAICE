@@ -14,6 +14,7 @@ export type RawJobApplication = Partial<JobApplicationRow> & {
   applicationStage?: string | null;
   recently_added?: boolean | null;
   recentlyAdded?: boolean | null;
+  updated_at?: string | null;
 };
 
 export type JobRealtimeEvent = {
@@ -49,6 +50,7 @@ export function convertToJobCard(rawJob: RawJobApplication): JobCardType {
     salary: rawJob.salary ?? undefined,
     date: convertTime(rawDate),
     receivedAtRaw: rawDate ? String(rawDate) : null,
+    updatedAtRaw: rawJob.updated_at ? String(rawJob.updated_at) : null,
     isArchived: rawJob.is_archived || false,
     isDeleted: rawJob.is_deleted || false,
     notes: rawJob.note ?? undefined,
@@ -82,6 +84,7 @@ export function convertBroadcastToJobCard(event: JobRealtimeEvent): JobCardType 
     salary: eventRecord.salary ?? undefined,
     date: convertTime(rawDate),
     receivedAtRaw: rawDate ? String(rawDate) : null,
+    updatedAtRaw: eventRecord.updated_at ? String(eventRecord.updated_at) : null,
     isArchived: eventRecord.is_archived || false,
     isDeleted: eventRecord.is_deleted || false,
     notes: eventRecord.note ?? undefined,

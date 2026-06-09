@@ -17,6 +17,7 @@ interface JobCardTitleProps {
   setLocalOpen: Dispatch<SetStateAction<boolean | null>>;
   job: JobCardType;
   allowSelection?: boolean;
+  mode?: "trash" | "archive" | "default";
 }
 
 function getDateParts(job: JobCardType) {
@@ -60,6 +61,7 @@ export function JobCardTitle({
   setLocalOpen,
   job,
   allowSelection = true,
+  mode = "default",
 }: JobCardTitleProps) {
   const { isMultiSelecting } = useIsMultiSelecting();
   const { toggleJobSelection } = useSelectedJobs();
@@ -113,6 +115,42 @@ export function JobCardTitle({
     setLocalOpen(null);
   }, [commandId, setLocalOpen]);
 
+  const getDaysUntilDeletion = () => {
+    const rawDate = job.updatedAtRaw || job.receivedAtRaw;
+    if (!rawDate) return 30;
+    const ms = /^\d{13}$/.test(String(rawDate))
+      ? Number(rawDate)
+      : Date.parse(String(rawDate));
+    if (Number.isNaN(ms)) return 30;
+    const daysPassed = Math.floor((Date.now() - ms) / (1000 * 60 * 60 * 24));
+    return Math.max(0, 30 - daysPassed);
+  };
+
+  const isTrash = mode === "trash";
+  const isArchive = mode === "archive";
+  const isDefault = mode === "default" || mode === undefined;
+
+  const getArchiveDateStr = () => {
+    const rawDate = job.updatedAtRaw || job.receivedAtRaw;
+    if (!rawDate) return date;
+    let strDate = String(rawDate);
+    // If it's just a date (YYYY-MM-DD), append time to prevent timezone shift
+    if (strDate.length === 10 && /^\d{4}-\d{2}-\d{2}$/.test(strDate)) {
+      strDate += "T12:00:00Z";
+    }
+    // Handle Postgres timestamp without T (e.g. 2026-06-09 15:30:00)
+    strDate = strDate.replace(" ", "T");
+    const ms = /^\d{13}$/.test(strDate) ? Number(strDate) : Date.parse(strDate);
+
+    if (!Number.isNaN(ms)) {
+      return new Date(ms).toLocaleDateString("en-US", {
+        dateStyle: "medium",
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    }
+    return date;
+  };
+
   return (
     <motion.div className="flex w-full items-center justify-center p-3">
       <motion.div
@@ -128,15 +166,22 @@ export function JobCardTitle({
             <small className="job-card-date-text secondary-text overflow-hidden text-ellipsis whitespace-nowrap">
               {date}
             </small>
-            <span className="relative flex h-[0.9rem] w-[6.25rem] shrink-0 items-center justify-end overflow-hidden">
+            <span className={`relative flex h-[0.9rem] ${isDefault ? "w-[6.25rem]" : "w-[9.5rem]"} shrink-0 items-center justify-end overflow-hidden`}>
               <motion.span
                 className="job-card-date-text secondary-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
+                style={
+                  isTrash
+                    ? { color: "var(--text-red)" }
+                    : isArchive
+                    ? { color: "var(--text-purple)" }
+                    : {}
+                }
                 initial={{
-                  opacity: isHovered || job.recentlyAdded ? 0 : 1,
+                  opacity: isHovered || (isDefault && job.recentlyAdded) ? 0 : 1,
                   x: isHovered ? -8 : 0,
                 }}
                 animate={{
-                  opacity: isHovered || job.recentlyAdded ? 0 : 1,
+                  opacity: isHovered || (isDefault && job.recentlyAdded) ? 0 : 1,
                   x: isHovered ? -8 : 0,
                 }}
                 transition={{
@@ -144,25 +189,33 @@ export function JobCardTitle({
                   ease: "easeOut",
                 }}
               >
-                {time}
+                {isTrash
+                  ? `Deletes in ${getDaysUntilDeletion()} days`
+                  : isArchive
+                  ? `Archived ${getArchiveDateStr()}`
+                  : time}
               </motion.span>
-              <motion.span
-                className="job-card-date-text job-card-recent-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
-                initial={{
-                  opacity: !isHovered && job.recentlyAdded ? 1 : 0,
-                  x: !isHovered && job.recentlyAdded ? 0 : -8,
-                }}
-                animate={{
-                  opacity: !isHovered && job.recentlyAdded ? 1 : 0,
-                  x: !isHovered && job.recentlyAdded ? 0 : -8,
-                }}
-                transition={{
-                  duration: parseFloat(getCSSVar("--animation-duration")),
-                  ease: "easeOut",
-                }}
-              >
-                Recently Added
-              </motion.span>
+              
+              {isDefault && (
+                <motion.span
+                  className="job-card-date-text job-card-recent-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
+                  initial={{
+                    opacity: !isHovered && job.recentlyAdded ? 1 : 0,
+                    x: !isHovered && job.recentlyAdded ? 0 : -8,
+                  }}
+                  animate={{
+                    opacity: !isHovered && job.recentlyAdded ? 1 : 0,
+                    x: !isHovered && job.recentlyAdded ? 0 : -8,
+                  }}
+                  transition={{
+                    duration: parseFloat(getCSSVar("--animation-duration")),
+                    ease: "easeOut",
+                  }}
+                >
+                  Recently Added
+                </motion.span>
+              )}
+
               <motion.span
                 className="job-card-date-text secondary-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
                 initial={{

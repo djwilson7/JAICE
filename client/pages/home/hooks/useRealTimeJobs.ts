@@ -5,6 +5,8 @@ import { convertToJobCardArray } from "@/pages/home/utils/convertToJobCard";
 import type { JobCardType } from "@/types/jobCardType";
 import type { JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
 
+export const JOB_REALTIME_CHANGE_EVENT = "jaice:job-realtime-change";
+
 export function useRealtimeJobs(
   userId: string,
   setJobs: React.Dispatch<React.SetStateAction<JobCardType[]>>
@@ -83,6 +85,10 @@ export function useRealtimeJobs(
       if (event.type === "INSERT" || event.event === "INSERT") {
         setNewJobsCount((n) => n + 1);
       }
+
+      window.dispatchEvent(
+        new CustomEvent(JOB_REALTIME_CHANGE_EVENT, { detail: event })
+      );
 
       void refreshJobs();
     },

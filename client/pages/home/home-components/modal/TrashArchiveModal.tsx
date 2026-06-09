@@ -113,6 +113,7 @@ function TrashArchiveJobCard({
         isHovered={isHovered}
         setLocalOpen={setLocalOpen}
         allowSelection={false}
+        mode={mode}
       />
       <JobCardContent isOpen={isOpen} job={job} />
       <JobCardButtonRow isHovered={isHovered}>
@@ -248,12 +249,21 @@ export default function TrashArchiveModal({
 
   if (!isOpen) return null;
 
-  const title = mode === "trash" ? "Trash" : "Archive";
+  const title = mode === "trash" ? "Trash Bin" : "Archive";
 
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} modalTitle={title} className="w-lg">
-        <div className="h-[36rem] max-h-[calc(100vh-8rem)] mb-4">
+        {items.length > 0 && (
+          <div className="w-full px-4 pt-4 pb-2 border-b border-[rgba(var(--primary-five-rgb),0.14)]">
+            <p className="job-card-body-text secondary-text text-sm">
+              {mode === "trash"
+                ? "Deleted jobs stay here for 30 days. After that, they are permanently removed."
+                : "Archived jobs are hidden from your main board. They stay here safely until you need them."}
+            </p>
+          </div>
+        )}
+        <div className="h-[36rem] max-h-[calc(100vh-8rem)] mb-4 mt-2">
           {isLoading ? (
             <TrashArchiveModalSkeleton />
           ) : list.length === 0 ? (

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/global-services/api";
 import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
 import type { JobCardType } from "@/types/jobCardType";
-import { convertToJobCardArray } from "@/pages/home/utils/convertToJobCard";
+import { convertToJobCardArray, type JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
+import { JOB_REALTIME_CHANGE_EVENT } from "@/pages/home/hooks/useRealTimeJobs";
 
 export function useTrashActions({
   onRestore,
@@ -13,6 +14,28 @@ export function useTrashActions({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { showBanner } = useBannerNotifications();
+
+  useEffect(() => {
+    const handleRealtimeChange = (e: Event) => {
+      const event = (e as CustomEvent<JobRealtimeEvent>).detail;
+      const eventType = event.event || event.type;
+      
+      if (eventType === "DELETE") {
+        const idToRemove = event.payload?.old?.provider_message_id;
+        if (idToRemove) {
+          setItems((prev) => prev.filter((j) => String(j.id) !== String(idToRemove)));
+        }
+      } else if (eventType === "UPDATE") {
+        const updatedJob = event.payload?.new;
+        if (updatedJob && !updatedJob.is_deleted) {
+          setItems((prev) => prev.filter((j) => String(j.id) !== String(updatedJob.provider_message_id)));
+        }
+      }
+    };
+
+    window.addEventListener(JOB_REALTIME_CHANGE_EVENT, handleRealtimeChange);
+    return () => window.removeEventListener(JOB_REALTIME_CHANGE_EVENT, handleRealtimeChange);
+  }, []);
 
   const open = async () => {
     setIsOpen(true);
