@@ -152,7 +152,6 @@ export function JobCardContainer({
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
         className={`flex w-full shrink-0 select-none items-center flex-col job-card min-h-[2rem] overflow-hidden p-0 ${reviewClass}`}
-        initial={{ opacity: 0, y: 18, scale: 0.96 }}
         onPointerDown={onPointerDown}
         variants={variants}
         animate={visualState}
@@ -163,9 +162,7 @@ export function JobCardContainer({
         }
         onHoverStart={!isMultiSelecting ? () => setIsHovered(true) : undefined}
         onHoverEnd={!isMultiSelecting ? () => setIsHovered(false) : undefined}
-        
         whileTap={{ cursor: "grabbing" }}
-        layout
         transition={cardTransition}
       >
         {children}

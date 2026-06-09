@@ -5,7 +5,7 @@ import { sortJobs } from "@/pages/home/hooks/sortJobs";
 
 export function useJobSearchAndSort(jobs: JobCardType[]) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("new");
+  const [sortOption, setSortOption] = useState("old");
 
   const fuse = useMemo(() => {
     return new Fuse<JobCardType>(jobs, {

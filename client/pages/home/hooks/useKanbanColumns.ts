@@ -12,6 +12,9 @@ export function useKanbanColumns(jobs: JobCardType[]) {
     const hasStagingJobs = jobs.some(
       (j) => j.column?.toLowerCase() === "staging"
     );
+    const hasProcessingJobs = jobs.some(
+      (j) => j.column?.toLowerCase() === "processing"
+    );
 
     return kanBanColumns.map((column) => {
       switch (column.id) {
@@ -45,6 +48,12 @@ export function useKanbanColumns(jobs: JobCardType[]) {
           return {
             ...column,
             visible: hasStagingJobs,
+          };
+
+        case "processing":
+          return {
+            ...column,
+            visible: hasProcessingJobs,
           };
 
         default:

@@ -12,6 +12,8 @@ export type RawJobApplication = Partial<JobApplicationRow> & {
   needsReview?: boolean | null;
   application_stage?: string | null;
   applicationStage?: string | null;
+  recently_added?: boolean | null;
+  recentlyAdded?: boolean | null;
 };
 
 export type JobRealtimeEvent = {
@@ -52,6 +54,7 @@ export function convertToJobCard(rawJob: RawJobApplication): JobCardType {
     notes: rawJob.note ?? undefined,
     providerSource: rawJob.provider_source ?? undefined,
     reviewNeeded: !!(rawJob.needs_review ?? rawJob.review_needed ?? rawJob.needsReview ?? false),
+    recentlyAdded: !!(rawJob.recently_added ?? rawJob.recentlyAdded ?? false) && !["processing", "staging"].includes(rawJob.app_stage?.toLowerCase() ?? ""),
     applicationStage: rawJob.application_stage ?? rawJob.app_stage ?? rawJob.applicationStage ?? undefined,
   };
 }
@@ -84,6 +87,7 @@ export function convertBroadcastToJobCard(event: JobRealtimeEvent): JobCardType 
     notes: eventRecord.note ?? undefined,
     providerSource: eventRecord.provider_source ?? undefined,
     reviewNeeded: !!(eventRecord.needs_review ?? eventRecord.review_needed ?? eventRecord.needsReview ?? false),
+    recentlyAdded: !!(eventRecord.recently_added ?? eventRecord.recentlyAdded ?? false) && !["processing", "staging"].includes(eventRecord.app_stage?.toLowerCase() ?? ""),
     applicationStage: eventRecord.application_stage ?? eventRecord.app_stage ?? eventRecord.applicationStage ?? undefined,
   };
 }

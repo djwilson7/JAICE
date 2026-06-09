@@ -12,8 +12,8 @@ interface DropDownMenuProps {
 }
 
 const sortByOptions = [
-  { value: "new", label: "Most Recent" },
   { value: "old", label: "Oldest First" },
+  { value: "new", label: "Most Recent" },
   { value: "az", label: "Ascend (a-z)" },
   { value: "za", label: "Descend (z-a)" },
 ];
@@ -182,18 +182,18 @@ export function DropDownMenu({
         src={circleXIcon}
         alt="Clear Order Icon"
         className={`w-4 h-4 shrink-0 icon ${
-          selectedOption === "new" ? "pointer-events-none absolute opacity-0" : ""
+          selectedOption === "old" ? "pointer-events-none absolute opacity-0" : ""
         }`}
         onClick={(event) => {
           event.stopPropagation();
-          selectOption("new");
+          selectOption("old");
         }}
-        title="Set to Most Recent (Default)"
+        title="Set to Oldest First (Default)"
         style={{
-          cursor: selectedOption !== "new" ? "pointer" : "default",
-          opacity: selectedOption !== "new" ? 1 : 0,
+          cursor: selectedOption !== "old" ? "pointer" : "default",
+          opacity: selectedOption !== "old" ? 1 : 0,
         }}
-        animate={{ opacity: selectedOption !== "new" ? 1 : 0 }}
+        animate={{ opacity: selectedOption !== "old" ? 1 : 0 }}
       />
     </motion.div>
   );

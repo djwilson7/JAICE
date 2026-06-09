@@ -152,20 +152,24 @@ export function HomePage() {
             <MultiSelectBar setIsHighlighted={setIsHighlighted} />
             {/* Kan Ban Columns */}
             <KanbanContent>
-              {columns.map(
-                (
-                  column // iterate over each column in the config
-                ) => (
-                  <Column
-                    column={column}
-                    key={column.id} // unique key for React
-                    count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
-                    isHighlighted={isHighlighted}
-                  >
-                    {jobsByColumn[column.id]}
-                  </Column>
-                )
-              )}
+              <AnimatePresence initial={false}>
+                {columns
+                  .filter((column) => column.visible !== false)
+                  .map(
+                    (
+                      column // iterate over each column in the config
+                    ) => (
+                      <Column
+                        column={column}
+                        key={column.id} // unique key for React
+                        count={jobsByColumn[column.id]?.length || 0} // pass down the count of job cards in the column
+                        isHighlighted={isHighlighted}
+                      >
+                        {jobsByColumn[column.id]}
+                      </Column>
+                    )
+                  )}
+              </AnimatePresence>
             </KanbanContent>
           </PageContent>
 

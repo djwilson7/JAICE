@@ -7,6 +7,7 @@ import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
 import { useJobCard } from "@/pages/home/hooks/useJobCard";
 import { getCSSVar } from "@/utils/getCSSVar";
 import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
+import { writeJobsToDB } from "@/global-services/writeJobsToDB";
 
 interface JobCardTitleProps {
   isSelected: boolean;
@@ -67,10 +68,13 @@ export function JobCardTitle({
   const { date, time } = getDateParts(job);
 
   const toggle = () => {
+    let shouldUpdateDB = false;
+    
     setLocalOpen((prev) => {
       const nextOpen = !(prev ?? expandAll);
 
       if (nextOpen && job.recentlyAdded) {
+        shouldUpdateDB = true;
         dispatchJobLocalChange({
           before: job,
           after: { ...job, recentlyAdded: false },
@@ -79,6 +83,10 @@ export function JobCardTitle({
 
       return nextOpen;
     });
+
+    if (shouldUpdateDB) {
+      writeJobsToDB({ jobs_to_update: [{ ...job, recentlyAdded: false }] }).catch(console.error);
+    }
   };
 
   const handleTitleTap = () => {
@@ -123,6 +131,10 @@ export function JobCardTitle({
             <span className="relative flex h-[0.9rem] w-[6.25rem] shrink-0 items-center justify-end overflow-hidden">
               <motion.span
                 className="job-card-date-text secondary-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
+                initial={{
+                  opacity: isHovered || job.recentlyAdded ? 0 : 1,
+                  x: isHovered ? -8 : 0,
+                }}
                 animate={{
                   opacity: isHovered || job.recentlyAdded ? 0 : 1,
                   x: isHovered ? -8 : 0,
@@ -136,6 +148,10 @@ export function JobCardTitle({
               </motion.span>
               <motion.span
                 className="job-card-date-text job-card-recent-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
+                initial={{
+                  opacity: !isHovered && job.recentlyAdded ? 1 : 0,
+                  x: !isHovered && job.recentlyAdded ? 0 : -8,
+                }}
                 animate={{
                   opacity: !isHovered && job.recentlyAdded ? 1 : 0,
                   x: !isHovered && job.recentlyAdded ? 0 : -8,
@@ -149,6 +165,10 @@ export function JobCardTitle({
               </motion.span>
               <motion.span
                 className="job-card-date-text secondary-text absolute inset-y-0 right-0 flex items-center whitespace-nowrap"
+                initial={{
+                  opacity: isHovered ? 1 : 0,
+                  x: isHovered ? 0 : 8,
+                }}
                 animate={{
                   opacity: isHovered ? 1 : 0,
                   x: isHovered ? 0 : 8,

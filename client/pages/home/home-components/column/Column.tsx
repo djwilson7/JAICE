@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { EmptyColumnPlaceholder } from "@/pages/home/home-components/column/EmptyColumnPlaceholder";
 import { ColumnTitle } from "@/pages/home/home-components/column/ColumnTitle";
@@ -18,12 +18,12 @@ interface ColumnProps {
   isHighlighted: string | null;
 }
 
-export function Column({
+export const Column = forwardRef<HTMLDivElement, ColumnProps>(({
   column,
   children,
   count,
   isHighlighted,
-}: ColumnProps) {
+}, ref) => {
   const { setDragTarget, isDragging, dragTarget, draggedJobs } = useDrag();
   const { reviewBehavior } = useSettings();
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -73,15 +73,31 @@ export function Column({
     };
   }, [children, count, updateScrollShadow]);
 
-  if (column.visible === false) {
-    return null;
-  }
-
   return (
     <motion.div
-      className="flex h-full min-h-full min-w-[19rem] flex-[0_0_19rem] self-stretch 2xl:min-w-[21rem] 2xl:flex-[1_0_21rem]"
-      transition={{ duration: parseFloat(getCSSVar("--animation-duration")), ease: "easeInOut" }}
+      ref={ref}
+      layout
+      className={
+        column.id === "processing"
+          ? "flex h-full min-h-full shrink-0 overflow-hidden"
+          : "flex h-full min-h-full min-w-[19rem] flex-[0_0_19rem] self-stretch 2xl:min-w-[21rem] 2xl:flex-[1_0_21rem]"
+      }
+      initial={column.id === "processing" ? { width: 0, opacity: 0 } : false}
+      animate={column.id === "processing" ? { width: "auto", opacity: 1 } : false}
+      exit={column.id === "processing" ? { width: 0, opacity: 0 } : undefined}
+      transition={
+        column.id === "processing"
+          ? { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
+          : { duration: parseFloat(getCSSVar("--animation-duration")), ease: "easeInOut" }
+      }
     >
+      <div
+        className={
+          column.id === "processing"
+            ? "flex h-full min-h-full min-w-[19rem] flex-[0_0_19rem] self-stretch w-full 2xl:min-w-[21rem] 2xl:flex-[1_0_21rem]"
+            : "flex h-full w-full min-w-0"
+        }
+      >
       <motion.div
         style={{
           pointerEvents: column.visible ? "auto" : "none",
@@ -158,6 +174,7 @@ export function Column({
           </div>
         </div>
       </motion.div>
+      </div>
     </motion.div>
   );
-}
+});

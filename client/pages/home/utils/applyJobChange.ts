@@ -30,18 +30,17 @@ function getBroadcastOperation(event: JobRealtimeEvent): string | undefined {
 function handleInsert(prev: JobCardType[], event: JobRealtimeEvent): JobCardType[] {
   const newCard = convertBroadcastToJobCard(event);
   if (!newCard) return prev;
-  const recentCard = { ...newCard, recentlyAdded: true };
 
   const exists = prev.some((c) => c.id === newCard.id);
   if (exists) {
     return prev.map((c) =>
       c.id === newCard.id
-        ? { ...newCard, recentlyAdded: c.recentlyAdded }
+        ? newCard
         : c
     );
   }
   console.log(`Insert: Added new card to view.`);
-  return [recentCard, ...prev];
+  return [newCard, ...prev];
 }
 
 // Updates existing job cards
@@ -66,7 +65,7 @@ function handleUpdate(prev: JobCardType[], event: JobRealtimeEvent): JobCardType
   console.log(`Update: Updated card in view.`);
   return prev.map((c) =>
     String(c.id) === String(updatedCard.id)
-      ? { ...updatedCard, recentlyAdded: c.recentlyAdded }
+      ? updatedCard
       : c
   );
 }

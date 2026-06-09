@@ -90,7 +90,6 @@ export function useJobCardDrag(job: JobCardType) {
       column: targetColumn,
       applicationStage: targetColumn,
       reviewNeeded: false,
-      recentlyAdded: true,
     }));
 
     after.forEach((afterJob, index) => {
