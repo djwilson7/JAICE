@@ -919,6 +919,7 @@ def _apply_batch_status_rules(
         return {
             "matched": True,
             "stage": None,
+            "requires_inference": True,
             "category": "APPLICATION_UPDATE",
             "reason": "rule_batch_application_update_requires_inference",
             "terminal_count": terminal_count,
