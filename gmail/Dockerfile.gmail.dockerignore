@@ -16,6 +16,5 @@ OpenAI
 classification
 client
 client_api
-ner
 public
 supabase

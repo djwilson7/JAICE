@@ -16,6 +16,5 @@ OpenAI
 client
 client_api
 gmail
-ner
 public
 supabase

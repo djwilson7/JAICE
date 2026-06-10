@@ -21,7 +21,6 @@ client/assets/*
 !client/assets/fonts/
 !client/assets/fonts/**
 gmail
-ner
 public
 relevance
 shared_worker_library

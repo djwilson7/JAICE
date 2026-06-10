@@ -17,7 +17,6 @@ classification
 client_api
 common
 gmail
-ner
 relevance
 shared_worker_library
 supabase
