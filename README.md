@@ -5,6 +5,8 @@
 ![Backend](https://img.shields.io/badge/backend-FastAPI%20%2B%20Celery-009688)
 ![AI](https://img.shields.io/badge/AI-Local%20Ollama-7C3AED)
 
+[View on Portfolio](https://www.dontaiwilson.com/projects/JAICE)
+
 JAICE is a full-stack job search workspace that helps users manage applications, recruiter emails, resume versions, and follow-up activity from one organized system.
 
 Modern job searching creates scattered information across inbox threads, spreadsheets, job boards, resume files, and application portals. JAICE brings that activity into a single workflow by combining authenticated account management, Gmail ingestion, rule-based email classification, selective local LLM inference, a Kanban-style application board, dashboard analytics, resume versioning, PDF export, and AI-assisted resume feedback.
