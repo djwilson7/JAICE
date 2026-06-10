@@ -7,10 +7,10 @@ omit =
     */setup.py
     */test_*.py
     */__init__.py
+    tests/*
     client_api/db/schema/*
     client_api/db/validate_new_supabase_schema.py
     client_api/db/apply_migration_asyncpg.py
-    OpenAI/*
     supabase/*
     */Dockerfile*
 

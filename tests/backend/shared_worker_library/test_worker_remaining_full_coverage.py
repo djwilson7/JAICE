@@ -8,7 +8,6 @@ import types
 import pytest
 
 from gmail import gmail_tasks
-from ner import ner_queries
 from shared_worker_library import database
 
 
@@ -196,10 +195,6 @@ def test_gmail_fetch_message_ids_http_failure(monkeypatch):
     )
     with pytest.raises(RuntimeError, match="network"):
         gmail_tasks.fetch_message_ids("token", "trace")
-
-
-def test_ner_query_placeholder_result():
-    assert ner_queries.update_job_app_table("trace", [{"id": 1}]) == {"status": "updated"}
 
 
 def test_worker_database_missing_url_guard(monkeypatch):

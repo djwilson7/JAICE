@@ -10,7 +10,6 @@ from classification import class_tasks, llm_classifier
 from client_api.services import firebase_admin
 from client_api.services.resume_chat import providers
 from gmail import gmail_queries, gmail_tasks
-from ner import ner_tasks
 from shared_worker_library import database
 from shared_worker_library.db_queries import std_queries, transfer_query
 
@@ -156,51 +155,6 @@ def test_transfer_query_paths(monkeypatch):
         "status": "failure",
         "error": "query",
     }
-
-
-def test_ner_task_orchestration_and_helpers(monkeypatch):
-    real_decrypt_email_content = ner_tasks.decrypt_email_content
-    real_normalized_emails_for_model = ner_tasks.normalized_emails_for_model
-    real_run_ner_model = ner_tasks.run_ner_model
-    monkeypatch.setattr(
-        ner_tasks,
-        "get_encrypted_emails",
-        lambda *_args: (_ for _ in ()).throw(RuntimeError("fetch")),
-    )
-    assert ner_tasks.ner_task("trace", []) == {"status": "failure", "error": "fetch"}
-
-    monkeypatch.setattr(ner_tasks, "get_encrypted_emails", lambda *_args: [])
-    for name, error in [
-        ("decrypt_email_content", "decrypt"),
-        ("normalized_emails_for_model", "normalize"),
-        ("run_ner_model", "model"),
-        ("update_job_app_table", "update"),
-    ]:
-        monkeypatch.setattr(
-            ner_tasks,
-            name,
-            lambda *_args, error=error: (_ for _ in ()).throw(RuntimeError(error)),
-        )
-        assert ner_tasks.ner_task("trace", []) == {"status": "failure", "error": error}
-        monkeypatch.setattr(ner_tasks, name, lambda *_args: [])
-
-    monkeypatch.setattr(ner_tasks, "update_job_app_table", lambda *_args: {"status": "updated"})
-    assert ner_tasks.ner_task("trace", []) == {
-        "status": "success",
-        "results": {"status": "updated"},
-    }
-
-    monkeypatch.setattr(ner_tasks, "decrypt_token", lambda value: value.decode())
-    assert real_decrypt_email_content(
-        "trace",
-        [
-            {"id": "1", "subject_enc": b"subject", "sender_enc": b"sender", "body_enc": b"body"},
-            {"id": "bad"},
-        ],
-    ) == [{"id": "1", "subject": "subject", "sender": "sender", "body": "body"}]
-    emails = [{"provider_message_id": "msg"}]
-    assert real_normalized_emails_for_model("trace", emails) is emails
-    assert real_run_ner_model("trace", emails) == ["msg"]
 
 
 def test_llm_classifier_parse_and_validation():
