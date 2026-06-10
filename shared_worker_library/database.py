@@ -30,6 +30,7 @@ def get_pool() -> ConnectionPool[Connection[TupleRow]]:
                 max_size=15,
                 max_lifetime=300,
                 max_idle=60,
+                open=True,
             )
     return pool
 

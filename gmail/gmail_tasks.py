@@ -381,7 +381,9 @@ def initial_sync(self, uid: str, trace_id: str, start_date_str: str):
         raise self.retry(exc=e)
 
     try:
-        days_to_sync = (datetime.utcnow() - start_date).days
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+        days_to_sync = (datetime.now(timezone.utc) - start_date).days
         message_ids = fetch_message_ids(access_token, trace_id, days_to_sync)
     except Exception as e:
         logging.error(

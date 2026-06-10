@@ -9,8 +9,29 @@ import types
 from collections import deque
 from contextlib import asynccontextmanager
 from typing import Any
+import time
 
 import pytest
+
+if os.name == "nt":
+    import tempfile
+    # Use a unique directory in the system temp to avoid project-root locking issues
+    timestamp = int(time.time())
+    safe_tmp = os.path.join(tempfile.gettempdir(), f"jaice_tests_{timestamp}")
+    os.makedirs(safe_tmp, exist_ok=True)
+    
+    os.environ["TMPDIR"] = safe_tmp
+    os.environ["TEMP"] = safe_tmp
+    os.environ["TMP"] = safe_tmp
+
+def pytest_configure(config: pytest.Config) -> None:
+    if os.name == "nt":
+        import tempfile
+        # Force a unique basetemp for this run to avoid locking issues on Windows
+        # Pytest's default cleanup of old temp dirs often fails on Windows.
+        unique_base = os.path.join(tempfile.gettempdir(), f"pytest_run_{int(time.time())}")
+        os.makedirs(unique_base, exist_ok=True)
+        config.option.basetemp = unique_base
 
 
 os.environ.setdefault(

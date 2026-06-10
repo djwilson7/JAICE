@@ -82,6 +82,8 @@ async def test_auth_dependencies(monkeypatch):
 def test_auth_api_mint_jwt_and_dispatch(monkeypatch):
     from client_api.api import auth_api
 
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "unit-test-supabase-secret")
+    monkeypatch.setattr(auth_api, "JWT_ALGORITHM", "HS256")
     token = auth_api.mint_jwt("user-123", exp=30)
     decoded = jwt.decode(token, "unit-test-supabase-secret", algorithms=["HS256"])
     assert decoded["sub"] == "user-123"

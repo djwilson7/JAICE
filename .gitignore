@@ -58,7 +58,6 @@ src/server/.env
 
 # Virtual environments
 **/.venv/
-**/.env
 
 # Python cache files
 **/__pycache__/
@@ -67,7 +66,7 @@ src/server/.env
 coverage.json
 htmlcov/
 .pytest_cache/
-.pytest_tmp/
+.pytest_tmp*/
 
 # Credentials files
 **/client_secrets.json

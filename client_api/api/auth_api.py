@@ -38,7 +38,7 @@ CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_LOCAL") or os.getenv(
 )
 
 # STANDARD ENV VARS (Doesn't care about local vs prod)
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 BACKGROUND_DURATION_DAYS = int(os.getenv("BACKGROUND_DURATION_DAYS", "365"))
 SCOPES = os.getenv("PERMISSIONS_SCOPES", "[]").strip("[]").replace('"', "").split(",")
 REDIRECT_URI = os.getenv("REDIRECT_URI", "/api/auth/google/callback")
@@ -122,7 +122,7 @@ async def oauth_callback(request: Request, code: str, state: str):
             )
             days_to_sync = GMAIL_INITIAL_SYNC_WINDOW_DAYS
 
-    start_date = datetime.utcnow() - timedelta(days=days_to_sync)
+    start_date = datetime.now(timezone.utc) - timedelta(days=days_to_sync)
     logging.info(
         f"Using {days_to_sync}-day sync window for user {uid} (start date: {start_date.isoformat()})"
     )

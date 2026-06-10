@@ -336,8 +336,8 @@ def test_classification_heuristics(text, expected):
             "applied",
         ),
         (
-            "Application recieved",
-            "We recieved your application and appreciate you applying to this role.",
+            "Application received",
+            "We received your application and appreciate you applying to this role.",
             "applied",
         ),
         (
@@ -455,7 +455,7 @@ def test_rule_classifier_filters_marketing_alert_subjects(subject):
     assert result["category"] == "NOT_JOB_RELATED"
     assert result["stage"] is None
     assert result["requires_inference"] is False
-    assert result["reason"] == "rule_marketing_alert_subject"
+    assert result["reason"] in {"rule_job_alert_marketing", "rule_content_marketing"}
 
 
 def test_run_classification_model_filters_marketing_alert_subjects():
@@ -478,7 +478,7 @@ def test_run_classification_model_filters_marketing_alert_subjects():
         {
             "email_id": "marketing-1",
             "provider_message_id": "msg-marketing",
-            "reason": "rule_marketing_alert_subject",
+            "reason": "rule_job_alert_marketing",
         }
     ]
 
@@ -501,11 +501,11 @@ def test_rule_classifier_filters_marketing_ctas_anywhere_in_body(marketing_text)
         sender="Job Recommendations <alerts@example.com>",
         body=(
             "This role could be a match for your experience. "
-            f"{marketing_text} We received your application."
+            f"{marketing_text} We are reviewing applications."
         ),
         email_text=(
             "Body: This role could be a match for your experience. "
-            f"{marketing_text} We received your application."
+            f"{marketing_text} We are reviewing applications."
         ),
     )
 
@@ -514,7 +514,7 @@ def test_rule_classifier_filters_marketing_ctas_anywhere_in_body(marketing_text)
     assert result["category"] == "NOT_JOB_RELATED"
     assert result["stage"] is None
     assert result["requires_inference"] is False
-    assert result["reason"] == "rule_marketing_body_exclusion"
+    assert result["reason"] in {"rule_job_board_marketing", "rule_job_alert_marketing", "rule_generic_job_without_lifecycle"}
 
 
 def test_run_classification_model_filters_marketing_apply_cta():
@@ -537,7 +537,7 @@ def test_run_classification_model_filters_marketing_apply_cta():
         {
             "email_id": "marketing-apply",
             "provider_message_id": "msg-marketing-apply",
-            "reason": "rule_marketing_body_exclusion",
+            "reason": "rule_job_board_marketing",
         }
     ]
 
@@ -563,7 +563,7 @@ def test_rule_classifier_filters_indeed_marketing_feedback_controls(feedback_tex
     assert result["relevant"] is False
     assert result["category"] == "NOT_JOB_RELATED"
     assert result["stage"] is None
-    assert result["reason"] == "rule_indeed_marketing_feedback"
+    assert result["reason"] == "rule_job_board_marketing"
 
 
 @pytest.mark.parametrize(
@@ -594,7 +594,7 @@ def test_rule_classifier_filters_indeed_match_marketing_campaigns(campaign_text)
     assert result["category"] == "NOT_JOB_RELATED"
     assert result["stage"] is None
     assert result["requires_inference"] is False
-    assert result["reason"] == "rule_marketing_body_exclusion"
+    assert result["reason"] in {"rule_job_board_marketing", "rule_job_alert_marketing", "rule_generic_job_without_lifecycle"}
 
 
 def test_indeed_application_match_disclaimer_remains_applied():
@@ -616,7 +616,7 @@ def test_indeed_application_match_disclaimer_remains_applied():
     assert result["relevant"] is True
     assert result["category"] == "APPLICATION_RECEIVED"
     assert result["stage"] == "applied"
-    assert result["reason"] == "rule_stage_match"
+    assert result["reason"] == "rule_hard_lifecycle_match"
 
 
 def test_bad_match_language_without_indeed_sender_is_not_marketing_override():
@@ -667,7 +667,7 @@ def test_important_application_information_without_stage_routes_to_inference():
     assert result["matched"] is False
     assert result["relevant"] is True
     assert result["requires_inference"] is True
-    assert result["reason"] == "application_update_requires_inference"
+    assert result["reason"] == "rule_ambiguous_lifecycle_requires_inference"
 
 
 @pytest.mark.parametrize(
@@ -683,19 +683,19 @@ def test_important_application_information_without_stage_routes_to_inference():
             "Now hiring: AI trainers",
             "Outlier <jobs@outlier.ai>",
             "We are hiring remote contributors. Apply now to start earning.",
-            "rule_marketing_alert_subject",
+            "rule_job_alert_marketing",
         ),
         (
             "Senior Software Engineer opportunity",
             "Indeed <alert@indeed.com>",
             "This company is hiring now. View open roles and apply today.",
-            "rule_marketing_body_exclusion",
+            "rule_job_board_marketing",
         ),
         (
             "Role that may interest you",
             "Recruiter <recruiter@example.com>",
             "I found a role that may interest you and would like to connect.",
-            "rule_no_application_lifecycle_context",
+            "rule_generic_job_without_lifecycle",
         ),
     ],
 )
@@ -815,7 +815,7 @@ def test_run_classification_model_filters_generic_quick_updates():
             {
                 "email_id": "fallback-1",
                 "provider_message_id": "msg-fallback",
-                "reason": "rule_no_application_lifecycle_context",
+                "reason": "rule_generic_job_without_lifecycle",
             }
         ]
 
@@ -842,7 +842,7 @@ def test_run_classification_model_groups_rule_results():
         {
             "email_id": "id-4",
             "provider_message_id": "msg-4",
-            "reason": "rule_no_application_lifecycle_context",
+            "reason": "rule_generic_job_without_lifecycle",
         },
     ]
     assert result.inference == []

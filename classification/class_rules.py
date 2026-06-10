@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,10 +22,10 @@ DECISIVE_STAGE_PRIORITY = {
 BASELINE_APPLIED_CATEGORIES = {"APPLICATION_RECEIVED", "APPLICATION_UPDATE"}
 SCORE_NORMALIZER = 10.0
 
-STRONG = 5.0
-MEDIUM = 3.0
-WEAK = 1.5
-TINY = 0.75
+STRONG = 6.0
+MEDIUM = 4.0
+WEAK = 2.0
+TINY = 1.0
 
 SUBJECT_MULTIPLIER = 1.35
 SENDER_MULTIPLIER = 1.10
@@ -247,8 +246,13 @@ HARD_LIFECYCLE_RULES: tuple[Rule, ...] = (
     Rule("welcome to the team", "accepted", STRONG, category="ACCEPTED", hard=True),
     Rule("welcome to our team", "accepted", STRONG, category="ACCEPTED", hard=True),
     Rule("next steps for onboarding", "accepted", STRONG, category="ACCEPTED", hard=True),
+    Rule("application sent", "applied", STRONG, category="APPLICATION_RECEIVED", hard=True),
+    Rule("your application has been sent", "applied", STRONG, category="APPLICATION_RECEIVED", hard=True),
+    Rule("your application was sent", "applied", STRONG, category="APPLICATION_RECEIVED", hard=True),
+    Rule("application was sent", "applied", STRONG, category="APPLICATION_RECEIVED", hard=True),
     Rule("we're excited to have you join", "accepted", STRONG, category="ACCEPTED", hard=True),
     Rule("we are excited to have you join", "accepted", STRONG, category="ACCEPTED", hard=True),
+    Rule("meeting request", "interview", STRONG, category="INTERVIEW", hard=True, requires_any=("interview", "call", "schedule", "conversation")),
     Rule("not moving forward", "rejected", STRONG, category="REJECTION", hard=True),
     Rule("will not be moving forward", "rejected", STRONG, category="REJECTION", hard=True),
     Rule("decided to pursue other candidates", "rejected", STRONG, category="REJECTION", hard=True),
@@ -410,6 +414,10 @@ JOB_ALERT_BODY_SIGNALS = (
     "submit your application today",
     "view all jobs",
     "view open roles",
+    "this is a bad match",
+    "is not a good match",
+    "isn't a good match",
+    "not a good match",
 )
 
 CONTENT_MARKETING_SIGNALS = (
