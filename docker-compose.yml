@@ -139,24 +139,6 @@ services:
       local_llm:
         condition: service_healthy
 
-  ner_worker:
-    container_name: ner_worker
-    build:
-      context: .
-      dockerfile: ./ner/Dockerfile.ner
-    command: >
-      watchmedo auto-restart --directory=/app/ner --directory=/app/shared_worker_library
-      --directory=/app/common --patterns=*.py --recursive --
-      celery -A ner.ner_worker worker -Q ner_model_queue -l info -E -n ner_model -c 2
-    env_file:
-      - .env
-    volumes:
-      - ./ner:/app/ner
-      - ./shared_worker_library:/app/shared_worker_library
-      - ./common:/app/common
-    depends_on:
-      - redis
-
   # Flower monitoring tool for Celery
   flower:
     container_name: flower_monitor

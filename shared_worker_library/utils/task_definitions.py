@@ -19,7 +19,6 @@ class TaskType(Enum):
         "classification_model.requeue_stale_email_inference_task",
         "classification_model_queue",
     )
-    NER_MODEL = ("ner_model.ner_task", "ner_model_queue")
 
     def __init__(self, task_name: str, queue_name: str):
         self.task_name = task_name

@@ -102,12 +102,25 @@ def _install_worker_boot_stubs() -> None:
     for module_name in (
         "classification.class_worker",
         "gmail.gmail_worker",
-        "ner.ner_worker",
     ):
         module = types.ModuleType(module_name)
         module.celery_app = fake_app
         module.NLP_MODEL = None
         sys.modules.setdefault(module_name, module)
+        
+        parts = module_name.split(".")
+        parent_name = parts[0]
+        sub_name = parts[1]
+        
+        if parent_name not in sys.modules:
+            try:
+                importlib.import_module(parent_name)
+            except ImportError:
+                parent_module = types.ModuleType(parent_name)
+                sys.modules[parent_name] = parent_module
+                
+        if parent_name in sys.modules:
+            setattr(sys.modules[parent_name], sub_name, module)
 
 
 _install_worker_boot_stubs()
