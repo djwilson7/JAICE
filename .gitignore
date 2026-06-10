@@ -81,3 +81,4 @@ gmail-pubsub-credentials.json
 ROTATION_PLAN.md 
 scratch/
 coverage/
+.coverage
