@@ -34,7 +34,7 @@ export function useDeleteByJobId() {
 
       return true;
     } catch (error) {
-      console.error("Failed to delete job with id:", job.id, error);
+      console.error("Failed to delete job with id:", job?.id, error);
       return false;
     }
   };

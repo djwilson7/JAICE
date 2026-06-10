@@ -349,6 +349,7 @@ export const useResumeDocumentEditing = () => {
         addEducation,
         removeEducation,
         addEducationDetailWithText,
+        removeEducationDetail,
         updateEducationDetailText,
         addSkillCategory,
         updateSkillCategoryName,

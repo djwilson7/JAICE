@@ -13,24 +13,4 @@ export interface UndoRedoContextType {
   redoCount: number;
 }
 
-export const UndoRedoContext = createContext<UndoRedoContextType>({
-  pushUndo: () => {
-    console.warn("pushUndo called outside UndoRedoProvider");
-  },
-
-  undo: () => {
-    console.warn("undo called outside UndoRedoProvider");
-    return undefined;
-  },
-  redo: () => {
-    console.warn("redo called outside UndoRedoProvider");
-    return undefined;
-  },
-  hasUndo: false,
-  hasRedo: false,
-  clear: () => {
-    console.warn("clear called outside UndoRedoProvider");
-  },
-  undoCount: 0,
-  redoCount: 0,
-});
+export const UndoRedoContext = createContext<UndoRedoContextType | null>(null);

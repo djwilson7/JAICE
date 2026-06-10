@@ -5,7 +5,4 @@ type MultiSelectContextType = {
   setIsMultiSelecting: (value: boolean) => void;
 };
 
-export const MultiSelectContext = createContext<MultiSelectContextType>({
-  isMultiSelecting: false,
-  setIsMultiSelecting: () => {},
-});
+export const MultiSelectContext = createContext<MultiSelectContextType | null>(null);

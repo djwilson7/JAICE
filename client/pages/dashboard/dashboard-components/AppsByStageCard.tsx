@@ -198,7 +198,8 @@ export function AppsByStageCard({
       return <ChartError message={error} />;
     }
 
-    if (!labels.length || !values.length) {
+    const totalValues = values.reduce((sum, v) => sum + v, 0);
+    if (!labels.length || totalValues === 0) {
       return (
         <div className={`flex h-full items-center justify-center text-sm ${chartTheme.emptyText}`}>
           No applications to display yet.

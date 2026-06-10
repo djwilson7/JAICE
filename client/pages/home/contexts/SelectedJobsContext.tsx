@@ -7,8 +7,4 @@ type SelectedJobsContextType = {
   toggleJobSelection: (job: JobCardType) => void;
 };
 
-export const SelectedJobsContext = createContext<SelectedJobsContextType>({
-  selectedJobs: [],
-  setSelectedJobs: () => {},
-  toggleJobSelection: () => {},
-});
+export const SelectedJobsContext = createContext<SelectedJobsContextType | null>(null);

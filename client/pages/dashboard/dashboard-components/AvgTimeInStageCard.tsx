@@ -7,10 +7,10 @@ import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 
 type AvgStageAges = {
-  applied: number;
-  interview: number;
-  offer: number;
-  accepted: number;
+  applied: number | null;
+  interview: number | null;
+  offer: number | null;
+  accepted: number | null;
 };
 
 type TimePart = {
@@ -79,10 +79,10 @@ export function AvgTimeInStageCard({
         const d = res?.data ?? {};
 
         setValues({
-          applied: d.applied ?? 0,
-          interview: d.interview ?? 0,
-          offer: d.offer ?? 0,
-          accepted: d.accepted ?? 0,
+          applied: d.applied ?? null,
+          interview: d.interview ?? null,
+          offer: d.offer ?? null,
+          accepted: d.accepted ?? null,
         });
       } catch (err) {
         if (!alive) return;

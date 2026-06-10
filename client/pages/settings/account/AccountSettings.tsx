@@ -125,15 +125,16 @@ export function AccountSettings() {
         const res = await unlinkGmail();
         if (res.status === "success") {
           setGmailConnected(false);
+          setGmailError(null);
         }
       } else {
         console.log("Linking Gmail...");
         const res = await linkGmail(days);
         if (res.status === "success") {
           setGmailConnected(true);
+          setGmailError(null);
         }
       }
-      setGmailError(null);
     } catch (error) {
       console.error("Gmail link/unlink error:", error);
       setGmailError("Error processing Gmail link.");

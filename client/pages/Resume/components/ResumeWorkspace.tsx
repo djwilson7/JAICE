@@ -189,6 +189,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
             await document.fonts?.ready;
             await new Promise((resolve) => window.requestAnimationFrame(resolve));
 
+            if (cancelled) return;
+
             const diagnostics = buildResumeRenderDiagnostics({
                 phase: "edit-canvas",
                 formatting: {
