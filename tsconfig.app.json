@@ -30,5 +30,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["."]
+  "include": ["client/**/*.ts", "client/**/*.tsx"],
+  "exclude": [
+    "client/**/*.test.ts",
+    "client/**/*.test.tsx",
+    "client/setupTests.ts"
+  ]
 }

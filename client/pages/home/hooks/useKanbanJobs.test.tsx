@@ -29,18 +29,43 @@ describe("useKanbanJobs", () => {
     const { result } = renderHook(() => useKanbanJobs({
       jobs,
       columns,
-      matchOrderMap: new Map([["1", 1]]),
+      matchScoreMap: new Map([["1", 0.1]]),
       hasSearch: true,
       openJobAppModal: vi.fn()
     }));
 
     const els = result.current;
     
-    // applied should have 1 and 2, but 2 should be first because of reviewNeeded and inline behavior
+    // Active search relevance takes precedence over inline review status.
     expect(els["applied"]).toBeDefined();
     expect(els["applied"].length).toBe(2);
+    expect(els["applied"][0].props.job.id).toBe("1");
+    expect(els["applied"][1].props.job.id).toBe("2");
     expect(els["interview"].length).toBe(1);
     expect(els["review"].length).toBe(1); // Job 2 has reviewNeeded: true, so it appears in review col as well
+  });
+
+  it("keeps review-needed jobs first when there is no active search", () => {
+    (useSettings as any).mockReturnValue({ reviewBehavior: "inline" });
+
+    const jobs = [
+      { id: "1", title: "Job 1", column: "applied", reviewNeeded: false },
+      { id: "2", title: "Job 2", column: "applied", reviewNeeded: true },
+    ] as any[];
+
+    const columns = [{ id: "applied", title: "Applied", bg: "" }];
+
+    const { result } = renderHook(() => useKanbanJobs({
+      jobs,
+      columns,
+      matchScoreMap: new Map(),
+      hasSearch: false,
+      openJobAppModal: vi.fn()
+    }));
+
+    const els = result.current["applied"];
+    expect(els[0].props.job.id).toBe("2");
+    expect(els[1].props.job.id).toBe("1");
   });
 
   it("handles separate reviewBehavior", () => {
@@ -59,7 +84,7 @@ describe("useKanbanJobs", () => {
     const { result } = renderHook(() => useKanbanJobs({
       jobs,
       columns,
-      matchOrderMap: new Map(),
+      matchScoreMap: new Map(),
       hasSearch: false,
       openJobAppModal: vi.fn()
     }));
@@ -70,7 +95,7 @@ describe("useKanbanJobs", () => {
     expect(els["review"].length).toBe(1); // Only Job 2
   });
 
-  it("sorts jobs correctly based on matchOrderMap", () => {
+  it("sorts matched jobs before dimmed jobs in each column", () => {
     (useSettings as any).mockReturnValue({ reviewBehavior: "separate" });
 
     const jobs = [
@@ -82,16 +107,15 @@ describe("useKanbanJobs", () => {
 
     const columns = [{ id: "applied", title: "Applied", bg: "" }];
 
-    // Match order: 3 should be first, 1 should be second. 2 and 4 are unmatched.
-    const matchOrderMap = new Map([
-      ["3", 1],
-      ["1", 2]
+    const matchScoreMap = new Map([
+      ["3", 0.05],
+      ["1", 0.2]
     ]);
 
     const { result } = renderHook(() => useKanbanJobs({
       jobs,
       columns,
-      matchOrderMap,
+      matchScoreMap,
       hasSearch: true,
       openJobAppModal: vi.fn()
     }));
@@ -112,7 +136,7 @@ describe("useKanbanJobs", () => {
     expect(els[3].props.dimmed).toBe(true);
   });
 
-  it("sorts by order in matchOrderMap when both are matched", () => {
+  it("sorts matched jobs by strongest relevance score", () => {
     (useSettings as any).mockReturnValue({ reviewBehavior: "separate" });
 
     const jobs = [
@@ -122,16 +146,15 @@ describe("useKanbanJobs", () => {
 
     const columns = [{ id: "applied", title: "Applied", bg: "" }];
 
-    // Job 2 comes before Job 1 in match results
-    const matchOrderMap = new Map([
-      ["2", 1],
-      ["1", 2]
+    const matchScoreMap = new Map([
+      ["2", 0.1],
+      ["1", 0.3]
     ]);
 
     const { result } = renderHook(() => useKanbanJobs({
       jobs,
       columns,
-      matchOrderMap,
+      matchScoreMap,
       hasSearch: true,
       openJobAppModal: vi.fn()
     }));
@@ -139,5 +162,30 @@ describe("useKanbanJobs", () => {
     const els = result.current["applied"];
     expect(els[0].props.job.id).toBe("2");
     expect(els[1].props.job.id).toBe("1");
+  });
+
+  it("dims every card when the search has no matches", () => {
+    (useSettings as any).mockReturnValue({ reviewBehavior: "separate" });
+
+    const jobs = [
+      { id: "1", column: "applied" },
+      { id: "2", column: "interview" },
+    ] as any[];
+
+    const columns = [
+      { id: "applied", title: "Applied", bg: "" },
+      { id: "interview", title: "Interview", bg: "" },
+    ];
+
+    const { result } = renderHook(() => useKanbanJobs({
+      jobs,
+      columns,
+      matchScoreMap: new Map(),
+      hasSearch: true,
+      openJobAppModal: vi.fn()
+    }));
+
+    expect(result.current["applied"][0].props.dimmed).toBe(true);
+    expect(result.current["interview"][0].props.dimmed).toBe(true);
   });
 });

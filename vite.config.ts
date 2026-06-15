@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite' // Tailwind CSS plugin for Vite
@@ -13,6 +13,32 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './client'),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (
+            id.includes('/chart.js/') ||
+            id.includes('/chartjs-chart-matrix/') ||
+            id.includes('/react-chartjs-2/')
+          ) {
+            return 'charts'
+          }
+          if (id.includes('/firebase/') || id.includes('/@supabase/')) {
+            return 'data'
+          }
+          if (id.includes('/react-markdown/') || id.includes('/remark-gfm/')) {
+            return 'markdown'
+          }
+          if (id.includes('/framer-motion/') || id.includes('/lottie-react/')) {
+            return 'motion'
+          }
+          return 'vendor'
+        },
+      },
     },
   },
   test: {

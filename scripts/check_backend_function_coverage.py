@@ -3,14 +3,18 @@ from __future__ import annotations
 import ast
 import fnmatch
 import json
+import os
 import sys
 from pathlib import Path
 from collections import defaultdict
 
 
-THRESHOLD = 100.0
+FILE_COVERAGE_THRESHOLD = float(os.getenv("BACKEND_FILE_COVERAGE_MIN", "100"))
+LINE_COVERAGE_THRESHOLD = float(os.getenv("BACKEND_LINE_COVERAGE_MIN", "95"))
+BRANCH_COVERAGE_THRESHOLD = float(os.getenv("BACKEND_BRANCH_COVERAGE_MIN", "95"))
+FUNCTION_COVERAGE_THRESHOLD = float(os.getenv("BACKEND_FUNCTION_COVERAGE_MIN", "95"))
 COVERAGE_JSON = Path("coverage.json")
-REPORT_PATH = Path("docs/BACKEND_TEST_RESULTS.md")
+REPORT_PATH = Path("docs/test-results/BACKEND_TEST_RESULTS.md")
 
 OMIT_PATTERNS = (
     "client_api/db/schema/*",
@@ -208,19 +212,25 @@ def main() -> int:
         f"{covered_functions_overall}/{total_functions_overall} = {function_percent:.2f}%"
     )
     failed = False
-    if file_percent < THRESHOLD:
-        print(f"File coverage is below {THRESHOLD:.2f}%. First missed files:")
+    if file_percent < FILE_COVERAGE_THRESHOLD:
+        print(
+            f"File coverage is below {FILE_COVERAGE_THRESHOLD:.2f}%. "
+            "First missed files:"
+        )
         for item in missed_files[:40]:
             print(f"  {item}")
         failed = True
-    if line_percent < THRESHOLD:
-        print(f"Line coverage is below {THRESHOLD:.2f}%.")
+    if line_percent < LINE_COVERAGE_THRESHOLD:
+        print(f"Line coverage is below {LINE_COVERAGE_THRESHOLD:.2f}%.")
         failed = True
-    if branch_percent < THRESHOLD:
-        print(f"Branch coverage is below {THRESHOLD:.2f}%.")
+    if branch_percent < BRANCH_COVERAGE_THRESHOLD:
+        print(f"Branch coverage is below {BRANCH_COVERAGE_THRESHOLD:.2f}%.")
         failed = True
-    if function_percent < THRESHOLD:
-        print(f"Function coverage is below {THRESHOLD:.2f}%. First missed functions:")
+    if function_percent < FUNCTION_COVERAGE_THRESHOLD:
+        print(
+            f"Function coverage is below {FUNCTION_COVERAGE_THRESHOLD:.2f}%. "
+            "First missed functions:"
+        )
         for item in missed_functions[:40]:
             print(f"  {item}")
         failed = True

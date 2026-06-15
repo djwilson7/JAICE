@@ -54,9 +54,14 @@ export function JobCardContainer({
   const overlayZIndex = DRAG_OVERLAY_Z_INDEX + draggedGroupSize - stackOrder;
   const shouldShowStackClone = isDraggedCard && dragPoint;
   const shouldDimOriginal = isDraggedCard && !!dragCloneRect;
+  const cardOpacity = shouldDimOriginal ? 0.24 : dimmed ? 0.35 : 1;
+  const cardFilter = shouldDimOriginal
+    ? "grayscale(85%) brightness(55%)"
+    : dimmed
+    ? "grayscale(40%) brightness(80%)"
+    : "none";
   const cardTransition = {
     layout: { duration: 0.58 },
-    opacity: { duration: 0.32 },
     y: { duration: 0.48 },
     scale: { duration: 0.42 },
   };
@@ -75,27 +80,19 @@ export function JobCardContainer({
 
   const variants = {
     dimmed: {
-      opacity: shouldDimOriginal ? 0.22 : 0.35,
       scale: 0.98,
       y: 0,
-      filter: shouldDimOriginal
-        ? "grayscale(80%) brightness(58%)"
-        : "grayscale(40%) brightness(80%)",
     },
     normal: {
-      opacity: 1,
       scale: 1,
       y: 0,
-      filter: "none",
       boxShadow: "none",
       border: "1px solid rgba(var(--primary-five-rgb), 0.14)",
       background: "var(--job-card-bg)",
     },
     selected: {
-      opacity: shouldDimOriginal ? 0.28 : 1,
       scale: 1,
       y: 0,
-      filter: shouldDimOriginal ? "grayscale(80%) brightness(58%)" : "none",
       boxShadow: "none",
       border: "1px solid rgba(74, 222, 128, 0.68)",
       background: "rgba(34, 197, 94, 0.24)",
@@ -103,17 +100,14 @@ export function JobCardContainer({
     },
 
     unselected: {
-      opacity: shouldDimOriginal ? 0.22 : 1,
       scale: 1,
       y: 0,
-      filter: shouldDimOriginal ? "grayscale(80%) brightness(58%)" : "none",
       boxShadow: "none",
       border: "1px solid rgba(var(--primary-five-rgb), 0.14)",
       background: "var(--job-card-bg)",
     },
 
     hoverUnselected: {
-      opacity: 1,
       scale: 1,
       y: 0,
       boxShadow: "none",
@@ -122,10 +116,8 @@ export function JobCardContainer({
       cursor: "pointer",
     },
     dragPlaceholder: {
-      opacity: 0.24,
       scale: 1,
       y: 0,
-      filter: "grayscale(85%) brightness(55%)",
       boxShadow: "none",
       border: "1px solid rgba(var(--primary-five-rgb), 0.16)",
       background: "rgba(var(--job-card-background-rgb), 0.36)",
@@ -151,7 +143,12 @@ export function JobCardContainer({
         ref={cardRef}
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
+        data-search-dimmed={dimmed}
         className={`flex w-full shrink-0 select-none items-center flex-col job-card min-h-[2rem] overflow-hidden p-0 ${reviewClass}`}
+        style={{
+          opacity: cardOpacity,
+          filter: cardFilter,
+        }}
         onPointerDown={onPointerDown}
         variants={variants}
         animate={visualState}

@@ -8,6 +8,7 @@ import { useJobCard } from "@/pages/home/hooks/useJobCard";
 import { getCSSVar } from "@/utils/getCSSVar";
 import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 import { writeJobsToDB } from "@/global-services/writeJobsToDB";
+import { getJobDateParts } from "@/pages/home/utils/jobDateParts";
 
 interface JobCardTitleProps {
   isSelected: boolean;
@@ -18,39 +19,6 @@ interface JobCardTitleProps {
   job: JobCardType;
   allowSelection?: boolean;
   mode?: "trash" | "archive" | "default";
-}
-
-function getDateParts(job: JobCardType) {
-  const rawDate = job.receivedAtRaw;
-  const ms = rawDate
-    ? /^\d{13}$/.test(String(rawDate))
-      ? Number(rawDate)
-      : Date.parse(String(rawDate))
-    : NaN;
-
-  if (!Number.isNaN(ms)) {
-    const date = new Date(ms);
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    return {
-      date: date.toLocaleDateString("en-US", {
-        dateStyle: "medium",
-        timeZone,
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        timeStyle: "short",
-        timeZone,
-      }),
-    };
-  }
-
-  const fallback = job.date ?? "";
-  const [date, time] = fallback.split(/,\s(?=[^,]+$)/);
-
-  return {
-    date: date || fallback,
-    time: time || "",
-  };
 }
 
 export function JobCardTitle({
@@ -67,7 +35,7 @@ export function JobCardTitle({
   const { toggleJobSelection } = useSelectedJobs();
   const { expandAll, commandId, registerOpen, registerClose } = useJobCard();
   const prevOpenRef = useRef(false);
-  const { date, time } = getDateParts(job);
+  const { date, time } = getJobDateParts(job);
 
   const toggle = () => {
     let shouldUpdateDB = false;

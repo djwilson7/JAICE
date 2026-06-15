@@ -95,8 +95,8 @@ describe("Column", () => {
   });
 
   it("handles resize observer via useEffect", () => {
-      let observeSpy = vi.fn();
-      let disconnectSpy = vi.fn();
+      const observeSpy = vi.fn();
+      const disconnectSpy = vi.fn();
       vi.stubGlobal('ResizeObserver', class {
           observe = observeSpy;
           disconnect = disconnectSpy;

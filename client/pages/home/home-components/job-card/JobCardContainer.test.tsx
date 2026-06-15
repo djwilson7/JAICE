@@ -75,6 +75,30 @@ describe("JobCardContainer", () => {
     expect(container).toHaveClass("review");
   });
 
+  it("applies dimming immediately when the prop changes", () => {
+    const { rerender } = render(
+      <JobCardContainer job={mockJob} dimmed={false} setIsHovered={mockSetIsHovered} isSelected={false}>
+        <div data-testid="child" />
+      </JobCardContainer>
+    );
+
+    const container = screen.getByTestId("child").parentElement;
+    expect(container).toHaveStyle({ opacity: "1", filter: "none" });
+
+    rerender(
+      <JobCardContainer job={mockJob} dimmed setIsHovered={mockSetIsHovered} isSelected={false}>
+        <div data-testid="child" />
+      </JobCardContainer>
+    );
+
+    expect(container).toHaveAttribute("data-search-dimmed", "true");
+    expect(container).toHaveStyle({
+      opacity: "0.35",
+      filter: "grayscale(40%) brightness(80%)",
+    });
+    expect(mockSetIsHovered).not.toHaveBeenCalled();
+  });
+
   it("shows stack clone when dragging and point exists", () => {
     (useDragHook.useDrag as any).mockReturnValue({
       isDragging: true,

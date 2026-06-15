@@ -26,7 +26,7 @@ vi.mock("@/pages/home/hooks/useJobSearchAndSort", () => ({
   useJobSearchAndSort: () => ({
     searchQuery: "", setSearchQuery: vi.fn(),
     sortOption: "default", setSortOption: vi.fn(),
-    sortedJobs: [], matchOrderMap: new Map(), hasSearch: false,
+    sortedJobs: [], matchScoreMap: new Map(), hasSearch: false,
   }),
 }));
 vi.mock("@/pages/home/hooks/useKanbanColumns", () => ({

@@ -99,15 +99,29 @@ describe('AccountSettings exhaustive branch coverage', () => {
   });
 
   it('covers link gmail success branch', async () => {
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = {
+      ...originalLocation,
+      href: 'http://localhost/',
+    } as Location;
+
     (checkGmailStatusModule.checkGmailStatus as any).mockImplementation(({ setGmailConnected }: any) => setGmailConnected(false));
-    render(<MemoryRouter><AccountSettings /></MemoryRouter>);
-    
-    fireEvent.click(screen.getByRole('button', { name: /Link Gmail/i }));
-    fireEvent.click(screen.getByText('1 month'));
-    await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /Confirm/i }));
-    });
-    expect(apiModule.api).toHaveBeenCalledWith('/api/auth/setup-rls-session', expect.any(Object));
+    try {
+      render(<MemoryRouter><AccountSettings /></MemoryRouter>);
+
+      fireEvent.click(screen.getByRole('button', { name: /Link Gmail/i }));
+      fireEvent.click(screen.getByText('1 month'));
+      await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: /Confirm/i }));
+      });
+      expect(apiModule.api).toHaveBeenCalledWith('/api/auth/setup-rls-session', expect.any(Object));
+      expect(window.location.href).toContain('token=fake-token');
+      expect(window.location.href).toContain('days=30');
+    } finally {
+      delete (window as any).location;
+      window.location = originalLocation;
+    }
   });
 
   it('covers unlink failure paths (revoke fail, logout catch)', async () => {

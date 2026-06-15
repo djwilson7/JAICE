@@ -105,7 +105,7 @@ describe("useJobMutation", () => {
     render(<TestComponent job={{ id: "1", title: "Job" }} intent={{ type: "archive" }} />);
     
     await act(async () => {
-      try { screen.getByTestId("mutate").click(); } catch {}
+      screen.getByTestId("mutate").click();
     });
     
     expect(showBanner).toHaveBeenCalledWith(expect.objectContaining({ tone: "error", message: "Failed to archive job. Try again." }));
@@ -116,7 +116,7 @@ describe("useJobMutation", () => {
     render(<TestComponent job={{ id: "1", title: "Job" }} intent={{ type: "delete" }} />);
     
     await act(async () => {
-      try { screen.getByTestId("mutate").click(); } catch {}
+      screen.getByTestId("mutate").click();
     });
     
     expect(showBanner).toHaveBeenCalledWith(expect.objectContaining({ tone: "error", message: "Failed to delete job. Try again." }));
@@ -128,7 +128,7 @@ describe("useJobMutation", () => {
     render(<TestComponent job={{ id: "1", title: "Job", reviewNeeded: true }} intent={{ type: "review" }} />);
     
     await act(async () => {
-      try { screen.getByTestId("mutate").click(); } catch {}
+      screen.getByTestId("mutate").click();
     });
     
     expect(showBanner).toHaveBeenCalledWith(expect.objectContaining({ tone: "error", message: "Failed to update job. Try again." }));

@@ -1,47 +1,77 @@
 import { useMemo, useState } from "react";
-import Fuse from "fuse.js";
 import type { JobCardType } from "@/types/jobCardType";
 import { sortJobs } from "@/pages/home/hooks/sortJobs";
+import { getJobDateParts } from "@/pages/home/utils/jobDateParts";
+
+function normalizeSearchText(value: string): string {
+  return value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function getSubstringScore(value: string, query: string): number | null {
+  const normalizedValue = normalizeSearchText(value);
+  if (!normalizedValue) return null;
+
+  const matchIndex = normalizedValue.indexOf(query);
+  if (matchIndex === -1) return null;
+
+  const startsInsideWord =
+    matchIndex > 0 && /[a-z0-9]/i.test(normalizedValue[matchIndex - 1]);
+  if (query.includes(" ") && startsInsideWord) return null;
+
+  if (normalizedValue === query) return 0;
+
+  const startsAtWordBoundary =
+    matchIndex === 0 || normalizedValue[matchIndex - 1] === " ";
+  const positionPenalty = matchIndex / Math.max(normalizedValue.length, 1);
+
+  if (matchIndex === 0) return 0.05 + positionPenalty;
+  if (startsAtWordBoundary) return 0.1 + positionPenalty;
+  return 0.2 + positionPenalty;
+}
+
+function getJobMatchScore(job: JobCardType, query: string): number | null {
+  const { dateSearchText, time } = getJobDateParts(job);
+  const fieldValues = [
+    job.title,
+    job.companyName ?? "",
+    dateSearchText,
+    time,
+  ];
+  const scores = fieldValues
+    .map((value) => getSubstringScore(value, query))
+    .filter((score): score is number => score !== null);
+
+  return scores.length > 0 ? Math.min(...scores) : null;
+}
 
 export function useJobSearchAndSort(jobs: JobCardType[]) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("old");
 
-  const fuse = useMemo(() => {
-    return new Fuse<JobCardType>(jobs, {
-      keys: ["title", "column", "date"],
-      includeScore: true,
-      threshold: 0.1,
-      ignoreLocation: true,
-      useExtendedSearch: true,
-    });
-  }, [jobs]);
-
-  const { sortedJobs, filteredJobs } = useMemo(() => {
+  const { sortedJobs, matchScoreMap } = useMemo(() => {
     const sorted = sortJobs(sortOption, jobs);
+    const normalizedQuery = normalizeSearchText(searchQuery);
 
-    if (!searchQuery.trim()) {
+    if (!normalizedQuery) {
       return {
         sortedJobs: sorted,
-        filteredJobs: sorted,
+        matchScoreMap: new Map(
+          sorted.map((job) => [job.id, 0])
+        ),
       };
     }
 
-    const results = fuse.search(searchQuery);
-    const strongMatches = results.filter((r) => (r.score ?? 1) <= 0.4);
-    const matchedIds = new Set(strongMatches.map((r) => r.item.id));
+    const scores = new Map<string, number>();
+    sorted.forEach((job) => {
+      const score = getJobMatchScore(job, normalizedQuery);
+      if (score !== null) scores.set(job.id, score);
+    });
 
     return {
       sortedJobs: sorted,
-      filteredJobs: sorted.filter((j) => matchedIds.has(j.id)),
+      matchScoreMap: scores,
     };
-  }, [jobs, searchQuery, sortOption, fuse]);
-
-  const matchOrderMap = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredJobs.forEach((job, idx) => map.set(job.id, idx));
-    return map;
-  }, [filteredJobs]);
+  }, [jobs, searchQuery, sortOption]);
 
   return {
     searchQuery,
@@ -49,7 +79,7 @@ export function useJobSearchAndSort(jobs: JobCardType[]) {
     sortOption,
     setSortOption,
     sortedJobs,
-    matchOrderMap,
+    matchScoreMap,
     hasSearch: !!searchQuery.trim(),
   };
 }

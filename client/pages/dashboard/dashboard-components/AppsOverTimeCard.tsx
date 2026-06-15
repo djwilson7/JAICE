@@ -100,6 +100,9 @@ const externalTooltipHandler = (context: ExternalTooltipContext<"line">) => {
   tooltipEl.style.top = position.top + window.scrollY + tooltipModel.caretY + "px";
   
   // Custom glassmorphic styles matching title info popover perfectly
+  tooltipEl.style.width = "max-content";
+  tooltipEl.style.maxWidth = "calc(100vw - 24px)";
+  tooltipEl.style.whiteSpace = "nowrap";
   tooltipEl.style.border = "1px solid rgba(var(--primary-five-rgb), 0.24)";
   tooltipEl.style.borderRadius = "12px";
   tooltipEl.style.background = "rgba(var(--primary-one-rgb), 0.82)";

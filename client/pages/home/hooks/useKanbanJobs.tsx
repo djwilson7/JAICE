@@ -6,13 +6,13 @@ import { useSettings } from "@/pages/settings/provider/settingsContext";
 export function useKanbanJobs({
   jobs,
   columns,
-  matchOrderMap,
+  matchScoreMap,
   hasSearch,
   openJobAppModal,
 }: {
   jobs: JobCardType[];
   columns: { id: string; title: string; bg: string }[];
-  matchOrderMap: Map<string, number>;
+  matchScoreMap: Map<string, number>;
   hasSearch: boolean;
   openJobAppModal: (payload: string | JobCardType | null) => void;
 
@@ -33,18 +33,24 @@ export function useKanbanJobs({
     }
 
     const orderedJobs = [...jobsInColumn].sort((a, b) => {
+      const aMatched = matchScoreMap.has(a.id);
+      const bMatched = matchScoreMap.has(b.id);
+
+      if (hasSearch) {
+        if (aMatched && !bMatched) return -1;
+        if (!aMatched && bMatched) return 1;
+        if (aMatched && bMatched) {
+          return (
+            (matchScoreMap.get(a.id) ?? 1) -
+            (matchScoreMap.get(b.id) ?? 1)
+          );
+        }
+      }
+
       if (reviewBehavior === "inline") {
         if (a.reviewNeeded && !b.reviewNeeded) return -1;
         if (!a.reviewNeeded && b.reviewNeeded) return 1;
       }
-
-      const aMatched = matchOrderMap.has(a.id);
-      const bMatched = matchOrderMap.has(b.id);
-
-      if (aMatched && !bMatched) return -1;
-      if (!aMatched && bMatched) return 1;
-      if (aMatched && bMatched)
-        return (matchOrderMap.get(a.id) ?? 0) - (matchOrderMap.get(b.id) ?? 0);
 
       return 0;
     });
@@ -53,7 +59,7 @@ export function useKanbanJobs({
       <JobCard
         key={job.id}
         job={job}
-        dimmed={hasSearch && !matchOrderMap.has(job.id)}
+        dimmed={hasSearch && !matchScoreMap.has(job.id)}
         openJobAppModal={openJobAppModal}
       />
     ));

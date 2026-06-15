@@ -129,6 +129,10 @@ describe("AppsOverTimeCard", () => {
       }
     };
     externalTooltip(mockContext as any);
+
+    const tooltip = document.getElementById("chartjs-apps-over-time-tooltip");
+    expect(tooltip?.style.width).toBe("max-content");
+    expect(tooltip?.style.whiteSpace).toBe("nowrap");
     
     // Hide tooltip
     const mockContextHide = { ...mockContext, tooltip: { ...mockContext.tooltip, opacity: 0 } };

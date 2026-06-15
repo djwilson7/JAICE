@@ -57,7 +57,7 @@ export function HomePage() {
     sortOption,
     setSortOption,
     sortedJobs,
-    matchOrderMap,
+    matchScoreMap,
     hasSearch,
   } = useJobSearchAndSort(jobs);
 
@@ -71,7 +71,7 @@ export function HomePage() {
   const jobsByColumn = useKanbanJobs({
     jobs: sortedJobs,
     columns,
-    matchOrderMap,
+    matchScoreMap,
     hasSearch,
     openJobAppModal,
   });
