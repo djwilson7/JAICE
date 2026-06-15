@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import type { ResumeData, ResumeFormatting, SavedResume } from "../types";
 import { defaultResumeFormatting } from "../formatting";
@@ -15,6 +15,7 @@ type UseResumePersistenceParams = {
     setError: React.Dispatch<React.SetStateAction<string | null>>;
     successMessage: string | null;
     setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
+    autoSaveDelayMs?: number;
 };
 
 export const useResumePersistence = ({
@@ -26,7 +27,8 @@ export const useResumePersistence = ({
     error,
     setError,
     successMessage,
-    setSuccessMessage
+    setSuccessMessage,
+    autoSaveDelayMs = 2500
 }: UseResumePersistenceParams) => {
     const [resumesList, setResumesList] = useState<SavedResume[]>([]);
     const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
@@ -37,10 +39,22 @@ export const useResumePersistence = ({
     const [loadingList, setLoadingList] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
+    const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
+        try {
+            return localStorage.getItem("resume_auto_save_enabled") !== "false";
+        } catch {
+            return true;
+        }
+    });
     const [searchQuery, setSearchQuery] = useState("");
     const [resumeSearchFocusSignal] = useState(0);
     const [pendingDeleteResume, setPendingDeleteResume] = useState<SavedResume | null>(null);
     const [isDeletingResume, setIsDeletingResume] = useState(false);
+    const loadingSaveRef = useRef(false);
+    const isDirtyRef = useRef(false);
+    const fetchResumesRef = useRef<(preferredActiveResumeId?: string) => Promise<void>>(
+        async () => undefined
+    );
 
     const activeSavedResume = useMemo(() => {
         return resumesList.find((r) => r.id === activeResumeId) || null;
@@ -188,8 +202,12 @@ export const useResumePersistence = ({
         }
     };
 
-    const handleSaveResume = async () => {
-        setLoadingSave(false);
+    fetchResumesRef.current = fetchResumes;
+
+    const performSaveResume = useCallback(async (source: "manual" | "auto") => {
+        if (loadingSaveRef.current || !isDirtyRef.current) return;
+
+        loadingSaveRef.current = true;
         setError(null);
         setSuccessMessage(null);
 
@@ -214,17 +232,30 @@ export const useResumePersistence = ({
                 });
 
             if (resp.status === "success") {
-                setSuccessMessage("Resume saved successfully!");
+                setSuccessMessage(source === "auto" ? "Resume auto-saved." : "Resume saved successfully!");
                 resetDraftState();
-                await fetchResumes(resp.resume.id);
+                await fetchResumesRef.current(resp.resume.id);
             }
         } catch (err) {
             console.error(err);
             setError((err as Error).message || "Failed to save resume.");
         } finally {
+            loadingSaveRef.current = false;
             setLoadingSave(false);
         }
-    };
+    }, [
+        activeResumeId,
+        currentResumeFormatting,
+        isMaster,
+        resetDraftState,
+        resumeData,
+        resumeName,
+        resumesList,
+        setError,
+        setSuccessMessage
+    ]);
+
+    const handleSaveResume = () => performSaveResume("manual");
 
     const handleDeleteResume = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -301,6 +332,37 @@ export const useResumePersistence = ({
         setIsDirty(savedString !== currentString || activeSavedResume.name !== resumeName || activeSavedResume.is_master !== isMaster);
     }, [resumeData, resumeName, isMaster, activeSavedResume, currentResumeFormatting]);
 
+    useEffect(() => {
+        isDirtyRef.current = isDirty;
+    }, [isDirty]);
+
+    useEffect(() => {
+        loadingSaveRef.current = loadingSave;
+    }, [loadingSave]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem("resume_auto_save_enabled", String(autoSaveEnabled));
+        } catch {
+            // Auto-save still works for the current session when storage is unavailable.
+        }
+    }, [autoSaveEnabled]);
+
+    useEffect(() => {
+        if (!autoSaveEnabled || !activeResumeId || !isDirty || loadingSave) return;
+        const timer = window.setTimeout(() => {
+            void performSaveResume("auto");
+        }, autoSaveDelayMs);
+        return () => window.clearTimeout(timer);
+    }, [
+        activeResumeId,
+        autoSaveDelayMs,
+        autoSaveEnabled,
+        isDirty,
+        loadingSave,
+        performSaveResume
+    ]);
+
     return {
         resumesList,
         activeResumeId,
@@ -320,6 +382,8 @@ export const useResumePersistence = ({
         loadingSave,
         isDirty,
         setIsDirty,
+        autoSaveEnabled,
+        setAutoSaveEnabled,
         searchQuery,
         setSearchQuery,
         resumeSearchFocusSignal,
