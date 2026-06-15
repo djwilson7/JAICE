@@ -1,6 +1,20 @@
 export type ResumeBullet = {
     id: string;
     text: string;
+    tagIds?: string[];
+};
+
+export type ResumeSectionKey = "summary" | "experience" | "education" | "skills";
+
+export type ResumeSectionTitles = Record<ResumeSectionKey, string>;
+
+export type ResumeTag = {
+    id: string;
+    name: string;
+    slug: string;
+    colorToken: string;
+    createdAt: string;
+    archivedAt?: string | null;
 };
 
 export type ExperienceItem = {
@@ -67,6 +81,8 @@ export type ResumeData = {
     customContact?: CustomContactField[];
     hiddenContactFields?: ContactFieldKey[];
     formatting?: ResumeFormatting;
+    sectionTitles?: ResumeSectionTitles;
+    tagLibrary?: ResumeTag[];
 };
 
 export type ResumeDataInput = Partial<Omit<ResumeData, "skills">> & {
@@ -235,4 +251,3 @@ export type PaperMetrics = {
         height: string;
     };
 };
-

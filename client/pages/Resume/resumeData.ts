@@ -1,9 +1,84 @@
-import type { ContactFieldKey, EducationItem, ExperienceItem, ResumeData, ResumeDataInput, SkillCategory } from "./types";
+import type {
+    ContactFieldKey,
+    EducationItem,
+    ExperienceItem,
+    ResumeData,
+    ResumeDataInput,
+    ResumeSectionKey,
+    ResumeSectionTitles,
+    ResumeTag,
+    SkillCategory
+} from "./types";
 import { defaultResumeFormatting, normalizeResumeFormatting } from "./formatting";
 
 export const makeId = () => Math.random().toString(36).slice(2, 10);
 
 export const hasText = (value: unknown) => String(value ?? "").trim().length > 0;
+
+export const DEFAULT_SECTION_TITLES: ResumeSectionTitles = {
+    summary: "Professional Summary",
+    experience: "Work Experience",
+    education: "Education",
+    skills: "Skills"
+};
+
+export const TAG_COLOR_TOKENS = [
+    "tag-teal",
+    "tag-orange",
+    "tag-purple",
+    "tag-cyan",
+    "tag-rose",
+    "tag-slate",
+    "tag-fuchsia",
+    "tag-violet",
+    "tag-pink",
+    "tag-zinc",
+    "tag-stone"
+] as const;
+
+export const normalizeTagSlug = (value: string): string =>
+    value.toLocaleLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+
+export const getSectionTitle = (
+    data: Pick<ResumeData, "sectionTitles">,
+    section: ResumeSectionKey
+): string => data.sectionTitles?.[section]?.trim() || DEFAULT_SECTION_TITLES[section];
+
+const normalizeSectionTitles = (titles: unknown): ResumeSectionTitles => {
+    const source = titles && typeof titles === "object"
+        ? titles as Partial<ResumeSectionTitles>
+        : {};
+    return {
+        summary: String(source.summary ?? DEFAULT_SECTION_TITLES.summary),
+        experience: String(source.experience ?? DEFAULT_SECTION_TITLES.experience),
+        education: String(source.education ?? DEFAULT_SECTION_TITLES.education),
+        skills: String(source.skills ?? DEFAULT_SECTION_TITLES.skills)
+    };
+};
+
+const normalizeTagLibrary = (tags: unknown): ResumeTag[] => {
+    if (!Array.isArray(tags)) return [];
+    return tags
+        .map((tag, index): ResumeTag | null => {
+            if (!tag || typeof tag !== "object") return null;
+            const candidate = tag as Partial<ResumeTag>;
+            const name = String(candidate.name ?? "").trim();
+            const slug = normalizeTagSlug(String(candidate.slug || name));
+            if (!name || !slug) return null;
+            return {
+                id: String(candidate.id || `tag-${index}-${slug}`),
+                name,
+                slug,
+                colorToken: String(
+                    candidate.colorToken ||
+                    TAG_COLOR_TOKENS[index % TAG_COLOR_TOKENS.length]
+                ),
+                createdAt: String(candidate.createdAt || new Date(0).toISOString()),
+                archivedAt: candidate.archivedAt ?? null
+            };
+        })
+        .filter((tag): tag is ResumeTag => Boolean(tag));
+};
 
 export const parseSkillItems = (input: string): string[] => {
     return input
@@ -105,7 +180,9 @@ export const defaultResumeData = (): ResumeData => ({
     skills: defaultSkillCategories(),
     customContact: [],
     hiddenContactFields: [],
-    formatting: defaultResumeFormatting()
+    formatting: defaultResumeFormatting(),
+    sectionTitles: { ...DEFAULT_SECTION_TITLES },
+    tagLibrary: []
 });
 
 export const normalizeResumeData = (data?: ResumeDataInput | string | null): ResumeData => {
@@ -130,7 +207,14 @@ export const normalizeResumeData = (data?: ResumeDataInput | string | null): Res
             ? parsed.experience.map((exp: ExperienceItem) => ({
                 ...exp,
                 bullets: Array.isArray(exp.bullets)
-                    ? exp.bullets.filter((bullet) => String(bullet.text || "").trim())
+                    ? exp.bullets
+                        .filter((bullet) => String(bullet.text || "").trim())
+                        .map((bullet) => ({
+                            ...bullet,
+                            tagIds: Array.isArray(bullet.tagIds)
+                                ? bullet.tagIds.map(String)
+                                : []
+                        }))
                     : []
             }))
             : [],
@@ -149,7 +233,9 @@ export const normalizeResumeData = (data?: ResumeDataInput | string | null): Res
                 ["location", "phone", "email", "linkedin", "website", "github"].includes(field)
             )
             : [],
-        formatting: normalizeResumeFormatting(parsed?.formatting)
+        formatting: normalizeResumeFormatting(parsed?.formatting),
+        sectionTitles: normalizeSectionTitles(parsed?.sectionTitles),
+        tagLibrary: normalizeTagLibrary(parsed?.tagLibrary)
     };
 };
 
@@ -175,6 +261,8 @@ export const normalizeResumeDataForPayload = (data?: ResumeDataInput | string | 
                 ? ed.details.filter((detail) => hasText(detail.text))
                 : []
         })),
-        skills: normalizeSkillCategoriesForPayload(normalized.skills)
+        skills: normalizeSkillCategoriesForPayload(normalized.skills),
+        sectionTitles: normalizeSectionTitles(normalized.sectionTitles),
+        tagLibrary: normalizeTagLibrary(normalized.tagLibrary)
     };
 };

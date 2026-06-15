@@ -124,13 +124,15 @@ describe('useResumeDocumentEditing', () => {
         expect(result.current.resumeData.experience[0].bullets[0].text).toBe('Updated');
     });
 
-    it('updateBulletText removes bullet when value is empty', () => {
+    it('retains an empty focused bullet until blur cleanup', () => {
         const { result } = getHook();
         act(() => { result.current.insertExperienceAt(0); });
         const expId = result.current.resumeData.experience[0].id;
         act(() => { result.current.addBulletWithText(expId, 'Original'); });
         const bulletId = result.current.resumeData.experience[0].bullets[0].id;
         act(() => { result.current.updateBulletText(expId, bulletId, '  '); });
+        expect(result.current.resumeData.experience[0].bullets).toHaveLength(1);
+        act(() => { result.current.removeBulletIfEmpty(expId, bulletId); });
         expect(result.current.resumeData.experience[0].bullets).toHaveLength(0);
     });
 
@@ -142,6 +144,43 @@ describe('useResumeDocumentEditing', () => {
         const bulletId = result.current.resumeData.experience[0].bullets[0].id;
         act(() => { result.current.removeBullet(expId, bulletId); });
         expect(result.current.resumeData.experience[0].bullets).toHaveLength(0);
+    });
+
+    it('inserts a blank bullet after the active bullet and keeps the section focused', () => {
+        const { result } = getHook();
+        const expId = result.current.resumeData.experience[0].id;
+        const bulletId = result.current.resumeData.experience[0].bullets[0].id;
+
+        act(() => result.current.insertBulletAfter(expId, bulletId));
+
+        expect(result.current.resumeData.experience[0].bullets[1].text).toBe('');
+        expect(result.current.focusedField).toBe('experience.0.bullets.1');
+        expect(result.current.activeDocumentSection).toBe('experience');
+    });
+
+    it('updates display titles while preserving section keys', () => {
+        const { result } = getHook();
+        act(() => result.current.updateSectionTitle('experience', 'Engineering Experience'));
+        expect(result.current.resumeData.sectionTitles?.experience).toBe('Engineering Experience');
+        expect(result.current.resumeData.experience).toBeDefined();
+    });
+
+    it('creates reusable colored tags and toggles bullet references by id', () => {
+        const { result } = getHook();
+        const expId = result.current.resumeData.experience[0].id;
+        const bulletId = result.current.resumeData.experience[0].bullets[0].id;
+
+        act(() => result.current.createAndAssignBulletTag(expId, bulletId, 'Backend'));
+        const tag = result.current.resumeData.tagLibrary?.[0];
+        expect(tag?.slug).toBe('backend');
+        expect(tag?.colorToken).toBe('tag-teal');
+        expect(result.current.resumeData.experience[0].bullets[0].tagIds).toEqual([tag?.id]);
+
+        act(() => result.current.toggleBulletTag(expId, bulletId, tag!.id));
+        expect(result.current.resumeData.experience[0].bullets[0].tagIds).toEqual([]);
+
+        act(() => result.current.createAndAssignBulletTag(expId, bulletId, 'back-end'));
+        expect(result.current.resumeData.tagLibrary).toHaveLength(1);
     });
 
     // ── education ─────────────────────────────────────────────────────────────
@@ -195,13 +234,15 @@ describe('useResumeDocumentEditing', () => {
         expect(result.current.resumeData.education[0].details[0].text).toBe('Updated');
     });
 
-    it('updateEducationDetailText removes detail when value is empty', () => {
+    it('retains an empty education detail until blur cleanup', () => {
         const { result } = getHook();
         act(() => { result.current.addEducation(); });
         const edId = result.current.resumeData.education[0].id;
         act(() => { result.current.addEducationDetailWithText(edId, 'Original'); });
         const detailId = result.current.resumeData.education[0].details[0].id;
         act(() => { result.current.updateEducationDetailText(edId, detailId, '  '); });
+        expect(result.current.resumeData.education[0].details).toHaveLength(1);
+        act(() => { result.current.removeEducationDetailIfEmpty(edId, detailId); });
         expect(result.current.resumeData.education[0].details).toHaveLength(0);
     });
 
@@ -304,6 +345,11 @@ describe('useResumeDocumentEditing', () => {
         expect(result.current.hoveredSkillDeleteId).toBe('s1');
         
         act(() => result.current.setActiveDocumentSection('experience'));
+        expect(result.current.activeDocumentSection).toBe('header');
+        act(() => result.current.setFocusedNameSection(false));
+        act(() => result.current.setFocusedContactField(null));
+        act(() => result.current.setFocusedSummary(false));
+        act(() => result.current.setFocusedField(null));
         expect(result.current.activeDocumentSection).toBe('experience');
     });
 
@@ -323,8 +369,10 @@ describe('useResumeDocumentEditing', () => {
         act(() => { result.current.setHoveredField(bulletPath); });
         
         act(() => { result.current.updateBulletText(expId, bulletId, '  '); });
-        expect(result.current.focusedField).toBe(null);
-        expect(result.current.hoveredField).toBe(null);
+        expect(result.current.focusedField).toBe(bulletPath);
+        expect(result.current.hoveredField).toBe(bulletPath);
+        act(() => { result.current.removeBulletIfEmpty(expId, bulletId); });
+        expect(result.current.resumeData.experience[0].bullets).toHaveLength(0);
     });
 
     it('updateEducationDetailText handles edge cases', () => {
@@ -343,8 +391,10 @@ describe('useResumeDocumentEditing', () => {
         act(() => { result.current.setHoveredField(detailPath); });
 
         act(() => { result.current.updateEducationDetailText(edId, detailId, '  '); });
-        expect(result.current.focusedField).toBe(null);
-        expect(result.current.hoveredField).toBe(null);
+        expect(result.current.focusedField).toBe(detailPath);
+        expect(result.current.hoveredField).toBe(detailPath);
+        act(() => { result.current.removeEducationDetailIfEmpty(edId, detailId); });
+        expect(result.current.resumeData.education[0].details).toHaveLength(0);
     });
 
     it('handles missing arrays in resumeData for branch coverage', () => {
