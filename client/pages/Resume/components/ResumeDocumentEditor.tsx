@@ -1,9 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import type { ContactFieldKey, ContactRenderField, DocumentSectionId, EducationItem, ExperienceItem, ExperienceRewriteSuggestion, ResumeData, ResumeRewriteActionHover, SummaryRewriteSuggestion } from "../types";
-import { getSkillItemsText, hasText } from "../resumeData";
+import type { ContactFieldKey, ContactRenderField, DocumentSectionId, EducationItem, ExperienceItem, ExperienceRewriteSuggestion, ResumeData, ResumeRewriteActionHover, ResumeSectionKey, SummaryRewriteSuggestion } from "../types";
+import { DEFAULT_SECTION_TITLES, getSkillItemsText, hasText } from "../resumeData";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { DocumentSection } from "./DocumentSection";
+import { EditableSectionTitle } from "./EditableSectionTitle";
+import { ExperienceBulletTags } from "./ExperienceBulletTags";
+import { InlineBulletComposer } from "./InlineBulletComposer";
 
 type OverlayInputParams = {
     path: string;
@@ -24,6 +27,8 @@ type OverlayInputParams = {
     disableDelete?: boolean;
     containerClassName?: string;
     inputContainerClassName?: string;
+    onBlur?: () => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
 };
 
 type ResumeDocumentEditorData = {
@@ -61,7 +66,9 @@ type ResumeDocumentEditorFormatting = {
 
 type ResumeDocumentEditorInteraction = {
     activeDocumentSection: DocumentSectionId | null;
+    focusedDocumentSection: DocumentSectionId | null;
     setActiveDocumentSection: React.Dispatch<React.SetStateAction<DocumentSectionId | null>>;
+    setFocusedField: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredNameSection: boolean;
     setHoveredNameSection: React.Dispatch<React.SetStateAction<boolean>>;
     focusedNameSection: boolean;
@@ -86,6 +93,8 @@ type ResumeDocumentEditorInteraction = {
     setHoveredExperienceClearId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredExperienceDeleteId: string | null;
     setHoveredExperienceDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
+    hoveredEducationClearId: string | null;
+    setHoveredEducationClearId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredEducationDeleteId: string | null;
     setHoveredEducationDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredSkillDeleteId: string | null;
@@ -109,6 +118,7 @@ type ResumeDocumentEditorHandlers = {
     isFieldChanged: (path: string) => { changed: boolean; reason?: string };
     getSuggestionReviewClass: (action?: "accept" | "reject") => string;
     updateField: (field: keyof ResumeData, value: string) => void;
+    updateSectionTitle: (section: ResumeSectionKey, value: string) => void;
     addCustomContactField: () => void;
     updateCustomContactField: (index: number, field: "label" | "value", val: string) => void;
     removeCustomContactField: (index: number) => void;
@@ -118,13 +128,21 @@ type ResumeDocumentEditorHandlers = {
     removeExperience: (id: string) => void;
     clearExperience: (id: string) => void;
     addBulletWithText: (expId: string, text: string) => void;
+    insertBulletAfter: (expId: string, bulletId: string) => void;
     updateBulletText: (expId: string, bulletId: string, value: string) => void;
+    removeBulletIfEmpty: (expId: string, bulletId: string) => void;
     removeBullet: (expId: string, bulletId: string) => void;
+    toggleBulletTag: (expId: string, bulletId: string, tagId: string) => void;
+    createAndAssignBulletTag: (expId: string, bulletId: string, name: string) => void;
+    deleteBulletTag: (tagId: string) => void;
     updateEducationField: (id: string, field: keyof EducationItem, value: string) => void;
     addEducation: () => void;
     removeEducation: (id: string) => void;
+    clearEducation: (id: string) => void;
     addEducationDetailWithText: (educationId: string, text: string) => void;
+    insertEducationDetailAfter: (educationId: string, detailId: string) => void;
     updateEducationDetailText: (educationId: string, detailId: string, value: string) => void;
+    removeEducationDetailIfEmpty: (educationId: string, detailId: string) => void;
     addSkillCategory: () => void;
     updateSkillCategoryName: (id: string, value: string) => void;
     updateSkillCategoryItems: (id: string, value: string) => void;
@@ -151,14 +169,29 @@ type ResumeDocumentEditorProps = {
 export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data, formatting, interaction, handlers }) => {
     const { resumeData, headerContactRows, showHeaderContactEditors, summaryRewriteSuggestion, experienceRewriteSuggestions } = data;
     const { titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, experienceMarginClearClass, experienceMarginDeleteClass, summaryMarginImproveClass } = formatting;
-    const { activeDocumentSection, setActiveDocumentSection, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId } = interaction;
-    const { renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, getSuggestionReviewClass, updateField, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, updateBulletText, removeBullet, updateEducationField, addEducation, removeEducation, addEducationDetailWithText, updateEducationDetailText, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion } = handlers;
+    const { activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId } = interaction;
+    const { renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, getSuggestionReviewClass, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion } = handlers;
+    const [previewExperienceTag, setPreviewExperienceTag] = React.useState<{ bulletId: string; color: string } | null>(null);
+
+    const renderSectionTitle = (section: ResumeSectionKey) => (
+        <EditableSectionTitle
+            section={section}
+            title={resumeData.sectionTitles?.[section] ?? DEFAULT_SECTION_TITLES[section]}
+            fallbackTitle={DEFAULT_SECTION_TITLES[section]}
+            isEditing={activeDocumentSection === section}
+            className={sectionHeadingClass}
+            style={sectionHeadingStyle}
+            onChange={(value) => updateSectionTitle(section, value)}
+            onFocusChange={setFocusedField}
+        />
+    );
 
     return (
         <>
                             <DocumentSection
                                 id="header"
                                 activeSection={activeDocumentSection}
+                                focusedSection={focusedDocumentSection}
                                 setActiveSection={setActiveDocumentSection}
                                 style={documentSectionGapStyle}
                                 showGapPreview={isSectionGapPreviewVisible}
@@ -335,15 +368,14 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                             <DocumentSection
                                 id="summary"
                                 activeSection={activeDocumentSection}
+                                focusedSection={focusedDocumentSection}
                                 setActiveSection={setActiveDocumentSection}
                                 className="group/summary"
                                 style={documentSectionGapStyle}
                                 showGapPreview={isSectionGapPreviewVisible}
                                 gapPreviewHeight={documentSectionGapPx}
                             >
-                                <h2 className={sectionHeadingClass} style={sectionHeadingStyle}>
-                                    Professional Summary
-                                </h2>
+                                {renderSectionTitle("summary")}
                                 <button
                                     type="button"
                                     onMouseEnter={() => setIsSummaryImproveHovered(true)}
@@ -477,6 +509,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                             <DocumentSection
                                 id="experience"
                                 activeSection={activeDocumentSection}
+                                focusedSection={focusedDocumentSection}
                                 setActiveSection={setActiveDocumentSection}
                                 className="group/experience-sec"
                                 style={documentSectionGapStyle}
@@ -484,12 +517,12 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                 gapPreviewHeight={documentSectionGapPx}
                             >
                                 <div className="flex items-center gap-2">
-                                    <h2 className={sectionHeadingClass} style={sectionHeadingStyle}>
-                                        Work Experience
-                                    </h2>
+                                    {renderSectionTitle("experience")}
                                 </div>
 
-                                <div className="space-y-1.5">
+                                <div className={`relative space-y-1.5 transition-[padding] duration-200 ${
+                                    activeDocumentSection === "experience" ? "pb-7" : "pb-0"
+                                }`}>
                                     {(resumeData.experience || []).map((exp, idx) => {
                                         const expBullets = Array.isArray(exp.bullets) ? exp.bullets : [];
                                         const showExperienceItemControls = isExperienceSectionActive || hoveredJobId === exp.id;
@@ -666,6 +699,14 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
 
                                                 {/* Bullet Points */}
                                                 <div className="space-y-0.5 ml-3 mt-1 relative z-20">
+                                                    {showExperienceItemControls && (
+                                                        <div
+                                                            className="resume-edit-control absolute right-full top-0 z-[80] mr-8 h-full w-28"
+                                                            aria-hidden="true"
+                                                            onMouseEnter={() => setActiveDocumentSection("experience")}
+                                                            onMouseLeave={() => setActiveDocumentSection((current) => current === "experience" ? null : current)}
+                                                        />
+                                                    )}
                                                     {expBullets.map((b, bulletIdx) => {
                                                         const bulletPath = `experience.${idx}.bullets.${bulletIdx}`;
                                                         const rewriteItem = pendingExperienceRewrite?.items.find((item) => item.bulletId === b.id);
@@ -686,6 +727,44 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                                 className="resume-diagnostic-bullet-row relative group/bullet flex items-start gap-2 rounded-sm border border-transparent"
                                                                 data-resume-diagnostic="bullet-row"
                                                             >
+                                                                <ExperienceBulletTags
+                                                                    bulletId={b.id}
+                                                                    tagIds={b.tagIds || []}
+                                                                    tags={resumeData.tagLibrary || []}
+                                                                    isEditing={showExperienceItemControls}
+                                                                    focusPath={`experience.${idx}.bullets.${bulletIdx}.tags`}
+                                                                    textStyle={documentTextStyle}
+                                                                    onSectionHoverChange={(isHovering) => {
+                                                                        setActiveDocumentSection((current) => {
+                                                                            if (isHovering) return "experience";
+                                                                            return current === "experience" ? null : current;
+                                                                        });
+                                                                    }}
+                                                                    onToggleTag={(tagId) => toggleBulletTag(exp.id, b.id, tagId)}
+                                                                    onCreateTag={(name) => createAndAssignBulletTag(exp.id, b.id, name)}
+                                                                    onDeleteTag={deleteBulletTag}
+                                                                    onPreviewTag={(tag) => {
+                                                                        if (!tag) {
+                                                                            setPreviewExperienceTag((current) => current?.bulletId === b.id ? null : current);
+                                                                            return;
+                                                                        }
+                                                                        const color = {
+                                                                            "tag-teal": "#0f766e",
+                                                                            "tag-orange": "#c2410c",
+                                                                            "tag-purple": "#7e22ce",
+                                                                            "tag-cyan": "#0e7490",
+                                                                            "tag-rose": "#be123c",
+                                                                            "tag-slate": "#475569",
+                                                                            "tag-fuchsia": "#a21caf",
+                                                                            "tag-violet": "#4f46e5",
+                                                                            "tag-pink": "#db2777",
+                                                                            "tag-zinc": "#52525b",
+                                                                            "tag-stone": "#57534e"
+                                                                        }[tag.colorToken] || "#475569";
+                                                                        setPreviewExperienceTag({ bulletId: b.id, color });
+                                                                    }}
+                                                                    onFocusChange={setFocusedField}
+                                                                />
                                                                 <span
                                                                     className="text-slate-600 select-none py-0.5 leading-[1.38]"
                                                                     style={{ ...documentTextStyle, display: "inline-block" }}
@@ -698,11 +777,26 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                                         label: "Bullet Point",
                                                                         value: b.text,
                                                                         placeholder: "Described high-impact action outcome...",
-                                                                        className: `${inputStyleClass} text-[#334155] leading-[1.38] resize-none py-0.5 ${bulletCurrentRewriteClass}`,
-                                                                        style: { ...documentTextStyle, whiteSpace: "pre-wrap", wordBreak: "break-word" },
+                                                                        className: `${inputStyleClass} text-[#334155] leading-[1.38] resize-none py-0.5 ${bulletCurrentRewriteClass} ${previewExperienceTag?.bulletId === b.id ? "resume-tag-preview-input" : ""}`,
+                                                                        style: {
+                                                                            ...documentTextStyle,
+                                                                            whiteSpace: "pre-wrap",
+                                                                            wordBreak: "break-word",
+                                                                            "--resume-tag-preview-color": previewExperienceTag?.bulletId === b.id ? previewExperienceTag.color : undefined
+                                                                        } as React.CSSProperties,
                                                                         isAutoResize: true,
                                                                         showTextStats: true,
                                                                         onChange: (val) => updateBulletText(exp.id, b.id, val),
+                                                                        onBlur: () => removeBulletIfEmpty(exp.id, b.id),
+                                                                        onKeyDown: (event) => {
+                                                                            if (event.key !== "Enter" || event.shiftKey) return;
+                                                                            event.preventDefault();
+                                                                            if (b.text.trim()) {
+                                                                                insertBulletAfter(exp.id, b.id);
+                                                                            } else {
+                                                                                event.currentTarget.blur();
+                                                                            }
+                                                                        },
                                                                         onDelete: () => removeBullet(exp.id, b.id),
                                                                         disableClear: true,
                                                                         disableDelete: true
@@ -757,15 +851,11 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                             >
                                                                 &bull;
                                                             </span>
-                                                            <input
+                                                            <InlineBulletComposer
                                                                 className={`${inputStyleClass} flex-1 border border-transparent bg-transparent py-0.5 leading-[1.38] text-slate-400 outline-none placeholder:text-slate-400 placeholder:italic`}
-                                                                value=""
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    if (val.trim()) {
-                                                                        addBulletWithText(exp.id, val);
-                                                                    }
-                                                                }}
+                                                                focusPath={`experience.${idx}.composer`}
+                                                                onCommit={(value) => addBulletWithText(exp.id, value)}
+                                                                onFocusChange={setFocusedField}
                                                                 placeholder="Type to add a new bullet..."
                                                                 style={documentTextStyle}
                                                             />
@@ -776,7 +866,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                             </React.Fragment>
                                         );
                                     })}
-                                    <div className={`resume-edit-control absolute left-0 bottom-0 h-0 w-full overflow-visible transition-opacity duration-300 ${
+                                    <div className={`resume-edit-control absolute bottom-0 left-0 h-6 w-full overflow-visible transition-opacity duration-300 ${
                                         activeDocumentSection === "experience"
                                             ? "opacity-100"
                                             : "opacity-0"
@@ -784,7 +874,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                         <button
                                             type="button"
                                             onClick={() => insertExperienceAt((resumeData.experience || []).length)}
-                                            className={`${experienceMarginAddClass} top-1/2 -translate-y-1/2`}
+                                            className={`${experienceMarginAddClass} top-0`}
                                             title="Add experience"
                                             aria-label="Add experience at the bottom of Work Experience"
                                         >
@@ -800,6 +890,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                             <DocumentSection
                                 id="education"
                                 activeSection={activeDocumentSection}
+                                focusedSection={focusedDocumentSection}
                                 setActiveSection={setActiveDocumentSection}
                                 className="group/education-sec"
                                 style={documentSectionGapStyle}
@@ -807,13 +898,14 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                 gapPreviewHeight={documentSectionGapPx}
                             >
                                 <div className="flex items-center gap-2">
-                                    <h2 className={sectionHeadingClass} style={sectionHeadingStyle}>
-                                        Education
-                                    </h2>
+                                    {renderSectionTitle("education")}
                                 </div>
 
-                                <div className="space-y-1.5">
+                                <div className={`relative space-y-1.5 transition-[padding] duration-200 ${
+                                    activeDocumentSection === "education" ? "pb-7" : "pb-0"
+                                }`}>
                                     {(resumeData.education || []).map((ed) => {
+                                        const isClearHovered = hoveredEducationClearId === ed.id;
                                         const isDeleteHovered = hoveredEducationDeleteId === ed.id;
                                         const showEducationFields = activeDocumentSection === "education";
                                         const educationMetaFields = [
@@ -869,27 +961,50 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                             <div
                                                 key={ed.id}
                                                 className={`relative group/edu rounded-sm border transition-all duration-200 ${activeDocumentSection === "education" ? "px-1.5 py-1" : "p-0"} ${
-                                                    isDeleteHovered
+                                                    isClearHovered
+                                                        ? "experience-clear-hover bg-slate-500/10"
+                                                        : isDeleteHovered
                                                         ? "experience-delete-hover bg-red-500/10"
                                                         : activeDocumentSection === "education"
                                                         ? "bg-white border-blue-800/40 hover:border-sky-400"
                                                         : "border-transparent hover:border-slate-200 hover:bg-slate-50"
                                                 }`}
-                                                style={isDeleteHovered ? { borderColor: "rgba(220, 38, 38, 0.72)" } : undefined}
+                                                style={
+                                                    isDeleteHovered
+                                                        ? { borderColor: "rgba(220, 38, 38, 0.72)" }
+                                                        : isClearHovered
+                                                        ? { borderColor: "rgba(100, 116, 139, 0.72)" }
+                                                        : undefined
+                                                }
                                             >
-                                                {/* Delete Edu (Icon only) */}
+                                                <button
+                                                    type="button"
+                                                    onMouseEnter={() => setHoveredEducationClearId(ed.id)}
+                                                    onMouseLeave={() => setHoveredEducationClearId(null)}
+                                                    onClick={() => clearEducation(ed.id)}
+                                                    className={`resume-edit-control absolute -right-9 top-0 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-slate-500 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-slate-600 active:scale-95 ${
+                                                        activeDocumentSection === "education" ? "opacity-100" : "pointer-events-none opacity-0"
+                                                    }`}
+                                                    title="Clear education"
+                                                    aria-label="Clear education"
+                                                >
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 9l-6 6M12 9l6 6" />
+                                                    </svg>
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onMouseEnter={() => setHoveredEducationDeleteId(ed.id)}
                                                     onMouseLeave={() => setHoveredEducationDeleteId(null)}
                                                     onClick={() => removeEducation(ed.id)}
-                                                    className={`edu-delete-button resume-edit-control absolute -right-9 top-1/2 -translate-y-1/2 z-[100] !inline-flex h-5 !h-5 w-5 !w-5 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-red-500 shadow-none transition-[background,border-color,color,opacity,transform] duration-150 hover:!bg-red-500/10 hover:!text-red-600 active:scale-95 cursor-pointer ${
-                                                        activeDocumentSection === "education" ? "opacity-70 hover:opacity-100" : "pointer-events-none opacity-0"
+                                                    className={`resume-edit-control absolute -right-9 top-7 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-rose-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-rose-600 active:scale-95 ${
+                                                        activeDocumentSection === "education" ? "opacity-100" : "pointer-events-none opacity-0"
                                                     }`}
                                                     title="Remove education"
                                                     aria-label="Remove education"
                                                 >
-                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.75">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5h6v2m-8 3 .7 9h8.6l.7-9" />
                                                     </svg>
                                                 </button>
@@ -957,6 +1072,16 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                                     isAutoResize: true,
                                                                     showTextStats: true,
                                                                     onChange: (val) => updateEducationDetailText(ed.id, detail.id, val),
+                                                                    onBlur: () => removeEducationDetailIfEmpty(ed.id, detail.id),
+                                                                    onKeyDown: (event) => {
+                                                                        if (event.key !== "Enter" || event.shiftKey) return;
+                                                                        event.preventDefault();
+                                                                        if (detail.text.trim()) {
+                                                                            insertEducationDetailAfter(ed.id, detail.id);
+                                                                        } else {
+                                                                            event.currentTarget.blur();
+                                                                        }
+                                                                    },
                                                                     disableClear: true,
                                                                     disableDelete: true
                                                                 })}
@@ -971,15 +1096,11 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                             >
                                                                 &bull;
                                                             </span>
-                                                            <input
+                                                            <InlineBulletComposer
                                                                 className={`${inputStyleClass} flex-1 border border-transparent bg-transparent py-0.5 leading-[1.38] text-slate-400 outline-none placeholder:text-slate-400 placeholder:italic`}
-                                                                value=""
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    if (val.trim()) {
-                                                                        addEducationDetailWithText(ed.id, val);
-                                                                    }
-                                                                }}
+                                                                focusPath={`education.${ed.id}.composer`}
+                                                                onCommit={(value) => addEducationDetailWithText(ed.id, value)}
+                                                                onFocusChange={setFocusedField}
                                                                 placeholder="Type to add concentration, honors, coursework..."
                                                                 style={documentTextStyle}
                                                             />
@@ -990,7 +1111,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                         </div>
                                         );
                                     })}
-                                    <div className={`resume-edit-control absolute left-0 bottom-0 h-0 w-full overflow-visible transition-opacity duration-300 ${
+                                    <div className={`resume-edit-control absolute bottom-0 left-0 h-6 w-full overflow-visible transition-opacity duration-300 ${
                                         activeDocumentSection === "education"
                                             ? "opacity-100"
                                             : "opacity-0"
@@ -998,7 +1119,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                         <button
                                             type="button"
                                             onClick={addEducation}
-                                            className={`resume-edit-control absolute -left-9 top-1/2 -translate-y-1/2 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-emerald-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-emerald-600 active:scale-95 cursor-pointer ${
+                                            className={`resume-edit-control absolute -left-9 top-0 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-emerald-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-emerald-600 active:scale-95 cursor-pointer ${
                                                 activeDocumentSection === "education" ? "opacity-100" : "pointer-events-none opacity-0"
                                             }`}
                                             title="Add education"
@@ -1016,6 +1137,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                             <DocumentSection
                                 id="skills"
                                 activeSection={activeDocumentSection}
+                                focusedSection={focusedDocumentSection}
                                 setActiveSection={setActiveDocumentSection}
                                 className="group/skills-sec"
                                 style={documentSectionGapStyle}
@@ -1023,11 +1145,11 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                 gapPreviewHeight={documentSectionGapPx}
                             >
                                 <div className="flex items-center gap-2">
-                                    <h2 className={sectionHeadingClass} style={sectionHeadingStyle}>
-                                        Skills
-                                    </h2>
+                                    {renderSectionTitle("skills")}
                                 </div>
-                                <div className="space-y-1">
+                                <div className={`relative space-y-1 transition-[padding] duration-200 ${
+                                    activeDocumentSection === "skills" ? "pb-7" : "pb-0"
+                                }`}>
                                     {(resumeData.skills || []).map((skill) => {
                                         const itemsPath = `skills.${skill.id}.items`;
                                         const isDeleteHovered = hoveredSkillDeleteId === skill.id;
@@ -1100,7 +1222,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                             </div>
                                         );
                                     })}
-                                    <div className={`resume-edit-control absolute left-0 bottom-0 h-0 w-full overflow-visible transition-opacity duration-300 ${
+                                    <div className={`resume-edit-control absolute bottom-0 left-0 h-6 w-full overflow-visible transition-opacity duration-300 ${
                                         activeDocumentSection === "skills"
                                             ? "opacity-100"
                                             : "opacity-0"
@@ -1108,7 +1230,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                         <button
                                             type="button"
                                             onClick={addSkillCategory}
-                                            className={`resume-edit-control absolute -left-9 top-1/2 -translate-y-1/2 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-emerald-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-emerald-600 active:scale-95 cursor-pointer ${
+                                            className={`resume-edit-control absolute -left-9 top-0 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-emerald-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-emerald-600 active:scale-95 cursor-pointer ${
                                                 activeDocumentSection === "skills" ? "opacity-100" : "pointer-events-none opacity-0"
                                             }`}
                                             title="Add skill category"

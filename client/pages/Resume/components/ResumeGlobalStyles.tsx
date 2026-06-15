@@ -349,6 +349,11 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
                 box-shadow: none !important;
                 color: black;
             }
+            .overlay-item-input.resume-tag-preview-input,
+            .overlay-meta-field[data-open="true"] .overlay-item-input.resume-tag-preview-input {
+                border-color: var(--resume-tag-preview-color) !important;
+                box-shadow: 0 0 0 1px var(--resume-tag-preview-color) !important;
+            }
             .resume-text-stat-pill {
                 background: white !important;
                 color: black !important;

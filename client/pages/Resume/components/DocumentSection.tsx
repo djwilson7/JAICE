@@ -4,6 +4,7 @@ import type { DocumentSectionId } from "../types";
 export type DocumentSectionProps = {
     id: DocumentSectionId;
     activeSection: DocumentSectionId | null;
+    focusedSection?: DocumentSectionId | null;
     setActiveSection: React.Dispatch<React.SetStateAction<DocumentSectionId | null>>;
     children: React.ReactNode;
     className?: string;
@@ -16,6 +17,7 @@ export type DocumentSectionProps = {
 export const DocumentSection: React.FC<DocumentSectionProps> = ({
     id,
     activeSection,
+    focusedSection = null,
     setActiveSection,
     children,
     className = "",
@@ -31,6 +33,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 className={`document-hover-section relative box-border w-full ${className}`}
                 data-section={id}
                 data-active={isActive}
+                data-focused={focusedSection === id}
                 title={title}
                 style={style}
             onMouseEnter={() => setActiveSection(id)}

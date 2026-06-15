@@ -63,6 +63,8 @@ export const useResumeDocumentViewModel = ({
         disableDelete?: boolean;
         containerClassName?: string;
         inputContainerClassName?: string;
+        onBlur?: () => void;
+        onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     }) => {
         return (
             <OverlayInput

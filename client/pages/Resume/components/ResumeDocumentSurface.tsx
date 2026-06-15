@@ -1,7 +1,7 @@
 import React from "react";
 import type { ResumeData, ResumeFormatting } from "../types";
 import { PAPER_SIZES, SECTION_GAP_PX } from "../formatting";
-import { hasText } from "../resumeData";
+import { getSectionTitle, hasText } from "../resumeData";
 import { RESUME_DOCUMENT_TYPOGRAPHY } from "../resumeTypography";
 
 type ResumeDocumentSurfaceProps = {
@@ -171,7 +171,7 @@ export const ResumeDocumentSurface: React.FC<ResumeDocumentSurfaceProps> = ({
 
             {resumeData.summary && (
                 <section style={sectionStyle}>
-                    <h2 style={headingStyle}>Professional Summary</h2>
+                    <h2 style={headingStyle}>{getSectionTitle(resumeData, "summary")}</h2>
                     <p style={{ ...bodyTextStyle, margin: 0, padding: fieldPadding, lineHeight: RESUME_DOCUMENT_TYPOGRAPHY.summaryLineHeight }}>{resumeData.summary}</p>
                 </section>
             )}
@@ -185,7 +185,7 @@ export const ResumeDocumentSurface: React.FC<ResumeDocumentSurfaceProps> = ({
                 (exp.bullets || []).some((bullet) => hasText(bullet.text))
             ) && (
                 <section style={sectionStyle}>
-                    <h2 style={headingStyle}>Work Experience</h2>
+                    <h2 style={headingStyle}>{getSectionTitle(resumeData, "experience")}</h2>
                     <div style={{ display: "flex", flexDirection: "column", gap: RESUME_DOCUMENT_TYPOGRAPHY.sectionItemGapPx }}>
                         {(resumeData.experience || [])
                             .filter((exp) =>
@@ -262,7 +262,7 @@ export const ResumeDocumentSurface: React.FC<ResumeDocumentSurfaceProps> = ({
                 (ed.details || []).some((detail) => hasText(detail.text))
             ) && (
                 <section style={sectionStyle}>
-                    <h2 style={headingStyle}>Education</h2>
+                    <h2 style={headingStyle}>{getSectionTitle(resumeData, "education")}</h2>
                     <div style={{ display: "flex", flexDirection: "column", gap: RESUME_DOCUMENT_TYPOGRAPHY.sectionItemGapPx }}>
                         {(resumeData.education || [])
                             .filter((ed) =>
@@ -331,7 +331,7 @@ export const ResumeDocumentSurface: React.FC<ResumeDocumentSurfaceProps> = ({
 
             {(resumeData.skills || []).some((skill) => hasText(skill.category) || (skill.items || []).some(hasText)) && (
                 <section>
-                    <h2 style={headingStyle}>Skills</h2>
+                    <h2 style={headingStyle}>{getSectionTitle(resumeData, "skills")}</h2>
                     <div style={{ display: "flex", flexDirection: "column", gap: RESUME_DOCUMENT_TYPOGRAPHY.skillItemGapPx }}>
                         {(resumeData.skills || [])
                             .filter((skill) => hasText(skill.category) || (skill.items || []).some(hasText))

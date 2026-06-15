@@ -143,4 +143,40 @@ describe('ResumePrintDocument', () => {
         expect(container.textContent).toContain('Only Category');
         expect(container.textContent).toContain('Item without category');
     });
+
+    it('renders custom section titles without rendering tag metadata', () => {
+        const { container } = render(
+            <ResumePrintDocument
+                resumeData={{
+                    fullName: 'John Doe',
+                    summary: 'Summary',
+                    sectionTitles: {
+                        summary: 'Profile',
+                        experience: 'Engineering Experience',
+                        education: 'Academic Background',
+                        skills: 'Technical Toolkit'
+                    },
+                    tagLibrary: [{
+                        id: 'tag-1',
+                        name: 'Backend',
+                        slug: 'backend',
+                        colorToken: 'tag-purple',
+                        createdAt: '2026-01-01T00:00:00.000Z'
+                    }],
+                    experience: [{
+                        id: 'exp-1',
+                        jobTitle: 'Engineer',
+                        bullets: [{ id: 'bullet-1', text: 'Built systems', tagIds: ['tag-1'] }]
+                    }],
+                    education: [],
+                    skills: []
+                }}
+                formatting={defaultFormatting}
+            />
+        );
+
+        expect(container.textContent).toContain('Profile');
+        expect(container.textContent).toContain('Engineering Experience');
+        expect(container.textContent).not.toContain('Backend');
+    });
 });

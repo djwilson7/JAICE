@@ -139,13 +139,17 @@ export function Resume() {
         setHoveredExperienceClearId,
         hoveredExperienceDeleteId,
         setHoveredExperienceDeleteId,
+        hoveredEducationClearId,
+        setHoveredEducationClearId,
         hoveredEducationDeleteId,
         setHoveredEducationDeleteId,
         hoveredSkillDeleteId,
         setHoveredSkillDeleteId,
         activeDocumentSection,
+        focusedDocumentSection,
         setActiveDocumentSection,
         updateField,
+        updateSectionTitle,
         addCustomContactField,
         updateCustomContactField,
         removeCustomContactField,
@@ -155,13 +159,21 @@ export function Resume() {
         removeExperience,
         clearExperience,
         addBulletWithText,
+        insertBulletAfter,
         updateBulletText,
+        removeBulletIfEmpty,
         removeBullet,
+        toggleBulletTag,
+        createAndAssignBulletTag,
+        deleteBulletTag,
         updateEducationField,
         addEducation,
         removeEducation,
+        clearEducation,
         addEducationDetailWithText,
+        insertEducationDetailAfter,
         updateEducationDetailText,
+        removeEducationDetailIfEmpty,
         addSkillCategory,
         updateSkillCategoryName,
         updateSkillCategoryItems,
@@ -222,6 +234,8 @@ export function Resume() {
         loadingSave,
         isDirty,
         setIsDirty,
+        autoSaveEnabled,
+        setAutoSaveEnabled,
         searchQuery,
         setSearchQuery,
         resumeSearchFocusSignal,
@@ -414,9 +428,10 @@ export function Resume() {
                 setResumeName={setResumeName}
                 isDirty={isDirty}
                 setIsDirty={setIsDirty}
-                activeResumeId={activeResumeId}
                 isDraft={isDraft}
                 loadingSave={loadingSave}
+                autoSaveEnabled={autoSaveEnabled}
+                setAutoSaveEnabled={setAutoSaveEnabled}
                 handleSaveResume={handleSaveResume}
                 isPdfPreviewOpen={isPdfPreviewOpen}
                 isGeneratingPdfPreview={isGeneratingPdfPreview}
@@ -501,7 +516,9 @@ export function Resume() {
                 experienceMarginDeleteClass={experienceMarginDeleteClass}
                 summaryMarginImproveClass={summaryMarginImproveClass}
                 activeDocumentSection={activeDocumentSection}
+                focusedDocumentSection={focusedDocumentSection}
                 setActiveDocumentSection={setActiveDocumentSection}
+                setFocusedField={setFocusedField}
                 hoveredNameSection={hoveredNameSection}
                 setHoveredNameSection={setHoveredNameSection}
                 focusedNameSection={focusedNameSection}
@@ -526,6 +543,8 @@ export function Resume() {
                 setHoveredExperienceClearId={setHoveredExperienceClearId}
                 hoveredExperienceDeleteId={hoveredExperienceDeleteId}
                 setHoveredExperienceDeleteId={setHoveredExperienceDeleteId}
+                hoveredEducationClearId={hoveredEducationClearId}
+                setHoveredEducationClearId={setHoveredEducationClearId}
                 hoveredEducationDeleteId={hoveredEducationDeleteId}
                 setHoveredEducationDeleteId={setHoveredEducationDeleteId}
                 hoveredSkillDeleteId={hoveredSkillDeleteId}
@@ -546,6 +565,7 @@ export function Resume() {
                 isFieldChanged={isFieldChanged}
                 getSuggestionReviewClass={getSuggestionReviewClass}
                 updateField={updateField}
+                updateSectionTitle={updateSectionTitle}
                 addCustomContactField={addCustomContactField}
                 updateCustomContactField={updateCustomContactField}
                 removeCustomContactField={removeCustomContactField}
@@ -555,13 +575,21 @@ export function Resume() {
                 removeExperience={removeExperience}
                 clearExperience={clearExperience}
                 addBulletWithText={addBulletWithText}
+                insertBulletAfter={insertBulletAfter}
                 updateBulletText={updateBulletText}
+                removeBulletIfEmpty={removeBulletIfEmpty}
                 removeBullet={removeBullet}
+                toggleBulletTag={toggleBulletTag}
+                createAndAssignBulletTag={createAndAssignBulletTag}
+                deleteBulletTag={deleteBulletTag}
                 updateEducationField={updateEducationField}
                 addEducation={addEducation}
                 removeEducation={removeEducation}
+                clearEducation={clearEducation}
                 addEducationDetailWithText={addEducationDetailWithText}
+                insertEducationDetailAfter={insertEducationDetailAfter}
                 updateEducationDetailText={updateEducationDetailText}
+                removeEducationDetailIfEmpty={removeEducationDetailIfEmpty}
                 addSkillCategory={addSkillCategory}
                 updateSkillCategoryName={updateSkillCategoryName}
                 updateSkillCategoryItems={updateSkillCategoryItems}

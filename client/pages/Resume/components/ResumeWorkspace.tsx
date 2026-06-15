@@ -29,6 +29,8 @@ type OverlayInputParams = {
     disableDelete?: boolean;
     containerClassName?: string;
     inputContainerClassName?: string;
+    onBlur?: () => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
 };
 
 type RewriteActionButtonParams = {
@@ -93,7 +95,9 @@ type ResumeWorkspaceProps = {
     experienceMarginDeleteClass: string;
     summaryMarginImproveClass: string;
     activeDocumentSection: DocumentSectionId | null;
+    focusedDocumentSection: DocumentSectionId | null;
     setActiveDocumentSection: React.Dispatch<React.SetStateAction<DocumentSectionId | null>>;
+    setFocusedField: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredNameSection: boolean; setHoveredNameSection: React.Dispatch<React.SetStateAction<boolean>>;
     focusedNameSection: boolean; setFocusedNameSection: React.Dispatch<React.SetStateAction<boolean>>;
     hoveredContactField: string | null; setHoveredContactField: React.Dispatch<React.SetStateAction<string | null>>;
@@ -106,6 +110,7 @@ type ResumeWorkspaceProps = {
     hoveredExperienceImproveId: string | null; setHoveredExperienceImproveId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredExperienceClearId: string | null; setHoveredExperienceClearId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredExperienceDeleteId: string | null; setHoveredExperienceDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
+    hoveredEducationClearId: string | null; setHoveredEducationClearId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredEducationDeleteId: string | null; setHoveredEducationDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredSkillDeleteId: string | null; setHoveredSkillDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
     rewriteActionHover: ResumeRewriteActionHover | null; setRewriteActionHover: React.Dispatch<React.SetStateAction<ResumeRewriteActionHover | null>>;
@@ -118,9 +123,10 @@ type ResumeWorkspaceProps = {
     isFieldChanged: (path: string) => { changed: boolean; reason?: string };
     getSuggestionReviewClass: (action?: "accept" | "reject") => string;
     updateField: (field: keyof ResumeData, value: string) => void;
+    updateSectionTitle: (section: import("../types").ResumeSectionKey, value: string) => void;
     addCustomContactField: () => void; updateCustomContactField: (index: number, field: "label" | "value", val: string) => void; removeCustomContactField: (index: number) => void; removeStandardContactField: (field: ContactFieldKey) => void;
-    updateExperienceField: (id: string, field: keyof ExperienceItem, value: string) => void; insertExperienceAt: (index: number) => void; removeExperience: (id: string) => void; clearExperience: (id: string) => void; addBulletWithText: (expId: string, text: string) => void; updateBulletText: (expId: string, bulletId: string, value: string) => void; removeBullet: (expId: string, bulletId: string) => void;
-    updateEducationField: (id: string, field: keyof EducationItem, value: string) => void; addEducation: () => void; removeEducation: (id: string) => void; addEducationDetailWithText: (educationId: string, text: string) => void; updateEducationDetailText: (educationId: string, detailId: string, value: string) => void;
+    updateExperienceField: (id: string, field: keyof ExperienceItem, value: string) => void; insertExperienceAt: (index: number) => void; removeExperience: (id: string) => void; clearExperience: (id: string) => void; addBulletWithText: (expId: string, text: string) => void; insertBulletAfter: (expId: string, bulletId: string) => void; updateBulletText: (expId: string, bulletId: string, value: string) => void; removeBulletIfEmpty: (expId: string, bulletId: string) => void; removeBullet: (expId: string, bulletId: string) => void; toggleBulletTag: (expId: string, bulletId: string, tagId: string) => void; createAndAssignBulletTag: (expId: string, bulletId: string, name: string) => void; deleteBulletTag: (tagId: string) => void;
+    updateEducationField: (id: string, field: keyof EducationItem, value: string) => void; addEducation: () => void; removeEducation: (id: string) => void; clearEducation: (id: string) => void; addEducationDetailWithText: (educationId: string, text: string) => void; insertEducationDetailAfter: (educationId: string, detailId: string) => void; updateEducationDetailText: (educationId: string, detailId: string, value: string) => void; removeEducationDetailIfEmpty: (educationId: string, detailId: string) => void;
     addSkillCategory: () => void; updateSkillCategoryName: (id: string, value: string) => void; updateSkillCategoryItems: (id: string, value: string) => void; removeSkillCategory: (id: string) => void;
     handleAnalyzeSummary: () => void; handleImproveSummary: () => void | Promise<void>; handleImproveExperience: (experience: ExperienceItem) => void | Promise<void>; acceptSummaryRewriteSuggestion: () => void; rejectSummaryRewriteSuggestion: () => void; acceptExperienceRewriteSuggestion: (experienceId: string, bulletId: string) => void; rejectExperienceRewriteSuggestion: (experienceId: string, bulletId: string) => void;
     setResumeData: React.Dispatch<React.SetStateAction<ResumeData>>; setChangeMetadata: React.Dispatch<React.SetStateAction<{ path: string; before: string; after: string; reason: string }[]>>;
@@ -136,8 +142,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         isLightMode, error, successMessage, setError, setSuccessMessage, headerActionButtonClass, headerActionIconClass,
         canvasViewportRef, resumeDocumentContentRef, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, bottomControlsViewportStyle, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, resumePageStride, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
         resumeData, headerContactRows, showHeaderContactEditors, changeMetadata, originalResumeDataBeforeDraft, summaryRewriteSuggestion, experienceRewriteSuggestions, titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, experienceMarginClearClass, experienceMarginDeleteClass, summaryMarginImproveClass,
-        activeDocumentSection, setActiveDocumentSection, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId,
-        renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, isFieldChanged, getSuggestionReviewClass, updateField, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, updateBulletText, removeBullet, updateEducationField, addEducation, removeEducation, addEducationDetailWithText, updateEducationDetailText, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleAnalyzeSummary, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setResumeData, setChangeMetadata,
+        activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId,
+        renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, isFieldChanged, getSuggestionReviewClass, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleAnalyzeSummary, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setResumeData, setChangeMetadata,
         isPageStyleShelfOpen, isPageStyleShelfCompact, shelfSurfaceStyle, shelfControlLabelClass, shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass, shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass, pageSize, setPageSize, setTitleFontSize, headerFontSize, setHeaderFontSize, setBodyFontSize, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible, setIsPageFormatPreviewVisible, setIsSectionGapPreviewVisible, toolbarSurfaceStyle, documentToolButtonClass, handleTogglePageStyleShelf, handleFitZoom, zoomMode, manualZoom, setZoomMode, setManualZoom, zoomPercent,
         isPdfPreviewOpen, pdfPreviewUrl, resumeName, isGeneratingPdfPreview, closePdfPreview, loadingList
     } = props;
@@ -328,7 +334,9 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                 }}
                                 interaction={{
                                     activeDocumentSection,
+                                    focusedDocumentSection,
                                     setActiveDocumentSection,
+                                    setFocusedField,
                                     hoveredNameSection,
                                     setHoveredNameSection,
                                     focusedNameSection,
@@ -353,6 +361,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     setHoveredExperienceClearId,
                                     hoveredExperienceDeleteId,
                                     setHoveredExperienceDeleteId,
+                                    hoveredEducationClearId,
+                                    setHoveredEducationClearId,
                                     hoveredEducationDeleteId,
                                     setHoveredEducationDeleteId,
                                     hoveredSkillDeleteId,
@@ -375,6 +385,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     isFieldChanged,
                                     getSuggestionReviewClass,
                                     updateField,
+                                    updateSectionTitle,
                                     addCustomContactField,
                                     updateCustomContactField,
                                     removeCustomContactField,
@@ -384,13 +395,21 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     removeExperience,
                                     clearExperience,
                                     addBulletWithText,
+                                    insertBulletAfter,
                                     updateBulletText,
+                                    removeBulletIfEmpty,
                                     removeBullet,
+                                    toggleBulletTag,
+                                    createAndAssignBulletTag,
+                                    deleteBulletTag,
                                     updateEducationField,
                                     addEducation,
                                     removeEducation,
+                                    clearEducation,
                                     addEducationDetailWithText,
+                                    insertEducationDetailAfter,
                                     updateEducationDetailText,
+                                    removeEducationDetailIfEmpty,
                                     addSkillCategory,
                                     updateSkillCategoryName,
                                     updateSkillCategoryItems,

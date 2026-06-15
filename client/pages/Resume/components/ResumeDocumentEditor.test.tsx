@@ -21,7 +21,11 @@ vi.mock('framer-motion', () => {
 });
 
 vi.mock('./DocumentSection', () => ({
-    DocumentSection: ({ children, ...props }: any) => <div data-testid="document-section" {...props}>{children}</div>
+    DocumentSection: ({ children, id, className }: any) => (
+        <div data-testid="document-section" data-section-id={id} className={className}>
+            {children}
+        </div>
+    )
 }));
 vi.mock('./AutoResizeTextarea', () => ({
     AutoResizeTextarea: (props: any) => <textarea data-testid="autoresize-textarea" {...props} />
@@ -41,7 +45,9 @@ describe('ResumeDocumentEditor', () => {
                     <input 
                         data-testid={`overlay-input-${props.path}`} 
                         value={props.value || ''} 
-                        onChange={(e) => props.onChange(e.target.value)} 
+                        onChange={(e) => props.onChange(e.target.value)}
+                        onBlur={props.onBlur}
+                        onKeyDown={props.onKeyDown}
                     />
                     {props.onDelete && (
                         <button type="button" aria-label="Delete bullet" onClick={props.onDelete}>
@@ -56,6 +62,7 @@ describe('ResumeDocumentEditor', () => {
             isFieldChanged: vi.fn().mockReturnValue({ changed: false }),
             getSuggestionReviewClass: vi.fn().mockReturnValue(''),
             updateField: vi.fn(),
+            updateSectionTitle: vi.fn(),
             addCustomContactField: vi.fn(),
             updateCustomContactField: vi.fn(),
             removeCustomContactField: vi.fn(),
@@ -65,13 +72,19 @@ describe('ResumeDocumentEditor', () => {
             removeExperience: vi.fn(),
             clearExperience: vi.fn(),
             addBulletWithText: vi.fn(),
+            insertBulletAfter: vi.fn(),
             updateBulletText: vi.fn(),
+            removeBulletIfEmpty: vi.fn(),
             removeBullet: vi.fn(),
+            toggleBulletTag: vi.fn(),
+            createAndAssignBulletTag: vi.fn(),
             updateEducationField: vi.fn(),
             addEducation: vi.fn(),
             removeEducation: vi.fn(),
             addEducationDetailWithText: vi.fn(),
+            insertEducationDetailAfter: vi.fn(),
             updateEducationDetailText: vi.fn(),
+            removeEducationDetailIfEmpty: vi.fn(),
             addSkillCategory: vi.fn(),
             updateSkillCategoryName: vi.fn(),
             updateSkillCategoryItems: vi.fn(),
@@ -90,7 +103,9 @@ describe('ResumeDocumentEditor', () => {
 
         interaction = {
             activeDocumentSection: null,
+            focusedDocumentSection: null,
             setActiveDocumentSection: vi.fn(),
+            setFocusedField: vi.fn(),
             hoveredNameSection: false,
             setHoveredNameSection: vi.fn(),
             focusedNameSection: false,
@@ -365,6 +380,8 @@ describe('ResumeDocumentEditor', () => {
 
         const addBulletInput = screen.getAllByPlaceholderText('Type to add a new bullet...')[0];
         fireEvent.change(addBulletInput, { target: { value: 'New bullet' } });
+        expect(handlers.addBulletWithText).not.toHaveBeenCalled();
+        fireEvent.keyDown(addBulletInput, { key: 'Enter' });
         expect(handlers.addBulletWithText).toHaveBeenCalledWith('exp1', 'New bullet');
 
         const jobDiv = container.querySelector('.group\\/job') as HTMLElement;
@@ -424,6 +441,8 @@ describe('ResumeDocumentEditor', () => {
         // Test education add detail input
         const eduDetailInput = screen.getAllByPlaceholderText('Type to add concentration, honors, coursework...')[0];
         fireEvent.change(eduDetailInput, { target: { value: 'New Detail' } });
+        expect(handlers.addEducationDetailWithText).not.toHaveBeenCalled();
+        fireEvent.keyDown(eduDetailInput, { key: 'Enter' });
         expect(handlers.addEducationDetailWithText).toHaveBeenCalledWith('edu1', 'New Detail');
         
         // Don't call add with empty text
@@ -559,8 +578,6 @@ describe('ResumeDocumentEditor', () => {
         const props = { ...defaultProps, interaction: { ...defaultProps.interaction, hoveredContactField: 'email', focusedContactField: 'email' } };
         const { container } = render(<ResumeDocumentEditor {...props} />);
 
-        screen.debug(container, 10000);
-
         // Now the remove button should be rendered
         const delBtns = container.querySelectorAll('button[title="Delete"]');
         const delBtn = delBtns[0] as HTMLButtonElement;
@@ -598,8 +615,6 @@ describe('ResumeDocumentEditor', () => {
             interaction: { ...defaultProps.interaction, hoveredSummary: true, focusedSummary: true, isExperienceSectionActive: true, hoveredJobId: 'exp1' } 
         };
         const { container } = render(<ResumeDocumentEditor {...props} />);
-
-        screen.debug(container, 10000);
 
         // Test summary functional updates
         const summaryDiv = container.querySelector('div[class*="summary-meta-field"]')!;

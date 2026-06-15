@@ -1,4 +1,5 @@
 import React from "react";
+import { ResumeAutoSaveIcon } from "./ResumeAutoSaveIcon";
 
 type ResumeHeaderProps = {
     isLightMode: boolean;
@@ -15,9 +16,10 @@ type ResumeHeaderProps = {
     setResumeName: React.Dispatch<React.SetStateAction<string>>;
     isDirty: boolean;
     setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
-    activeResumeId: string | null;
     isDraft: boolean;
     loadingSave: boolean;
+    autoSaveEnabled: boolean;
+    setAutoSaveEnabled: React.Dispatch<React.SetStateAction<boolean>>;
     isPdfPreviewOpen: boolean;
     isGeneratingPdfPreview: boolean;
     handleSaveResume: () => void | Promise<void>;
@@ -28,8 +30,8 @@ type ResumeHeaderProps = {
 export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
     isLightMode, headerShellStyle, headerActionButtonClass, headerActionIconClass,
     isLeftRailCollapsed, setIsLeftRailCollapsed, isRightRailCollapsed, setIsRightRailCollapsed,
-    isMaster, setIsMaster, resumeName, setResumeName, isDirty, setIsDirty, activeResumeId, isDraft,
-    loadingSave, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview
+    isMaster, setIsMaster, resumeName, setResumeName, isDirty, setIsDirty, isDraft,
+    loadingSave, autoSaveEnabled, setAutoSaveEnabled, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview
 }) => (
             <header 
                 className="absolute inset-x-0 top-0 z-40 mx-3 mt-3 flex flex-col items-stretch gap-1 rounded-md border px-4 py-2 print:hidden"
@@ -96,7 +98,11 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                     </div>
 
                     <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-2 select-none">
-                        {(isDirty || isDraft) ? (
+                        {loadingSave ? (
+                            <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-600" : "text-slate-400"} whitespace-nowrap font-medium tracking-wide`}>
+                                Saving...
+                            </span>
+                        ) : (isDirty || isDraft) ? (
                             <>
                                 <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_7px_rgba(251,191,36,0.55)]" />
                                 <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-600" : "text-slate-400"} whitespace-nowrap font-medium tracking-wide`}>
@@ -109,6 +115,20 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setAutoSaveEnabled((enabled) => !enabled)}
+                            className={`${headerActionButtonClass} ${
+                                autoSaveEnabled
+                                    ? "!border-violet-500/35 !bg-violet-500/12 !text-violet-500"
+                                    : ""
+                            }`}
+                            title={autoSaveEnabled ? "Disable auto-save" : "Enable auto-save"}
+                            aria-label={autoSaveEnabled ? "Disable auto-save" : "Enable auto-save"}
+                            aria-pressed={autoSaveEnabled}
+                        >
+                            <ResumeAutoSaveIcon className="h-5 w-5" />
+                        </button>
                         <button
                             onClick={() => {
                                 setIsMaster(!isMaster);
@@ -130,8 +150,8 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
 
                         <button
                             onClick={handleSaveResume}
-                            disabled={loadingSave || (!isDirty && activeResumeId !== null)}
-                            className={`${headerActionButtonClass} disabled:!cursor-default disabled:!opacity-100`}
+                            disabled={loadingSave || !isDirty}
+                            className={`${headerActionButtonClass} disabled:!cursor-default disabled:!opacity-30`}
                             title="Save current resume changes"
                             aria-label="Save current resume changes"
                         >

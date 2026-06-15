@@ -168,6 +168,7 @@ const estimateLineCount = (element: Element | null) => {
 
 const findExperienceSection = (element: Element) => {
     return Array.from(element.querySelectorAll("section")).find((section) =>
+        section.getAttribute("data-section") === "experience" ||
         section.querySelector("h2")?.textContent?.trim() === "Work Experience"
     ) ?? null;
 };

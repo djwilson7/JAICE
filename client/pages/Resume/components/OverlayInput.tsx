@@ -22,6 +22,8 @@ export type OverlayInputProps = {
     disableDelete?: boolean;
     containerClassName?: string;
     inputContainerClassName?: string;
+    onBlur?: () => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     hoveredField: string | null;
     setHoveredField: React.Dispatch<React.SetStateAction<string | null>>;
     focusedField: string | null;
@@ -46,6 +48,8 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     disableDelete = false,
     containerClassName = "",
     inputContainerClassName = "",
+    onBlur,
+    onKeyDown,
     hoveredField,
     setHoveredField,
     focusedField,
@@ -139,7 +143,11 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
                     value={value}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value)}
                     onFocus={() => setFocusedField(path)}
-                    onBlur={() => setFocusedField(current => current === path ? null : current)}
+                    onBlur={() => {
+                        onBlur?.();
+                        setFocusedField(current => current === path ? null : current);
+                    }}
+                    onKeyDown={onKeyDown}
                     placeholder={placeholder}
                     style={{
                         ...style,

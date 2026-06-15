@@ -21,6 +21,8 @@ describe('ResumeHeader', () => {
         activeResumeId: '1',
         isDraft: false,
         loadingSave: false,
+        autoSaveEnabled: true,
+        setAutoSaveEnabled: vi.fn(),
         isPdfPreviewOpen: false,
         isGeneratingPdfPreview: false,
         handleSaveResume: vi.fn(),
@@ -70,6 +72,9 @@ describe('ResumeHeader', () => {
         const pdfOpenBtn = screen.getByLabelText('Preview PDF before download');
         fireEvent.click(pdfOpenBtn);
         expect(defaultProps.openPdfPreview).toHaveBeenCalled();
+
+        fireEvent.click(screen.getByLabelText('Disable auto-save'));
+        expect(defaultProps.setAutoSaveEnabled).toHaveBeenCalled();
     });
 
     it('renders with collapsed rails and master mode', () => {
