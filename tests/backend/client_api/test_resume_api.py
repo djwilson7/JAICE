@@ -177,6 +177,47 @@ def test_resume_models_and_render_helpers(monkeypatch, tmp_path):
     assert "State University" in document
     assert "Python, TypeScript, SQL" in document
 
+    tagged_payload = sample_resume_data(
+        sectionTitles={
+            "summary": "Profile",
+            "experience": "Selected Work",
+            "education": "Training",
+            "skills": "Toolkit",
+        },
+        tagLibrary=[
+            {
+                "id": "tag-1",
+                "name": "Backend",
+                "slug": "backend",
+                "colorToken": "slate",
+                "createdAt": "2026-06-15T12:00:00Z",
+            }
+        ],
+        experience=[
+            {
+                "id": "exp-1",
+                "jobTitle": "Software Engineer",
+                "company": "Acme",
+                "bullets": [
+                    {
+                        "id": "b1",
+                        "text": "Built APIs.",
+                        "tagIds": ["tag-1"],
+                    }
+                ],
+            }
+        ],
+    )
+    tagged_dump = tagged_payload.model_dump()
+    assert tagged_dump["sectionTitles"]["experience"] == "Selected Work"
+    assert tagged_dump["experience"][0]["bullets"][0]["tagIds"] == ["tag-1"]
+    assert tagged_dump["tagLibrary"][0]["name"] == "Backend"
+
+    tagged_document, *_ = resume._render_resume_pdf_html(tagged_payload)
+    assert "Selected Work" in tagged_document
+    assert "Work Experience" not in tagged_document
+    assert "Backend" not in tagged_document
+
     empty_doc, *_ = resume._render_resume_pdf_html(
         resume.ResumeData(fullName="", summary="", experience=[], education=[], skills=[])
     )

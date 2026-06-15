@@ -89,6 +89,23 @@ def _resume_pdf_debug_host_path(filename: str) -> Optional[str]:
 class ResumeBullet(BaseModel):
     id: Optional[str] = None
     text: str
+    tagIds: List[str] = []
+
+
+class ResumeTag(BaseModel):
+    id: str
+    name: str
+    slug: str
+    colorToken: str
+    createdAt: str
+    archivedAt: Optional[str] = None
+
+
+class ResumeSectionTitles(BaseModel):
+    summary: str = "Professional Summary"
+    experience: str = "Work Experience"
+    education: str = "Education"
+    skills: str = "Skills"
 
 
 class ExperienceItem(BaseModel):
@@ -152,6 +169,8 @@ class ResumeData(BaseModel):
     customContact: List[CustomContactField] = []
     hiddenContactFields: List[str] = []
     formatting: ResumeFormatting = ResumeFormatting()
+    sectionTitles: ResumeSectionTitles = ResumeSectionTitles()
+    tagLibrary: List[ResumeTag] = []
 
     @field_validator("skills", mode="before")
     @classmethod
@@ -409,6 +428,7 @@ def _render_resume_pdf_html(
     title_font = float(formatting.titleFontSize or 24)
     header_font = float(formatting.headerFontSize or 16)
     body_font = float(formatting.bodyFontSize or 12)
+    section_titles = payload.sectionTitles or ResumeSectionTitles()
 
     sections = []
 
@@ -423,7 +443,7 @@ def _render_resume_pdf_html(
     if payload.summary and payload.summary.strip():
         sections.append(f"""
             <section class="resume-section">
-                <h2>Professional Summary</h2>
+                <h2>{_safe_text(section_titles.summary) or "Professional Summary"}</h2>
                 <p class="body-text">{_safe_text(payload.summary)}</p>
             </section>
         """)
@@ -459,7 +479,7 @@ def _render_resume_pdf_html(
         if experience_items:
             sections.append(f"""
                 <section class="resume-section experience-section">
-                    <h2>Work Experience</h2>
+                    <h2>{_safe_text(section_titles.experience) or "Work Experience"}</h2>
                     <div class="item-stack">{''.join(experience_items)}</div>
                 </section>
             """)
@@ -494,7 +514,7 @@ def _render_resume_pdf_html(
         if education_items:
             sections.append(f"""
                 <section class="resume-section">
-                    <h2>Education</h2>
+                    <h2>{_safe_text(section_titles.education) or "Education"}</h2>
                     <div class="item-stack education-stack">{''.join(education_items)}</div>
                 </section>
             """)
@@ -515,7 +535,7 @@ def _render_resume_pdf_html(
     if skill_rows:
         sections.append(f"""
             <section class="resume-section final-section">
-                <h2>Skills</h2>
+                <h2>{_safe_text(section_titles.skills) or "Skills"}</h2>
                 <div class="skill-stack">{''.join(skill_rows)}</div>
             </section>
         """)
