@@ -357,7 +357,7 @@
   right: 100%;
   bottom: -0.25rem;
   z-index: 0;
-  width: calc(var(--resume-page-margin) + 8rem);
+  width: calc(var(--resume-page-margin) + 6.5rem);
   background: transparent;
 }
 
@@ -477,6 +477,7 @@
 }
 
 .resume-editor-bullet-row {
+  --resume-bullet-first-line-center: calc(1px + 0.125rem + 0.69em);
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -488,8 +489,10 @@
 .resume-editor-bullet-marker {
   display: inline-block;
   padding-block: 0.125rem;
+  border: 1px solid transparent;
   color: #475569;
   line-height: 1.38;
+  transform: translateY(-1px);
   user-select: none;
 }
 
@@ -874,6 +877,30 @@ textarea.resume-rewrite-current-reject-hover,
   background-clip: padding-box;
 }
 
+.resume-experience-tag-control {
+  top: calc(var(--resume-bullet-first-line-center) - 2px);
+  right: calc(100% + var(--resume-page-margin) + 1rem + 4px);
+  width: 120px;
+  transform: translateY(-50%);
+}
+
+.resume-experience-tag-control::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: calc(var(--resume-page-margin) + 1rem + 4px);
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--resume-tag-connector-color) 0%,
+    var(--resume-tag-connector-color) 72%,
+    color-mix(in srgb, var(--resume-tag-connector-color) 42%, transparent) 100%
+  );
+  transform: translateY(-50%);
+}
+
 .resume-tag-trigger,
 .resume-tag-trigger:hover,
 .resume-tag-trigger:focus,
@@ -897,8 +924,7 @@ textarea.resume-rewrite-current-reject-hover,
 .resume-tag-label {
   position: relative;
   display: block;
-  width: 100%;
-  min-width: 0;
+  width: 120px;
   overflow: hidden;
   padding: 0.125rem 0.25rem;
   border: 1px solid;

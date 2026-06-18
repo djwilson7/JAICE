@@ -199,8 +199,13 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
     return (
         <div
             ref={rootRef}
-            className="resume-edit-control absolute right-full top-0 z-[95] mr-8 flex min-h-5 w-28 justify-start"
+            className="resume-edit-control resume-experience-tag-control absolute top-0 z-[95] flex min-h-5 justify-start"
             data-bullet-tags={bulletId}
+            style={{
+                "--resume-tag-connector-color": displayedTags.length > 0
+                    ? getTagColorStyle(displayedTags[0].colorToken).color
+                    : "#64748b"
+            } as React.CSSProperties}
             onMouseEnter={() => onSectionHoverChange(true)}
             onMouseLeave={() => onSectionHoverChange(false)}
         >
