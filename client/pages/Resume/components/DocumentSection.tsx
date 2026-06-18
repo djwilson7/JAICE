@@ -12,6 +12,8 @@ export type DocumentSectionProps = {
     showGapPreview?: boolean;
     gapPreviewHeight?: number;
     title?: string;
+    onMouseMove?: React.MouseEventHandler<HTMLElement>;
+    onMouseLeave?: React.MouseEventHandler<HTMLElement>;
 };
 
 export const DocumentSection: React.FC<DocumentSectionProps> = ({
@@ -24,7 +26,9 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     style,
     showGapPreview = false,
     gapPreviewHeight = 0,
-    title
+    title,
+    onMouseMove,
+    onMouseLeave
 }) => {
     const isActive = activeSection === id;
 
@@ -35,9 +39,13 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 data-active={isActive}
                 data-focused={focusedSection === id}
                 title={title}
-                style={style}
+            style={style}
+            onMouseMove={onMouseMove}
             onMouseEnter={() => setActiveSection(id)}
-            onMouseLeave={() => setActiveSection((current) => current === id ? null : current)}
+            onMouseLeave={(event) => {
+                onMouseLeave?.(event);
+                setActiveSection((current) => current === id ? null : current);
+            }}
         >
             <div className="document-hover-section-hit-pad document-hover-section-hit-pad-top" aria-hidden="true" />
             <div className="document-hover-section-hit-pad document-hover-section-hit-pad-bottom" aria-hidden="true" />
