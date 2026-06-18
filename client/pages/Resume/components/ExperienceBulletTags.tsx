@@ -1,19 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { normalizeTagSlug } from "../resumeData";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { getTagColorStyle, normalizeTagSlug } from "../resumeData";
 import type { ResumeTag } from "../types";
 
-const TAG_COLORS: Record<string, { color: string; background: string }> = {
-    "tag-teal": { color: "#0f766e", background: "#ccfbf1" },
-    "tag-orange": { color: "#c2410c", background: "#ffedd5" },
-    "tag-purple": { color: "#7e22ce", background: "#f3e8ff" },
-    "tag-cyan": { color: "#0e7490", background: "#cffafe" },
-    "tag-rose": { color: "#be123c", background: "#ffe4e6" },
-    "tag-slate": { color: "#475569", background: "#e2e8f0" },
-    "tag-fuchsia": { color: "#a21caf", background: "#fae8ff" },
-    "tag-violet": { color: "#4f46e5", background: "#e0e7ff" },
-    "tag-pink": { color: "#db2777", background: "#fce7f3" },
-    "tag-zinc": { color: "#52525b", background: "#e4e4e7" },
-    "tag-stone": { color: "#57534e", background: "#e7e5e4" }
+const TAG_MENU_WIDTH_PX = 208;
+const TAG_MENU_GAP_PX = 8;
+const TAG_MENU_VIEWPORT_MARGIN_PX = 8;
+const TAG_MENU_MIN_HEIGHT_PX = 224;
+
+type TagMenuPosition = {
+    left: number;
+    top: number;
+    maxHeight: number;
+    placement: "viewport-left" | "viewport-right";
 };
 
 const editDistance = (left: string, right: string): number => {
@@ -77,10 +76,12 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
     onFocusChange
 }) => {
     const rootRef = useRef<HTMLDivElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [previewTag, setPreviewTag] = useState<ResumeTag | null>(null);
+    const [menuPosition, setMenuPosition] = useState<TagMenuPosition | null>(null);
     const activeTags = tags.filter((tag) => tagIds.includes(tag.id) && !tag.archivedAt);
     const displayedTags = previewTag ? [previewTag] : activeTags;
     const suggestions = useMemo(
@@ -89,7 +90,6 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
             .map((tag) => ({ tag, score: getTagMatchScore(tag, query) }))
             .filter((match): match is { tag: ResumeTag; score: number } => match.score !== null)
             .sort((left, right) => left.score - right.score || left.tag.name.localeCompare(right.tag.name))
-            .slice(0, 8)
             .map((match) => match.tag),
         [query, tags]
     );
@@ -100,8 +100,10 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
     useEffect(() => {
         if (!isOpen) return;
         const closeOnOutsideClick = (event: MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) {
                 setIsOpen(false);
+                setMenuPosition(null);
                 setQuery("");
                 setPreviewTag(null);
                 onPreviewTag(null);
@@ -112,10 +114,50 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
         return () => document.removeEventListener("mousedown", closeOnOutsideClick);
     }, [isOpen, onFocusChange, onPreviewTag]);
 
+    useLayoutEffect(() => {
+        if (!isOpen) return;
+
+        const updateMenuPosition = () => {
+            const triggerRect = rootRef.current?.getBoundingClientRect();
+            if (!triggerRect) return;
+
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const maxHeight = Math.max(0, viewportHeight - TAG_MENU_VIEWPORT_MARGIN_PX * 2);
+            const measuredHeight = menuRef.current?.scrollHeight || TAG_MENU_MIN_HEIGHT_PX;
+            const visibleHeight = Math.min(Math.max(measuredHeight, TAG_MENU_MIN_HEIGHT_PX), maxHeight);
+            const preferredLeft = triggerRect.left - TAG_MENU_WIDTH_PX - TAG_MENU_GAP_PX;
+            const rightSideLeft = triggerRect.right + TAG_MENU_GAP_PX;
+            const canFitLeft = preferredLeft >= TAG_MENU_VIEWPORT_MARGIN_PX;
+            const canFitRight = rightSideLeft + TAG_MENU_WIDTH_PX <= viewportWidth - TAG_MENU_VIEWPORT_MARGIN_PX;
+            const placement = canFitLeft || !canFitRight ? "viewport-left" : "viewport-right";
+            const unclampedLeft = placement === "viewport-left" ? preferredLeft : rightSideLeft;
+            const left = Math.min(
+                Math.max(unclampedLeft, TAG_MENU_VIEWPORT_MARGIN_PX),
+                Math.max(TAG_MENU_VIEWPORT_MARGIN_PX, viewportWidth - TAG_MENU_WIDTH_PX - TAG_MENU_VIEWPORT_MARGIN_PX)
+            );
+            const top = Math.min(
+                Math.max(triggerRect.top, TAG_MENU_VIEWPORT_MARGIN_PX),
+                Math.max(TAG_MENU_VIEWPORT_MARGIN_PX, viewportHeight - visibleHeight - TAG_MENU_VIEWPORT_MARGIN_PX)
+            );
+
+            setMenuPosition({ left, top, maxHeight, placement });
+        };
+
+        updateMenuPosition();
+        window.addEventListener("resize", updateMenuPosition);
+        window.addEventListener("scroll", updateMenuPosition, true);
+        return () => {
+            window.removeEventListener("resize", updateMenuPosition);
+            window.removeEventListener("scroll", updateMenuPosition, true);
+        };
+    }, [cleanQuery, isOpen, suggestions.length]);
+
     if (!isEditing) return null;
 
     const openMenu = () => {
         activeTags.forEach((tag) => onToggleTag(tag.id));
+        setMenuPosition(null);
         setIsOpen(true);
         onFocusChange(focusPath);
         requestAnimationFrame(() => inputRef.current?.focus());
@@ -123,6 +165,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
 
     const closeMenu = () => {
         setIsOpen(false);
+        setMenuPosition(null);
         setQuery("");
         setPreviewTag(null);
         onPreviewTag(null);
@@ -171,7 +214,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
                 {displayedTags.length > 0 && (
                     <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
                         {displayedTags.map((tag) => {
-                            const color = TAG_COLORS[tag.colorToken]?.color || "#475569";
+                            const color = getTagColorStyle(tag.colorToken).color;
                             return (
                                 <span
                                     key={tag.id}
@@ -204,11 +247,20 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
                 )}
             </button>
 
-            {isOpen && (
+            {isOpen && createPortal(
                 <div
-                    className="resume-tag-menu-panel absolute right-full top-0 mr-2 flex w-52 flex-col gap-0.5 text-left"
-                    data-tag-menu-placement="canvas-left"
+                    ref={menuRef}
+                    className="resume-tag-menu-panel fixed z-[300] flex w-52 flex-col gap-0.5 overflow-hidden text-left"
+                    data-tag-menu-placement={menuPosition?.placement || "viewport-left"}
                     role="menu"
+                    onMouseEnter={() => onSectionHoverChange(true)}
+                    onMouseLeave={() => onSectionHoverChange(false)}
+                    style={{
+                        left: menuPosition?.left ?? TAG_MENU_VIEWPORT_MARGIN_PX,
+                        top: menuPosition?.top ?? TAG_MENU_VIEWPORT_MARGIN_PX,
+                        maxHeight: menuPosition?.maxHeight ?? `calc(100vh - ${TAG_MENU_VIEWPORT_MARGIN_PX * 2}px)`,
+                        visibility: menuPosition ? "visible" : "hidden"
+                    }}
                 >
                     <input
                         ref={inputRef}
@@ -218,6 +270,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
                         onKeyDown={(event) => {
                             if (event.key === "Escape") {
                                 setIsOpen(false);
+                                setMenuPosition(null);
                                 setQuery("");
                                 setPreviewTag(null);
                                 onPreviewTag(null);
@@ -232,7 +285,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
                         placeholder="Search or create tag"
                         aria-label="Tag name"
                     />
-                    <div className="max-h-36 overflow-y-auto">
+                    <div className="resume-tag-menu-options">
                         {cleanQuery && !hasExactTag && (
                                 <button
                                     type="button"
@@ -252,7 +305,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
                         )}
                         {suggestions.map((tag) => {
                             const selected = tagIds.includes(tag.id);
-                            const colors = TAG_COLORS[tag.colorToken] || TAG_COLORS["tag-slate"];
+                            const colors = getTagColorStyle(tag.colorToken);
                             return (
                                 <div
                                     key={tag.id}
@@ -299,7 +352,8 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
                             );
                         })}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

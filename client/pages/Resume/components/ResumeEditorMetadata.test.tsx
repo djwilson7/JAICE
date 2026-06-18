@@ -83,7 +83,7 @@ describe("resume editor metadata controls", () => {
         );
 
         fireEvent.click(screen.getByLabelText("Edit bullet tags"));
-        expect(document.querySelector('[data-tag-menu-placement="canvas-left"]')).toBeTruthy();
+        expect(document.querySelector('[data-tag-menu-placement^="viewport-"]')).toBeTruthy();
         const input = screen.getByLabelText("Tag name");
         fireEvent.change(input, { target: { value: "front-end" } });
 
@@ -95,6 +95,86 @@ describe("resume editor metadata controls", () => {
         fireEvent.change(reopenedInput, { target: { value: "frontends" } });
         fireEvent.click(screen.getByLabelText("Create frontends tag"));
         expect(onCreateTag).toHaveBeenCalledWith("frontends");
+    });
+
+    it("renders the complete tag library inside a scrollable options viewport", () => {
+        const tags = Array.from({ length: 12 }, (_, index) => ({
+            id: `tag-${index}`,
+            name: `Tag ${String(index + 1).padStart(2, "0")}`,
+            slug: `tag${index + 1}`,
+            colorToken: "tag-teal",
+            createdAt: "2026-01-01T00:00:00.000Z"
+        }));
+
+        render(
+            <ExperienceBulletTags
+                bulletId="bullet-1"
+                tagIds={[]}
+                tags={tags}
+                isEditing
+                focusPath="experience.0.bullets.0.tags"
+                textStyle={{ fontFamily: "Poppins" }}
+                onSectionHoverChange={vi.fn()}
+                onToggleTag={vi.fn()}
+                onCreateTag={vi.fn()}
+                onDeleteTag={vi.fn()}
+                onPreviewTag={vi.fn()}
+                onFocusChange={vi.fn()}
+            />
+        );
+
+        fireEvent.click(screen.getByLabelText("Edit bullet tags"));
+
+        const optionsViewport = document.querySelector(".resume-tag-menu-options");
+        expect(optionsViewport).toBeTruthy();
+        expect(screen.getByText("Tag 01")).toBeTruthy();
+        expect(screen.getByText("Tag 12")).toBeTruthy();
+    });
+
+    it("keeps the tag menu within the viewport near the bottom edge", () => {
+        const originalInnerHeight = window.innerHeight;
+        Object.defineProperty(window, "innerHeight", { configurable: true, value: 720 });
+
+        const { container } = render(
+            <ExperienceBulletTags
+                bulletId="bullet-1"
+                tagIds={[]}
+                tags={[]}
+                isEditing
+                focusPath="experience.0.bullets.0.tags"
+                textStyle={{ fontFamily: "Poppins" }}
+                onSectionHoverChange={vi.fn()}
+                onToggleTag={vi.fn()}
+                onCreateTag={vi.fn()}
+                onDeleteTag={vi.fn()}
+                onPreviewTag={vi.fn()}
+                onFocusChange={vi.fn()}
+            />
+        );
+
+        const root = container.querySelector("[data-bullet-tags='bullet-1']") as HTMLElement;
+        vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
+            x: 400,
+            y: 690,
+            top: 690,
+            right: 512,
+            bottom: 710,
+            left: 400,
+            width: 112,
+            height: 20,
+            toJSON: () => ({})
+        });
+
+        fireEvent.click(screen.getByLabelText("Edit bullet tags"));
+
+        const menu = document.querySelector(".resume-tag-menu-panel") as HTMLElement;
+        Object.defineProperty(window, "innerHeight", { configurable: true, value: originalInnerHeight });
+
+        expect(menu).toHaveClass("fixed");
+        expect(menu).toHaveStyle({
+            top: "488px",
+            maxHeight: "704px"
+        });
     });
 
     it("renders selected tags as colored text and active menu rows with a delete action", () => {
