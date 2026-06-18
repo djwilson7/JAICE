@@ -28,6 +28,15 @@ from client_api.services.resume_chat.service import (
     stream_resume_chat_response,
     stream_resume_rewrite_suggestion,
 )
+from client_api.services.resume_pdf import (
+    format_pt as _resume_pdf_format_pt,
+    generate_resume_pdf as _generate_resume_pdf,
+    normalize_formatting as _normalize_resume_pdf_formatting,
+    paper_viewport_dimensions as _resume_pdf_viewport_dimensions,
+    PlaywrightUnavailableError,
+    render_resume_pdf_html as _service_render_resume_pdf_html,
+)
+from client_api.services.resume_pdf.fonts import build_font_face_css as _service_font_face_css
 
 router = APIRouter(tags=["resume"])
 logging = get_logger()
@@ -371,34 +380,7 @@ def _font_data_uri(path: Path) -> Optional[str]:
 
 
 def _font_face_css() -> str:
-    root = Path(__file__).resolve().parents[2]
-    font_root = root / "client" / "assets" / "fonts"
-    fonts = [
-        ("Poppins", 400, "normal", font_root / "Poppins" / "Poppins-Regular.ttf"),
-        ("Poppins", 400, "italic", font_root / "Poppins" / "Poppins-Italic.ttf"),
-        ("Poppins", 500, "normal", font_root / "Poppins" / "Poppins-Medium.ttf"),
-        ("Poppins", 500, "italic", font_root / "Poppins" / "Poppins-MediumItalic.ttf"),
-        ("Poppins", 600, "normal", font_root / "Poppins" / "Poppins-SemiBold.ttf"),
-        ("Poppins", 600, "italic", font_root / "Poppins" / "Poppins-SemiBoldItalic.ttf"),
-        ("Poppins", 700, "normal", font_root / "Poppins" / "Poppins-Bold.ttf"),
-        ("Poppins", 700, "italic", font_root / "Poppins" / "Poppins-BoldItalic.ttf"),
-        ("Libre Baskerville", 400, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Regular.ttf"),
-        ("Libre Baskerville", 400, "italic", font_root / "Libre_Baskerville" / "LibreBaskerville-Italic.ttf"),
-        ("Libre Baskerville", 700, "normal", font_root / "Libre_Baskerville" / "LibreBaskerville-Bold.ttf"),
-    ]
-    rules = []
-    for family, weight, style, path in fonts:
-        data_uri = _font_data_uri(path)
-        if not data_uri:
-            continue
-        rules.append(
-            "@font-face { "
-            f"font-family: '{family}'; "
-            f"src: url('{data_uri}') format('truetype'); "
-            f"font-weight: {weight}; font-style: {style}; font-display: block; "
-            "}"
-        )
-    return "\n".join(rules)
+    return _service_font_face_css()
 
 
 def _paper_dimensions(page_size: str) -> tuple[str, str, str]:
@@ -408,16 +390,11 @@ def _paper_dimensions(page_size: str) -> tuple[str, str, str]:
 
 
 def _paper_viewport_dimensions(page_name: str) -> dict[str, int]:
-    paper = PAPER_SIZES_PT["Letter"] if page_name == "Letter" else PAPER_SIZES_PT["A4"]
-    return {"width": _pt_to_px(paper["widthPt"]), "height": _pt_to_px(paper["heightPt"])}
+    return _resume_pdf_viewport_dimensions(page_name)
 
 
 def _normalize_resume_pdf_margin_pt(value: Any) -> float:
-    try:
-        margin = float(value)
-    except (TypeError, ValueError):
-        margin = ResumeFormatting().pageMarginPt
-    return max(24, min(72, margin))
+    return _normalize_resume_pdf_formatting({"pageMarginPt": value}).page_margin_pt
 
 
 def _normalize_resume_pdf_number(value: Any, minimum: float, maximum: float, fallback: float) -> float:
@@ -429,7 +406,7 @@ def _normalize_resume_pdf_number(value: Any, minimum: float, maximum: float, fal
 
 
 def _format_resume_pdf_pt(value: float) -> str:
-    return f"{value:g}pt"
+    return _resume_pdf_format_pt(value)
 
 
 def _render_contact_items(payload: ResumeData) -> List[str]:
@@ -471,6 +448,8 @@ def _render_resume_pdf_html(
     payload: ResumeData,
     document_title: Optional[str] = None,
 ) -> tuple[str, str, str, str, float]:
+    return _service_render_resume_pdf_html(payload, document_title)
+
     formatting = payload.formatting or ResumeFormatting()
     page_size = formatting.pageSize if formatting.pageSize in {"a4", "letter"} else "a4"
     page_width, page_height, page_name = _paper_dimensions(page_size)
@@ -1324,6 +1303,31 @@ async def export_resume_pdf(
     """
     Accept structured resume JSON and return a PDF file rendered by headless Chromium.
     """
+    try:
+        document_title = request.query_params.get("document_title") or payload.fullName or "resume"
+        generated = await _generate_resume_pdf(
+            payload,
+            document_title,
+            debug_enabled=_resume_pdf_debug_enabled(request),
+            debug_dir=_resume_pdf_debug_dir(),
+            logger=logging,
+        )
+        preview_token = _store_resume_pdf_preview(generated.pdf_bytes)
+        preview_path = f"/api/resume/pdf-preview/{preview_token}/{generated.filename}"
+        return Response(
+            content=generated.pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{generated.filename}"',
+                "X-PDF-Preview-Path": preview_path,
+            },
+        )
+    except PlaywrightUnavailableError as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+    except Exception as error:
+        logging.error("Error generating resume PDF", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {error}") from error
+
     try:
         try:
             from playwright.async_api import async_playwright

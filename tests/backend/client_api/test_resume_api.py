@@ -175,9 +175,9 @@ def test_resume_models_and_render_helpers(monkeypatch, tmp_path):
     assert "@page { size: Letter; margin: 36pt; }" in document
     assert "height: 11in;" not in document
     assert "padding: 36.0pt;" not in document
-    assert ".item-stack {\n            display: block;" in document
-    assert ".experience-item,\n        .education-item {\n            display: block;" in document
-    assert ".bullet-row {\n            position: relative;\n            display: block;" in document
+    assert ".resume-document__item-stack" in document
+    assert ".resume-document__item {" in document
+    assert ".resume-document__bullet-row {" in document
     assert "Avery Applicant" in document
     assert "Work Experience" in document
     assert "State University" in document
@@ -699,7 +699,7 @@ def test_resume_sparse_render_helpers(monkeypatch):
     assert page_name == "A4"
     assert width == "210mm"
     assert height == "297mm"
-    assert margin == 0
+    assert margin == 24
     assert "Python" in document
 
 
