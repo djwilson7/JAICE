@@ -1,0 +1,307 @@
+.resume-document {
+  box-sizing: border-box;
+  background: #fff;
+  color: #0f172a;
+  font-family: var(--resume-font-family);
+  font-size: var(--resume-body-font-size);
+  line-height: var(--resume-body-line-height);
+  text-align: left;
+}
+
+.resume-document,
+.resume-document * {
+  box-sizing: border-box;
+}
+
+.resume-font--title,
+.resume-title-font-target {
+  font-family: var(--resume-title-font-family);
+  font-size: var(--resume-title-font-size);
+  font-weight: 700;
+  line-height: var(--resume-title-line-height);
+}
+
+.resume-font--heading,
+.resume-header-font-target {
+  font-family: var(--resume-heading-font-family);
+  font-size: var(--resume-header-font-size);
+  font-weight: 700;
+  line-height: var(--resume-header-line-height);
+}
+
+.resume-font--subheading,
+.resume-subheader-font-target {
+  font-family: var(--resume-contact-font-family);
+  font-size: var(--resume-subheader-font-size);
+  line-height: var(--resume-subheader-line-height);
+}
+
+.resume-font--body,
+.resume-body-font-target {
+  font-family: var(--resume-font-family);
+  font-size: var(--resume-body-font-size);
+  font-weight: 400;
+  line-height: var(--resume-body-line-height);
+}
+
+.resume-font--contact {
+  font-family: var(--resume-contact-font-family);
+  font-size: var(--resume-body-font-size);
+  font-weight: 500;
+  line-height: var(--resume-body-line-height);
+}
+
+.resume-document__section {
+  width: 100%;
+  margin: 0 0 var(--resume-section-gap);
+  text-align: left;
+  break-inside: auto;
+}
+
+.resume-document__section:last-child {
+  margin-bottom: 0;
+}
+
+.resume-document__title {
+  margin: 0 0 2px;
+  padding: var(--resume-title-padding);
+  color: #0f172a;
+  font-family: var(--resume-title-font-family);
+  font-size: var(--resume-title-font-size);
+  font-weight: 700;
+  line-height: var(--resume-title-line-height);
+  text-align: center;
+}
+
+.resume-document__contact-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--resume-contact-stack-gap);
+  color: #475569;
+  font-family: var(--resume-contact-font-family);
+  font-size: var(--resume-body-font-size);
+  font-weight: 500;
+  line-height: var(--resume-body-line-height);
+  text-align: center;
+}
+
+.resume-document__contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--resume-contact-row-gap);
+  max-width: 100%;
+}
+
+.resume-document__separator {
+  flex: 0 0 auto;
+  color: #cbd5e1;
+}
+
+.resume-document__section-title {
+  width: 100%;
+  margin: 0 0 var(--resume-heading-margin-bottom);
+  padding: 0 0 var(--resume-heading-padding-bottom);
+  border-bottom: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-family: var(--resume-heading-font-family);
+  font-size: var(--resume-header-font-size);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: var(--resume-header-line-height);
+  text-align: left;
+  text-transform: uppercase;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.resume-document__body {
+  margin: 0;
+  padding: var(--resume-field-padding);
+  color: #334155;
+  font-family: var(--resume-font-family);
+  font-size: var(--resume-body-font-size);
+  font-weight: 400;
+  line-height: var(--resume-body-line-height);
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.resume-document__item-stack,
+.resume-document__bullet-stack,
+.resume-document__skill-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-document__item-stack {
+  gap: var(--resume-inner-section-gap);
+}
+
+.resume-document__item {
+  display: block;
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+.resume-document__meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--resume-date-group-gap) var(--resume-meta-date-gap);
+  color: #475569;
+  font-family: var(--resume-contact-font-family);
+  font-size: var(--resume-subheader-font-size);
+  font-weight: 500;
+  line-height: var(--resume-subheader-line-height);
+  break-after: avoid;
+  break-inside: avoid;
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-document__meta-row--with-bullets {
+  margin-bottom: var(--resume-meta-row-to-bullet-gap);
+}
+
+.resume-document__meta-fields,
+.resume-document__date-fields {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.resume-document__meta-fields {
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: var(--resume-meta-group-gap);
+  overflow: visible;
+}
+
+.resume-document__date-fields {
+  flex: 0 0 auto;
+  gap: var(--resume-date-group-gap);
+}
+
+.resume-document__meta-field,
+.resume-document__date-field {
+  flex: 0 0 auto;
+  padding: var(--resume-field-padding);
+}
+
+.resume-document__meta-field--primary {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.resume-document__meta-field--secondary {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.resume-document__meta-field--tertiary {
+  color: #475569;
+  font-weight: 600;
+}
+
+.resume-document__bullet-stack {
+  gap: var(--resume-education-detail-gap);
+  margin-left: var(--resume-bullet-indent);
+}
+
+.resume-document__bullet-stack--education {
+  margin-top: var(--resume-education-detail-gap);
+}
+
+.resume-document__bullet-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--resume-bullet-gap);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-document__bullet-row--paginated {
+  margin-left: var(--resume-bullet-indent);
+}
+
+.resume-document__bullet-marker {
+  display: inline-block;
+  flex: 0 0 auto;
+  padding: var(--resume-field-padding-y) 0;
+  color: #475569;
+  font-family: var(--resume-font-family);
+  font-size: var(--resume-body-font-size);
+  font-weight: 400;
+  line-height: var(--resume-body-line-height);
+}
+
+.resume-document__bullet-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.resume-document__skill-stack {
+  gap: var(--resume-inner-section-gap);
+}
+
+.resume-document__skill-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--resume-meta-group-gap);
+  color: #334155;
+  font-family: var(--resume-font-family);
+  font-size: var(--resume-body-font-size);
+  font-weight: 400;
+  line-height: var(--resume-body-line-height);
+  text-align: left;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-document__skill-category {
+  flex: 0 0 auto;
+  padding: var(--resume-field-padding);
+  color: #0f172a;
+  font-family: var(--resume-contact-font-family);
+  font-size: var(--resume-subheader-font-size);
+  font-weight: 700;
+  line-height: var(--resume-subheader-line-height);
+  text-align: left;
+}
+
+.resume-document__skill-colon {
+  flex: 0 0 auto;
+  padding-top: 4px;
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.resume-document__skill-items {
+  min-width: 0;
+  padding: var(--resume-field-padding);
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.resume-document__segment-section {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+.resume-document__gap {
+  position: relative;
+  height: var(--resume-section-gap);
+}
+
+.resume-document__gap--inner {
+  height: var(--resume-inner-section-gap);
+}

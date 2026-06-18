@@ -1,0 +1,226 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "name": "sparse-a4",
+      "input": {
+        "fullName": "",
+        "experience": [],
+        "education": [],
+        "skills": [],
+        "formatting": {
+          "pageSize": "a4"
+        }
+      },
+      "expected": {
+        "fullName": "Your Name",
+        "contactRows": [],
+        "summary": null,
+        "experience": [],
+        "education": [],
+        "skills": []
+      }
+    },
+    {
+      "name": "full-letter",
+      "input": {
+        "fullName": "Avery Applicant",
+        "email": "avery@example.com",
+        "phone": "555-111-2222",
+        "location": "Austin, TX",
+        "linkedin": "linkedin.com/in/avery",
+        "hiddenContactFields": ["phone"],
+        "customContact": [
+          {
+            "label": "Portfolio",
+            "value": "avery.dev"
+          }
+        ],
+        "summary": "Builder of useful systems.",
+        "sectionTitles": {
+          "summary": "Profile",
+          "experience": "Selected Work",
+          "education": "Training",
+          "skills": "Toolkit"
+        },
+        "experience": [
+          {
+            "id": "exp-1",
+            "jobTitle": "Software Engineer",
+            "company": "Acme",
+            "location": "Remote",
+            "startDate": "2021",
+            "endDate": "Present",
+            "bullets": [
+              {
+                "id": "bullet-1",
+                "text": "Built APIs."
+              }
+            ]
+          }
+        ],
+        "education": [
+          {
+            "id": "edu-1",
+            "school": "State University",
+            "degree": "BS Computer Science",
+            "startDate": "2017",
+            "endDate": "2021",
+            "details": [
+              {
+                "id": "detail-1",
+                "text": "Dean's List"
+              }
+            ]
+          }
+        ],
+        "skills": [
+          {
+            "id": "skill-1",
+            "category": "Languages",
+            "items": ["Python", "TypeScript"]
+          }
+        ],
+        "formatting": {
+          "pageSize": "letter"
+        }
+      },
+      "expected": {
+        "fullName": "Avery Applicant",
+        "contactRows": [
+          ["Austin, TX", "avery@example.com", "linkedin.com/in/avery"],
+          ["avery.dev"]
+        ],
+        "summary": {
+          "title": "Profile",
+          "text": "Builder of useful systems."
+        },
+        "experience": [
+          {
+            "id": "exp-1",
+            "title": "Selected Work",
+            "meta": [
+              {
+                "value": "Software Engineer",
+                "tone": "primary"
+              },
+              {
+                "value": "Acme",
+                "tone": "secondary"
+              },
+              {
+                "value": "Remote",
+                "tone": "tertiary"
+              }
+            ],
+            "dates": ["2021", "Present"],
+            "bullets": [
+              {
+                "id": "bullet-1",
+                "text": "Built APIs."
+              }
+            ]
+          }
+        ],
+        "education": [
+          {
+            "id": "edu-1",
+            "title": "Training",
+            "meta": [
+              {
+                "value": "BS Computer Science",
+                "tone": "primary"
+              },
+              {
+                "value": "State University",
+                "tone": "secondary"
+              }
+            ],
+            "dates": ["2017", "2021"],
+            "details": [
+              {
+                "id": "detail-1",
+                "text": "Dean's List"
+              }
+            ]
+          }
+        ],
+        "skills": [
+          {
+            "id": "skill-1",
+            "title": "Toolkit",
+            "category": "Languages",
+            "items": ["Python", "TypeScript"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "multi-page-letter",
+      "input": {
+        "fullName": "Long Resume",
+        "summary": "A deliberately long resume fixture.",
+        "experience": [
+          {
+            "id": "exp-long",
+            "jobTitle": "Principal Engineer",
+            "company": "Example",
+            "bullets": [
+              {
+                "id": "long-1",
+                "text": "Designed and delivered a multi-year platform modernization program spanning architecture, delivery, reliability, observability, security, and developer experience."
+              },
+              {
+                "id": "long-2",
+                "text": "Led cross-functional teams through complex migrations while preserving customer availability and measurable operational performance."
+              }
+            ]
+          }
+        ],
+        "education": [],
+        "skills": [],
+        "formatting": {
+          "pageSize": "letter",
+          "paperLayoutFormat": "relaxed"
+        }
+      },
+      "expected": {
+        "fullName": "Long Resume",
+        "contactRows": [],
+        "summary": {
+          "title": "Professional Summary",
+          "text": "A deliberately long resume fixture."
+        },
+        "experience": [
+          {
+            "id": "exp-long",
+            "title": "Work Experience",
+            "meta": [
+              {
+                "value": "Principal Engineer",
+                "tone": "primary"
+              },
+              {
+                "value": "Example",
+                "tone": "secondary"
+              }
+            ],
+            "dates": [],
+            "bullets": [
+              {
+                "id": "long-1",
+                "text": "Designed and delivered a multi-year platform modernization program spanning architecture, delivery, reliability, observability, security, and developer experience."
+              },
+              {
+                "id": "long-2",
+                "text": "Led cross-functional teams through complex migrations while preserving customer availability and measurable operational performance."
+              }
+            ]
+          }
+        ],
+        "education": [],
+        "skills": []
+      }
+    }
+  ]
+}

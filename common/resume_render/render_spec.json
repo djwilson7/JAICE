@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "defaults": {
+    "pageSize": "a4",
+    "paperLayoutFormat": "standard",
+    "innerSectionGapFormat": "standard"
+  },
+  "limits": {
+    "titleFontSize": [18, 34],
+    "headerFontSize": [12, 22],
+    "subHeaderFontSize": [10, 20],
+    "bodyFontSize": [9, 15],
+    "pageMarginPt": [24, 72]
+  },
+  "paperSizes": {
+    "a4": {
+      "label": "A4",
+      "standardLabel": "Europe, Asia, etc.",
+      "widthPt": 595.28,
+      "heightPt": 841.89,
+      "printName": "A4",
+      "cssWidth": "210mm",
+      "cssHeight": "297mm",
+      "dimensionLabel": {
+        "width": "210 mm",
+        "height": "297 mm"
+      }
+    },
+    "letter": {
+      "label": "Letter",
+      "standardLabel": "US & Canada",
+      "widthPt": 612,
+      "heightPt": 792,
+      "printName": "Letter",
+      "cssWidth": "8.5in",
+      "cssHeight": "11in",
+      "dimensionLabel": {
+        "width": "8.5 in",
+        "height": "11 in"
+      }
+    }
+  },
+  "densityNames": ["compact", "standard", "relaxed"]
+}

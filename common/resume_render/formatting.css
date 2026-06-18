@@ -1,0 +1,128 @@
+:root {
+  --resume-default-title-font-size-pt: 24;
+  --resume-default-header-font-size-pt: 16;
+  --resume-default-subheader-font-size-pt: 14;
+  --resume-default-body-font-size-pt: 12;
+  --resume-default-page-margin-pt: 54;
+  --resume-title-horizontal-padding-px: 6;
+  --resume-title-vertical-padding-px: 4;
+  --resume-field-horizontal-padding-px: 6;
+  --resume-field-vertical-padding-px: 2;
+  --resume-heading-padding-bottom-px: 2;
+  --resume-heading-margin-bottom-px: 4;
+  --resume-meta-row-to-bullet-gap-px: 10;
+  --resume-education-detail-gap-px: 2;
+  --resume-bullet-indent-px: 12;
+  --resume-bullet-gap-px: 8;
+  --resume-meta-group-gap-px: 6;
+  --resume-date-group-gap-px: 4;
+  --resume-meta-date-gap-px: 16;
+  --resume-contact-row-gap-px: 4;
+  --resume-contact-stack-gap-px: 2;
+  --resume-title-font-size-pt: var(--resume-default-title-font-size-pt);
+  --resume-header-font-size-pt: var(--resume-default-header-font-size-pt);
+  --resume-subheader-font-size-pt: var(--resume-default-subheader-font-size-pt);
+  --resume-body-font-size-pt: var(--resume-default-body-font-size-pt);
+  --resume-page-margin-pt: var(--resume-default-page-margin-pt);
+
+  --resume-compact-title-line-height: 1;
+  --resume-compact-header-line-height: 1.05;
+  --resume-compact-subheader-line-height: 1.1;
+  --resume-compact-body-line-height: 1.1;
+  --resume-compact-section-gap-pt: 8;
+  --resume-compact-inner-section-gap-pt: 4;
+
+  --resume-standard-title-line-height: 1.05;
+  --resume-standard-header-line-height: 1.1;
+  --resume-standard-subheader-line-height: 1.15;
+  --resume-standard-body-line-height: 1.2;
+  --resume-standard-section-gap-pt: 12;
+  --resume-standard-inner-section-gap-pt: 8;
+
+  --resume-relaxed-title-line-height: 1.1;
+  --resume-relaxed-header-line-height: 1.15;
+  --resume-relaxed-subheader-line-height: 1.2;
+  --resume-relaxed-body-line-height: 1.3;
+  --resume-relaxed-section-gap-pt: 16;
+  --resume-relaxed-inner-section-gap-pt: 12;
+}
+
+.resume-formatting-context {
+  --resume-title-font-size: calc(var(--resume-title-font-size-pt) * 1.3333333333px);
+  --resume-header-font-size: calc(var(--resume-header-font-size-pt) * 1.3333333333px);
+  --resume-subheader-font-size: calc(var(--resume-subheader-font-size-pt) * 1.3333333333px);
+  --resume-body-font-size: calc(var(--resume-body-font-size-pt) * 1.3333333333px);
+  --resume-page-margin: calc(var(--resume-page-margin-pt) * 1.3333333333px);
+  --resume-font-family: var(--font-title);
+  --resume-title-font-family: var(--font-subheading);
+  --resume-heading-font-family: var(--font-subheading);
+  --resume-contact-font-family: var(--font-subheading);
+  --resume-field-padding: calc(var(--resume-field-vertical-padding-px) * 1px) calc(var(--resume-field-horizontal-padding-px) * 1px);
+  --resume-field-padding-y: calc(var(--resume-field-vertical-padding-px) * 1px);
+  --resume-title-padding: calc(var(--resume-title-vertical-padding-px) * 1px) calc(var(--resume-title-horizontal-padding-px) * 1px);
+  --resume-heading-padding-bottom: calc(var(--resume-heading-padding-bottom-px) * 1px);
+  --resume-heading-margin-bottom: calc(var(--resume-heading-margin-bottom-px) * 1px);
+  --resume-meta-row-to-bullet-gap: calc(var(--resume-meta-row-to-bullet-gap-px) * 1px);
+  --resume-education-detail-gap: calc(var(--resume-education-detail-gap-px) * 1px);
+  --resume-bullet-indent: calc(var(--resume-bullet-indent-px) * 1px);
+  --resume-bullet-gap: calc(var(--resume-bullet-gap-px) * 1px);
+  --resume-meta-group-gap: calc(var(--resume-meta-group-gap-px) * 1px);
+  --resume-date-group-gap: calc(var(--resume-date-group-gap-px) * 1px);
+  --resume-meta-date-gap: calc(var(--resume-meta-date-gap-px) * 1px);
+  --resume-contact-row-gap: calc(var(--resume-contact-row-gap-px) * 1px);
+  --resume-contact-stack-gap: calc(var(--resume-contact-stack-gap-px) * 1px);
+}
+
+.resume-page-content {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--resume-page-margin);
+}
+
+.resume-formatting-context[data-resume-document-surface="pdf"] {
+  --resume-font-family: "Libre Baskerville", serif;
+  --resume-title-font-family: Poppins, Arial, sans-serif;
+  --resume-heading-font-family: Poppins, Arial, sans-serif;
+  --resume-contact-font-family: Poppins, Arial, sans-serif;
+}
+
+.resume-formatting-context[data-resume-layout-density="compact"] {
+  --resume-title-line-height: var(--resume-compact-title-line-height);
+  --resume-header-line-height: var(--resume-compact-header-line-height);
+  --resume-subheader-line-height: var(--resume-compact-subheader-line-height);
+  --resume-body-line-height: var(--resume-compact-body-line-height);
+  --resume-section-gap-pt: var(--resume-compact-section-gap-pt);
+}
+
+.resume-formatting-context[data-resume-layout-density="standard"] {
+  --resume-title-line-height: var(--resume-standard-title-line-height);
+  --resume-header-line-height: var(--resume-standard-header-line-height);
+  --resume-subheader-line-height: var(--resume-standard-subheader-line-height);
+  --resume-body-line-height: var(--resume-standard-body-line-height);
+  --resume-section-gap-pt: var(--resume-standard-section-gap-pt);
+}
+
+.resume-formatting-context[data-resume-layout-density="relaxed"] {
+  --resume-title-line-height: var(--resume-relaxed-title-line-height);
+  --resume-header-line-height: var(--resume-relaxed-header-line-height);
+  --resume-subheader-line-height: var(--resume-relaxed-subheader-line-height);
+  --resume-body-line-height: var(--resume-relaxed-body-line-height);
+  --resume-section-gap-pt: var(--resume-relaxed-section-gap-pt);
+}
+
+.resume-formatting-context[data-resume-inner-density="compact"] {
+  --resume-inner-section-gap-pt: var(--resume-compact-inner-section-gap-pt);
+}
+
+.resume-formatting-context[data-resume-inner-density="standard"] {
+  --resume-inner-section-gap-pt: var(--resume-standard-inner-section-gap-pt);
+}
+
+.resume-formatting-context[data-resume-inner-density="relaxed"] {
+  --resume-inner-section-gap-pt: var(--resume-relaxed-inner-section-gap-pt);
+}
+
+.resume-formatting-context {
+  --resume-section-gap: calc(var(--resume-section-gap-pt) * 1.3333333333px);
+  --resume-inner-section-gap: calc(var(--resume-inner-section-gap-pt) * 1.3333333333px);
+}
