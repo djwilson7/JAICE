@@ -63,6 +63,24 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
         resumeDocumentContentRef.current = element;
         registerResumeDocumentContentElement(element);
     }, [registerResumeDocumentContentElement, resumeDocumentContentRef]);
+    const handleDocumentFieldWheel = React.useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+        if (event.ctrlKey || event.metaKey) return;
+        const target = event.target;
+        if (!(target instanceof Element) || !target.matches("input, textarea")) return;
+
+        const deltaScale = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+            ? 16
+            : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? event.currentTarget.clientHeight
+            : 1;
+
+        event.preventDefault();
+        event.currentTarget.scrollBy({
+            left: event.deltaX * deltaScale,
+            top: event.deltaY * deltaScale,
+            behavior: "auto"
+        });
+    }, []);
 
     React.useEffect(() => {
         const viewport = canvasViewportRef.current;
@@ -77,6 +95,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     return (
                 <div
                     ref={canvasViewportRef}
+                    onWheelCapture={handleDocumentFieldWheel}
                     className="no-scrollbar relative box-border min-h-0 flex-1 overscroll-contain print:p-0"
                     style={{
                         ...canvasViewportStyle,

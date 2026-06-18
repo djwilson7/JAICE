@@ -24,6 +24,7 @@ describe('ResumeCanvas', () => {
     beforeEach(() => {
         Element.prototype.scrollTo = vi.fn();
         window.HTMLElement.prototype.scrollTo = vi.fn();
+        window.HTMLElement.prototype.scrollBy = vi.fn();
         mockViewport = document.createElement('div');
     });
 
@@ -183,5 +184,46 @@ describe('ResumeCanvas', () => {
         };
         const { container } = render(<ResumeCanvas {...props} />);
         expect(container).toBeTruthy();
+    });
+
+    it('routes wheel input over document fields to the canvas viewport', () => {
+        const ref = { current: null };
+        const props = {
+            canvasViewportRef: ref,
+            resumeDocumentContentRef: { current: null },
+            registerResumeDocumentContentElement: vi.fn(),
+            canvasNeedsHorizontalScroll: false,
+            canvasNeedsVerticalScroll: true,
+            canvasViewportStyle: {},
+            canvasHorizontalOverflow: 0,
+            scaledCanvasWidth: 800,
+            scaledCanvasHeight: 1600,
+            paperMetrics: { width: 800, height: 1000, dimensionLabel: { width: '8.5in', height: '11in' } } as any,
+            resumeCanvasHeight: 1600,
+            animatedCanvasZoom: 1,
+            fontPreviewTarget: null,
+            documentCssVariables,
+            resumePageCount: 2,
+            resumePageStride: 1000,
+            isPageFormatPreviewVisible: false,
+            isMarginPreviewVisible: false,
+            children: <textarea aria-label="Resume field" />,
+        };
+
+        render(<ResumeCanvas {...props} />);
+        const viewport = ref.current as unknown as HTMLDivElement;
+        const scrollBy = vi.spyOn(viewport, 'scrollBy');
+
+        fireEvent.wheel(screen.getByLabelText('Resume field'), {
+            deltaX: 3,
+            deltaY: 40,
+            deltaMode: WheelEvent.DOM_DELTA_PIXEL
+        });
+
+        expect(scrollBy).toHaveBeenCalledWith({
+            left: 3,
+            top: 40,
+            behavior: 'auto'
+        });
     });
 });
