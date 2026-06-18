@@ -28,13 +28,43 @@ export const TAG_COLOR_TOKENS = [
     "tag-purple",
     "tag-cyan",
     "tag-rose",
-    "tag-slate",
+    "tag-emerald",
     "tag-fuchsia",
     "tag-violet",
     "tag-pink",
-    "tag-zinc",
-    "tag-stone"
+    "tag-amber",
+    "tag-blue"
 ] as const;
+
+export const TAG_COLOR_STYLES: Record<string, { color: string; background: string }> = {
+    "tag-teal": { color: "#0f766e", background: "#ccfbf1" },
+    "tag-orange": { color: "#c2410c", background: "#ffedd5" },
+    "tag-purple": { color: "#7e22ce", background: "#f3e8ff" },
+    "tag-cyan": { color: "#0e7490", background: "#cffafe" },
+    "tag-rose": { color: "#be123c", background: "#ffe4e6" },
+    "tag-emerald": { color: "#047857", background: "#d1fae5" },
+    "tag-fuchsia": { color: "#a21caf", background: "#fae8ff" },
+    "tag-violet": { color: "#4f46e5", background: "#e0e7ff" },
+    "tag-pink": { color: "#db2777", background: "#fce7f3" },
+    "tag-amber": { color: "#b45309", background: "#fef3c7" },
+    "tag-blue": { color: "#1d4ed8", background: "#dbeafe" }
+};
+
+const LEGACY_GRAY_TAG_COLOR_REPLACEMENTS: Record<string, string> = {
+    "tag-slate": "tag-emerald",
+    "tag-zinc": "tag-amber",
+    "tag-stone": "tag-blue"
+};
+
+export const normalizeTagColorToken = (value: unknown, fallbackIndex = 0): string => {
+    const token = String(value || "");
+    if (TAG_COLOR_STYLES[token]) return token;
+    if (LEGACY_GRAY_TAG_COLOR_REPLACEMENTS[token]) return LEGACY_GRAY_TAG_COLOR_REPLACEMENTS[token];
+    return TAG_COLOR_TOKENS[fallbackIndex % TAG_COLOR_TOKENS.length];
+};
+
+export const getTagColorStyle = (value: unknown): { color: string; background: string } =>
+    TAG_COLOR_STYLES[normalizeTagColorToken(value)];
 
 export const normalizeTagSlug = (value: string): string =>
     value.toLocaleLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
@@ -69,10 +99,7 @@ const normalizeTagLibrary = (tags: unknown): ResumeTag[] => {
                 id: String(candidate.id || `tag-${index}-${slug}`),
                 name,
                 slug,
-                colorToken: String(
-                    candidate.colorToken ||
-                    TAG_COLOR_TOKENS[index % TAG_COLOR_TOKENS.length]
-                ),
+                colorToken: normalizeTagColorToken(candidate.colorToken, index),
                 createdAt: String(candidate.createdAt || new Date(0).toISOString()),
                 archivedAt: candidate.archivedAt ?? null
             };

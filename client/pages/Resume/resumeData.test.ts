@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import {
     makeId,
     hasText,
+    TAG_COLOR_TOKENS,
+    TAG_COLOR_STYLES,
+    normalizeTagColorToken,
     parseSkillItems,
     normalizeTextList,
     formatSkillItemsForInput,
@@ -61,6 +64,27 @@ describe('hasText', () => {
     it('returns false for 0 (which becomes "0" which has text)', () => {
         // "0".trim().length > 0 → true
         expect(hasText(0)).toBe(true);
+    });
+});
+
+describe('tag colors', () => {
+    it('uses only chromatic tag tokens', () => {
+        expect(TAG_COLOR_TOKENS).not.toContain('tag-slate');
+        expect(TAG_COLOR_TOKENS).not.toContain('tag-zinc');
+        expect(TAG_COLOR_TOKENS).not.toContain('tag-stone');
+        expect(Object.keys(TAG_COLOR_STYLES)).toEqual([...TAG_COLOR_TOKENS]);
+    });
+
+    it.each([
+        ['tag-slate', 'tag-emerald'],
+        ['tag-zinc', 'tag-amber'],
+        ['tag-stone', 'tag-blue'],
+    ])('migrates legacy gray token %s to %s', (legacyToken, replacementToken) => {
+        expect(normalizeTagColorToken(legacyToken)).toBe(replacementToken);
+    });
+
+    it('uses a chromatic palette fallback for unknown tokens', () => {
+        expect(normalizeTagColorToken('tag-gray')).toBe('tag-teal');
     });
 });
 
@@ -285,6 +309,22 @@ describe('normalizeResumeData', () => {
         expect(data.fullName).toBe('Alice');
         expect(data.experience[0].bullets).toHaveLength(1);
         expect(data.education[0].details).toHaveLength(1);
+    });
+
+    it('replaces legacy gray tag colors in saved resume data', () => {
+        const data = normalizeResumeData({
+            tagLibrary: [
+                { id: 'tag-1', name: 'Leadership', slug: 'leadership', colorToken: 'tag-slate', createdAt: '' },
+                { id: 'tag-2', name: 'Impact', slug: 'impact', colorToken: 'tag-zinc', createdAt: '' },
+                { id: 'tag-3', name: 'Scale', slug: 'scale', colorToken: 'tag-stone', createdAt: '' },
+            ],
+        });
+
+        expect(data.tagLibrary.map((tag) => tag.colorToken)).toEqual([
+            'tag-emerald',
+            'tag-amber',
+            'tag-blue',
+        ]);
     });
 
     it('filters empty bullets from experience', () => {
