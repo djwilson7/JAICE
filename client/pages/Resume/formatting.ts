@@ -1,68 +1,21 @@
 import type React from "react";
-import type { PageSize, PaperLayoutFormat, PaperMetrics, ResumeFormatting } from "./types";
-import { RESUME_DOCUMENT_TYPOGRAPHY } from "./resumeTypography";
-import { ptCss, ptToPx, pxToPt } from "./utils/documentUnits";
+import type { PageSize, PaperMetrics, ResumeFormatting } from "./types";
+import { RESUME_RENDER_SPEC } from "./rendering/renderSpec";
+import { RESUME_CSS_DEFAULTS, RESUME_CSS_DENSITY_PRESETS } from "./rendering/formattingTokens";
+import { ptToPx, pxCss, pxToPt } from "./utils/documentUnits";
 
-export const RESUME_DENSITY_PRESETS = {
-    compact: {
-        titleLineHeight: 1.0,
-        headerLineHeight: 1.05,
-        subHeaderLineHeight: 1.1,
-        bodyLineHeight: 1.1,
-        sectionGapPt: 8,
-        innerSectionGapPt: 4
-    },
-    standard: {
-        titleLineHeight: 1.05,
-        headerLineHeight: 1.1,
-        subHeaderLineHeight: 1.15,
-        bodyLineHeight: 1.2,
-        sectionGapPt: 12,
-        innerSectionGapPt: 8
-    },
-    relaxed: {
-        titleLineHeight: 1.1,
-        headerLineHeight: 1.15,
-        subHeaderLineHeight: 1.2,
-        bodyLineHeight: 1.3,
-        sectionGapPt: 16,
-        innerSectionGapPt: 12
-    }
-} as const satisfies Record<PaperLayoutFormat, {
-    titleLineHeight: number;
-    headerLineHeight: number;
-    subHeaderLineHeight: number;
-    bodyLineHeight: number;
-    sectionGapPt: number;
-    innerSectionGapPt: number;
-}>;
+export const RESUME_DENSITY_PRESETS = RESUME_CSS_DENSITY_PRESETS;
 
 export const PAPER_SIZES: Record<PageSize, PaperMetrics> = {
     a4: {
-        label: "A4",
-        standardLabel: "Europe, Asia, etc.",
-        widthPt: 595.28,
-        heightPt: 841.89,
-        width: ptToPx(595.28),
-        height: ptToPx(841.89),
-        printName: "A4",
-        dimensionLabel: {
-            width: "210 mm",
-            height: "297 mm"
-        }
+        ...RESUME_RENDER_SPEC.paperSizes.a4,
+        width: ptToPx(RESUME_RENDER_SPEC.paperSizes.a4.widthPt),
+        height: ptToPx(RESUME_RENDER_SPEC.paperSizes.a4.heightPt)
     },
     letter: {
-        label: "Letter",
-        standardLabel: "US & Canada",
-        widthPt: 612,
-        heightPt: 792,
-        width: ptToPx(612),
-        height: ptToPx(792),
-        printName: "Letter",
-        dimensionLabel: {
-            width: "8.5 in",
-            height: "11 in"
-        }
+        ...RESUME_RENDER_SPEC.paperSizes.letter,
+        width: ptToPx(RESUME_RENDER_SPEC.paperSizes.letter.widthPt),
+        height: ptToPx(RESUME_RENDER_SPEC.paperSizes.letter.heightPt)
     }
 };
 
@@ -77,14 +30,10 @@ export const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM
 export const clampFitZoom = (value: number) => Math.min(1, Math.max(MIN_FIT_ZOOM, value));
 
 export const defaultResumeFormatting = (): ResumeFormatting => ({
-    pageSize: "a4",
-    titleFontSize: 24,
-    headerFontSize: 16,
-    subHeaderFontSize: 14,
-    bodyFontSize: 12,
-    pageMarginPt: 54,
-    paperLayoutFormat: "standard",
-    innerSectionGapFormat: "standard"
+    pageSize: RESUME_RENDER_SPEC.defaults.pageSize,
+    paperLayoutFormat: RESUME_RENDER_SPEC.defaults.paperLayoutFormat,
+    innerSectionGapFormat: RESUME_RENDER_SPEC.defaults.innerSectionGapFormat,
+    ...RESUME_CSS_DEFAULTS
 });
 
 
@@ -102,11 +51,11 @@ export const normalizeResumeFormatting = (formatting?: Partial<ResumeFormatting>
 
     return {
         pageSize,
-        titleFontSize: clampNumberValue(formatting?.titleFontSize, 18, 34, defaults.titleFontSize),
-        headerFontSize: clampNumberValue(formatting?.headerFontSize, 12, 22, defaults.headerFontSize),
-        subHeaderFontSize: clampNumberValue(formatting?.subHeaderFontSize, 10, 20, defaults.subHeaderFontSize),
-        bodyFontSize: clampNumberValue(formatting?.bodyFontSize, 9, 15, defaults.bodyFontSize),
-        pageMarginPt: clampNumberValue(formatting?.pageMarginPt, 24, 72, defaults.pageMarginPt),
+        titleFontSize: clampNumberValue(formatting?.titleFontSize, ...RESUME_RENDER_SPEC.limits.titleFontSize, defaults.titleFontSize),
+        headerFontSize: clampNumberValue(formatting?.headerFontSize, ...RESUME_RENDER_SPEC.limits.headerFontSize, defaults.headerFontSize),
+        subHeaderFontSize: clampNumberValue(formatting?.subHeaderFontSize, ...RESUME_RENDER_SPEC.limits.subHeaderFontSize, defaults.subHeaderFontSize),
+        bodyFontSize: clampNumberValue(formatting?.bodyFontSize, ...RESUME_RENDER_SPEC.limits.bodyFontSize, defaults.bodyFontSize),
+        pageMarginPt: clampNumberValue(formatting?.pageMarginPt, ...RESUME_RENDER_SPEC.limits.pageMarginPt, defaults.pageMarginPt),
         paperLayoutFormat,
         innerSectionGapFormat
     };
@@ -144,14 +93,6 @@ export type ResumeRenderTokens = {
     innerSectionGapPt: number;
     sectionGapPx: number;
     innerSectionGapPx: number;
-    fieldPadding: string;
-    titlePadding: string;
-    titleStyle: React.CSSProperties;
-    headingStyle: React.CSSProperties;
-    bodyTextStyle: React.CSSProperties;
-    contactTextStyle: React.CSSProperties;
-    metaTextStyle: React.CSSProperties;
-    sectionStyle: React.CSSProperties;
 };
 
 export const buildResumeRenderTokens = (
@@ -160,8 +101,9 @@ export const buildResumeRenderTokens = (
 ): ResumeRenderTokens => {
     const formatting = normalizeResumeFormatting(formattingInput);
     const paperMetrics = paperMetricsOverride ?? PAPER_SIZES[formatting.pageSize];
-    const pageWidth = formatting.pageSize === "a4" ? "210mm" : "8.5in";
-    const pageHeight = formatting.pageSize === "a4" ? "297mm" : "11in";
+    const paperSizeSpec = RESUME_RENDER_SPEC.paperSizes[formatting.pageSize];
+    const pageWidth = paperSizeSpec.cssWidth;
+    const pageHeight = paperSizeSpec.cssHeight;
     const pageWidthPt = paperMetrics.widthPt ?? pxToPt(paperMetrics.width);
     const pageHeightPt = paperMetrics.heightPt ?? pxToPt(paperMetrics.height);
     const pageWidthPx = ptToPx(pageWidthPt);
@@ -177,84 +119,35 @@ export const buildResumeRenderTokens = (
     const subHeaderLineHeight = densityPreset.subHeaderLineHeight;
     const bodyLineHeight = densityPreset.bodyLineHeight;
     const sectionGapPt = densityPreset.sectionGapPt;
-    const innerSectionGapPt = densityPreset.innerSectionGapPt;
+    const innerDensityPreset = RESUME_DENSITY_PRESETS[formatting.innerSectionGapFormat] ?? RESUME_DENSITY_PRESETS.standard;
+    const innerSectionGapPt = innerDensityPreset.innerSectionGapPt;
     const sectionGapPx = ptToPx(sectionGapPt);
     const innerSectionGapPx = ptToPx(innerSectionGapPt);
     const titleFontSizePx = ptToPx(formatting.titleFontSize);
     const headerFontSizePx = ptToPx(formatting.headerFontSize);
     const subHeaderFontSizePx = ptToPx(formatting.subHeaderFontSize);
     const bodyFontSizePx = ptToPx(formatting.bodyFontSize);
-    const fieldPadding = `${RESUME_DOCUMENT_TYPOGRAPHY.fieldVerticalPaddingPx}px ${RESUME_DOCUMENT_TYPOGRAPHY.fieldHorizontalPaddingPx}px`;
-    const titlePadding = `${RESUME_DOCUMENT_TYPOGRAPHY.titleVerticalPaddingPx}px ${RESUME_DOCUMENT_TYPOGRAPHY.titleHorizontalPaddingPx}px`;
     const documentCssVariables = {
-        "--resume-title-font-size": ptCss(formatting.titleFontSize),
-        "--resume-header-font-size": ptCss(formatting.headerFontSize),
-        "--resume-subheader-font-size": ptCss(formatting.subHeaderFontSize),
-        "--resume-body-font-size": ptCss(formatting.bodyFontSize),
-        "--resume-section-gap": ptCss(sectionGapPt),
-        "--resume-inner-section-gap": ptCss(innerSectionGapPt),
+        "--resume-title-font-size-pt": String(formatting.titleFontSize),
+        "--resume-header-font-size-pt": String(formatting.headerFontSize),
+        "--resume-subheader-font-size-pt": String(formatting.subHeaderFontSize),
+        "--resume-body-font-size-pt": String(formatting.bodyFontSize),
+        "--resume-page-margin-pt": String(formatting.pageMarginPt),
+        "--resume-section-gap-pt": String(sectionGapPt),
+        "--resume-inner-section-gap-pt": String(innerSectionGapPt),
+        "--resume-title-font-size": pxCss(titleFontSizePx),
+        "--resume-header-font-size": pxCss(headerFontSizePx),
+        "--resume-subheader-font-size": pxCss(subHeaderFontSizePx),
+        "--resume-body-font-size": pxCss(bodyFontSizePx),
+        "--resume-section-gap": pxCss(sectionGapPx),
+        "--resume-inner-section-gap": pxCss(innerSectionGapPx),
         "--resume-title-line-height": String(titleLineHeight),
         "--resume-header-line-height": String(headerLineHeight),
         "--resume-subheader-line-height": String(subHeaderLineHeight),
         "--resume-body-line-height": String(bodyLineHeight),
         "--resume-line-height": String(bodyLineHeight),
-        "--resume-page-margin": ptCss(formatting.pageMarginPt),
-        "--resume-font-family": RESUME_DOCUMENT_TYPOGRAPHY.bodyFamily
+        "--resume-page-margin": pxCss(pageMarginPx)
     } as React.CSSProperties;
-
-    const titleStyle: React.CSSProperties = {
-        margin: "0 0 2px",
-        padding: titlePadding,
-        textAlign: "center",
-        fontSize: "var(--resume-title-font-size)",
-        lineHeight: "var(--resume-title-line-height)",
-        fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.titleFamily,
-        fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.strongWeight,
-        color: "#0f172a"
-    };
-    const headingStyle: React.CSSProperties = {
-        fontSize: "var(--resume-header-font-size)",
-        lineHeight: "var(--resume-header-line-height)",
-        margin: `0 0 ${RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingMarginBottomPx}px`,
-        paddingBottom: RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingPaddingBottomPx,
-        borderBottom: "1px solid #cbd5e1",
-        fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingFamily,
-        fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.headingWeight,
-        letterSpacing: 0,
-        textTransform: "uppercase",
-        color: "#0f172a",
-        textAlign: "left"
-    };
-    const bodyTextStyle: React.CSSProperties = {
-        fontSize: "var(--resume-body-font-size)",
-        lineHeight: "var(--resume-body-line-height)",
-        color: "#334155",
-        fontFamily: "var(--resume-font-family)",
-        fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.bodyWeight,
-        textAlign: "left",
-        whiteSpace: "pre-wrap"
-    };
-    const contactTextStyle: React.CSSProperties = {
-        fontSize: "var(--resume-body-font-size)",
-        lineHeight: "var(--resume-body-line-height)",
-        fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.contactFamily,
-        fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.contactWeight,
-        color: "#475569",
-        textAlign: "center"
-    };
-    const metaTextStyle: React.CSSProperties = {
-        fontSize: "var(--resume-subheader-font-size)",
-        lineHeight: "var(--resume-subheader-line-height)",
-        fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.contactFamily,
-        fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.metaWeight,
-        color: "#475569",
-        textAlign: "left"
-    };
-    const sectionStyle: React.CSSProperties = {
-        marginBottom: "var(--resume-section-gap)",
-        textAlign: "left",
-        width: "100%"
-    };
 
     return {
         formatting,
@@ -282,14 +175,6 @@ export const buildResumeRenderTokens = (
         sectionGapPt,
         innerSectionGapPt,
         sectionGapPx,
-        innerSectionGapPx,
-        fieldPadding,
-        titlePadding,
-        titleStyle,
-        headingStyle,
-        bodyTextStyle,
-        contactTextStyle,
-        metaTextStyle,
-        sectionStyle
+        innerSectionGapPx
     };
 };

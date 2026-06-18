@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildResumeRenderTokens } from "./formatting";
+import { RESUME_CSS_DEFAULTS, RESUME_FORMATTING_CSS } from "./rendering/formattingTokens";
 
 describe("resume formatting render tokens", () => {
     it("gives body and meta font sizes one shared meaning", () => {
@@ -15,26 +16,18 @@ describe("resume formatting render tokens", () => {
         });
 
         const documentCssVariables = tokens.documentCssVariables as Record<string, string | number>;
-        expect(documentCssVariables["--resume-body-font-size"]).toBe("11.5pt");
-        expect(documentCssVariables["--resume-subheader-font-size"]).toBe("13pt");
-        expect(documentCssVariables["--resume-header-font-size"]).toBe("17pt");
-        expect(documentCssVariables["--resume-title-font-size"]).toBe("27pt");
+        expect(documentCssVariables["--resume-body-font-size-pt"]).toBe("11.5");
+        expect(documentCssVariables["--resume-body-font-size"]).toBe("15.33px");
+        expect(documentCssVariables["--resume-subheader-font-size"]).toBe("17.33px");
+        expect(documentCssVariables["--resume-header-font-size"]).toBe("22.67px");
+        expect(documentCssVariables["--resume-title-font-size"]).toBe("36px");
         expect(documentCssVariables["--resume-title-line-height"]).toBe("1.1");
         expect(documentCssVariables["--resume-header-line-height"]).toBe("1.15");
         expect(documentCssVariables["--resume-subheader-line-height"]).toBe("1.2");
         expect(documentCssVariables["--resume-body-line-height"]).toBe("1.3");
-        expect(tokens.bodyTextStyle.fontSize).toBe("var(--resume-body-font-size)");
-        expect(tokens.bodyTextStyle.lineHeight).toBe("var(--resume-body-line-height)");
-        expect(tokens.contactTextStyle.fontSize).toBe("var(--resume-body-font-size)");
-        expect(tokens.metaTextStyle.fontSize).toBe("var(--resume-subheader-font-size)");
-        expect(tokens.metaTextStyle.lineHeight).toBe("var(--resume-subheader-line-height)");
-        expect(tokens.headingStyle.fontSize).toBe("var(--resume-header-font-size)");
-        expect(tokens.headingStyle.lineHeight).toBe("var(--resume-header-line-height)");
-        expect(tokens.titleStyle.fontSize).toBe("var(--resume-title-font-size)");
-        expect(tokens.titleStyle.lineHeight).toBe("var(--resume-title-line-height)");
         expect(tokens.bodyFontSizePx).toBeCloseTo(15.3333);
         expect(tokens.sectionGapPx).toBeCloseTo(21.3333);
-        expect(tokens.innerSectionGapPx).toBeCloseTo(16);
+        expect(tokens.innerSectionGapPx).toBeCloseTo(5.3333);
         expect(tokens.pageWidth).toBe("8.5in");
         expect(tokens.pageHeight).toBe("11in");
         expect(tokens.pageWidthPt).toBe(612);
@@ -64,5 +57,17 @@ describe("resume formatting render tokens", () => {
         expect(tokens.sectionGapPx).toBeCloseTo(16);
         expect(tokens.innerSectionGapPx).toBeCloseTo(10.6667);
         expect(tokens.paperMetrics.printName).toBe("A4");
+    });
+
+    it("loads visual defaults from the canonical CSS token source", () => {
+        expect(RESUME_CSS_DEFAULTS).toEqual({
+            titleFontSize: 24,
+            headerFontSize: 16,
+            subHeaderFontSize: 14,
+            bodyFontSize: 12,
+            pageMarginPt: 54
+        });
+        expect(RESUME_FORMATTING_CSS).toContain("--resume-standard-section-gap-pt: 12");
+        expect(RESUME_FORMATTING_CSS).toContain(".resume-page-content");
     });
 });

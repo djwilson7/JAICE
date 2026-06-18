@@ -86,7 +86,7 @@ describe('useResumeFormatting final', () => {
         act(() => { vi.advanceTimersByTime(100); });
         if (rafCb) act(() => { rafCb(performance.now()); });
 
-        expect(result.resumeChromeRootClass).toBeDefined();
+        expect(result.documentCssVariables).toBeDefined();
         
         rerender(<TestComponent p={{ ...mockProps, isLeftRailCollapsed: true }} />);
     });
