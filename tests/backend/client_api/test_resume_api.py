@@ -172,6 +172,12 @@ def test_resume_models_and_render_helpers(monkeypatch, tmp_path):
     assert width == "8.5in"
     assert height == "11in"
     assert margin == 36
+    assert "@page { size: Letter; margin: 36pt; }" in document
+    assert "height: 11in;" not in document
+    assert "padding: 36.0pt;" not in document
+    assert ".item-stack {\n            display: block;" in document
+    assert ".experience-item,\n        .education-item {\n            display: block;" in document
+    assert ".bullet-row {\n            position: relative;\n            display: block;" in document
     assert "Avery Applicant" in document
     assert "Work Experience" in document
     assert "State University" in document
@@ -222,6 +228,30 @@ def test_resume_models_and_render_helpers(monkeypatch, tmp_path):
         resume.ResumeData(fullName="", summary="", experience=[], education=[], skills=[])
     )
     assert "Your Name" in empty_doc
+
+
+def test_resume_pdf_html_applies_formatting_to_page_model():
+    payload = sample_resume_data(
+        formatting={
+            "pageSize": "letter",
+            "titleFontSize": 28,
+            "headerFontSize": 15,
+            "bodyFontSize": 11,
+            "pageMarginPt": 54,
+            "paperLayoutFormat": "relaxed",
+        }
+    )
+
+    document, width, height, page_name, margin = resume._render_resume_pdf_html(payload)
+
+    assert page_name == "Letter"
+    assert width == "8.5in"
+    assert height == "11in"
+    assert margin == 54
+    assert "@page { size: Letter; margin: 54pt; }" in document
+    assert "width: 100%;" in document
+    assert "min-height: 100%;" in document
+    assert ".experience-item,\n        .education-item,\n        .skill-row {\n            break-inside: avoid;" not in document
 
 
 @pytest.mark.asyncio

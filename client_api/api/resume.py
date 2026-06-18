@@ -149,9 +149,11 @@ class ResumeFormatting(BaseModel):
     pageSize: str = "a4"
     titleFontSize: float = 24
     headerFontSize: float = 16
+    subHeaderFontSize: float = 14
     bodyFontSize: float = 12
-    pageMarginPt: float = 42
+    pageMarginPt: float = 54
     paperLayoutFormat: str = "standard"
+    innerSectionGapFormat: str = "standard"
 
 
 class ResumeData(BaseModel):
@@ -320,11 +322,41 @@ async def resume_rewrite_suggestion_stream_endpoint(
     return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
-SECTION_GAPS = {
-    "compact": 6,
-    "standard": 10,
-    "relaxed": 16,
+RESUME_DENSITY_PRESETS = {
+    "compact": {
+        "titleLineHeight": 1.0,
+        "headerLineHeight": 1.05,
+        "subHeaderLineHeight": 1.1,
+        "bodyLineHeight": 1.1,
+        "sectionGapPt": 8,
+        "innerSectionGapPt": 4,
+    },
+    "standard": {
+        "titleLineHeight": 1.05,
+        "headerLineHeight": 1.1,
+        "subHeaderLineHeight": 1.15,
+        "bodyLineHeight": 1.2,
+        "sectionGapPt": 12,
+        "innerSectionGapPt": 8,
+    },
+    "relaxed": {
+        "titleLineHeight": 1.1,
+        "headerLineHeight": 1.15,
+        "subHeaderLineHeight": 1.2,
+        "bodyLineHeight": 1.3,
+        "sectionGapPt": 16,
+        "innerSectionGapPt": 12,
+    },
 }
+
+PAPER_SIZES_PT = {
+    "Letter": {"widthPt": 612, "heightPt": 792},
+    "A4": {"widthPt": 595.28, "heightPt": 841.89},
+}
+
+
+def _pt_to_px(value: float) -> int:
+    return round(value * 96 / 72)
 
 
 def _safe_text(value: Optional[str]) -> str:
@@ -376,9 +408,28 @@ def _paper_dimensions(page_size: str) -> tuple[str, str, str]:
 
 
 def _paper_viewport_dimensions(page_name: str) -> dict[str, int]:
-    if page_name == "Letter":
-        return {"width": 816, "height": 1056}
-    return {"width": 794, "height": 1123}
+    paper = PAPER_SIZES_PT["Letter"] if page_name == "Letter" else PAPER_SIZES_PT["A4"]
+    return {"width": _pt_to_px(paper["widthPt"]), "height": _pt_to_px(paper["heightPt"])}
+
+
+def _normalize_resume_pdf_margin_pt(value: Any) -> float:
+    try:
+        margin = float(value)
+    except (TypeError, ValueError):
+        margin = ResumeFormatting().pageMarginPt
+    return max(24, min(72, margin))
+
+
+def _normalize_resume_pdf_number(value: Any, minimum: float, maximum: float, fallback: float) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        number = fallback
+    return max(minimum, min(maximum, number))
+
+
+def _format_resume_pdf_pt(value: float) -> str:
+    return f"{value:g}pt"
 
 
 def _render_contact_items(payload: ResumeData) -> List[str]:
@@ -423,11 +474,25 @@ def _render_resume_pdf_html(
     formatting = payload.formatting or ResumeFormatting()
     page_size = formatting.pageSize if formatting.pageSize in {"a4", "letter"} else "a4"
     page_width, page_height, page_name = _paper_dimensions(page_size)
-    section_gap = SECTION_GAPS.get(formatting.paperLayoutFormat, SECTION_GAPS["standard"])
-    margin_pt = max(0, float(formatting.pageMarginPt or 0))
-    title_font = float(formatting.titleFontSize or 24)
-    header_font = float(formatting.headerFontSize or 16)
-    body_font = float(formatting.bodyFontSize or 12)
+    density = RESUME_DENSITY_PRESETS.get(formatting.paperLayoutFormat, RESUME_DENSITY_PRESETS["standard"])
+    section_gap = density["sectionGapPt"]
+    inner_section_gap = density["innerSectionGapPt"]
+    title_line_height = density["titleLineHeight"]
+    header_line_height = density["headerLineHeight"]
+    sub_header_line_height = density["subHeaderLineHeight"]
+    body_line_height = density["bodyLineHeight"]
+    margin_pt = _normalize_resume_pdf_margin_pt(formatting.pageMarginPt)
+    margin_css = _format_resume_pdf_pt(margin_pt)
+    title_font = _normalize_resume_pdf_number(formatting.titleFontSize, 18, 34, 24)
+    header_font = _normalize_resume_pdf_number(formatting.headerFontSize, 12, 22, 16)
+    sub_header_font = _normalize_resume_pdf_number(formatting.subHeaderFontSize, 10, 20, 14)
+    body_font = _normalize_resume_pdf_number(formatting.bodyFontSize, 9, 15, 12)
+    title_font_css = _format_resume_pdf_pt(title_font)
+    header_font_css = _format_resume_pdf_pt(header_font)
+    sub_header_font_css = _format_resume_pdf_pt(sub_header_font)
+    body_font_css = _format_resume_pdf_pt(body_font)
+    section_gap_css = _format_resume_pdf_pt(section_gap)
+    inner_section_gap_css = _format_resume_pdf_pt(inner_section_gap)
     section_titles = payload.sectionTitles or ResumeSectionTitles()
 
     sections = []
@@ -543,8 +608,21 @@ def _render_resume_pdf_html(
     css = f"""
         {_font_face_css()}
         /* Canvas-first typography: mirrors client/pages/Resume/resumeTypography.ts. */
-        @page {{ size: {page_name}; margin: 0; }}
+        @page {{ size: {page_name}; margin: {margin_css}; }}
         html, body {{
+            --resume-title-font-size: {title_font_css};
+            --resume-header-font-size: {header_font_css};
+            --resume-subheader-font-size: {sub_header_font_css};
+            --resume-body-font-size: {body_font_css};
+            --resume-section-gap: {section_gap_css};
+            --resume-inner-section-gap: {inner_section_gap_css};
+            --resume-title-line-height: {title_line_height:g};
+            --resume-header-line-height: {header_line_height:g};
+            --resume-subheader-line-height: {sub_header_line_height:g};
+            --resume-body-line-height: {body_line_height:g};
+            --resume-line-height: {body_line_height:g};
+            --resume-page-margin: {margin_css};
+            --resume-font-family: "Libre Baskerville", serif;
             margin: 0;
             padding: 0;
             background: #ffffff;
@@ -554,33 +632,32 @@ def _render_resume_pdf_html(
         }}
         * {{ box-sizing: border-box; }}
         body {{
-            font-family: "Libre Baskerville", serif;
-            font-size: {body_font}px;
-            line-height: 1.38;
+            font-family: var(--resume-font-family);
+            font-size: var(--resume-body-font-size);
+            line-height: var(--resume-body-line-height);
             text-align: left;
         }}
         .page {{
-            width: {page_width};
-            height: {page_height};
-            min-height: {page_height};
-            padding: {margin_pt}pt;
+            width: 100%;
+            min-height: 100%;
+            padding: 0;
             box-sizing: border-box;
             background: #ffffff;
             overflow: visible;
         }}
         .resume-section {{
             width: 100%;
-            margin: 0 0 {section_gap}px;
+            margin: 0 0 var(--resume-section-gap);
             text-align: left;
             break-inside: auto;
         }}
         .resume-section h2 {{
             break-after: avoid;
+            page-break-after: avoid;
         }}
-        .experience-item,
-        .education-item,
         .skill-row {{
             break-inside: avoid;
+            page-break-inside: avoid;
         }}
         .final-section {{ margin-bottom: 0; }}
         h1 {{
@@ -588,10 +665,10 @@ def _render_resume_pdf_html(
             padding: 4px 6px;
             text-align: center;
             font-family: Poppins, Arial, sans-serif;
-            font-size: {title_font}px;
+            font-size: var(--resume-title-font-size);
             font-weight: 700;
             font-style: normal;
-            line-height: 1;
+            line-height: var(--resume-title-line-height);
             color: #0f172a;
         }}
         .contact-strip {{
@@ -602,9 +679,9 @@ def _render_resume_pdf_html(
             padding: 2px 6px 0;
             color: #475569;
             font-family: Poppins, Arial, sans-serif;
-            font-size: {body_font}px;
+            font-size: var(--resume-body-font-size);
             font-weight: 500;
-            line-height: 1.2;
+            line-height: var(--resume-body-line-height);
             white-space: nowrap;
         }}
         .contact-row {{
@@ -625,10 +702,10 @@ def _render_resume_pdf_html(
             padding: 0 0 2px;
             border-bottom: 1px solid #cbd5e1;
             font-family: Poppins, Arial, sans-serif;
-            font-size: {header_font}px;
+            font-size: var(--resume-header-font-size);
             font-weight: 700;
             font-style: normal;
-            line-height: 1.1;
+            line-height: var(--resume-header-line-height);
             letter-spacing: 0;
             text-align: left;
             text-transform: uppercase;
@@ -638,20 +715,28 @@ def _render_resume_pdf_html(
             margin: 0;
             padding: 2px 6px;
             color: #334155;
-            font-family: "Libre Baskerville", serif;
-            font-size: {body_font}px;
+            font-family: var(--resume-font-family);
+            font-size: var(--resume-body-font-size);
             font-weight: 400;
             font-style: normal;
-            line-height: 1.45;
+            line-height: var(--resume-body-line-height);
             text-align: left;
             white-space: pre-wrap;
         }}
         .item-stack {{
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            display: block;
         }}
-        .education-stack {{ gap: 6px; }}
+        .experience-item,
+        .education-item {{
+            display: block;
+            margin: 0 0 var(--resume-inner-section-gap);
+            break-inside: auto;
+            page-break-inside: auto;
+        }}
+        .experience-item:last-child,
+        .education-item:last-child {{
+            margin-bottom: 0;
+        }}
         .meta-row {{
             display: flex;
             align-items: baseline;
@@ -662,10 +747,14 @@ def _render_resume_pdf_html(
             margin: 0;
             color: #475569;
             font-family: Poppins, Arial, sans-serif;
-            font-size: {body_font}px;
+            font-size: var(--resume-subheader-font-size);
             font-weight: 500;
             font-style: normal;
-            line-height: 1.25;
+            line-height: var(--resume-subheader-line-height);
+            break-inside: avoid;
+            page-break-inside: avoid;
+            break-after: avoid;
+            page-break-after: avoid;
         }}
         .experience-row {{ margin-bottom: 10px; }}
         .education-row {{ margin-bottom: 0; }}
@@ -709,48 +798,49 @@ def _render_resume_pdf_html(
             font-style: normal;
         }}
         .bullet-stack {{
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
+            display: block;
             margin: 0 0 0 12px;
         }}
         .education-details {{
             margin-top: 2px;
         }}
         .bullet-row {{
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
+            position: relative;
+            display: block;
+            margin: 0 0 2px;
+            padding-left: 16px;
+            break-inside: auto;
+            page-break-inside: auto;
         }}
         .bullet-marker {{
-            display: inline-block;
-            flex: 0 0 auto;
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: block;
             padding: 2px 0;
             color: #475569;
-            font-family: "Libre Baskerville", serif;
-            font-size: {body_font}px;
+            font-family: var(--resume-font-family);
+            font-size: var(--resume-body-font-size);
             font-weight: 400;
             font-style: normal;
-            line-height: 1.38;
+            line-height: var(--resume-body-line-height);
         }}
         .bullet-text {{
+            display: block;
             min-width: 0;
-            flex: 1 1 auto;
             padding: 2px 6px;
             color: #334155;
-            font-family: "Libre Baskerville", serif;
-            font-size: {body_font}px;
+            font-family: var(--resume-font-family);
+            font-size: var(--resume-body-font-size);
             font-weight: 400;
             font-style: normal;
-            line-height: 1.38;
+            line-height: var(--resume-body-line-height);
             text-align: left;
             white-space: pre-wrap;
             overflow-wrap: break-word;
         }}
         .skill-stack {{
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            display: block;
         }}
         .skill-row {{
             display: flex;
@@ -758,28 +848,30 @@ def _render_resume_pdf_html(
             justify-content: flex-start;
             gap: 6px;
             color: #334155;
-            font-family: "Libre Baskerville", serif;
-            font-size: {body_font}px;
+            font-family: var(--resume-font-family);
+            font-size: var(--resume-body-font-size);
             font-weight: 400;
             font-style: normal;
-            line-height: 1.38;
+            line-height: var(--resume-body-line-height);
             text-align: left;
+            margin: 0 0 var(--resume-inner-section-gap);
         }}
         .skill-category {{
             flex: 0 0 auto;
             padding: 2px 6px;
             color: #0f172a;
             font-family: Poppins, Arial, sans-serif;
+            font-size: var(--resume-subheader-font-size);
             font-weight: 700;
             font-style: normal;
-            line-height: 1.25;
+            line-height: var(--resume-subheader-line-height);
             text-align: left;
         }}
         .skill-colon {{
             flex: 0 0 auto;
             padding-top: 4px;
             color: #0f172a;
-            font-family: "Libre Baskerville", serif;
+            font-family: var(--resume-font-family);
             font-weight: 700;
             font-style: normal;
             line-height: 1;
@@ -1264,8 +1356,8 @@ async def export_resume_pdf(
                 f"resolved_page_name={page_name}, "
                 f"viewport={viewport['width']}x{viewport['height']}, "
                 f"pdf_width={page_width}, pdf_height={page_height}, "
-                f"page_padding={page_padding_pt}pt, "
-                "css_page_margin=0, playwright_pdf_margin=0"
+                f"page_margin={_format_resume_pdf_pt(page_padding_pt)}, "
+                f"css_page_margin={_format_resume_pdf_pt(page_padding_pt)}, playwright_pdf_margin=0"
             )
             logging.info(f"Resume PDF debug HTML saved to {html_path}")
 
@@ -1565,7 +1657,7 @@ async def export_resume_pdf(
                                     resolvedPageWidth: %s,
                                     resolvedPageHeight: %s,
                                     resolvedPagePaddingPt: %s,
-                                    cssPageMargin: "0",
+                                    cssPageMargin: %s,
                                     playwrightPdfMargin: {
                                         top: "0",
                                         right: "0",
@@ -1597,6 +1689,7 @@ async def export_resume_pdf(
                             json.dumps(page_width),
                             json.dumps(page_height),
                             json.dumps(page_padding_pt),
+                            json.dumps(_format_resume_pdf_pt(page_padding_pt)),
                         )
                     )
                     logging.info(f"Resume PDF debug screenshot saved to {screenshot_path}")
