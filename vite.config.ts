@@ -2,11 +2,27 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import fs from 'fs'
 import tailwindcss from '@tailwindcss/vite' // Tailwind CSS plugin for Vite
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    {
+      name: 'resume-formatting-css-tokens',
+      enforce: 'pre',
+      resolveId(source) {
+        if (source === 'virtual:resume-formatting-tokens') return '\0resume-formatting-tokens'
+        return null
+      },
+      load(id) {
+        if (id !== '\0resume-formatting-tokens') return null
+        const cssPath = path.resolve(__dirname, 'common/resume_render/formatting.css')
+        this.addWatchFile(cssPath)
+        const css = fs.readFileSync(cssPath, 'utf8')
+        return `export default ${JSON.stringify(css)}`
+      },
+    },
     react(), 
     tailwindcss(),
   ],
