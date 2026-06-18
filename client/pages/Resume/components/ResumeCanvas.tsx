@@ -18,6 +18,7 @@ type ResumeCanvasProps = {
     documentCssVariables: React.CSSProperties;
     resumePageCount: number;
     resumePageStride: number;
+    resumePageBreakOffset?: number;
     isPageFormatPreviewVisible: boolean;
     isMarginPreviewVisible: boolean;
     isPagePreviewMode?: boolean;
@@ -44,6 +45,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     documentCssVariables,
     resumePageCount,
     resumePageStride,
+    resumePageBreakOffset = 0,
     isPageFormatPreviewVisible,
     isMarginPreviewVisible,
     isPagePreviewMode = false,
@@ -110,7 +112,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                                     key={guideIndex}
                                     className="resume-canvas-page-guide absolute"
                                     style={{
-                                        top: `${(guideIndex + 1) * resumePageStride}px`
+                                        top: `${resumePageBreakOffset + (guideIndex + 1) * resumePageStride}px`
                                     }}
                                 >
                                     <div className="resume-canvas-page-guide-line" />
@@ -127,7 +129,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                         )}
                         <div
                             id="print-canvas"
-                            className={`text-[#0f172a] box-border relative z-10 transition-shadow duration-300 ${
+                            className={`resume-formatting-context resume-canvas-document text-[#0f172a] box-border relative z-10 transition-shadow duration-300 ${
                                 isPagePreviewMode
                                     ? "bg-transparent shadow-none border-none rounded-none"
                                     : "flex flex-col bg-white shadow-[0_26px_70px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,255,255,0.08)] border border-white/80 rounded-sm print:h-auto"
@@ -138,9 +140,6 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                                 ...documentCssVariables,
                                 width: `${canvasWidth}px`,
                                 minHeight: `${canvasHeight}px`,
-                                fontFamily: "var(--resume-font-family)",
-                                fontSize: "var(--resume-body-font-size)",
-                                padding: 0
                             }}
                         >
                             {isPagePreviewMode ? pagePreviewContent : (
@@ -157,17 +156,16 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                             )}
                             {isMarginPreviewVisible && (
                                 <div className="resume-margin-preview">
-                                    <div className="resume-margin-preview-band" style={{ left: 0, right: 0, top: 0, height: "var(--resume-page-margin)" }} />
-                                    <div className="resume-margin-preview-band" style={{ left: 0, right: 0, bottom: 0, height: "var(--resume-page-margin)" }} />
-                                    <div className="resume-margin-preview-band" style={{ left: 0, top: "var(--resume-page-margin)", bottom: "var(--resume-page-margin)", width: "var(--resume-page-margin)" }} />
-                                    <div className="resume-margin-preview-band" style={{ right: 0, top: "var(--resume-page-margin)", bottom: "var(--resume-page-margin)", width: "var(--resume-page-margin)" }} />
-                                    <div className="resume-margin-preview-content" style={{ inset: "var(--resume-page-margin)" }} />
+                                    <div className="resume-margin-preview-band resume-margin-preview-band--top" />
+                                    <div className="resume-margin-preview-band resume-margin-preview-band--bottom" />
+                                    <div className="resume-margin-preview-band resume-margin-preview-band--left" />
+                                    <div className="resume-margin-preview-band resume-margin-preview-band--right" />
+                                    <div className="resume-margin-preview-content" />
                                 </div>
                             )}
                             <div
                                 ref={handleContentRef}
-                                className="relative z-10"
-                                style={{ padding: "var(--resume-page-margin)" }}
+                                className="resume-page-content resume-canvas-document-content relative z-10"
                             >
                             {children}                            </div>
                             </>

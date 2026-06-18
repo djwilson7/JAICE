@@ -6,8 +6,6 @@ type ResumePdfPreviewProps = {
     documentTitle: string;
     isGeneratingPdfPreview: boolean;
     viewportStyle: React.CSSProperties;
-    headerActionButtonClass: string;
-    headerActionIconClass: string;
     onBackToEdit: () => void;
 };
 
@@ -17,8 +15,6 @@ export const ResumePdfPreview: React.FC<ResumePdfPreviewProps> = ({
     documentTitle,
     isGeneratingPdfPreview,
     viewportStyle,
-    headerActionButtonClass,
-    headerActionIconClass,
     onBackToEdit
 }) => (
     <div
@@ -31,11 +27,11 @@ export const ResumePdfPreview: React.FC<ResumePdfPreviewProps> = ({
                     <button
                         type="button"
                         onClick={onBackToEdit}
-                        className={`${headerActionButtonClass} ${isLightMode ? "text-slate-600 hover:text-slate-950" : "text-slate-400 hover:text-slate-100"}`}
+                        className={`resume-action-button ${isLightMode ? "text-slate-600 hover:text-slate-950" : "text-slate-400 hover:text-slate-100"}`}
                         title="Back to editing"
                         aria-label="Back to editing"
                     >
-                        <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4">
+                        <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 6 9 12l6 6" />
                         </svg>
                     </button>

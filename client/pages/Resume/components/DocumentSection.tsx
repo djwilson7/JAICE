@@ -47,11 +47,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             </div>
             {showGapPreview && gapPreviewHeight > 0 && (
                 <div
-                    className="resume-section-gap-preview"
-                    style={{
-                        height: `${gapPreviewHeight}px`,
-                        bottom: `-${gapPreviewHeight}px`
-                    }}
+                    className="resume-section-gap-preview resume-section-gap-preview--section"
                 />
             )}
         </section>

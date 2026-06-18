@@ -52,7 +52,6 @@ type ExperienceBulletTagsProps = {
     tags: ResumeTag[];
     isEditing: boolean;
     focusPath: string;
-    textStyle: React.CSSProperties;
     onSectionHoverChange: (isHovering: boolean) => void;
     onToggleTag: (tagId: string) => void;
     onCreateTag: (name: string) => void;
@@ -67,7 +66,6 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
     tags,
     isEditing,
     focusPath,
-    textStyle,
     onSectionHoverChange,
     onToggleTag,
     onCreateTag,
@@ -204,8 +202,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
         >
             <button
                 type="button"
-                className="resume-tag-trigger group/tag-trigger inline-flex w-full items-start justify-start text-left font-normal leading-tight"
-                style={{ fontFamily: textStyle.fontFamily || "var(--font-body)" }}
+                className="resume-tag-trigger resume-bullet-tag-menu group/tag-trigger inline-flex w-full items-start justify-start text-left font-normal leading-tight"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={openMenu}
                 aria-label="Edit bullet tags"

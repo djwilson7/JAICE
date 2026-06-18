@@ -1,9 +1,17 @@
 import React from "react";
 import type { FontPreviewTarget, PaperMetrics, ResumeData, ResumeFormatting } from "../types";
 import { buildResumeRenderTokens } from "../formatting";
-import { getSectionTitle, hasText } from "../resumeData";
-import { RESUME_DOCUMENT_TYPOGRAPHY } from "../resumeTypography";
-import { ptToPx, pxToPt } from "../utils/documentUnits";
+import { RESUME_CSS_LAYOUT } from "../rendering/formattingTokens";
+import { pxCss, pxToPt } from "../utils/documentUnits";
+import { buildResumeRenderModel } from "../rendering/renderModel";
+import {
+    canSplitIntoHeight,
+    estimateWrappedTextHeight,
+    outerHeightPx,
+    paginateSegments,
+    splitWordsForHeight,
+    type PageSegment
+} from "../rendering/pagination";
 
 type ResumePagedPreviewProps = {
     resumeData: ResumeData;
@@ -21,19 +29,10 @@ type ResumePagedPreviewProps = {
     onRenderedPageCountChange: (pageCount: number) => void;
 };
 
-type PageSegment = {
-    id: string;
-    estimatedHeight: number;
-    render: (key: string) => React.ReactNode;
-    split?: (availableHeight: number) => { head: PageSegment | null; tail: PageSegment | null };
-};
-
 type MeasuredSegmentHeightsState = {
     layoutKey: string;
     heights: Record<string, number>;
 };
-
-const MIN_SPLITTABLE_TEXT_HEIGHT_PT = 18;
 
 const renderMeasuredSegment = (segment: PageSegment, key: string) => {
     const node = segment.render(key);
@@ -51,102 +50,6 @@ const renderMeasuredSegment = (segment: PageSegment, key: string) => {
     );
 };
 
-const estimateWrappedTextHeight = (text: string, widthPt: number, fontSizePt: number, lineHeight: number, verticalPaddingPt = 0) => {
-    const averageCharacterWidth = fontSizePt * 0.62;
-    const charactersPerLine = Math.max(12, Math.floor(widthPt / averageCharacterWidth));
-    const lineCount = Math.max(1, Math.ceil(String(text || " ").length / charactersPerLine));
-    return lineCount * fontSizePt * lineHeight + verticalPaddingPt;
-};
-
-const splitWordsForHeight = (
-    text: string,
-    availableHeight: number,
-    widthPt: number,
-    fontSizePt: number,
-    lineHeight: number,
-    verticalPaddingPt = 0
-) => {
-    const words = text.trim().split(/\s+/).filter(Boolean);
-    if (words.length <= 1) return { head: "", tail: text };
-
-    let low = 1;
-    let high = words.length - 1;
-    let best = 0;
-
-    while (low <= high) {
-        const mid = Math.floor((low + high) / 2);
-        const candidate = words.slice(0, mid).join(" ");
-        const height = estimateWrappedTextHeight(candidate, widthPt, fontSizePt, lineHeight, verticalPaddingPt);
-        if (height <= availableHeight) {
-            best = mid;
-            low = mid + 1;
-        } else {
-            high = mid - 1;
-        }
-    }
-
-    if (best <= 0) return { head: "", tail: text };
-    return {
-        head: words.slice(0, best).join(" "),
-        tail: words.slice(best).join(" ")
-    };
-};
-
-const canSplitIntoHeight = (availableHeight: number) => availableHeight >= MIN_SPLITTABLE_TEXT_HEIGHT_PT;
-
-const paginateSegments = (segments: PageSegment[], pageContentHeight: number) => {
-    const pages: PageSegment[][] = [];
-    let currentPage: PageSegment[] = [];
-    let remainingHeight = pageContentHeight;
-    const queue = [...segments];
-
-    const finishPage = () => {
-        pages.push(currentPage);
-        currentPage = [];
-        remainingHeight = pageContentHeight;
-    };
-
-    while (queue.length > 0) {
-        const segment = queue.shift();
-        if (!segment) continue;
-
-        if (segment.estimatedHeight <= remainingHeight || currentPage.length === 0) {
-            if (segment.estimatedHeight > remainingHeight && segment.split) {
-                const { head, tail } = segment.split(remainingHeight);
-                if (!head && tail && currentPage.length === 0) {
-                    currentPage.push(tail);
-                    remainingHeight = 0;
-                    continue;
-                }
-                if (head) currentPage.push(head);
-                finishPage();
-                if (tail) queue.unshift(tail);
-                continue;
-            }
-
-            currentPage.push(segment);
-            remainingHeight -= Math.min(segment.estimatedHeight, remainingHeight);
-            continue;
-        }
-
-        if (segment.split) {
-            const { head, tail } = segment.split(remainingHeight);
-            if (head) currentPage.push(head);
-            finishPage();
-            if (tail) queue.unshift(tail);
-            continue;
-        }
-
-        finishPage();
-        queue.unshift(segment);
-    }
-
-    if (currentPage.length > 0 || pages.length === 0) {
-        pages.push(currentPage);
-    }
-
-    return pages;
-};
 
 export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
     resumeData,
@@ -169,9 +72,8 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         heights: {}
     });
     const renderTokens = buildResumeRenderTokens(formatting, paperMetrics);
+    const renderModel = buildResumeRenderModel(resumeData);
     const {
-        contentWidth,
-        contentHeight,
         contentWidthPt,
         contentHeightPt,
         sectionGapPt: sectionGap,
@@ -180,49 +82,26 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         headerLineHeight,
         subHeaderLineHeight,
         bodyLineHeight,
-        documentCssVariables,
-        fieldPadding,
-        titlePadding,
-        headingStyle,
-        bodyTextStyle,
-        contactTextStyle,
-        metaTextStyle
+        documentCssVariables
     } = renderTokens;
-    const fieldPaddingPx = RESUME_DOCUMENT_TYPOGRAPHY.fieldVerticalPaddingPx * 2;
+    const fieldPaddingPx = RESUME_CSS_LAYOUT.fieldVerticalPaddingPx * 2;
     const fieldPaddingPt = pxToPt(fieldPaddingPx);
     const headingHeight =
         renderTokens.formatting.headerFontSize * headerLineHeight +
-        pxToPt(RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingPaddingBottomPx) +
-        pxToPt(RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingMarginBottomPx) +
+        pxToPt(RESUME_CSS_LAYOUT.sectionHeadingPaddingBottomPx) +
+        pxToPt(RESUME_CSS_LAYOUT.sectionHeadingMarginBottomPx) +
         pxToPt(1);
 
-    const hiddenContactFields = new Set(resumeData.hiddenContactFields || []);
-    const contactItems = [
-        !hiddenContactFields.has("location") ? resumeData.location : "",
-        !hiddenContactFields.has("phone") ? resumeData.phone : "",
-        !hiddenContactFields.has("email") ? resumeData.email : "",
-        !hiddenContactFields.has("linkedin") ? resumeData.linkedin : "",
-        !hiddenContactFields.has("website") ? resumeData.website : "",
-        !hiddenContactFields.has("github") ? resumeData.github : "",
-        ...(resumeData.customContact || []).map((field) => field.value)
-    ].map((item) => String(item || "").trim()).filter(Boolean);
-    const contactRows: string[][] = [];
-    for (let i = 0; i < contactItems.length; i += 3) {
-        contactRows.push(contactItems.slice(i, i + 3));
-    }
+    const contactRows = renderModel.contactRows;
 
-    const sectionStyle: React.CSSProperties = {
-        marginBottom: 0,
-        textAlign: "left",
-        width: "100%"
-    };
-    const textWidthPt = Math.max(1, contentWidthPt - pxToPt(RESUME_DOCUMENT_TYPOGRAPHY.fieldHorizontalPaddingPx * 2));
-    const bulletTextWidthPt = Math.max(1, textWidthPt - pxToPt(RESUME_DOCUMENT_TYPOGRAPHY.bulletIndentPx + RESUME_DOCUMENT_TYPOGRAPHY.bulletGapPx) - renderTokens.formatting.bodyFontSize);
+    const textWidthPt = Math.max(1, contentWidthPt - pxToPt(RESUME_CSS_LAYOUT.fieldHorizontalPaddingPx * 2));
+    const bulletTextWidthPt = Math.max(1, textWidthPt - pxToPt(RESUME_CSS_LAYOUT.bulletIndentPx + RESUME_CSS_LAYOUT.bulletGapPx) - renderTokens.formatting.bodyFontSize);
 
     const makeHeadingSegment = (id: string, title: string): PageSegment => ({
         id,
         estimatedHeight: headingHeight,
-        render: (key) => <h2 key={key} className="resume-header-font-target resume-document__section-title" style={headingStyle}>{title}</h2>
+        keepWithNext: true,
+        render: (key) => <h2 key={key} className="resume-document__section-title resume-font--heading resume-header-font-target">{title}</h2>
     });
 
     const makeParagraphSegment = (id: string, text: string): PageSegment => {
@@ -230,7 +109,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         return {
             id,
             estimatedHeight,
-            render: (key) => <p key={key} className="resume-body-font-target resume-document__body" style={{ ...bodyTextStyle, margin: 0, padding: fieldPadding }}>{text}</p>,
+            render: (key) => <p key={key} className="resume-document__body resume-font--body resume-body-font-target">{text}</p>,
             split: (availableHeight) => {
                 const split = splitWordsForHeight(text, availableHeight, textWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
                 return {
@@ -247,30 +126,19 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
             id,
             estimatedHeight,
             render: (key) => (
-                <div key={key} className="resume-diagnostic-bullet-row" data-resume-diagnostic="bullet-row" style={{ display: "flex", alignItems: "flex-start", gap: RESUME_DOCUMENT_TYPOGRAPHY.bulletGapPx, marginLeft: RESUME_DOCUMENT_TYPOGRAPHY.bulletIndentPx }}>
-                    <span className="resume-body-font-target resume-document__body" style={{ ...bodyTextStyle, display: "inline-block", flexShrink: 0, padding: `${RESUME_DOCUMENT_TYPOGRAPHY.fieldVerticalPaddingPx}px 0`, color: "#475569" }}>&bull;</span>
-                    <div className="resume-body-font-target resume-document__body" style={{ ...bodyTextStyle, flex: "1 1 auto", minWidth: 0, padding: fieldPadding, wordBreak: "break-word" }}>{text}</div>
+                <div key={key} className="resume-document__bullet-row resume-document__bullet-row--paginated resume-diagnostic-bullet-row" data-resume-diagnostic="bullet-row">
+                    <span className="resume-document__bullet-marker resume-font--body resume-body-font-target">&bull;</span>
+                    <div className="resume-document__body resume-document__bullet-text resume-font--body resume-body-font-target">{text}</div>
                 </div>
-            ),
-            split: (availableHeight) => {
-                if (!canSplitIntoHeight(availableHeight)) {
-                    return { head: null, tail: makeBulletSegment(id, text) };
-                }
-
-                const split = splitWordsForHeight(text, availableHeight, bulletTextWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
-                return {
-                    head: split.head ? makeBulletSegment(`${id}-head`, split.head) : null,
-                    tail: split.tail ? makeBulletSegment(`${id}-tail`, split.tail) : null
-                };
-            }
+            )
         };
     };
 
     const makeSkillSegment = (id: string, category: string, items: string[]): PageSegment => {
-        const visibleItems = items.filter(hasText);
+        const visibleItems = items.filter(Boolean);
         const itemsText = visibleItems.join(", ");
         const text = `${category || ""}${category && itemsText ? ": " : ""}${itemsText}`;
-        const categoryWidth = hasText(category)
+        const categoryWidth = category
             ? estimateWrappedTextHeight(category, textWidthPt, renderTokens.formatting.subHeaderFontSize, subHeaderLineHeight, fieldPaddingPt)
             : 0;
         const estimatedHeight = Math.max(
@@ -282,10 +150,10 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
             id,
             estimatedHeight,
         render: (key) => (
-                <div key={key} style={{ ...bodyTextStyle, display: "flex", alignItems: "flex-start", justifyContent: "flex-start", gap: RESUME_DOCUMENT_TYPOGRAPHY.metaGroupGapPx }}>
-                    {hasText(category) && <strong className="resume-subheader-font-target resume-document__meta" style={{ ...metaTextStyle, flexShrink: 0, padding: fieldPadding, color: "#0f172a", fontWeight: 700 }}>{category}</strong>}
-                    {hasText(category) && visibleItems.length > 0 && <span style={{ flexShrink: 0, paddingTop: 4, fontWeight: 700, lineHeight: 1, color: "#0f172a" }}>:</span>}
-                    <span className="resume-body-font-target resume-document__body" style={{ minWidth: 0, padding: fieldPadding }}>{itemsText}</span>
+                <div key={key} className="resume-document__skill-row resume-font--body">
+                    {category && <strong className="resume-document__skill-category resume-font--subheading resume-subheader-font-target">{category}</strong>}
+                    {category && visibleItems.length > 0 && <span className="resume-document__skill-colon">:</span>}
+                    <span className="resume-document__skill-items resume-font--body resume-body-font-target">{itemsText}</span>
                 </div>
             ),
             split: (availableHeight) => {
@@ -302,19 +170,13 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         };
     };
 
-    const makeGapSegment = (id: string, height: number): PageSegment => ({
+    const makeGapSegment = (id: string, height: number, inner = false): PageSegment => ({
         id,
         estimatedHeight: height,
         render: (key) => (
-            <div key={key} style={{ height: ptToPx(height), position: "relative" }}>
+            <div key={key} className={`resume-document__gap${inner ? " resume-document__gap--inner" : ""}`}>
                 {isSectionGapPreviewVisible && (
-                    <div
-                        className="resume-section-gap-preview"
-                        style={{
-                            height: `${ptToPx(height)}px`,
-                            top: 0
-                        }}
-                    />
+                    <div className="resume-section-gap-preview" />
                 )}
             </div>
         )
@@ -322,50 +184,26 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
 
     const segments: PageSegment[] = (() => {
         const nextSegments: PageSegment[] = [];
-        const subHeaderFieldStyle = (weight: React.CSSProperties["fontWeight"], color: string): React.CSSProperties => ({
-            ...metaTextStyle,
-            flexShrink: 0,
-            padding: fieldPadding,
-            color,
-            fontWeight: weight
-        });
-        const contactFieldStyle: React.CSSProperties = {
-            ...contactTextStyle,
-            flexShrink: 0
-        };
-
         nextSegments.push({
             id: "header",
             estimatedHeight:
                 renderTokens.formatting.titleFontSize * titleLineHeight +
-                pxToPt(RESUME_DOCUMENT_TYPOGRAPHY.titleVerticalPaddingPx * 2) +
+                pxToPt(RESUME_CSS_LAYOUT.titleVerticalPaddingPx * 2) +
                 contactRows.length * renderTokens.formatting.bodyFontSize * bodyLineHeight +
-                pxToPt(Math.max(0, contactRows.length - 1) * RESUME_DOCUMENT_TYPOGRAPHY.contactStackGapPx),
+                pxToPt(Math.max(0, contactRows.length - 1) * RESUME_CSS_LAYOUT.contactStackGapPx),
             render: (key) => (
-                <section key={key} style={sectionStyle}>
-                    <h1
-                        className="resume-title-font-target resume-document__title"
-                        style={{
-                            margin: "0 0 2px",
-                            padding: titlePadding,
-                            textAlign: "center",
-                            fontSize: "var(--resume-title-font-size)",
-                            lineHeight: "var(--resume-title-line-height)",
-                            fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.titleFamily,
-                            fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.strongWeight,
-                            color: "#0f172a"
-                        }}
-                    >
-                        {resumeData.fullName || "Your Name"}
+                <section key={key} className="resume-document__segment-section">
+                    <h1 className="resume-document__title resume-font--title resume-title-font-target">
+                        {renderModel.fullName}
                     </h1>
                     {contactRows.length > 0 && (
-                        <div className="resume-body-font-target resume-document__body" style={{ ...contactTextStyle, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: RESUME_DOCUMENT_TYPOGRAPHY.contactStackGapPx }}>
+                        <div className="resume-document__contact-strip resume-font--contact resume-body-font-target">
                             {contactRows.map((row, rowIndex) => (
-                                <div className="resume-body-font-target resume-document__body" key={`contact-row-${rowIndex}`} style={{ ...contactTextStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: RESUME_DOCUMENT_TYPOGRAPHY.contactRowGapPx, flexWrap: "wrap" }}>
+                                <div className="resume-document__contact-row" key={`contact-row-${rowIndex}`}>
                                     {row.map((item, index) => (
                                         <React.Fragment key={`${item}-${index}`}>
-                                            {index > 0 && <span className="resume-body-font-target resume-document__body" style={{ ...contactFieldStyle, color: "#cbd5e1" }}>&bull;</span>}
-                                            <span className="resume-body-font-target resume-document__body" style={contactFieldStyle}>{item}</span>
+                                            {index > 0 && <span className="resume-document__separator">&bull;</span>}
+                                            <span>{item}</span>
                                         </React.Fragment>
                                     ))}
                                 </div>
@@ -376,71 +214,43 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
             )
         });
 
-        if (
-            resumeData.summary ||
-            (resumeData.experience || []).some((exp) =>
-                hasText(exp.jobTitle) ||
-                hasText(exp.company) ||
-                hasText(exp.location) ||
-                hasText(exp.startDate) ||
-                hasText(exp.endDate) ||
-                (exp.bullets || []).some((bullet) => hasText(bullet.text))
-            ) ||
-            (resumeData.education || []).some((ed) =>
-                hasText(ed.degree) ||
-                hasText(ed.school) ||
-                hasText(ed.startDate) ||
-                hasText(ed.endDate) ||
-                (ed.details || []).some((detail) => hasText(detail.text))
-            ) ||
-            (resumeData.skills || []).some((skill) => hasText(skill.category) || (skill.items || []).some(hasText))
-        ) {
+        if (renderModel.summary || renderModel.experience.length || renderModel.education.length || renderModel.skills.length) {
             nextSegments.push(makeGapSegment("header-gap", sectionGap));
         }
 
-        if (resumeData.summary) {
-            nextSegments.push(makeHeadingSegment("summary-heading", getSectionTitle(resumeData, "summary")));
-            nextSegments.push(makeParagraphSegment("summary-body", resumeData.summary));
+        if (renderModel.summary) {
+            nextSegments.push(makeHeadingSegment("summary-heading", renderModel.summary.title));
+            nextSegments.push(makeParagraphSegment("summary-body", renderModel.summary.text));
             nextSegments.push(makeGapSegment("summary-gap", sectionGap));
         }
 
-        const visibleExperience = (resumeData.experience || []).filter((exp) =>
-            hasText(exp.jobTitle) ||
-            hasText(exp.company) ||
-            hasText(exp.location) ||
-            hasText(exp.startDate) ||
-            hasText(exp.endDate) ||
-            (exp.bullets || []).some((bullet) => hasText(bullet.text))
-        );
+        const visibleExperience = renderModel.experience;
         if (visibleExperience.length > 0) {
-            nextSegments.push(makeHeadingSegment("experience-heading", getSectionTitle(resumeData, "experience")));
+            nextSegments.push(makeHeadingSegment("experience-heading", visibleExperience[0].title));
             visibleExperience.forEach((exp, expIndex) => {
-                const metaFields = [
-                    { value: exp.jobTitle, weight: 700, color: "#0f172a" },
-                    { value: exp.company, weight: 600, color: "#1f2937" },
-                    { value: exp.location, weight: 600, color: "#475569" }
-                ].filter((field) => hasText(field.value));
-                const dateFields = [exp.startDate, exp.endDate].filter(hasText);
+                const metaFields = exp.meta;
+                const dateFields = exp.dates;
                 if (metaFields.length > 0 || dateFields.length > 0) {
                     nextSegments.push({
                         id: `${exp.id}-meta`,
-                        estimatedHeight: renderTokens.formatting.subHeaderFontSize * subHeaderLineHeight + fieldPaddingPt + pxToPt(RESUME_DOCUMENT_TYPOGRAPHY.metaRowToBulletGapPx),
+                        estimatedHeight: renderTokens.formatting.subHeaderFontSize * subHeaderLineHeight + fieldPaddingPt + pxToPt(RESUME_CSS_LAYOUT.metaRowToBulletGapPx),
+                        keepWithNext: exp.bullets.length > 0,
                         render: (key) => (
-                            <div key={key} className="resume-subheader-font-target resume-document__meta" style={{ ...metaTextStyle, display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: `${RESUME_DOCUMENT_TYPOGRAPHY.dateGroupGapPx}px ${RESUME_DOCUMENT_TYPOGRAPHY.metaDateGapPx}px`, marginBottom: (exp.bullets || []).some((bullet) => hasText(bullet.text)) ? RESUME_DOCUMENT_TYPOGRAPHY.metaRowToBulletGapPx : 0 }}>
-                                <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: RESUME_DOCUMENT_TYPOGRAPHY.metaGroupGapPx, minWidth: 0, flex: "1 1 auto", overflow: "visible" }}>
+                            <div key={key} className={`resume-document__meta-row resume-font--subheading resume-subheader-font-target${exp.bullets.length ? " resume-document__meta-row--with-bullets" : ""}`}>
+                                <div className="resume-document__meta-fields">
                                     {metaFields.map((field, index) => (
                                         <React.Fragment key={`${field.value}-${index}`}>
-                                            {index > 0 && <span style={{ color: "#cbd5e1", flexShrink: 0 }}>|</span>}
-                                            <span className="resume-subheader-font-target resume-document__meta" style={subHeaderFieldStyle(field.weight, field.color)}>{field.value}</span>
+                                            {index > 0 && <span className="resume-document__separator">|</span>}
+                                            <span className={`resume-document__meta-field resume-document__meta-field--${field.tone}`}>{field.value}</span>
                                         </React.Fragment>
                                     ))}
                                 </div>
                                 {dateFields.length > 0 && (
-                                    <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: RESUME_DOCUMENT_TYPOGRAPHY.dateGroupGapPx, flexShrink: 0 }}>
+                                    <div className="resume-document__date-fields">
                                         {dateFields.map((date, index) => (
                                             <React.Fragment key={`${date}-${index}`}>
-                                                {index > 0 && <span style={{ color: "#cbd5e1" }}>-</span>}
-                                                <span className="resume-subheader-font-target resume-document__meta" style={subHeaderFieldStyle(500, "#475569")}>{date}</span>
+                                                {index > 0 && <span className="resume-document__separator">-</span>}
+                                                <span className="resume-document__date-field">{date}</span>
                                             </React.Fragment>
                                         ))}
                                     </div>
@@ -449,51 +259,43 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                         )
                     });
                 }
-                (exp.bullets || []).filter((bullet) => hasText(bullet.text)).forEach((bullet) => {
+                exp.bullets.forEach((bullet) => {
                     nextSegments.push(makeBulletSegment(`${exp.id}-${bullet.id}`, bullet.text));
                 });
                 if (expIndex < visibleExperience.length - 1) {
-                    nextSegments.push(makeGapSegment(`${exp.id}-gap`, innerSectionGap));
+                    nextSegments.push(makeGapSegment(`${exp.id}-gap`, innerSectionGap, true));
                 }
             });
             nextSegments.push(makeGapSegment("experience-gap", sectionGap));
         }
 
-        const visibleEducation = (resumeData.education || []).filter((ed) =>
-            hasText(ed.degree) ||
-            hasText(ed.school) ||
-            hasText(ed.startDate) ||
-            hasText(ed.endDate) ||
-            (ed.details || []).some((detail) => hasText(detail.text))
-        );
+        const visibleEducation = renderModel.education;
         if (visibleEducation.length > 0) {
-            nextSegments.push(makeHeadingSegment("education-heading", getSectionTitle(resumeData, "education")));
+            nextSegments.push(makeHeadingSegment("education-heading", visibleEducation[0].title));
             visibleEducation.forEach((ed, edIndex) => {
-                const metaFields = [
-                    { value: ed.degree, weight: 700, color: "#0f172a" },
-                    { value: ed.school, weight: 600, color: "#1f2937" }
-                ].filter((field) => hasText(field.value));
-                const dateFields = [ed.startDate, ed.endDate].filter(hasText);
+                const metaFields = ed.meta;
+                const dateFields = ed.dates;
                 if (metaFields.length > 0 || dateFields.length > 0) {
                     nextSegments.push({
                         id: `${ed.id}-meta`,
                         estimatedHeight: renderTokens.formatting.subHeaderFontSize * subHeaderLineHeight + fieldPaddingPt,
+                        keepWithNext: ed.details.length > 0,
                         render: (key) => (
-                            <div key={key} className="resume-subheader-font-target resume-document__meta" style={{ ...metaTextStyle, display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: `${RESUME_DOCUMENT_TYPOGRAPHY.dateGroupGapPx}px ${RESUME_DOCUMENT_TYPOGRAPHY.metaDateGapPx}px` }}>
-                                <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: RESUME_DOCUMENT_TYPOGRAPHY.metaGroupGapPx, minWidth: 0, flex: "1 1 auto", overflow: "visible" }}>
+                            <div key={key} className="resume-document__meta-row resume-font--subheading resume-subheader-font-target">
+                                <div className="resume-document__meta-fields">
                                     {metaFields.map((field, index) => (
                                         <React.Fragment key={`${field.value}-${index}`}>
-                                            {index > 0 && <span style={{ color: "#cbd5e1", flexShrink: 0 }}>|</span>}
-                                            <span className="resume-subheader-font-target resume-document__meta" style={subHeaderFieldStyle(field.weight, field.color)}>{field.value}</span>
+                                            {index > 0 && <span className="resume-document__separator">|</span>}
+                                            <span className={`resume-document__meta-field resume-document__meta-field--${field.tone}`}>{field.value}</span>
                                         </React.Fragment>
                                     ))}
                                 </div>
                                 {dateFields.length > 0 && (
-                                    <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: RESUME_DOCUMENT_TYPOGRAPHY.dateGroupGapPx, flexShrink: 0 }}>
+                                    <div className="resume-document__date-fields">
                                         {dateFields.map((date, index) => (
                                             <React.Fragment key={`${date}-${index}`}>
-                                                {index > 0 && <span style={{ color: "#cbd5e1" }}>-</span>}
-                                                <span className="resume-subheader-font-target resume-document__meta" style={subHeaderFieldStyle(500, "#475569")}>{date}</span>
+                                                {index > 0 && <span className="resume-document__separator">-</span>}
+                                                <span className="resume-document__date-field">{date}</span>
                                             </React.Fragment>
                                         ))}
                                     </div>
@@ -502,23 +304,23 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                         )
                     });
                 }
-                (ed.details || []).filter((detail) => hasText(detail.text)).forEach((detail) => {
+                ed.details.forEach((detail) => {
                     nextSegments.push(makeBulletSegment(`${ed.id}-${detail.id}`, detail.text));
                 });
                 if (edIndex < visibleEducation.length - 1) {
-                    nextSegments.push(makeGapSegment(`${ed.id}-gap`, innerSectionGap));
+                    nextSegments.push(makeGapSegment(`${ed.id}-gap`, innerSectionGap, true));
                 }
             });
             nextSegments.push(makeGapSegment("education-gap", sectionGap));
         }
 
-        const visibleSkills = (resumeData.skills || []).filter((skill) => hasText(skill.category) || (skill.items || []).some(hasText));
+        const visibleSkills = renderModel.skills;
         if (visibleSkills.length > 0) {
-            nextSegments.push(makeHeadingSegment("skills-heading", getSectionTitle(resumeData, "skills")));
+            nextSegments.push(makeHeadingSegment("skills-heading", visibleSkills[0].title));
             visibleSkills.forEach((skill, skillIndex) => {
-                nextSegments.push(makeSkillSegment(`${skill.id}-skill`, skill.category || "", skill.items || []));
+                nextSegments.push(makeSkillSegment(`${skill.id}-skill`, skill.category, skill.items));
                 if (skillIndex < visibleSkills.length - 1) {
-                    nextSegments.push(makeGapSegment(`${skill.id}-gap`, innerSectionGap));
+                    nextSegments.push(makeGapSegment(`${skill.id}-gap`, innerSectionGap, true));
                 }
             });
         }
@@ -559,7 +361,14 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                 if (!segmentId) return;
 
                 const rectHeight = element.getBoundingClientRect().height;
-                const measuredHeight = pxToPt(Math.ceil(rectHeight || element.offsetHeight || 0));
+                const computedStyle = window.getComputedStyle(element);
+                const marginTop = Number.parseFloat(computedStyle.marginTop) || 0;
+                const marginBottom = Number.parseFloat(computedStyle.marginBottom) || 0;
+                const measuredHeight = pxToPt(outerHeightPx(
+                    rectHeight || element.offsetHeight || 0,
+                    marginTop,
+                    marginBottom
+                ));
                 if (measuredHeight > 0) {
                     nextHeights[segmentId] = measuredHeight;
                 }
@@ -618,28 +427,27 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         onRenderedPageCountChange(renderedPages.length);
     }, [onRenderedPageCountChange, renderedPages.length]);
 
+    const previewCssVariables = {
+        ...documentCssVariables,
+        "--resume-preview-column-count": String(previewColumnCount),
+        "--resume-preview-page-width": pxCss(paperMetrics.width),
+        "--resume-preview-page-height": pxCss(paperMetrics.height),
+        "--resume-preview-page-gap": pxCss(pageGapPx)
+    } as React.CSSProperties;
+
     return (
         <div
-            className="resume-page-preview"
+            className="resume-formatting-context resume-page-preview"
             data-resume-page-preview="true"
             data-font-preview={fontPreviewTarget || undefined}
-            style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${previewColumnCount}, ${paperMetrics.width}px)`,
-                gap: `${pageGapPx}px`
-            }}
+            data-resume-layout-density={renderTokens.formatting.paperLayoutFormat}
+            data-resume-inner-density={renderTokens.formatting.innerSectionGapFormat}
+            style={previewCssVariables}
         >
             <div
                 ref={handleMeasurementRef}
-                className="resume-page-preview-measure"
+                className="resume-page-content resume-page-preview-measure"
                 aria-hidden="true"
-                style={{
-                    ...documentCssVariables,
-                    width: `${paperMetrics.width}px`,
-                    padding: "var(--resume-page-margin)",
-                    fontFamily: "var(--resume-font-family)",
-                    fontSize: "var(--resume-body-font-size)"
-                }}
             >
                 {segments.map((segment, index) => renderMeasuredSegment(segment, `measure-${segment.id}-${index}`))}
             </div>
@@ -648,14 +456,6 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                     key={`resume-page-preview-${pageIndex}`}
                     className="resume-page-preview-page"
                     aria-label={`Page ${pageIndex + 1}`}
-                    style={{
-                        ...documentCssVariables,
-                        width: `${paperMetrics.width}px`,
-                        height: `${paperMetrics.height}px`,
-                        padding: "var(--resume-page-margin)",
-                        fontFamily: "var(--resume-font-family)",
-                        fontSize: "var(--resume-body-font-size)"
-                    }}
                 >
                     {isPageFormatPreviewVisible && (
                         <div className="resume-page-format-preview">
@@ -669,21 +469,14 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                     )}
                     {isMarginPreviewVisible && (
                         <div className="resume-margin-preview">
-                            <div className="resume-margin-preview-band" style={{ left: 0, right: 0, top: 0, height: "var(--resume-page-margin)" }} />
-                            <div className="resume-margin-preview-band" style={{ left: 0, right: 0, bottom: 0, height: "var(--resume-page-margin)" }} />
-                            <div className="resume-margin-preview-band" style={{ left: 0, top: "var(--resume-page-margin)", bottom: "var(--resume-page-margin)", width: "var(--resume-page-margin)" }} />
-                            <div className="resume-margin-preview-band" style={{ right: 0, top: "var(--resume-page-margin)", bottom: "var(--resume-page-margin)", width: "var(--resume-page-margin)" }} />
-                            <div className="resume-margin-preview-content" style={{ inset: "var(--resume-page-margin)" }} />
+                            <div className="resume-margin-preview-band resume-margin-preview-band--top" />
+                            <div className="resume-margin-preview-band resume-margin-preview-band--bottom" />
+                            <div className="resume-margin-preview-band resume-margin-preview-band--left" />
+                            <div className="resume-margin-preview-band resume-margin-preview-band--right" />
+                            <div className="resume-margin-preview-content" />
                         </div>
                     )}
-                    <div
-                        className="resume-page-preview-page-content"
-                        style={{
-                            width: `${contentWidth}px`,
-                            height: `${contentHeight}px`,
-                            overflow: "hidden"
-                        }}
-                    >
+                    <div className="resume-page-content resume-page-preview-page-content">
                         {pageSegments.map((segment, segmentIndex) => segment.render(`${segment.id}-${pageIndex}-${segmentIndex}`))}
                     </div>
                 </div>

@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { ResumeDocumentSurface } from './ResumeDocumentSurface';
-import { RESUME_DOCUMENT_TYPOGRAPHY } from '../resumeTypography';
 
 describe('ResumeDocumentSurface', () => {
     const defaultFormatting: any = {
@@ -174,12 +173,12 @@ describe('ResumeDocumentSurface', () => {
         );
 
         expect(container.firstChild).toHaveStyle({
-            '--resume-body-font-size': '11pt',
-            '--resume-subheader-font-size': '15pt'
+            '--resume-body-font-size': '14.67px',
+            '--resume-subheader-font-size': '20px'
         });
-        expect(container.querySelector('p')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
-        expect(container.querySelector('article > div')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
-        expect(container.querySelector('.resume-diagnostic-bullet-row div')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+        expect(container.querySelector('p')).toHaveClass('resume-document__body');
+        expect(container.querySelector('article > div')).toHaveClass('resume-document__meta-row');
+        expect(container.querySelector('.resume-diagnostic-bullet-row div')).toHaveClass('resume-document__body');
     });
 
     it('uses the body token for the contact strip under the name', () => {
@@ -201,7 +200,7 @@ describe('ResumeDocumentSurface', () => {
             />
         );
 
-        expect(container.firstChild).toHaveStyle({ '--resume-body-font-size': '10pt' });
-        expect(container.querySelector('section > div')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+        expect(container.firstChild).toHaveStyle({ '--resume-body-font-size': '13.33px' });
+        expect(container.querySelector('section > div')).toHaveClass('resume-document__contact-strip');
     });
 });

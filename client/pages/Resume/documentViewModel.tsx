@@ -3,7 +3,6 @@ import type { ChangeMetadata, ContactRenderField, ResumeData } from "./types";
 import { buildResumeRenderTokens } from "./formatting";
 import { hasText } from "./resumeData";
 import { OverlayInput } from "./components/OverlayInput";
-import { RESUME_DOCUMENT_TYPOGRAPHY } from "./resumeTypography";
 
 type UseResumeDocumentViewModelParams = {
     resumeData: ResumeData;
@@ -86,26 +85,14 @@ export const useResumeDocumentViewModel = ({
         subHeaderFontSize,
         pageMarginPt
     });
-    const inputStyleClass = "w-full bg-transparent border border-transparent hover:bg-slate-100/70 hover:border-slate-300 focus:bg-sky-50/80 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15 rounded-sm outline-none px-1.5 py-0.5 text-[#1e293b] transition-colors duration-150";
-    const contentFitInputStyleClass = inputStyleClass.replace("w-full", "w-auto");
-    const boldInputClass = `${inputStyleClass} font-bold text-[#0f172a]`;
-    const documentTextStyle = {
-        fontSize: renderTokens.bodyTextStyle.fontSize,
-        fontFamily: renderTokens.bodyTextStyle.fontFamily
-    };
-    const sectionHeadingClass = `resume-header-font-target w-full text-left ${RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingClass} font-bold text-[#0f172a] border-b border-[#cbd5e1] pb-0.5 uppercase`;
-    const sectionHeadingStyle = {
-        fontSize: renderTokens.headingStyle.fontSize,
-        fontFamily: renderTokens.headingStyle.fontFamily,
-        lineHeight: renderTokens.headingStyle.lineHeight,
-        letterSpacing: renderTokens.headingStyle.letterSpacing,
-        marginBottom: renderTokens.headingStyle.marginBottom,
-        fontWeight: renderTokens.headingStyle.fontWeight
-    };
-    const compactFitMetaInputClass = `${contentFitInputStyleClass} resume-subheader-font-target shrink-0 leading-[1.25] text-[#1f2937] font-semibold`;
-    const compactFitDateInputClass = `${contentFitInputStyleClass} resume-subheader-font-target shrink-0 leading-[1.25] text-[#475569] font-medium`;
-    const contactInputClass = `${inputStyleClass} resume-body-font-target shrink-0 leading-[1.2] text-[#475569] font-medium hover:bg-slate-100/60`;
-    const resumeDividerClass = "shrink-0 text-slate-300/70";
+    const inputStyleClass = "resume-editor-input";
+    const contentFitInputStyleClass = "resume-editor-input resume-editor-input--fit";
+    const boldInputClass = "resume-editor-input resume-editor-input--bold";
+    const sectionHeadingClass = "resume-editor-section-title resume-font--heading resume-header-font-target";
+    const compactFitMetaInputClass = `${contentFitInputStyleClass} resume-editor-input--meta resume-subheader-font-target`;
+    const compactFitDateInputClass = `${contentFitInputStyleClass} resume-editor-input--date resume-subheader-font-target`;
+    const contactInputClass = `${inputStyleClass} resume-editor-input--contact resume-body-font-target`;
+    const resumeDividerClass = "resume-editor-divider";
 
     const bodyFontSizePx = renderTokens.bodyFontSizePx;
     const subHeaderFontSizePx = renderTokens.subHeaderFontSizePx;
@@ -125,16 +112,6 @@ export const useResumeDocumentViewModel = ({
         return context.measureText(text).width;
     };
 
-    const getMeasuredFontStyle = (font: string): React.CSSProperties => {
-        const sizeMatch = font.match(/(\d+(?:\.\d+)?)px\s+(.+)$/);
-        const weightMatch = font.match(/^(bold|\d{3})\s+/);
-        return {
-            fontFamily: sizeMatch?.[2] ?? RESUME_DOCUMENT_TYPOGRAPHY.bodyFamily,
-            fontSize: sizeMatch ? `${sizeMatch[1]}px` : `${bodyFontSizePx}px`,
-            fontWeight: weightMatch?.[1] === "bold" ? 700 : weightMatch?.[1] ?? RESUME_DOCUMENT_TYPOGRAPHY.bodyWeight
-        };
-    };
-
     const getDynamicInputStyle = (
         value: string | undefined,
         placeholder: string,
@@ -146,8 +123,6 @@ export const useResumeDocumentViewModel = ({
         const contentWidth = Math.ceil(measureTextWidth(content, font) + padding);
         const minWidth = 16;
         return {
-            ...documentTextStyle,
-            ...getMeasuredFontStyle(font),
             ...extraStyles,
             width: `${Math.max(minWidth, contentWidth)}px`,
             minWidth: `${minWidth}px`,
@@ -158,9 +133,8 @@ export const useResumeDocumentViewModel = ({
 
     const contactFieldStyle = (value: string | undefined, placeholder: string): React.CSSProperties => {
         return getDynamicInputStyle(value, placeholder, `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`, {
-            fontSize: renderTokens.contactTextStyle.fontSize,
-            fontFamily: renderTokens.contactTextStyle.fontFamily,
-            lineHeight: renderTokens.contactTextStyle.lineHeight
+            fontSize: "var(--resume-body-font-size)",
+            lineHeight: "var(--resume-body-line-height)"
         });
     };
     const subHeaderFieldStyle = (
@@ -170,22 +144,21 @@ export const useResumeDocumentViewModel = ({
         extraStyles: React.CSSProperties = {}
     ): React.CSSProperties => {
         return getDynamicInputStyle(value, placeholder, `${weight} ${subHeaderFontSizePx}px Poppins, Arial, sans-serif`, {
-            fontSize: renderTokens.metaTextStyle.fontSize,
-            fontFamily: renderTokens.metaTextStyle.fontFamily,
-            lineHeight: renderTokens.metaTextStyle.lineHeight,
+            fontSize: "var(--resume-subheader-font-size)",
+            lineHeight: "var(--resume-subheader-line-height)",
             ...extraStyles
         });
     };
 
-    const headerMarginAddClass = `resume-edit-control absolute -left-9 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-emerald-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-emerald-600 active:scale-95 ${activeDocumentSection === "header" ? "opacity-100" : "pointer-events-none opacity-0"}`;
+    const headerMarginAddClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--add${activeDocumentSection === "header" ? " is-visible" : ""}`;
     const isExperienceSectionActive = activeDocumentSection === "experience";
-    const experienceMarginAddClass = `resume-edit-control absolute -left-9 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-emerald-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-emerald-600 active:scale-95 ${isExperienceSectionActive ? "opacity-100" : "pointer-events-none opacity-0"}`;
-    const experienceMarginImproveClass = `resume-edit-control absolute -left-9 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-sky-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-sky-600 active:scale-95 ${isExperienceSectionActive ? "opacity-100" : "pointer-events-none opacity-0"}`;
-    const experienceMarginClearClass = `resume-edit-control absolute -right-9 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-slate-500 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-slate-600 active:scale-95 ${isExperienceSectionActive ? "opacity-100" : "pointer-events-none opacity-0"}`;
-    const experienceMarginDeleteClass = `resume-edit-control absolute -right-9 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-rose-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-rose-600 active:scale-95 ${isExperienceSectionActive ? "opacity-100" : "pointer-events-none opacity-0"}`;
+    const experienceMarginAddClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--add${isExperienceSectionActive ? " is-visible" : ""}`;
+    const experienceMarginImproveClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--improve${isExperienceSectionActive ? " is-visible" : ""}`;
+    const experienceMarginClearClass = `resume-edit-control resume-margin-control resume-margin-control--right resume-margin-control--clear${isExperienceSectionActive ? " is-visible" : ""}`;
+    const experienceMarginDeleteClass = `resume-edit-control resume-margin-control resume-margin-control--right resume-margin-control--delete${isExperienceSectionActive ? " is-visible" : ""}`;
     const isSummarySectionActive = activeDocumentSection === "summary";
     const showSummaryControls = isSummarySectionActive || hoveredSummary || focusedSummary;
-    const summaryMarginImproveClass = `resume-edit-control absolute -left-9 z-10 !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-sky-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-sky-600 active:scale-95 ${showSummaryControls ? "opacity-100" : "pointer-events-none opacity-0"}`;
+    const summaryMarginImproveClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--improve${showSummaryControls ? " is-visible" : ""}`;
 
     const summaryRewriteHoverAction = rewriteActionHover?.target === "summary" ? rewriteActionHover.action : null;
     const summaryCurrentRewriteClass = summaryRewriteHoverAction === "accept"
@@ -274,9 +247,7 @@ export const useResumeDocumentViewModel = ({
         renderOverlayInput,
         inputStyleClass,
         boldInputClass,
-        documentTextStyle,
         sectionHeadingClass,
-        sectionHeadingStyle,
         compactFitMetaInputClass,
         compactFitDateInputClass,
         contactInputClass,

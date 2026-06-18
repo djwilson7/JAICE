@@ -5,17 +5,13 @@ type ResumeAlertsProps = {
     successMessage: string | null;
     setError: React.Dispatch<React.SetStateAction<string | null>>;
     setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
-    headerActionButtonClass: string;
-    headerActionIconClass: string;
 };
 
 export const ResumeAlerts: React.FC<ResumeAlertsProps> = ({
     error,
     successMessage,
     setError,
-    setSuccessMessage,
-    headerActionButtonClass,
-    headerActionIconClass
+    setSuccessMessage
 }) => (
     <>
         {(error || successMessage) && (
@@ -25,10 +21,10 @@ export const ResumeAlerts: React.FC<ResumeAlertsProps> = ({
                                 <span className="flex-1 leading-normal pl-1">{error}</span>
                                 <button
                                     onClick={() => setError(null)}
-                                    className={`${headerActionButtonClass} text-rose-300 hover:text-rose-100`}
+                                    className="resume-action-button text-rose-300 hover:text-rose-100"
                                     title="Dismiss alert"
                                 >
-                                    <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
@@ -39,10 +35,10 @@ export const ResumeAlerts: React.FC<ResumeAlertsProps> = ({
                                 <span className="flex-1 leading-normal pl-1">{successMessage}</span>
                                 <button
                                     onClick={() => setSuccessMessage(null)}
-                                    className={`${headerActionButtonClass} text-emerald-300 hover:text-emerald-100`}
+                                    className="resume-action-button text-emerald-300 hover:text-emerald-100"
                                     title="Dismiss alert"
                                 >
-                                    <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>

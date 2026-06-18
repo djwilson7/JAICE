@@ -20,12 +20,6 @@ describe('ResumeSwitcherRail', () => {
     const defaultProps: any = {
         isLightMode: true,
         isLeftRailCollapsed: false,
-        railShellStyle: {},
-        railHeaderRowClass: '',
-        railTitleClass: '',
-        railTitleStyle: {},
-        headerActionButtonClass: '',
-        headerActionIconClass: '',
         handleCreateNewClick: vi.fn(),
         searchQuery: '',
         setSearchQuery: vi.fn(),
@@ -84,4 +78,3 @@ describe('ResumeSwitcherRail', () => {
         expect(screen.getByText('Resumes')).toBeTruthy();
     });
 });
-

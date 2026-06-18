@@ -14,12 +14,6 @@ describe('ResumeChatRail', () => {
     const defaultProps = {
         isLightMode: true,
         isRightRailCollapsed: false,
-        rightRailShellStyle: {},
-        railHeaderRowClass: '',
-        railTitleClass: '',
-        railTitleStyle: {},
-        headerActionButtonClass: '',
-        headerActionIconClass: '',
         chatContainerRef: { current: null },
         chatInputRef: { current: null },
         chatMessages: [],

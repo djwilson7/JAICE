@@ -144,8 +144,25 @@ describe('ResumeWorkspace', () => {
         loadingList: false
     };
 
+    const renderWorkspace = (overrides: Record<string, unknown> = {}) => {
+        const contract = { ...defaultProps, ...overrides };
+        return render(
+            <ResumeWorkspace
+                theme={{ isLightMode: contract.isLightMode }}
+                alerts={contract}
+                formatting={contract}
+                editing={contract}
+                rewrite={contract}
+                viewModel={contract}
+                pdfPreview={contract}
+                persistence={contract}
+                onAnalyzeSummary={contract.handleAnalyzeSummary}
+            />
+        );
+    };
+
     it('renders normal edit mode and handles zoom/shelf toggles', () => {
-        render(<ResumeWorkspace {...defaultProps} />);
+        renderWorkspace();
 
         expect(screen.getByTestId('resume-alerts')).toBeTruthy();
         expect(screen.getByTestId('resume-canvas')).toBeTruthy();
@@ -176,7 +193,7 @@ describe('ResumeWorkspace', () => {
     });
 
     it('renders fit mode as clean paged preview instead of the editable canvas', () => {
-        render(<ResumeWorkspace {...defaultProps} zoomMode="fit" />);
+        renderWorkspace({ zoomMode: 'fit' });
 
         expect(screen.getByTestId('resume-canvas')).toBeTruthy();
         expect(screen.queryByTestId('resume-document-editor')).toBeNull();
@@ -184,18 +201,15 @@ describe('ResumeWorkspace', () => {
     });
 
     it('keeps 1:1 editor mounted but suppresses canvas hover controls while the shelf is open', () => {
-        render(
-            <ResumeWorkspace
-                {...defaultProps}
-                isPageStyleShelfOpen={true}
-                activeDocumentSection="experience"
-                focusedDocumentSection="summary"
-                hoveredJobId="exp-1"
-                hoveredSummary={true}
-                isExperienceSectionActive={true}
-                isSummarySectionActive={true}
-            />
-        );
+        renderWorkspace({
+            isPageStyleShelfOpen: true,
+            activeDocumentSection: 'experience',
+            focusedDocumentSection: 'summary',
+            hoveredJobId: 'exp-1',
+            hoveredSummary: true,
+            isExperienceSectionActive: true,
+            isSummarySectionActive: true
+        });
 
         expect(screen.getByTestId('resume-document-editor')).toBeTruthy();
         const editorProps = mockResumeDocumentEditor.mock.calls[0][0];
@@ -209,7 +223,7 @@ describe('ResumeWorkspace', () => {
     });
 
     it('renders pdf preview mode', () => {
-        render(<ResumeWorkspace {...defaultProps} isPdfPreviewOpen={true} />);
+        renderWorkspace({ isPdfPreviewOpen: true });
         
         expect(screen.getByTestId('resume-pdf-preview')).toBeTruthy();
         expect(screen.queryByTestId('resume-canvas')).toBeNull();
@@ -234,7 +248,7 @@ describe('ResumeWorkspace', () => {
         document.body.appendChild(canvasElement);
         document.body.appendChild(surfaceElement);
 
-        render(<ResumeWorkspace {...defaultProps} resumeDocumentContentRef={{ current: editorElement }} />);
+        renderWorkspace({ resumeDocumentContentRef: { current: editorElement } });
 
         await vi.runAllTimersAsync();
 
@@ -251,7 +265,7 @@ describe('ResumeWorkspace', () => {
         vi.useFakeTimers();
         (buildResumeRenderDiagnostics as any).mockClear();
         (isResumeDebugEnabled as any).mockReturnValue(true);
-        const { unmount } = render(<ResumeWorkspace {...defaultProps} />);
+        const { unmount } = renderWorkspace();
         
         // Unmount immediately to set cancelled = true
         unmount();
@@ -275,7 +289,7 @@ describe('ResumeWorkspace', () => {
         const getElementByIdSpy = vi.spyOn(document, 'getElementById').mockImplementation((id: string) => null);
 
         const editorElement = document.createElement('div');
-        render(<ResumeWorkspace {...defaultProps} resumeDocumentContentRef={{ current: editorElement }} />);
+        renderWorkspace({ resumeDocumentContentRef: { current: editorElement } });
 
         // Let it retry multiple times (750ms initial + 8 * 200ms)
         await vi.runAllTimersAsync();
@@ -308,7 +322,7 @@ describe('ResumeWorkspace', () => {
         document.body.appendChild(canvasElement);
         document.body.appendChild(surfaceElement);
 
-        render(<ResumeWorkspace {...defaultProps} resumeDocumentContentRef={{ current: editorElement }} />);
+        renderWorkspace({ resumeDocumentContentRef: { current: editorElement } });
 
         await vi.runAllTimersAsync();
 

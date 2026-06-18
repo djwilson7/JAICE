@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { normalizeResumeDataForPayload } from "./resumeData";
-import { ResumeGlobalStyles } from "./components/ResumeGlobalStyles";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
 import { ResumeDocumentSurface } from "./components/ResumeDocumentSurface";
 import { CloneResumeModal } from "./components/CloneResumeModal";
@@ -18,6 +17,9 @@ import { useResumeRewriteSuggestions } from "./hooks/useResumeRewriteSuggestions
 import { useResumePdfPreview } from "./hooks/useResumePdfPreview";
 import { useResumeDocumentViewModel } from "./documentViewModel";
 import { isResumeDebugEnabled } from "./resumeDiagnostics";
+import "./resume.css";
+import "./resume-editor.css";
+import "./resume-preview.css";
 
 export function Resume() {
     const { theme } = useSettings();
@@ -25,21 +27,19 @@ export function Resume() {
     const resumeDebugEnabled = isResumeDebugEnabled();
     const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(false);
     const [isRightRailCollapsed, setIsRightRailCollapsed] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleToggleLeftRail = () => {
         const isOpeningLeftRail = isLeftRailCollapsed;
         setIsLeftRailCollapsed(!isLeftRailCollapsed);
-        if (isOpeningLeftRail) {
-            setIsRightRailCollapsed(true);
-        }
+        if (isOpeningLeftRail) setIsRightRailCollapsed(true);
     };
 
     const handleToggleRightRail = () => {
         const isOpeningRightRail = isRightRailCollapsed;
         setIsRightRailCollapsed(!isRightRailCollapsed);
-        if (isOpeningRightRail) {
-            setIsLeftRailCollapsed(true);
-        }
+        if (isOpeningRightRail) setIsLeftRailCollapsed(true);
     };
 
     const handleOpenRightRail = () => {
@@ -52,367 +52,94 @@ export function Resume() {
         isLeftRailCollapsed,
         isRightRailCollapsed
     });
-    const {
-        canvasViewportRef,
-        resumeDocumentContentRef,
-        registerResumeDocumentContentElement,
-        pageSize,
-        setPageSize,
-        zoomMode,
-        setZoomMode,
-        manualZoom,
-        setManualZoom,
-        animatedCanvasZoom,
-        isPageStyleShelfOpen,
-        titleFontSize,
-        setTitleFontSize,
-        headerFontSize,
-        setHeaderFontSize,
-        subHeaderFontSize,
-        setSubHeaderFontSize,
-        bodyFontSize,
-        setBodyFontSize,
-        pageMarginPt,
-        setPageMarginPt,
-        paperLayoutFormat,
-        setPaperLayoutFormat,
-        innerSectionGapFormat,
-        fontPreviewTarget,
-        setFontPreviewTarget,
-        isMarginPreviewVisible,
-        setIsMarginPreviewVisible,
-        isPageFormatPreviewVisible,
-        setIsPageFormatPreviewVisible,
-        gapPreviewTarget,
-        setGapPreviewTarget,
-        applyResumeFormatting,
-        paperMetrics,
-        resumePageCount,
-        resumePageStride,
-        resumeCanvasHeight,
-        zoomPercent,
-        scaledCanvasWidth,
-        scaledCanvasHeight,
-        canvasNeedsHorizontalScroll,
-        canvasNeedsVerticalScroll,
-        canvasViewportStyle,
-        pdfPreviewViewportStyle,
-        bottomControlsViewportStyle,
-        viewableCanvasWidth,
-        canvasHorizontalOverflow,
-        isPageStyleShelfCompact,
-        printWidth,
-        printHeight,
-        documentSectionGapPx,
-        documentSectionGapStyle,
-        documentInnerSectionGapPx,
-        documentInnerSectionGapStyle,
-        documentCssVariables,
-        currentResumeFormatting,
-        handleFitZoom,
-        handleTogglePageStyleShelf,
-        closePageStyleShelf,
-        resumeChromeRootClass,
-        resumeChromeBackground,
-        headerShellStyle,
-        railShellStyle,
-        rightRailShellStyle,
-        toolbarSurfaceStyle,
-        shelfSurfaceStyle,
-        railTitleClass,
-        railTitleStyle,
-        railHeaderRowClass,
-        headerActionButtonClass,
-        headerActionIconClass,
-        documentToolButtonClass,
-        shelfControlLabelClass,
-        shelfSegmentGroupClass,
-        shelfSegmentButtonClass,
-        shelfSegmentIndicatorClass,
-        shelfStepperButtonClass,
-        shelfStepperControlClass,
-        shelfStepperLabelClass,
-        shelfStepperValueClass,
-        shelfStepperRowClass
-    } = formatting;
-
     const documentEditing = useResumeDocumentEditing();
-    const {
-        resumeData,
-        setResumeData,
-        hoveredDeleteIndex,
-        setHoveredDeleteIndex,
-        hoveredContactField,
-        setHoveredContactField,
-        focusedContactField,
-        setFocusedContactField,
-        hoveredNameSection,
-        setHoveredNameSection,
-        focusedNameSection,
-        setFocusedNameSection,
-        hoveredSummary,
-        setHoveredSummary,
-        focusedSummary,
-        setFocusedSummary,
-        isSummaryImproveHovered,
-        setIsSummaryImproveHovered,
-        hoveredField,
-        setHoveredField,
-        focusedField,
-        setFocusedField,
-        hoveredJobId,
-        setHoveredJobId,
-        hoveredExperienceImproveId,
-        setHoveredExperienceImproveId,
-        hoveredExperienceClearId,
-        setHoveredExperienceClearId,
-        hoveredExperienceDeleteId,
-        setHoveredExperienceDeleteId,
-        hoveredEducationClearId,
-        setHoveredEducationClearId,
-        hoveredEducationDeleteId,
-        setHoveredEducationDeleteId,
-        hoveredSkillDeleteId,
-        setHoveredSkillDeleteId,
-        activeDocumentSection,
-        focusedDocumentSection,
-        setActiveDocumentSection,
-        updateField,
-        updateSectionTitle,
-        addCustomContactField,
-        updateCustomContactField,
-        removeCustomContactField,
-        removeStandardContactField,
-        updateExperienceField,
-        insertExperienceAt,
-        removeExperience,
-        moveExperienceUp,
-        moveExperienceDown,
-        clearExperience,
-        addBulletWithText,
-        insertBulletAfter,
-        updateBulletText,
-        removeBulletIfEmpty,
-        removeBullet,
-        toggleBulletTag,
-        createAndAssignBulletTag,
-        deleteBulletTag,
-        updateEducationField,
-        addEducation,
-        removeEducation,
-        clearEducation,
-        addEducationDetailWithText,
-        insertEducationDetailAfter,
-        updateEducationDetailText,
-        removeEducationDetailIfEmpty,
-        addSkillCategory,
-        updateSkillCategoryName,
-        updateSkillCategoryItems,
-        removeSkillCategory
-    } = documentEditing;
-
-    const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const { resumeData, setResumeData } = documentEditing;
 
     const rewrite = useResumeRewriteSuggestions({
         resumeData,
         setResumeData,
-        currentResumeFormatting,
+        currentResumeFormatting: formatting.currentResumeFormatting,
         setError,
         setSuccessMessage
     });
-    const {
-        isDraft,
-        originalResumeDataBeforeDraft,
-        changeMetadata,
-        setChangeMetadata,
-        loadingSummaryImprove,
-        loadingExperienceImproveId,
-        summaryRewriteSuggestion,
-        experienceRewriteSuggestions,
-        rewriteActionHover,
-        setRewriteActionHover,
-        handleImproveSummary,
-        handleImproveExperience,
-        acceptSummaryRewriteSuggestion,
-        rejectSummaryRewriteSuggestion,
-        acceptExperienceRewriteSuggestion,
-        rejectExperienceRewriteSuggestion
-    } = rewrite;
 
     const persistence = useResumePersistence({
         resumeData,
         setResumeData,
-        currentResumeFormatting,
-        applyResumeFormatting,
+        currentResumeFormatting: formatting.currentResumeFormatting,
+        applyResumeFormatting: formatting.applyResumeFormatting,
         resetDraftState: rewrite.resetDraftState,
         error,
         setError,
         successMessage,
         setSuccessMessage
     });
-    const {
-        activeResumeId,
-        resumeName,
-        setResumeName,
-        isMaster,
-        setIsMaster,
-        showCloneModal,
-        setShowCloneModal,
-        dontAskClone,
-        setDontAskClone,
-        loadingList,
-        loadingSave,
-        isDirty,
-        setIsDirty,
-        autoSaveEnabled,
-        setAutoSaveEnabled,
-        searchQuery,
-        setSearchQuery,
-        resumeSearchFocusSignal,
-        filteredResumes,
-        pendingDeleteResume,
-        isDeletingResume,
-        loadResumeIntoWorkspace,
-        handleCreateNewClick,
-        handleCreateResume,
-        handleSaveResume,
-        handleDeleteResume,
-        cancelDeleteResume,
-        confirmDeleteResume
-    } = persistence;
 
     const pdfPreview = useResumePdfPreview({
         resumeData,
-        resumeName,
-        currentResumeFormatting,
+        resumeName: persistence.resumeName,
+        currentResumeFormatting: formatting.currentResumeFormatting,
         setError,
         setSuccessMessage,
         clearFormatPreviews: () => {
-            setFontPreviewTarget(null);
-            setIsMarginPreviewVisible(false);
-            setIsPageFormatPreviewVisible(false);
-            setGapPreviewTarget(null);
+            formatting.setFontPreviewTarget(null);
+            formatting.setIsMarginPreviewVisible(false);
+            formatting.setIsPageFormatPreviewVisible(false);
+            formatting.setGapPreviewTarget(null);
         }
     });
-    const {
-        isPdfPreviewOpen,
-        isGeneratingPdfPreview,
-        pdfPreviewUrl,
-        openPdfPreview,
-        togglePdfPreview,
-        closePdfPreview
-    } = pdfPreview;
 
     const handleOpenPdfPreview = () => {
         setIsLeftRailCollapsed(true);
         setIsRightRailCollapsed(true);
-        closePageStyleShelf();
-        return openPdfPreview();
+        formatting.closePageStyleShelf();
+        return pdfPreview.openPdfPreview();
     };
 
-    const handleTogglePdfPreview = () => {
-        if (isPdfPreviewOpen) {
-            return togglePdfPreview();
-        }
-        return handleOpenPdfPreview();
-    };
-
+    const handleTogglePdfPreview = () =>
+        pdfPreview.isPdfPreviewOpen
+            ? pdfPreview.togglePdfPreview()
+            : handleOpenPdfPreview();
 
     const chat = useResumeChat({
         resumeData,
-        currentResumeFormatting,
+        currentResumeFormatting: formatting.currentResumeFormatting,
         setError,
         openChatRail: handleOpenRightRail
     });
-    const {
-        chatInput,
-        setChatInput,
-        chatMessages,
-        chatContainerRef,
-        chatInputRef,
-        isChatInputCollapsed,
-        setIsChatInputCollapsed,
-        showBackToBottom,
-        chatScrollShadow,
-        isChatResponding,
-        copiedChatMessageIndex,
-        isAssistantGenerating,
-        scrollChatToBottom,
-        handleSendChatMessage,
-        handleStopChatMessage,
-        handleCopyAssistantMessage,
-        handleAnalyzeSummary: handleAnalyzeSummaryPrompt
-    } = chat;
-    const handleAnalyzeSummary = () => handleAnalyzeSummaryPrompt(resumeData.summary);
 
     const documentViewModel = useResumeDocumentViewModel({
         resumeData,
-        changeMetadata,
-        bodyFontSize,
-        headerFontSize,
-        subHeaderFontSize,
-        pageMarginPt,
-        activeDocumentSection,
-        hoveredSummary,
-        focusedSummary,
-        hoveredContactField,
-        focusedContactField,
-        hoveredField,
-        setHoveredField,
-        focusedField,
-        setFocusedField,
-        rewriteActionHover
+        changeMetadata: rewrite.changeMetadata,
+        bodyFontSize: formatting.bodyFontSize,
+        headerFontSize: formatting.headerFontSize,
+        subHeaderFontSize: formatting.subHeaderFontSize,
+        pageMarginPt: formatting.pageMarginPt,
+        activeDocumentSection: documentEditing.activeDocumentSection,
+        hoveredSummary: documentEditing.hoveredSummary,
+        focusedSummary: documentEditing.focusedSummary,
+        hoveredContactField: documentEditing.hoveredContactField,
+        focusedContactField: documentEditing.focusedContactField,
+        hoveredField: documentEditing.hoveredField,
+        setHoveredField: documentEditing.setHoveredField,
+        focusedField: documentEditing.focusedField,
+        setFocusedField: documentEditing.setFocusedField,
+        rewriteActionHover: rewrite.rewriteActionHover
     });
-    const {
-        isFieldChanged,
-        renderOverlayInput,
-        inputStyleClass,
-        boldInputClass,
-        documentTextStyle,
-        sectionHeadingClass,
-        sectionHeadingStyle,
-        compactFitMetaInputClass,
-        compactFitDateInputClass,
-        contactInputClass,
-        resumeDividerClass,
-        getDynamicInputStyle,
-        contactFieldStyle,
-        subHeaderFieldStyle,
-        headerMarginAddClass,
-        isExperienceSectionActive,
-        experienceMarginAddClass,
-        experienceMarginImproveClass,
-        experienceMarginClearClass,
-        experienceMarginDeleteClass,
-        isSummarySectionActive,
-        summaryMarginImproveClass,
-        summaryRewriteHoverAction,
-        summaryCurrentRewriteClass,
-        showHeaderContactEditors,
-        headerContactRows,
-        getSuggestionReviewClass,
-        renderRewriteActionButtons
-    } = documentViewModel;
 
+    const handleAnalyzeSummary = () => chat.handleAnalyzeSummary(resumeData.summary);
     const printResumeData = normalizeResumeDataForPayload({
         ...resumeData,
-        formatting: currentResumeFormatting
+        formatting: formatting.currentResumeFormatting
     });
 
     return (
-        <div
-            className={resumeChromeRootClass}
-            style={{
-                background: resumeChromeBackground
-            }}
-        >
-            
-            <ResumeGlobalStyles paperMetrics={paperMetrics} printWidth={printWidth} printHeight={printHeight} pageMarginPt={pageMarginPt} />
+        <div className="resume-page">
             <ResumePrintDocument
                 resumeData={printResumeData}
-                formatting={currentResumeFormatting}
+                formatting={formatting.currentResumeFormatting}
             />
+
             <div
                 id="resume-print-comparison-harness"
                 aria-hidden="true"
@@ -429,298 +156,105 @@ export function Resume() {
                 <ResumeDocumentSurface
                     rootId="resume-document-surface-print-comparison"
                     resumeData={printResumeData}
-                    formatting={currentResumeFormatting}
+                    formatting={formatting.currentResumeFormatting}
                     mode="print"
                 />
             </div>
 
-            {showCloneModal && (
+            {persistence.showCloneModal && (
                 <CloneResumeModal
                     isLightMode={isLightMode}
-                    dontAskClone={dontAskClone}
-                    setDontAskClone={setDontAskClone}
-                    setShowCloneModal={setShowCloneModal}
-                    handleCreateResume={handleCreateResume}
-                    headerActionButtonClass={headerActionButtonClass}
-                    headerActionIconClass={headerActionIconClass}
+                    dontAskClone={persistence.dontAskClone}
+                    setDontAskClone={persistence.setDontAskClone}
+                    setShowCloneModal={persistence.setShowCloneModal}
+                    handleCreateResume={persistence.handleCreateResume}
+                    headerActionButtonClass="resume-action-button"
+                    headerActionIconClass="resume-action-button__icon"
                 />
             )}
 
             <DeleteResumeModal
-                resume={pendingDeleteResume}
-                isDeleting={isDeletingResume}
-                onCancel={cancelDeleteResume}
-                onConfirm={confirmDeleteResume}
+                resume={persistence.pendingDeleteResume}
+                isDeleting={persistence.isDeletingResume}
+                onCancel={persistence.cancelDeleteResume}
+                onConfirm={persistence.confirmDeleteResume}
             />
 
-            {!isPdfPreviewOpen && <ResumeHeader
-                isLightMode={isLightMode}
-                headerShellStyle={headerShellStyle}
-                headerActionButtonClass={headerActionButtonClass}
-                headerActionIconClass={headerActionIconClass}
-                isLeftRailCollapsed={isLeftRailCollapsed}
-                onToggleLeftRail={handleToggleLeftRail}
-                isRightRailCollapsed={isRightRailCollapsed}
-                onToggleRightRail={handleToggleRightRail}
-                isMaster={isMaster}
-                setIsMaster={setIsMaster}
-                resumeName={resumeName}
-                setResumeName={setResumeName}
-                isDirty={isDirty}
-                setIsDirty={setIsDirty}
-                isDraft={isDraft}
-                loadingSave={loadingSave}
-                autoSaveEnabled={autoSaveEnabled}
-                setAutoSaveEnabled={setAutoSaveEnabled}
-                handleSaveResume={handleSaveResume}
-                isPdfPreviewOpen={isPdfPreviewOpen}
-                isGeneratingPdfPreview={isGeneratingPdfPreview}
-                togglePdfPreview={handleTogglePdfPreview}
-                openPdfPreview={handleOpenPdfPreview}
-            />}
+            {!pdfPreview.isPdfPreviewOpen && (
+                <ResumeHeader
+                    isLightMode={isLightMode}
+                    isLeftRailCollapsed={isLeftRailCollapsed}
+                    onToggleLeftRail={handleToggleLeftRail}
+                    isRightRailCollapsed={isRightRailCollapsed}
+                    onToggleRightRail={handleToggleRightRail}
+                    isMaster={persistence.isMaster}
+                    setIsMaster={persistence.setIsMaster}
+                    resumeName={persistence.resumeName}
+                    setResumeName={persistence.setResumeName}
+                    isDirty={persistence.isDirty}
+                    setIsDirty={persistence.setIsDirty}
+                    isDraft={rewrite.isDraft}
+                    loadingSave={persistence.loadingSave}
+                    autoSaveEnabled={persistence.autoSaveEnabled}
+                    setAutoSaveEnabled={persistence.setAutoSaveEnabled}
+                    handleSaveResume={persistence.handleSaveResume}
+                    isPdfPreviewOpen={pdfPreview.isPdfPreviewOpen}
+                    isGeneratingPdfPreview={pdfPreview.isGeneratingPdfPreview}
+                    togglePdfPreview={handleTogglePdfPreview}
+                    openPdfPreview={handleOpenPdfPreview}
+                />
+            )}
 
-            <div className="absolute inset-0">
+            <div className="resume-page__layers">
+                <ResumeSwitcherRail
+                    isLightMode={isLightMode}
+                    isLeftRailCollapsed={isLeftRailCollapsed}
+                    handleCreateNewClick={persistence.handleCreateNewClick}
+                    searchQuery={persistence.searchQuery}
+                    setSearchQuery={persistence.setSearchQuery}
+                    resumeSearchFocusSignal={persistence.resumeSearchFocusSignal}
+                    loadingList={persistence.loadingList}
+                    filteredResumes={persistence.filteredResumes}
+                    activeResumeId={persistence.activeResumeId}
+                    loadResumeIntoWorkspace={persistence.loadResumeIntoWorkspace}
+                    handleDeleteResume={persistence.handleDeleteResume}
+                />
 
-            <ResumeSwitcherRail
-                isLightMode={isLightMode}
-                isLeftRailCollapsed={isLeftRailCollapsed}
-                railShellStyle={railShellStyle}
-                railHeaderRowClass={railHeaderRowClass}
-                railTitleClass={railTitleClass}
-                railTitleStyle={railTitleStyle}
-                headerActionButtonClass={headerActionButtonClass}
-                headerActionIconClass={headerActionIconClass}
-                handleCreateNewClick={handleCreateNewClick}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                resumeSearchFocusSignal={resumeSearchFocusSignal}
-                loadingList={loadingList}
-                filteredResumes={filteredResumes}
-                activeResumeId={activeResumeId}
-                loadResumeIntoWorkspace={loadResumeIntoWorkspace}
-                handleDeleteResume={handleDeleteResume}
-            />
+                <ResumeWorkspace
+                    theme={{ isLightMode }}
+                    alerts={{ error, successMessage, setError, setSuccessMessage }}
+                    formatting={formatting}
+                    editing={documentEditing}
+                    rewrite={rewrite}
+                    viewModel={documentViewModel}
+                    pdfPreview={pdfPreview}
+                    persistence={{
+                        resumeName: persistence.resumeName,
+                        loadingList: persistence.loadingList
+                    }}
+                    onAnalyzeSummary={handleAnalyzeSummary}
+                />
 
-            {/* CENTRAL WORKSPACE */}
-            <ResumeWorkspace
-                isLightMode={isLightMode}
-                error={error}
-                successMessage={successMessage}
-                setError={setError}
-                setSuccessMessage={setSuccessMessage}
-                headerActionButtonClass={headerActionButtonClass}
-                headerActionIconClass={headerActionIconClass}
-                canvasViewportRef={canvasViewportRef}
-                resumeDocumentContentRef={resumeDocumentContentRef}
-                registerResumeDocumentContentElement={registerResumeDocumentContentElement}
-                canvasNeedsHorizontalScroll={canvasNeedsHorizontalScroll}
-                canvasNeedsVerticalScroll={canvasNeedsVerticalScroll}
-                canvasViewportStyle={canvasViewportStyle}
-                pdfPreviewViewportStyle={pdfPreviewViewportStyle}
-                bottomControlsViewportStyle={bottomControlsViewportStyle}
-                viewableCanvasWidth={viewableCanvasWidth}
-                canvasHorizontalOverflow={canvasHorizontalOverflow}
-                scaledCanvasWidth={scaledCanvasWidth}
-                scaledCanvasHeight={scaledCanvasHeight}
-                paperMetrics={paperMetrics}
-                resumeCanvasHeight={resumeCanvasHeight}
-                animatedCanvasZoom={animatedCanvasZoom}
-                fontPreviewTarget={fontPreviewTarget}
-                bodyFontSize={bodyFontSize}
-                subHeaderFontSize={subHeaderFontSize}
-                resumePageCount={resumePageCount}
-                resumePageStride={resumePageStride}
-                isPageFormatPreviewVisible={isPageFormatPreviewVisible}
-                isMarginPreviewVisible={isMarginPreviewVisible}
-                pageMarginPt={pageMarginPt}
-                resumeData={resumeData}
-                headerContactRows={headerContactRows}
-                showHeaderContactEditors={showHeaderContactEditors}
-                changeMetadata={changeMetadata}
-                originalResumeDataBeforeDraft={originalResumeDataBeforeDraft}
-                summaryRewriteSuggestion={summaryRewriteSuggestion}
-                experienceRewriteSuggestions={experienceRewriteSuggestions}
-                titleFontSize={titleFontSize}
-                documentSectionGapStyle={documentSectionGapStyle}
-                documentSectionGapPx={documentSectionGapPx}
-                documentInnerSectionGapStyle={documentInnerSectionGapStyle}
-                documentInnerSectionGapPx={documentInnerSectionGapPx}
-                documentCssVariables={documentCssVariables}
-                documentTextStyle={documentTextStyle}
-                sectionHeadingClass={sectionHeadingClass}
-                sectionHeadingStyle={sectionHeadingStyle}
-                inputStyleClass={inputStyleClass}
-                boldInputClass={boldInputClass}
-                compactFitMetaInputClass={compactFitMetaInputClass}
-                compactFitDateInputClass={compactFitDateInputClass}
-                contactInputClass={contactInputClass}
-                resumeDividerClass={resumeDividerClass}
-                headerMarginAddClass={headerMarginAddClass}
-                experienceMarginAddClass={experienceMarginAddClass}
-                experienceMarginImproveClass={experienceMarginImproveClass}
-                experienceMarginClearClass={experienceMarginClearClass}
-                experienceMarginDeleteClass={experienceMarginDeleteClass}
-                summaryMarginImproveClass={summaryMarginImproveClass}
-                activeDocumentSection={activeDocumentSection}
-                focusedDocumentSection={focusedDocumentSection}
-                setActiveDocumentSection={setActiveDocumentSection}
-                setFocusedField={setFocusedField}
-                hoveredNameSection={hoveredNameSection}
-                setHoveredNameSection={setHoveredNameSection}
-                focusedNameSection={focusedNameSection}
-                setFocusedNameSection={setFocusedNameSection}
-                hoveredContactField={hoveredContactField}
-                setHoveredContactField={setHoveredContactField}
-                focusedContactField={focusedContactField}
-                setFocusedContactField={setFocusedContactField}
-                hoveredDeleteIndex={hoveredDeleteIndex}
-                setHoveredDeleteIndex={setHoveredDeleteIndex}
-                hoveredSummary={hoveredSummary}
-                setHoveredSummary={setHoveredSummary}
-                focusedSummary={focusedSummary}
-                setFocusedSummary={setFocusedSummary}
-                isSummaryImproveHovered={isSummaryImproveHovered}
-                setIsSummaryImproveHovered={setIsSummaryImproveHovered}
-                hoveredJobId={hoveredJobId}
-                setHoveredJobId={setHoveredJobId}
-                hoveredExperienceImproveId={hoveredExperienceImproveId}
-                setHoveredExperienceImproveId={setHoveredExperienceImproveId}
-                hoveredExperienceClearId={hoveredExperienceClearId}
-                setHoveredExperienceClearId={setHoveredExperienceClearId}
-                hoveredExperienceDeleteId={hoveredExperienceDeleteId}
-                setHoveredExperienceDeleteId={setHoveredExperienceDeleteId}
-                hoveredEducationClearId={hoveredEducationClearId}
-                setHoveredEducationClearId={setHoveredEducationClearId}
-                hoveredEducationDeleteId={hoveredEducationDeleteId}
-                setHoveredEducationDeleteId={setHoveredEducationDeleteId}
-                hoveredSkillDeleteId={hoveredSkillDeleteId}
-                setHoveredSkillDeleteId={setHoveredSkillDeleteId}
-                rewriteActionHover={rewriteActionHover}
-                setRewriteActionHover={setRewriteActionHover}
-                isExperienceSectionActive={isExperienceSectionActive}
-                isSummarySectionActive={isSummarySectionActive}
-                summaryRewriteHoverAction={summaryRewriteHoverAction}
-                summaryCurrentRewriteClass={summaryCurrentRewriteClass}
-                gapPreviewTarget={gapPreviewTarget}
-                loadingSummaryImprove={loadingSummaryImprove}
-                loadingExperienceImproveId={loadingExperienceImproveId}
-                renderOverlayInput={renderOverlayInput}
-                renderRewriteActionButtons={renderRewriteActionButtons}
-                getDynamicInputStyle={getDynamicInputStyle}
-                contactFieldStyle={contactFieldStyle}
-                subHeaderFieldStyle={subHeaderFieldStyle}
-                isFieldChanged={isFieldChanged}
-                getSuggestionReviewClass={getSuggestionReviewClass}
-                updateField={updateField}
-                updateSectionTitle={updateSectionTitle}
-                addCustomContactField={addCustomContactField}
-                updateCustomContactField={updateCustomContactField}
-                removeCustomContactField={removeCustomContactField}
-                removeStandardContactField={removeStandardContactField}
-                updateExperienceField={updateExperienceField}
-                insertExperienceAt={insertExperienceAt}
-                removeExperience={removeExperience}
-                moveExperienceUp={moveExperienceUp}
-                moveExperienceDown={moveExperienceDown}
-                clearExperience={clearExperience}
-                addBulletWithText={addBulletWithText}
-                insertBulletAfter={insertBulletAfter}
-                updateBulletText={updateBulletText}
-                removeBulletIfEmpty={removeBulletIfEmpty}
-                removeBullet={removeBullet}
-                toggleBulletTag={toggleBulletTag}
-                createAndAssignBulletTag={createAndAssignBulletTag}
-                deleteBulletTag={deleteBulletTag}
-                updateEducationField={updateEducationField}
-                addEducation={addEducation}
-                removeEducation={removeEducation}
-                clearEducation={clearEducation}
-                addEducationDetailWithText={addEducationDetailWithText}
-                insertEducationDetailAfter={insertEducationDetailAfter}
-                updateEducationDetailText={updateEducationDetailText}
-                removeEducationDetailIfEmpty={removeEducationDetailIfEmpty}
-                addSkillCategory={addSkillCategory}
-                updateSkillCategoryName={updateSkillCategoryName}
-                updateSkillCategoryItems={updateSkillCategoryItems}
-                removeSkillCategory={removeSkillCategory}
-                handleAnalyzeSummary={handleAnalyzeSummary}
-                handleImproveSummary={handleImproveSummary}
-                handleImproveExperience={handleImproveExperience}
-                acceptSummaryRewriteSuggestion={acceptSummaryRewriteSuggestion}
-                rejectSummaryRewriteSuggestion={rejectSummaryRewriteSuggestion}
-                acceptExperienceRewriteSuggestion={acceptExperienceRewriteSuggestion}
-                rejectExperienceRewriteSuggestion={rejectExperienceRewriteSuggestion}
-                setResumeData={setResumeData}
-                setChangeMetadata={setChangeMetadata}
-                isPageStyleShelfOpen={isPageStyleShelfOpen}
-                isPageStyleShelfCompact={isPageStyleShelfCompact}
-                shelfSurfaceStyle={shelfSurfaceStyle}
-                shelfControlLabelClass={shelfControlLabelClass}
-                shelfSegmentGroupClass={shelfSegmentGroupClass}
-                shelfSegmentButtonClass={shelfSegmentButtonClass}
-                shelfSegmentIndicatorClass={shelfSegmentIndicatorClass}
-                shelfStepperControlClass={shelfStepperControlClass}
-                shelfStepperLabelClass={shelfStepperLabelClass}
-                shelfStepperRowClass={shelfStepperRowClass}
-                shelfStepperButtonClass={shelfStepperButtonClass}
-                shelfStepperValueClass={shelfStepperValueClass}
-                pageSize={pageSize}
-                setPageSize={setPageSize}
-                setTitleFontSize={setTitleFontSize}
-                headerFontSize={headerFontSize}
-                setHeaderFontSize={setHeaderFontSize}
-                setSubHeaderFontSize={setSubHeaderFontSize}
-                setBodyFontSize={setBodyFontSize}
-                setPageMarginPt={setPageMarginPt}
-                paperLayoutFormat={paperLayoutFormat}
-                setPaperLayoutFormat={setPaperLayoutFormat}
-                innerSectionGapFormat={innerSectionGapFormat}
-                setFontPreviewTarget={setFontPreviewTarget}
-                setIsMarginPreviewVisible={setIsMarginPreviewVisible}
-                setIsPageFormatPreviewVisible={setIsPageFormatPreviewVisible}
-                setGapPreviewTarget={setGapPreviewTarget}
-                toolbarSurfaceStyle={toolbarSurfaceStyle}
-                documentToolButtonClass={documentToolButtonClass}
-                handleTogglePageStyleShelf={handleTogglePageStyleShelf}
-                handleFitZoom={handleFitZoom}
-                zoomMode={zoomMode}
-                manualZoom={manualZoom}
-                setZoomMode={setZoomMode}
-                setManualZoom={setManualZoom}
-                zoomPercent={zoomPercent}
-                isPdfPreviewOpen={isPdfPreviewOpen}
-                pdfPreviewUrl={pdfPreviewUrl}
-                resumeName={resumeName}
-                isGeneratingPdfPreview={isGeneratingPdfPreview}
-                closePdfPreview={closePdfPreview}
-                loadingList={loadingList}
-            />
-            <ResumeChatRail
-                isLightMode={isLightMode}
-                isRightRailCollapsed={isRightRailCollapsed}
-                rightRailShellStyle={rightRailShellStyle}
-                railHeaderRowClass={railHeaderRowClass}
-                railTitleClass={railTitleClass}
-                railTitleStyle={railTitleStyle}
-                headerActionButtonClass={headerActionButtonClass}
-                headerActionIconClass={headerActionIconClass}
-                chatContainerRef={chatContainerRef}
-                chatInputRef={chatInputRef}
-                chatMessages={chatMessages}
-                copiedChatMessageIndex={copiedChatMessageIndex}
-                handleCopyAssistantMessage={handleCopyAssistantMessage}
-                isChatResponding={isChatResponding}
-                isAssistantGenerating={isAssistantGenerating}
-                showBackToBottom={showBackToBottom}
-                chatScrollShadow={chatScrollShadow}
-                scrollChatToBottom={scrollChatToBottom}
-                isChatInputCollapsed={isChatInputCollapsed}
-                setIsChatInputCollapsed={setIsChatInputCollapsed}
-                chatInput={chatInput}
-                setChatInput={setChatInput}
-                handleSendChatMessage={handleSendChatMessage}
-                handleStopChatMessage={handleStopChatMessage}
-            />
+                <ResumeChatRail
+                    isLightMode={isLightMode}
+                    isRightRailCollapsed={isRightRailCollapsed}
+                    chatContainerRef={chat.chatContainerRef}
+                    chatInputRef={chat.chatInputRef}
+                    chatMessages={chat.chatMessages}
+                    copiedChatMessageIndex={chat.copiedChatMessageIndex}
+                    handleCopyAssistantMessage={chat.handleCopyAssistantMessage}
+                    isChatResponding={chat.isChatResponding}
+                    isAssistantGenerating={chat.isAssistantGenerating}
+                    showBackToBottom={chat.showBackToBottom}
+                    chatScrollShadow={chat.chatScrollShadow}
+                    scrollChatToBottom={chat.scrollChatToBottom}
+                    isChatInputCollapsed={chat.isChatInputCollapsed}
+                    setIsChatInputCollapsed={chat.setIsChatInputCollapsed}
+                    chatInput={chat.chatInput}
+                    setChatInput={chat.setChatInput}
+                    handleSendChatMessage={chat.handleSendChatMessage}
+                    handleStopChatMessage={chat.handleStopChatMessage}
+                />
             </div>
         </div>
     );

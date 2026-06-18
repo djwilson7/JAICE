@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 type InlineBulletComposerProps = {
     placeholder: string;
     className: string;
-    style: React.CSSProperties;
+    style?: React.CSSProperties;
     focusPath: string;
     onCommit: (value: string) => void;
     onFocusChange: (fieldPath: string | null) => void;

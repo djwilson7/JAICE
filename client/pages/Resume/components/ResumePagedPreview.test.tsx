@@ -64,8 +64,8 @@ describe('ResumePagedPreview', () => {
         expect(register).toHaveBeenCalled();
     });
 
-    it('reflows an oversized bullet across pages instead of clipping it', () => {
-        const longText = Array.from({ length: 120 }, (_, index) => `word${index}`).join(' ');
+    it('moves a whole bullet to the next page instead of splitting its text', () => {
+        const longText = Array.from({ length: 30 }, (_, index) => `word${index}`).join(' ');
         const onRenderedPageCountChange = vi.fn();
 
         const { container } = render(
@@ -100,9 +100,9 @@ describe('ResumePagedPreview', () => {
                 }}
                 paperMetrics={{
                     widthPt: 240,
-                    heightPt: 210,
+                    heightPt: 300,
                     width: 320,
-                    height: 280,
+                    height: 400,
                     printName: 'Letter',
                     label: 'Letter',
                     standardLabel: 'US & Canada',
@@ -121,13 +121,16 @@ describe('ResumePagedPreview', () => {
             />
         );
 
-        const visiblePageText = Array.from(container.querySelectorAll<HTMLElement>('.resume-page-preview-page'))
-            .map((page) => page.textContent || '')
-            .join(' ');
+        const visiblePages = Array.from(container.querySelectorAll<HTMLElement>('.resume-page-preview-page'));
         expect(screen.getByLabelText('Page 2')).toBeTruthy();
-        expect(visiblePageText).toContain('word0');
-        expect(visiblePageText).toContain('word119');
-        expect(screen.getAllByText(longText)).toHaveLength(1); // hidden measurement copy keeps the unsplit source text
+        expect(visiblePages[0].textContent).not.toContain(longText);
+        const bulletPages = visiblePages.filter((page) => page.textContent?.includes(longText));
+        expect(bulletPages).toHaveLength(1);
+        const visibleBulletRows = container.querySelectorAll(
+            '.resume-page-preview-page .resume-document__bullet-row--paginated'
+        );
+        expect(visibleBulletRows).toHaveLength(1);
+        expect(visibleBulletRows[0].textContent).toContain(longText);
         expect(screen.getAllByText('8.5 in').length).toBeGreaterThan(0);
         expect(onRenderedPageCountChange).toHaveBeenCalled();
     });
@@ -280,19 +283,25 @@ describe('ResumePagedPreview', () => {
         const findVisibleText = (text: string) => Array.from(visiblePage.querySelectorAll<HTMLElement>('*'))
             .find((element) => element.textContent === text);
 
-        expect(visiblePage).toHaveStyle({
-            '--resume-title-font-size': '29pt',
-            '--resume-subheader-font-size': '15pt',
-            '--resume-body-font-size': '13.5pt'
+        expect(document.querySelector('.resume-page-preview')).toHaveStyle({
+            '--resume-title-font-size': '38.67px',
+            '--resume-subheader-font-size': '20px',
+            '--resume-body-font-size': '18px'
         });
-        expect(findVisibleText('Ada Lovelace')).toHaveStyle({ fontSize: 'var(--resume-title-font-size)' });
-        expect(findVisibleText('ada@example.com')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
-        expect(findVisibleText('Principal Engineer')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
-        expect(findVisibleText('Jan 2020')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
-        expect(findVisibleText('MS Computing')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
-        expect(findVisibleText('Sep 2018')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
-        expect(findVisibleText('Languages')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
-        expect(findVisibleText('TypeScript, React')?.closest('.resume-body-font-target')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+        expect(findVisibleText('Ada Lovelace')).toHaveClass('resume-font--title');
+        expect(findVisibleText('ada@example.com')?.closest('.resume-font--contact')).toBeTruthy();
+        expect(findVisibleText('Principal Engineer')?.closest('.resume-font--subheading')).toBeTruthy();
+        expect(findVisibleText('Jan 2020')?.closest('.resume-font--subheading')).toBeTruthy();
+        expect(findVisibleText('MS Computing')?.closest('.resume-font--subheading')).toBeTruthy();
+        expect(findVisibleText('Sep 2018')?.closest('.resume-font--subheading')).toBeTruthy();
+        expect(findVisibleText('Languages')).toHaveClass('resume-font--subheading');
+        expect(findVisibleText('TypeScript, React')?.closest('.resume-font--body')).toBeTruthy();
+        expect(findVisibleText('Built reliable tooling.')?.closest('.resume-document__bullet-row')).toHaveClass(
+            'resume-document__bullet-row--paginated'
+        );
+        expect(findVisibleText('Studied reliable systems.')?.closest('.resume-document__bullet-row')).toHaveClass(
+            'resume-document__bullet-row--paginated'
+        );
     });
 
     it('uses the body token for the under-name contact strip in fit preview', () => {
@@ -348,8 +357,8 @@ describe('ResumePagedPreview', () => {
                 .find((element) => element.textContent === 'ada@example.com');
         };
 
-        expect(document.querySelector('.resume-page-preview-page')).toHaveStyle({ '--resume-body-font-size': '10pt' });
-        expect(findContactStyle()).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+        expect(document.querySelector('.resume-page-preview')).toHaveStyle({ '--resume-body-font-size': '13.33px' });
+        expect(findContactStyle()?.closest('.resume-font--contact')).toBeTruthy();
 
         rerender(
             <ResumePagedPreview
@@ -367,8 +376,8 @@ describe('ResumePagedPreview', () => {
             />
         );
 
-        expect(document.querySelector('.resume-page-preview-page')).toHaveStyle({ '--resume-body-font-size': '14pt' });
-        expect(findContactStyle()).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+        expect(document.querySelector('.resume-page-preview')).toHaveStyle({ '--resume-body-font-size': '18.67px' });
+        expect(findContactStyle()?.closest('.resume-font--contact')).toBeTruthy();
     });
 
     it('applies bottom shelf layout changes across every rendered preview page', () => {
@@ -419,13 +428,14 @@ describe('ResumePagedPreview', () => {
             />
         );
 
+        expect(container.querySelector('.resume-page-preview')).toHaveStyle({
+            '--resume-preview-page-width': '816px',
+            '--resume-preview-page-height': '1056px',
+            '--resume-page-margin': '32px'
+        });
         Array.from(container.querySelectorAll<HTMLElement>('.resume-page-preview-page')).forEach((page) => {
-            expect(page).toHaveStyle({
-                width: '816px',
-                height: '1056px',
-                '--resume-page-margin': '24pt'
-            });
-            expect(page.getAttribute('style')).toContain('padding: var(--resume-page-margin)');
+            expect(page).not.toHaveAttribute('style');
+            expect(page.querySelector('.resume-page-preview-page-content')).toHaveClass('resume-page-content');
         });
 
         rerender(
@@ -455,13 +465,13 @@ describe('ResumePagedPreview', () => {
             />
         );
 
+        expect(container.querySelector('.resume-page-preview')).toHaveStyle({
+            '--resume-preview-page-width': '794px',
+            '--resume-preview-page-height': '1123px',
+            '--resume-page-margin': '72px'
+        });
         Array.from(container.querySelectorAll<HTMLElement>('.resume-page-preview-page')).forEach((page) => {
-            expect(page).toHaveStyle({
-                width: '794px',
-                height: '1123px',
-                '--resume-page-margin': '54pt'
-            });
-            expect(page.getAttribute('style')).toContain('padding: var(--resume-page-margin)');
+            expect(page).not.toHaveAttribute('style');
         });
     });
 

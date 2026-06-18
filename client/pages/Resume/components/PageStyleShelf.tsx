@@ -5,18 +5,8 @@ import { PAPER_SIZES } from "../formatting";
 import { ShelfMinusIcon, ShelfPlusIcon } from "./DocumentSection";
 
 type PageStyleShelfProps = {
-    isLightMode: boolean;
     isPageStyleShelfOpen: boolean;
     isPageStyleShelfCompact: boolean;
-    shelfControlLabelClass: string;
-    shelfSegmentGroupClass: string;
-    shelfSegmentButtonClass: string;
-    shelfSegmentIndicatorClass: string;
-    shelfStepperControlClass: string;
-    shelfStepperLabelClass: string;
-    shelfStepperRowClass: string;
-    shelfStepperButtonClass: string;
-    shelfStepperValueClass: string;
     pageSize: PageSize;
     setPageSize: React.Dispatch<React.SetStateAction<PageSize>>;
     titleFontSize: number;
@@ -39,9 +29,7 @@ type PageStyleShelfProps = {
 
 export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
     const {
-        isLightMode, isPageStyleShelfOpen, isPageStyleShelfCompact, shelfControlLabelClass,
-        shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass,
-        shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass,
+        isPageStyleShelfOpen, isPageStyleShelfCompact,
         pageSize, setPageSize, titleFontSize, setTitleFontSize, headerFontSize, setHeaderFontSize, subHeaderFontSize, setSubHeaderFontSize, bodyFontSize, setBodyFontSize,
         pageMarginPt, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible,
         setIsPageFormatPreviewVisible, setGapPreviewTarget
@@ -66,57 +54,57 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-title-size ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-title-size resume-shelf-stepper"
                                     onMouseEnter={() => setFontPreviewTarget("title")}
                                     onMouseLeave={() => setFontPreviewTarget(null)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Title</span>
-                                    <div className={shelfStepperRowClass}>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setTitleFontSize((value) => clampNumber(value - 1, 18, 34))} disabled={titleFontSize <= 18} aria-label="Decrease title font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{titleFontSize}pt</span>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setTitleFontSize((value) => clampNumber(value + 1, 18, 34))} disabled={titleFontSize >= 34} aria-label="Increase title font size"><ShelfPlusIcon /></button>
+                                    <span className="resume-shelf-label">Title</span>
+                                    <div className="resume-shelf-stepper__row">
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setTitleFontSize((value) => clampNumber(value - 1, 18, 34))} disabled={titleFontSize <= 18} aria-label="Decrease title font size"><ShelfMinusIcon /></button>
+                                        <span className="resume-shelf-stepper__value">{titleFontSize}pt</span>
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setTitleFontSize((value) => clampNumber(value + 1, 18, 34))} disabled={titleFontSize >= 34} aria-label="Increase title font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-header-size ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-header-size resume-shelf-stepper"
                                     onMouseEnter={() => setFontPreviewTarget("header")}
                                     onMouseLeave={() => setFontPreviewTarget(null)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Header</span>
-                                    <div className={shelfStepperRowClass}>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setHeaderFontSize((value) => clampNumber(value - 1, 12, 22))} disabled={headerFontSize <= 12} aria-label="Decrease header font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{headerFontSize}pt</span>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setHeaderFontSize((value) => clampNumber(value + 1, 12, 22))} disabled={headerFontSize >= 22} aria-label="Increase header font size"><ShelfPlusIcon /></button>
+                                    <span className="resume-shelf-label">Header</span>
+                                    <div className="resume-shelf-stepper__row">
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setHeaderFontSize((value) => clampNumber(value - 1, 12, 22))} disabled={headerFontSize <= 12} aria-label="Decrease header font size"><ShelfMinusIcon /></button>
+                                        <span className="resume-shelf-stepper__value">{headerFontSize}pt</span>
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setHeaderFontSize((value) => clampNumber(value + 1, 12, 22))} disabled={headerFontSize >= 22} aria-label="Increase header font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-subheader-size ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-subheader-size resume-shelf-stepper"
                                     onMouseEnter={() => setFontPreviewTarget("subheader")}
                                     onMouseLeave={() => setFontPreviewTarget(null)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Sub Header</span>
-                                    <div className={shelfStepperRowClass}>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setSubHeaderFontSize((value) => clampNumber(value - 1, 10, 20))} disabled={subHeaderFontSize <= 10} aria-label="Decrease sub header font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{subHeaderFontSize}pt</span>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setSubHeaderFontSize((value) => clampNumber(value + 1, 10, 20))} disabled={subHeaderFontSize >= 20} aria-label="Increase sub header font size"><ShelfPlusIcon /></button>
+                                    <span className="resume-shelf-label">Sub Header</span>
+                                    <div className="resume-shelf-stepper__row">
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setSubHeaderFontSize((value) => clampNumber(value - 1, 10, 20))} disabled={subHeaderFontSize <= 10} aria-label="Decrease sub header font size"><ShelfMinusIcon /></button>
+                                        <span className="resume-shelf-stepper__value">{subHeaderFontSize}pt</span>
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setSubHeaderFontSize((value) => clampNumber(value + 1, 10, 20))} disabled={subHeaderFontSize >= 20} aria-label="Increase sub header font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-body-size ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-body-size resume-shelf-stepper"
                                     onMouseEnter={() => setFontPreviewTarget("body")}
                                     onMouseLeave={() => setFontPreviewTarget(null)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Body</span>
-                                    <div className={shelfStepperRowClass}>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setBodyFontSize((value) => clampNumber(value - 0.5, 9, 15))} disabled={bodyFontSize <= 9} aria-label="Decrease body font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{bodyFontSize}pt</span>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setBodyFontSize((value) => clampNumber(value + 0.5, 9, 15))} disabled={bodyFontSize >= 15} aria-label="Increase body font size"><ShelfPlusIcon /></button>
+                                    <span className="resume-shelf-label">Body</span>
+                                    <div className="resume-shelf-stepper__row">
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setBodyFontSize((value) => clampNumber(value - 0.5, 9, 15))} disabled={bodyFontSize <= 9} aria-label="Decrease body font size"><ShelfMinusIcon /></button>
+                                        <span className="resume-shelf-stepper__value">{bodyFontSize}pt</span>
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setBodyFontSize((value) => clampNumber(value + 0.5, 9, 15))} disabled={bodyFontSize >= 15} aria-label="Increase body font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
                                 </div>
@@ -124,32 +112,33 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-margins ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-margins resume-shelf-stepper"
                                     onMouseEnter={() => setIsMarginPreviewVisible(true)}
                                     onMouseLeave={() => setIsMarginPreviewVisible(false)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Margins</span>
-                                    <div className={shelfStepperRowClass}>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setPageMarginPt((value) => clampNumber(value - 2, 24, 72))} disabled={pageMarginPt <= 24} aria-label="Decrease page margins"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{pageMarginPt}pt</span>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setPageMarginPt((value) => clampNumber(value + 2, 24, 72))} disabled={pageMarginPt >= 72} aria-label="Increase page margins"><ShelfPlusIcon /></button>
+                                    <span className="resume-shelf-label">Margins</span>
+                                    <div className="resume-shelf-stepper__row">
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setPageMarginPt((value) => clampNumber(value - 2, 24, 72))} disabled={pageMarginPt <= 24} aria-label="Decrease page margins"><ShelfMinusIcon /></button>
+                                        <span className="resume-shelf-stepper__value">{pageMarginPt}pt</span>
+                                        <button type="button" className="resume-shelf-stepper__button" onClick={() => setPageMarginPt((value) => clampNumber(value + 2, 24, 72))} disabled={pageMarginPt >= 72} aria-label="Increase page margins"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-page-format ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-page-format resume-shelf-stepper"
                                     onMouseEnter={() => setIsPageFormatPreviewVisible(true)}
                                     onMouseLeave={() => setIsPageFormatPreviewVisible(false)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Page Format</span>
-                                    <div className={shelfSegmentGroupClass} role="group" aria-label="Page size">
+                                    <span className="resume-shelf-label">Page Format</span>
+                                    <div className="resume-shelf-segments" role="group" aria-label="Page size">
                                         {(["a4", "letter"] as PageSize[]).map((size) => (
                                             <button
                                                 key={size}
                                                 type="button"
                                                 onClick={() => setPageSize(size)}
-                                                className={`${shelfSegmentButtonClass} ${pageSize === size ? isLightMode ? "!text-sky-700" : "!text-sky-100" : ""}`}
+                                                className="resume-shelf-segment"
+                                                data-selected={pageSize === size}
                                                 title={`Use ${PAPER_SIZES[size].standardLabel} page size`}
                                                 aria-label={`Use ${PAPER_SIZES[size].standardLabel} page size`}
                                                 aria-pressed={pageSize === size}
@@ -158,7 +147,7 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                                 {pageSize === size && (
                                                     <motion.span
                                                         layoutId="page-size-shelf-indicator"
-                                                        className={shelfSegmentIndicatorClass}
+                                                        className="resume-shelf-segment__indicator"
                                                         transition={{ duration: 0.18, ease: [0.32, 0.72, 0.32, 1] }}
                                                     />
                                                 )}
@@ -169,18 +158,19 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
-                                    className={`resume-page-style-shelf-control resume-page-style-shelf-section-gap ${shelfStepperControlClass}`}
+                                    className="resume-page-style-shelf-control resume-page-style-shelf-section-gap resume-shelf-stepper"
                                     onMouseEnter={() => setGapPreviewTarget("section")}
                                     onMouseLeave={() => setGapPreviewTarget(null)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Spacing</span>
-                                    <div className={shelfSegmentGroupClass} role="group" aria-label="Document spacing">
+                                    <span className="resume-shelf-label">Spacing</span>
+                                    <div className="resume-shelf-segments" role="group" aria-label="Document spacing">
                                         {(["compact", "standard", "relaxed"] as PaperLayoutFormat[]).map((format) => (
                                             <button
                                                 key={format}
                                                 type="button"
                                                 onClick={() => setPaperLayoutFormat(format)}
-                                                className={`${shelfSegmentButtonClass} ${paperLayoutFormat === format ? isLightMode ? "!text-sky-700" : "!text-sky-100" : ""}`}
+                                                className="resume-shelf-segment"
+                                                data-selected={paperLayoutFormat === format}
                                                 title={`${format[0].toUpperCase()}${format.slice(1)} document spacing`}
                                                 aria-label={`${format[0].toUpperCase()}${format.slice(1)} document spacing`}
                                                 aria-pressed={paperLayoutFormat === format}
@@ -189,7 +179,7 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                                 {paperLayoutFormat === format && (
                                                     <motion.span
                                                         layoutId="section-gap-shelf-indicator"
-                                                        className={shelfSegmentIndicatorClass}
+                                                        className="resume-shelf-segment__indicator"
                                                         transition={{ duration: 0.18, ease: [0.32, 0.72, 0.32, 1] }}
                                                     />
                                                 )}

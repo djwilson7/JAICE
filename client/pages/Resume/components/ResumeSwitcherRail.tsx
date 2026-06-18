@@ -6,12 +6,6 @@ import { ResumeRailDivider } from "./ResumeRailDivider";
 type ResumeSwitcherRailProps = {
     isLightMode: boolean;
     isLeftRailCollapsed: boolean;
-    railShellStyle: React.CSSProperties;
-    railHeaderRowClass: string;
-    railTitleClass: string;
-    railTitleStyle: React.CSSProperties;
-    headerActionButtonClass: string;
-    headerActionIconClass: string;
     handleCreateNewClick: () => void;
     searchQuery: string;
     setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
@@ -24,8 +18,7 @@ type ResumeSwitcherRailProps = {
 };
 
 export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
-    isLightMode, isLeftRailCollapsed, railShellStyle, railHeaderRowClass, railTitleClass, railTitleStyle,
-    headerActionButtonClass, headerActionIconClass, handleCreateNewClick, searchQuery, setSearchQuery,
+    isLightMode, isLeftRailCollapsed, handleCreateNewClick, searchQuery, setSearchQuery,
     resumeSearchFocusSignal, loadingList, filteredResumes, activeResumeId, loadResumeIntoWorkspace, handleDeleteResume
 }) => {
     const listContainerRef = React.useRef<HTMLDivElement>(null);
@@ -57,29 +50,24 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
 
     return (
             <aside 
-                className={`absolute bottom-0 left-0 top-16 z-30 mb-3 mt-1 min-h-0 rounded-md border flex flex-col print:hidden overflow-hidden transition-[width,margin,opacity,border-color,box-shadow] duration-300 ${
-                    isLeftRailCollapsed ? "ml-0 w-0 border-0 opacity-0 shadow-none pointer-events-none" : "ml-3 w-72 opacity-100"
-                }`}
-                style={isLeftRailCollapsed ? { borderColor: "transparent" } : railShellStyle}
+                className="resume-rail resume-rail--left resume-chrome-surface print:hidden"
+                data-collapsed={isLeftRailCollapsed}
             >
                 <div
-                    className={`flex h-full min-h-0 w-72 flex-col gap-5 p-2.5 transition-opacity duration-150 ${
-                        isLeftRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
-                    }`}
-                    style={{ fontFamily: "var(--font-body)" }}
+                    className="resume-rail__content"
                 >
                     <div className="flex flex-col">
-                    <div className={`${railHeaderRowClass} justify-between items-center w-full`}>
+                    <div className="resume-rail__header">
                         <div className="min-w-0 overflow-hidden">
-                            <div className={railTitleClass} style={railTitleStyle}>Resumes</div>
+                            <div className="resume-rail__title">Resumes</div>
                         </div>
                         <button
                             onClick={handleCreateNewClick}
-                            className={headerActionButtonClass}
+                            className="resume-action-button"
                             title="Create a new resume."
                             aria-label="Create a new resume."
                         >
-                            <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
                         </button>
@@ -172,11 +160,11 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                                         </span>
                                         <button
                                             onClick={(e) => handleDeleteResume(res.id, e)}
-                                            className={`${headerActionButtonClass} absolute right-0 top-0 translate-x-3 text-slate-500 opacity-0 transition-all duration-200 hover:text-rose-400 group-hover:translate-x-0 group-hover:opacity-100 focus:translate-x-0 focus:opacity-100`}
+                                            className="resume-action-button absolute right-0 top-0 translate-x-3 text-slate-500 opacity-0 transition-all duration-200 hover:text-rose-400 group-hover:translate-x-0 group-hover:opacity-100 focus:translate-x-0 focus:opacity-100"
                                             title="Delete version"
                                             aria-label={`Delete ${res.name}`}
                                         >
-                                            <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                            <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
                                         </button>

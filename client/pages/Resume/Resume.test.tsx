@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Resume } from "./Resume";
-import { ResumeGlobalStyles } from "./components/ResumeGlobalStyles";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
 import { ResumeDocumentSurface } from "./components/ResumeDocumentSurface";
 import { CloneResumeModal } from "./components/CloneResumeModal";
@@ -12,12 +11,11 @@ import { ResumeChatRail } from "./components/ResumeChatRail";
 import { ResumeWorkspace } from "./components/ResumeWorkspace";
 
 console.log("Imports:", {
-    ResumeGlobalStyles, ResumePrintDocument, ResumeDocumentSurface,
+    ResumePrintDocument, ResumeDocumentSurface,
     CloneResumeModal, DeleteResumeModal, ResumeHeader,
     ResumeSwitcherRail, ResumeChatRail, ResumeWorkspace
 });
 
-vi.mock("./components/ResumeGlobalStyles", () => ({ ResumeGlobalStyles: () => <div data-testid="ResumeGlobalStyles" /> }));
 vi.mock("./components/ResumePrintDocument", () => ({ ResumePrintDocument: () => <div data-testid="ResumePrintDocument" /> }));
 vi.mock("./components/ResumeDocumentSurface", () => ({ ResumeDocumentSurface: () => <div data-testid="ResumeDocumentSurface" /> }));
 vi.mock("./components/CloneResumeModal", () => ({ CloneResumeModal: () => <div data-testid="CloneResumeModal" /> }));

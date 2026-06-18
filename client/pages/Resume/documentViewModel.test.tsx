@@ -89,10 +89,10 @@ describe('useResumeDocumentViewModel – isFieldChanged', () => {
 // ─── getDynamicInputStyle ────────────────────────────────────────────────────
 
 describe('useResumeDocumentViewModel – getDynamicInputStyle', () => {
-    it('returns a style object with width and fontSize', () => {
+    it('returns geometry only and leaves typography to CSS', () => {
         const vm = callHook();
         const style = vm.getDynamicInputStyle('hello', 'Placeholder');
-        expect(style).toHaveProperty('fontSize');
+        expect(style).not.toHaveProperty('fontSize');
         expect(style).toHaveProperty('width');
     });
 
@@ -349,9 +349,7 @@ describe('useResumeDocumentViewModel – returned object shape', () => {
             'renderOverlayInput',
             'inputStyleClass',
             'boldInputClass',
-            'documentTextStyle',
             'sectionHeadingClass',
-            'sectionHeadingStyle',
             'compactFitMetaInputClass',
             'compactFitDateInputClass',
             'contactInputClass',

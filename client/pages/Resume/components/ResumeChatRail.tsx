@@ -6,12 +6,6 @@ import { ResumeRailDivider } from "./ResumeRailDivider";
 type ResumeChatRailProps = {
     isLightMode: boolean;
     isRightRailCollapsed: boolean;
-    rightRailShellStyle: React.CSSProperties;
-    railHeaderRowClass: string;
-    railTitleClass: string;
-    railTitleStyle: React.CSSProperties;
-    headerActionButtonClass: string;
-    headerActionIconClass: string;
     chatContainerRef: React.RefObject<HTMLDivElement | null>;
     chatInputRef: React.RefObject<HTMLTextAreaElement | null>;
     chatMessages: ResumeChatMessage[];
@@ -34,29 +28,24 @@ type ResumeChatRailProps = {
 };
 
 export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
-    isLightMode, isRightRailCollapsed, rightRailShellStyle, railHeaderRowClass,
-    railTitleClass, railTitleStyle, headerActionButtonClass, headerActionIconClass, chatContainerRef, chatInputRef,
+    isLightMode, isRightRailCollapsed, chatContainerRef, chatInputRef,
     chatMessages, copiedChatMessageIndex, handleCopyAssistantMessage, isChatResponding, isAssistantGenerating,
     showBackToBottom, chatScrollShadow, scrollChatToBottom, isChatInputCollapsed, setIsChatInputCollapsed, chatInput, setChatInput,
     handleSendChatMessage, handleStopChatMessage
 }) => (
             <aside 
-                    className={`absolute bottom-0 right-0 top-16 z-30 mb-3 mt-1 min-h-0 rounded-md border flex flex-col print:hidden overflow-hidden animate-slide-left transition-[width,margin,opacity,border-color,box-shadow] duration-300 ${
-                        isRightRailCollapsed ? "mr-0 w-0 border-0 opacity-0 shadow-none pointer-events-none" : "mr-3 w-72 opacity-100"
-                    }`}
-                    style={isRightRailCollapsed ? { borderColor: "transparent" } : rightRailShellStyle}
+                    className="resume-rail resume-rail--right resume-chrome-surface print:hidden"
+                    data-collapsed={isRightRailCollapsed}
                 >
-                    <div className={`absolute inset-0 flex min-h-0 w-72 flex-col gap-2.5 p-2.5 transition-opacity duration-150 ${
-                        isRightRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
-                    }`}>
-                    <div className={`${railHeaderRowClass} justify-between shrink-0`}>
+                    <div className="resume-rail__content absolute inset-0 !gap-2.5">
+                    <div className="resume-rail__header">
                         <div className="flex items-center gap-2">
-                            <div className={railTitleClass} style={railTitleStyle}>Jaice</div>
+                            <div className="resume-rail__title">Jaice</div>
                         </div>
                         <button
                             type="button"
                             onClick={scrollChatToBottom}
-                            className={`${headerActionButtonClass} transition-opacity ${
+                            className={`resume-action-button transition-opacity ${
                                 showBackToBottom
                                     ? "opacity-100"
                                     : "pointer-events-none opacity-0"
@@ -66,7 +55,7 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                             aria-hidden={!showBackToBottom}
                             tabIndex={showBackToBottom ? 0 : -1}
                         >
-                            <svg className={headerActionIconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M12 19l7-7M12 19l-7-7" />
                             </svg>
                         </button>

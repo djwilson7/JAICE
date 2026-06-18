@@ -7,7 +7,7 @@ type EditableSectionTitleProps = {
     fallbackTitle: string;
     isEditing: boolean;
     className: string;
-    style: React.CSSProperties;
+    style?: React.CSSProperties;
     onChange: (value: string) => void;
     onFocusChange: (fieldPath: string | null) => void;
 };

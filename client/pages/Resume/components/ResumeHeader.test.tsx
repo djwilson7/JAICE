@@ -5,9 +5,6 @@ import { ResumeHeader } from './ResumeHeader';
 describe('ResumeHeader', () => {
     const defaultProps: any = {
         isLightMode: true,
-        headerShellStyle: {},
-        headerActionButtonClass: 'btn',
-        headerActionIconClass: 'icon',
         isLeftRailCollapsed: false,
         onToggleLeftRail: vi.fn(),
         isRightRailCollapsed: false,
