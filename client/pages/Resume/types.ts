@@ -93,9 +93,11 @@ export type ResumeFormatting = {
     pageSize: PageSize;
     titleFontSize: number;
     headerFontSize: number;
+    subHeaderFontSize: number;
     bodyFontSize: number;
     pageMarginPt: number;
     paperLayoutFormat: PaperLayoutFormat;
+    innerSectionGapFormat: PaperLayoutFormat;
 };
 
 export type SavedResume = {
@@ -238,11 +240,13 @@ export type PageSize = "a4" | "letter";
 export type ZoomMode = "fit" | "manual";
 export type DocumentSectionId = "header" | "summary" | "experience" | "education" | "skills";
 export type PaperLayoutFormat = "compact" | "standard" | "relaxed";
-export type FontPreviewTarget = "title" | "header" | "body";
+export type FontPreviewTarget = "title" | "header" | "subheader" | "body";
 
 export type PaperMetrics = {
     label: string;
     standardLabel: string;
+    widthPt: number;
+    heightPt: number;
     width: number;
     height: number;
     printName: string;

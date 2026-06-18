@@ -62,9 +62,11 @@ const defaultFormatting = {
     pageSize: 'letter',
     titleFontSize: 24,
     headerFontSize: 16,
+    subHeaderFontSize: 14,
     bodyFontSize: 12,
     pageMarginPt: 42,
     paperLayoutFormat: 'standard',
+    innerSectionGapFormat: 'standard',
 };
 
 /** Create a minimal mock Element with all required methods */

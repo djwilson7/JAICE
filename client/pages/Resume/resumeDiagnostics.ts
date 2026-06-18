@@ -8,9 +8,11 @@ type ResumeDiagnosticFormatting = {
     pageSize: string;
     titleFontSize: number;
     headerFontSize: number;
+    subHeaderFontSize?: number;
     bodyFontSize: number;
     pageMarginPt: number;
     paperLayoutFormat: string;
+    innerSectionGapFormat?: string;
 };
 
 type ResumeDiagnosticMissingTarget = {
