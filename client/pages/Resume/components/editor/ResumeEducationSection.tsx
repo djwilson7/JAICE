@@ -60,18 +60,18 @@ export const ResumeEducationSection: React.FC<ResumeEditorSectionProps> = ({
             <div className="resume-editor-item-stack">
                 {education.map((item, index) => {
                     const details = Array.isArray(item.details) ? item.details : [];
-                    const visibleDetails = details.filter((detail) => showFields || hasText(detail.text));
+                    const visibleDetails = details.filter((detail) => hasText(detail.text));
                     const meta = [
                         ["degree", "Degree / Major", item.degree || "", "Degree / Major", 700],
                         ["school", "Institution Name", item.school, "Institution Name", 600]
                     ] as const;
-                    const visibleMeta = meta.filter((field) => showFields || hasText(field[2]));
+                    const visibleMeta = meta.filter((field) => hasText(field[2]));
                     const dates = [
                         ["startDate", "Start Date", item.startDate || "", "Start"],
                         ["endDate", "End Date", item.endDate || "", "End"]
                     ] as const;
-                    const visibleDates = dates.filter((field) => showFields || hasText(field[2]));
-                    if (!showFields && !visibleMeta.length && !visibleDates.length && !visibleDetails.length) {
+                    const visibleDates = dates.filter((field) => hasText(field[2]));
+                    if (!visibleMeta.length && !visibleDates.length && !visibleDetails.length) {
                         return null;
                     }
                     return (
@@ -148,7 +148,7 @@ export const ResumeEducationSection: React.FC<ResumeEditorSectionProps> = ({
                                     </div>
                                 </div>
                             )}
-                            {(visibleDetails.length > 0 || showFields) && (
+                            {visibleDetails.length > 0 && (
                                 <div className="resume-editor-bullet-stack">
                                     {visibleDetails.map((detail, detailIndex) => (
                                         <div
@@ -191,22 +191,22 @@ export const ResumeEducationSection: React.FC<ResumeEditorSectionProps> = ({
                                             </div>
                                         </div>
                                     ))}
-                                    {showFields && (
-                                        <div className="resume-editor-bullet-row">
-                                            <span className="resume-editor-bullet-marker resume-font--body">
-                                                &bull;
-                                            </span>
-                                            <InlineBulletComposer
-                                                className={`${inputStyleClass} resume-editor-bullet-composer`}
-                                                focusPath={`education.${item.id}.composer`}
-                                                onCommit={(value) =>
-                                                    addEducationDetailWithText(item.id, value)
-                                                }
-                                                onFocusChange={setFocusedField}
-                                                placeholder="Type to add concentration, honors, coursework..."
-                                            />
-                                        </div>
-                                    )}
+                                </div>
+                            )}
+                            {showFields && (
+                                <div className="resume-editor-education-composer resume-editor-bullet-row">
+                                    <span className="resume-editor-bullet-marker resume-font--body">
+                                        &bull;
+                                    </span>
+                                    <InlineBulletComposer
+                                        className={`${inputStyleClass} resume-editor-bullet-composer`}
+                                        focusPath={`education.${item.id}.composer`}
+                                        onCommit={(value) =>
+                                            addEducationDetailWithText(item.id, value)
+                                        }
+                                        onFocusChange={setFocusedField}
+                                        placeholder="Type to add concentration, honors, coursework..."
+                                    />
                                 </div>
                             )}
                             {index < education.length - 1
