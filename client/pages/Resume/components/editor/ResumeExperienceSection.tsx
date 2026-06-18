@@ -75,6 +75,45 @@ export const ResumeExperienceSection: React.FC<
         rejectExperienceRewriteSuggestion
     } = handlers;
     const experiences = resumeData.experience || [];
+    const handleExperienceSectionMouseMove = React.useCallback(
+        (event: React.MouseEvent<HTMLElement>) => {
+            const itemElements = Array.from(
+                event.currentTarget.querySelectorAll<HTMLElement>("[data-experience-item-id]")
+            );
+            if (itemElements.length === 0) return;
+
+            const nearestItem = itemElements.reduce<{
+                id: string;
+                distance: number;
+            } | null>((nearest, element) => {
+                const id = element.dataset.experienceItemId;
+                if (!id) return nearest;
+                const rect = element.getBoundingClientRect();
+                const horizontalDistance = event.clientX < rect.left
+                    ? rect.left - event.clientX
+                    : event.clientX > rect.right
+                    ? event.clientX - rect.right
+                    : 0;
+                const verticalDistance = event.clientY < rect.top
+                    ? rect.top - event.clientY
+                    : event.clientY > rect.bottom
+                    ? event.clientY - rect.bottom
+                    : 0;
+                const distance = Math.hypot(horizontalDistance, verticalDistance);
+
+                return !nearest || distance < nearest.distance
+                    ? { id, distance }
+                    : nearest;
+            }, null);
+
+            if (nearestItem) {
+                setHoveredJobId((current) =>
+                    current === nearestItem.id ? current : nearestItem.id
+                );
+            }
+        },
+        [setHoveredJobId]
+    );
 
     return (
         <DocumentSection
@@ -85,6 +124,8 @@ export const ResumeExperienceSection: React.FC<
             className="group/experience-sec"
             showGapPreview={gapPreviewTarget === "section"}
             gapPreviewHeight={documentSectionGapPx}
+            onMouseMove={handleExperienceSectionMouseMove}
+            onMouseLeave={() => setHoveredJobId(null)}
         >
             {renderSectionTitle("experience")}
             <div className="resume-editor-item-stack">
@@ -124,28 +165,35 @@ export const ResumeExperienceSection: React.FC<
                         <div
                             key={experience.id}
                             className="group/job resume-editor-item"
+                            data-experience-item-id={experience.id}
                             data-section-active={isExperienceSectionActive}
                             data-controls-visible={showControls}
                             data-improve-hovered={hoveredExperienceImproveId === experience.id}
                             data-clear-hovered={hoveredExperienceClearId === experience.id}
                             data-delete-hovered={hoveredExperienceDeleteId === experience.id}
-                            onMouseEnter={() => setHoveredJobId(experience.id)}
-                            onMouseLeave={() => setHoveredJobId(null)}
                         >
+                            <div
+                                className="resume-editor-experience-hit-wing"
+                                data-experience-hit-wing={experience.id}
+                                aria-hidden="true"
+                            />
                             <button
                                 type="button"
                                 onMouseEnter={() => setHoveredExperienceImproveId(experience.id)}
                                 onMouseLeave={() => setHoveredExperienceImproveId(null)}
                                 onClick={() => handleImproveExperience(experience)}
                                 disabled={Boolean(pendingRewrite?.isStreaming) || bullets.length === 0}
-                                className={`${experienceMarginImproveClass} resume-editor-item__improve`}
+                                className={`${experienceMarginImproveClass}${isItemHovered ? " is-visible" : ""} resume-editor-item-control resume-editor-item__improve`}
                                 title="Improve work experience with AI"
                                 aria-label="Improve work experience with AI"
                             >
                                 {loadingExperienceImproveId === experience.id ? (
                                     <span className="resume-editor-spinner" />
                                 ) : (
-                                    <span aria-hidden="true">✦</span>
+                                    <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M12 3l1.35 4.65L18 9l-4.65 1.35L12 15l-1.35-4.65L6 9l4.65-1.35L12 3Z" />
+                                        <path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15Z" />
+                                    </svg>
                                 )}
                             </button>
                             <div className="resume-editor-item-actions" data-visible={showControls}>
@@ -153,43 +201,51 @@ export const ResumeExperienceSection: React.FC<
                                     type="button"
                                     disabled={index === 0}
                                     onClick={() => moveExperienceUp(experience.id)}
-                                    className="resume-editor-icon-button"
+                                    className="resume-editor-item-control resume-editor-icon-button"
                                     title="Move work experience up"
                                     aria-label="Move work experience up"
                                 >
-                                    ↑
+                                    <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="m7 11 5-5 5 5M12 6v12" />
+                                    </svg>
                                 </button>
                                 <button
                                     type="button"
                                     disabled={index === experiences.length - 1}
                                     onClick={() => moveExperienceDown(experience.id)}
-                                    className="resume-editor-icon-button"
+                                    className="resume-editor-item-control resume-editor-icon-button"
                                     title="Move work experience down"
                                     aria-label="Move work experience down"
                                 >
-                                    ↓
+                                    <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="m7 13 5 5 5-5M12 18V6" />
+                                    </svg>
                                 </button>
                                 <button
                                     type="button"
                                     onMouseEnter={() => setHoveredExperienceClearId(experience.id)}
                                     onMouseLeave={() => setHoveredExperienceClearId(null)}
                                     onClick={() => clearExperience(experience.id)}
-                                    className="resume-editor-icon-button"
+                                    className="resume-editor-item-control resume-editor-icon-button"
                                     title="Clear work experience"
                                     aria-label="Clear work experience"
                                 >
-                                    ×
+                                    <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true">
+                                        <path d="M6 6l12 12M18 6 6 18" />
+                                    </svg>
                                 </button>
                                 <button
                                     type="button"
                                     onMouseEnter={() => setHoveredExperienceDeleteId(experience.id)}
                                     onMouseLeave={() => setHoveredExperienceDeleteId(null)}
                                     onClick={() => removeExperience(experience.id)}
-                                    className="resume-editor-icon-button resume-editor-icon-button--delete"
+                                    className="resume-editor-item-control resume-editor-icon-button resume-editor-icon-button--delete"
                                     title="Remove work experience"
                                     aria-label="Remove work experience"
                                 >
-                                    ⌫
+                                    <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M4 7h16M9 7V5h6v2M7 10l1 9h8l1-9M10 11v5M14 11v5" />
+                                    </svg>
                                 </button>
                             </div>
 

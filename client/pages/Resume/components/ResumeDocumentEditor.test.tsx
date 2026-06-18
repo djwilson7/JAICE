@@ -21,8 +21,14 @@ vi.mock('framer-motion', () => {
 });
 
 vi.mock('./DocumentSection', () => ({
-    DocumentSection: ({ children, id, className }: any) => (
-        <div data-testid="document-section" data-section-id={id} className={className}>
+    DocumentSection: ({ children, id, className, onMouseMove, onMouseLeave }: any) => (
+        <div
+            data-testid="document-section"
+            data-section-id={id}
+            className={className}
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
+        >
             {children}
         </div>
     )
@@ -271,7 +277,14 @@ describe('ResumeDocumentEditor', () => {
         
         const newInteraction = { ...defaultProps.interaction, isExperienceSectionActive: true, activeDocumentSection: 'experience', hoveredExperienceDeleteId: 'exp1' } as any;
         const newProps = { ...defaultProps, interaction: newInteraction };
-        const { rerender } = render(<ResumeDocumentEditor {...newProps} />);
+        const { container, rerender } = render(<ResumeDocumentEditor {...newProps} />);
+        const experienceControls = container.querySelectorAll(
+            '[data-section-id="experience"] .resume-editor-item-control'
+        );
+        expect(experienceControls).toHaveLength(10);
+        expect(container.querySelectorAll(
+            '[data-section-id="experience"] .resume-editor-control-icon'
+        )).toHaveLength(10);
         
         const jobInput = screen.getByDisplayValue('Dev');
         fireEvent.change(jobInput, { target: { value: 'Dev 2' } });
@@ -361,6 +374,8 @@ describe('ResumeDocumentEditor', () => {
             expect(item).toHaveAttribute('data-section-active', 'true');
             expect(item).toHaveAttribute('data-controls-visible', 'false');
         });
+        const improveButtons = screen.getAllByTitle('Improve work experience with AI');
+        improveButtons.forEach((button) => expect(button).not.toHaveClass('is-visible'));
 
         interaction.hoveredJobId = 'exp2';
         rerender(<ResumeDocumentEditor {...defaultProps} />);
@@ -368,6 +383,8 @@ describe('ResumeDocumentEditor', () => {
         expect(screen.getAllByPlaceholderText('Type to add a new bullet...')).toHaveLength(1);
         expect(experienceItems[0]).toHaveAttribute('data-controls-visible', 'false');
         expect(experienceItems[1]).toHaveAttribute('data-controls-visible', 'true');
+        expect(improveButtons[0]).not.toHaveClass('is-visible');
+        expect(improveButtons[1]).toHaveClass('is-visible');
     });
 
     it('shows missing metadata fields only for the hovered experience', () => {
@@ -491,11 +508,99 @@ describe('ResumeDocumentEditor', () => {
         fireEvent.keyDown(addBulletInput, { key: 'Enter' });
         expect(handlers.addBulletWithText).toHaveBeenCalledWith('exp1', 'New bullet');
 
-        const jobDiv = container.querySelector('.group\\/job') as HTMLElement;
-        fireEvent.mouseEnter(jobDiv);
-        expect(interaction.setHoveredJobId).toHaveBeenCalledWith('exp1');
-        fireEvent.mouseLeave(jobDiv);
+        const experienceSection = container.querySelector(
+            '[data-section-id="experience"]'
+        ) as HTMLElement;
+        const jobDiv = experienceSection.querySelector(
+            '[data-experience-item-id="exp1"]'
+        ) as HTMLElement;
+        jobDiv.getBoundingClientRect = () => ({
+            x: 100,
+            y: 100,
+            top: 100,
+            right: 500,
+            bottom: 200,
+            left: 100,
+            width: 400,
+            height: 100,
+            toJSON: () => ({})
+        });
+        fireEvent.mouseMove(experienceSection, { clientX: 200, clientY: 150 });
+        const proximityUpdate = (interaction.setHoveredJobId as any).mock.lastCall[0];
+        expect(proximityUpdate(null)).toBe('exp1');
+        fireEvent.mouseLeave(experienceSection);
         expect(interaction.setHoveredJobId).toHaveBeenCalledWith(null);
+    });
+
+    it('activates the experience item closest to the pointer', () => {
+        defaultProps.data.resumeData.experience = [
+            { id: 'exp1', jobTitle: 'First', bullets: [{ id: 'b1', text: 'One' }] },
+            { id: 'exp2', jobTitle: 'Second', bullets: [{ id: 'b2', text: 'Two' }] }
+        ];
+        interaction.activeDocumentSection = 'experience';
+        interaction.isExperienceSectionActive = true;
+
+        const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const section = container.querySelector(
+            '[data-section-id="experience"]'
+        ) as HTMLElement;
+        const firstItem = section.querySelector(
+            '[data-experience-item-id="exp1"]'
+        ) as HTMLElement;
+        const secondItem = section.querySelector(
+            '[data-experience-item-id="exp2"]'
+        ) as HTMLElement;
+        firstItem.getBoundingClientRect = () => ({
+            x: 100, y: 100, top: 100, right: 500, bottom: 180, left: 100,
+            width: 400, height: 80, toJSON: () => ({})
+        });
+        secondItem.getBoundingClientRect = () => ({
+            x: 100, y: 240, top: 240, right: 500, bottom: 360, left: 100,
+            width: 400, height: 120, toJSON: () => ({})
+        });
+
+        fireEvent.mouseMove(section, { clientX: 80, clientY: 220 });
+        const firstUpdate = (interaction.setHoveredJobId as any).mock.lastCall[0];
+        expect(firstUpdate(null)).toBe('exp2');
+
+        fireEvent.mouseMove(section, { clientX: 80, clientY: 140 });
+        const secondUpdate = (interaction.setHoveredJobId as any).mock.lastCall[0];
+        expect(secondUpdate('exp2')).toBe('exp1');
+    });
+
+    it('keeps experience proximity active through the left tag interaction wing', () => {
+        defaultProps.data.resumeData.experience = [
+            { id: 'exp1', jobTitle: 'First', bullets: [{ id: 'b1', text: 'One' }] },
+            { id: 'exp2', jobTitle: 'Second', bullets: [{ id: 'b2', text: 'Two' }] }
+        ];
+        interaction.activeDocumentSection = 'experience';
+        interaction.isExperienceSectionActive = true;
+
+        const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const section = container.querySelector(
+            '[data-section-id="experience"]'
+        ) as HTMLElement;
+        const firstItem = section.querySelector(
+            '[data-experience-item-id="exp1"]'
+        ) as HTMLElement;
+        const secondItem = section.querySelector(
+            '[data-experience-item-id="exp2"]'
+        ) as HTMLElement;
+        firstItem.getBoundingClientRect = () => ({
+            x: 100, y: 100, top: 100, right: 500, bottom: 180, left: 100,
+            width: 400, height: 80, toJSON: () => ({})
+        });
+        secondItem.getBoundingClientRect = () => ({
+            x: 100, y: 240, top: 240, right: 500, bottom: 320, left: 100,
+            width: 400, height: 80, toJSON: () => ({})
+        });
+        const secondWing = section.querySelector(
+            '[data-experience-hit-wing="exp2"]'
+        ) as HTMLElement;
+
+        fireEvent.mouseMove(secondWing, { clientX: -40, clientY: 270 });
+        const proximityUpdate = (interaction.setHoveredJobId as any).mock.lastCall[0];
+        expect(proximityUpdate(null)).toBe('exp2');
     });
 
     it('handles education rendering and interactions', () => {

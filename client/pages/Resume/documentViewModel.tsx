@@ -153,7 +153,7 @@ export const useResumeDocumentViewModel = ({
     const headerMarginAddClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--add${activeDocumentSection === "header" ? " is-visible" : ""}`;
     const isExperienceSectionActive = activeDocumentSection === "experience";
     const experienceMarginAddClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--add${isExperienceSectionActive ? " is-visible" : ""}`;
-    const experienceMarginImproveClass = `resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--improve${isExperienceSectionActive ? " is-visible" : ""}`;
+    const experienceMarginImproveClass = "resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--improve";
     const experienceMarginClearClass = `resume-edit-control resume-margin-control resume-margin-control--right resume-margin-control--clear${isExperienceSectionActive ? " is-visible" : ""}`;
     const experienceMarginDeleteClass = `resume-edit-control resume-margin-control resume-margin-control--right resume-margin-control--delete${isExperienceSectionActive ? " is-visible" : ""}`;
     const isSummarySectionActive = activeDocumentSection === "summary";

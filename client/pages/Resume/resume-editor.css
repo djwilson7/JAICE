@@ -114,11 +114,11 @@
 }
 
 .resume-margin-control--left {
-  left: -2.25rem;
+  left: calc(-1 * var(--resume-page-margin-half) - 0.75rem);
 }
 
 .resume-margin-control--right {
-  right: -2.25rem;
+  right: calc(-1 * var(--resume-page-margin-half) - 0.75rem);
 }
 
 .resume-margin-control--add {
@@ -351,6 +351,16 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
+.resume-editor-experience-hit-wing {
+  position: absolute;
+  top: -0.25rem;
+  right: 100%;
+  bottom: -0.25rem;
+  z-index: 0;
+  width: calc(var(--resume-page-margin) + 8rem);
+  background: transparent;
+}
+
 .resume-editor-item__improve {
   top: 0;
 }
@@ -358,10 +368,13 @@
 .resume-editor-item-actions {
   position: absolute;
   top: 0;
-  right: -50px;
+  right: calc(-1 * var(--resume-page-margin-half) - 1.625rem);
   z-index: 30;
   display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
   grid-template-columns: repeat(2, 1.5rem);
+  grid-template-rows: repeat(2, 1.5rem);
   gap: 0.25rem;
   opacity: 0;
   pointer-events: none;
@@ -369,7 +382,7 @@
 }
 
 .resume-editor-item-actions--vertical {
-  right: -2.25rem;
+  right: calc(-1 * var(--resume-page-margin-half) - 0.75rem);
   grid-template-columns: 1.5rem;
 }
 
@@ -378,18 +391,36 @@
   pointer-events: auto;
 }
 
-.resume-editor-icon-button {
+.resume-editor-item-control {
   display: inline-flex !important;
   width: 1.5rem !important;
+  min-width: 1.5rem !important;
+  max-width: 1.5rem !important;
   height: 1.5rem !important;
+  min-height: 1.5rem !important;
+  max-height: 1.5rem !important;
+  flex: 0 0 1.5rem;
   align-items: center;
   justify-content: center;
   padding: 0 !important;
+  line-height: 1;
+}
+
+.resume-editor-icon-button {
   border: 1px solid transparent;
   border-radius: 0.375rem;
   background: transparent !important;
   color: #64748b !important;
   box-shadow: none;
+}
+
+.resume-editor-control-icon {
+  display: block;
+  width: 0.75rem;
+  min-width: 0.75rem;
+  height: 0.75rem;
+  min-height: 0.75rem;
+  flex: 0 0 0.75rem;
 }
 
 .resume-editor-icon-button:hover {
