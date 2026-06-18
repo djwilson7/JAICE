@@ -54,6 +54,8 @@ def test_backend_html_uses_canonical_tokens_and_semantic_classes_only():
     assert "resume-formatting-context resume-document" in document
     assert "resume-font--title" in document
     assert "resume-font--body" in document
+    assert "font-variant-ligatures: none" in document
+    assert 'font-feature-settings: "liga" 0, "clig" 0' in document
     assert "break-inside: avoid" in document
     assert "page-break-inside: avoid" in document
     assert " contact-row" not in document

@@ -202,6 +202,11 @@ def render_resume_pdf_html(
             print-color-adjust: exact;
         }}
         * {{ box-sizing: border-box; }}
+        [data-resume-document-surface="pdf"],
+        [data-resume-document-surface="pdf"] * {{
+            font-variant-ligatures: none;
+            font-feature-settings: "liga" 0, "clig" 0;
+        }}
         body {{
             font-family: var(--resume-font-family);
             font-size: var(--resume-body-font-size);
