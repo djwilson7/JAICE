@@ -7,6 +7,7 @@ const TAG_MENU_WIDTH_PX = 208;
 const TAG_MENU_GAP_PX = 8;
 const TAG_MENU_VIEWPORT_MARGIN_PX = 8;
 const TAG_MENU_MIN_HEIGHT_PX = 224;
+const TAG_MENU_MAX_HEIGHT_PX = 400;
 
 type TagMenuPosition = {
     left: number;
@@ -121,7 +122,10 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
 
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            const maxHeight = Math.max(0, viewportHeight - TAG_MENU_VIEWPORT_MARGIN_PX * 2);
+            const maxHeight = Math.min(
+                TAG_MENU_MAX_HEIGHT_PX,
+                Math.max(0, viewportHeight - TAG_MENU_VIEWPORT_MARGIN_PX * 2)
+            );
             const measuredHeight = menuRef.current?.scrollHeight || TAG_MENU_MIN_HEIGHT_PX;
             const visibleHeight = Math.min(Math.max(measuredHeight, TAG_MENU_MIN_HEIGHT_PX), maxHeight);
             const preferredLeft = triggerRect.left - TAG_MENU_WIDTH_PX - TAG_MENU_GAP_PX;

@@ -814,7 +814,7 @@ textarea.resume-rewrite-current-reject-hover,
 
 .resume-tag-menu-panel {
   min-height: min(14rem, calc(100vh - 1rem));
-  padding: 0.25rem;
+  padding: 0.5rem;
   border-radius: calc(var(--corner-radius) * 0.65);
   background: var(--primary-one);
   box-shadow: var(--shadow);
@@ -826,7 +826,52 @@ textarea.resume-rewrite-current-reject-hover,
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.125rem;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
+}
+
+.resume-tag-menu-options::-webkit-scrollbar {
+  width: 2px;
+}
+
+.resume-tag-menu-options::-webkit-scrollbar-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent;
+}
+
+.resume-tag-menu-options::-webkit-scrollbar-button:vertical:start:decrement,
+.resume-tag-menu-options::-webkit-scrollbar-button:vertical:end:increment,
+.resume-tag-menu-options::-webkit-scrollbar-button:single-button,
+.resume-tag-menu-options::-webkit-scrollbar-button:vertical:decrement,
+.resume-tag-menu-options::-webkit-scrollbar-button:vertical:increment {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  background: transparent;
+}
+
+.resume-tag-menu-options::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.resume-tag-menu-options::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 999px;
+  background: #64748b;
+  background-clip: padding-box;
+}
+
+.resume-tag-menu-options::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+  background-clip: padding-box;
 }
 
 .resume-tag-trigger,
