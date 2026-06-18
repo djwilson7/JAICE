@@ -343,7 +343,8 @@ describe('ResumeDocumentEditor', () => {
         const innerPreviews = container.querySelectorAll('.resume-inner-section-gap-preview');
         expect(innerPreviews).toHaveLength(3);
         innerPreviews.forEach((preview) => {
-            expect(preview).toHaveStyle({ height: '8px', bottom: '-8px' });
+            expect(preview).not.toHaveAttribute('style');
+            expect(preview).toHaveClass('resume-inner-section-gap-preview');
         });
     });
 
