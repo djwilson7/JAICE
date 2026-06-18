@@ -53,7 +53,7 @@ describe("resume formatting render tokens", () => {
 
         expect(tokens.formatting.bodyFontSize).toBe(15);
         expect(tokens.formatting.subHeaderFontSize).toBe(10);
-        expect(tokens.formatting.headerFontSize).toBe(16);
+        expect(tokens.formatting.headerFontSize).toBe(12);
         expect(tokens.formatting.titleFontSize).toBe(18);
         expect(tokens.formatting.pageMarginPt).toBe(72);
         expect(tokens.sectionGapPx).toBeCloseTo(16);
@@ -63,10 +63,10 @@ describe("resume formatting render tokens", () => {
 
     it("loads visual defaults from the canonical CSS token source", () => {
         expect(RESUME_CSS_DEFAULTS).toEqual({
-            titleFontSize: 24,
-            headerFontSize: 16,
-            subHeaderFontSize: 14,
-            bodyFontSize: 12,
+            titleFontSize: 18,
+            headerFontSize: 12,
+            subHeaderFontSize: 10,
+            bodyFontSize: 9,
             pageMarginPt: 54
         });
         expect(RESUME_FORMATTING_CSS).toContain("--resume-standard-section-gap-pt: 12");

@@ -1,8 +1,8 @@
 :root {
-  --resume-default-title-font-size-pt: 24;
-  --resume-default-header-font-size-pt: 16;
-  --resume-default-subheader-font-size-pt: 14;
-  --resume-default-body-font-size-pt: 12;
+  --resume-default-title-font-size-pt: 18;
+  --resume-default-header-font-size-pt: 12;
+  --resume-default-subheader-font-size-pt: 10;
+  --resume-default-body-font-size-pt: 9;
   --resume-default-page-margin-pt: 54;
   --resume-title-horizontal-padding-px: 6;
   --resume-title-vertical-padding-px: 4;
