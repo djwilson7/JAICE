@@ -110,5 +110,13 @@ describe('ResumeGlobalStyles', () => {
         } as any;
         const { container } = render(<ResumeGlobalStyles {...props} />);
         expect(container).toBeTruthy();
+        const styleText = container.querySelector('style')?.textContent || "";
+        expect(styleText).toContain(
+            '.document-hover-section[data-active="true"] {\n                z-index: 10;'
+        );
+        expect(styleText).not.toContain('padding-top: 10px;');
+        expect(styleText).not.toContain('padding-bottom: 10px;');
+        expect(styleText).toContain('.document-hover-section-hit-pad-top');
+        expect(styleText).toContain('top: calc(-1 * var(--resume-section-hover-pad-y));');
     });
 });

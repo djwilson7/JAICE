@@ -1,15 +1,22 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ResumeWorkspace } from './ResumeWorkspace';
+
+const mockResumeDocumentEditor = vi.hoisted(() => vi.fn());
 
 vi.mock('./ResumeAlerts', () => ({
     ResumeAlerts: () => <div data-testid="resume-alerts" />
 }));
 vi.mock('./ResumeCanvas', () => ({
-    ResumeCanvas: ({ children }: any) => <div data-testid="resume-canvas">{children}</div>
+    ResumeCanvas: ({ children, isPagePreviewMode, pagePreviewContent }: any) => (
+        <div data-testid="resume-canvas">{isPagePreviewMode ? pagePreviewContent : children}</div>
+    )
 }));
 vi.mock('./ResumeDocumentEditor', () => ({
-    ResumeDocumentEditor: () => <div data-testid="resume-document-editor" />
+    ResumeDocumentEditor: (props: any) => {
+        mockResumeDocumentEditor(props);
+        return <div data-testid="resume-document-editor" />;
+    }
 }));
 vi.mock('./ResumePdfPreview', () => ({
     ResumePdfPreview: ({ onBackToEdit }: any) => <div data-testid="resume-pdf-preview"><button onClick={onBackToEdit}>Back to edit</button></div>
@@ -34,6 +41,10 @@ import { isResumeDebugEnabled, buildResumeRenderDiagnostics } from '../resumeDia
 import { saveResumeRenderDiagnostics } from '../resumeApi';
 
 describe('ResumeWorkspace', () => {
+    beforeEach(() => {
+        mockResumeDocumentEditor.mockClear();
+    });
+
     const defaultProps: any = {
         isLightMode: true,
         error: null,
@@ -44,11 +55,13 @@ describe('ResumeWorkspace', () => {
         headerActionIconClass: '',
         canvasViewportRef: { current: null },
         resumeDocumentContentRef: { current: null },
+        registerResumeDocumentContentElement: vi.fn(),
         canvasNeedsHorizontalScroll: false,
         canvasNeedsVerticalScroll: false,
         canvasViewportStyle: {},
         pdfPreviewViewportStyle: {},
         bottomControlsViewportStyle: {},
+        viewableCanvasWidth: 900,
         canvasHorizontalOverflow: 0,
         scaledCanvasWidth: 800,
         scaledCanvasHeight: 1100,
@@ -57,6 +70,7 @@ describe('ResumeWorkspace', () => {
         animatedCanvasZoom: 1,
         fontPreviewTarget: null,
         bodyFontSize: 12,
+        subHeaderFontSize: 14,
         resumePageCount: 1,
         resumePageStride: 1100,
         isPageFormatPreviewVisible: false,
@@ -72,6 +86,9 @@ describe('ResumeWorkspace', () => {
         titleFontSize: 24,
         documentSectionGapStyle: {},
         documentSectionGapPx: 10,
+        documentInnerSectionGapStyle: {},
+        documentInnerSectionGapPx: 8,
+        documentCssVariables: {},
         documentTextStyle: {},
         sectionHeadingClass: '',
         sectionHeadingStyle: {},
@@ -105,11 +122,12 @@ describe('ResumeWorkspace', () => {
         hoveredSkillDeleteId: null, setHoveredSkillDeleteId: vi.fn(),
         rewriteActionHover: null, setRewriteActionHover: vi.fn(),
         isExperienceSectionActive: false, isSummarySectionActive: false, summaryRewriteHoverAction: null, summaryCurrentRewriteClass: '',
-        isSectionGapPreviewVisible: false, loadingSummaryImprove: false, loadingExperienceImproveId: null,
+        gapPreviewTarget: null, loadingSummaryImprove: false, loadingExperienceImproveId: null,
         renderOverlayInput: vi.fn(),
         renderRewriteActionButtons: vi.fn(),
         getDynamicInputStyle: vi.fn(),
         contactFieldStyle: vi.fn(),
+        subHeaderFieldStyle: vi.fn(),
         isFieldChanged: vi.fn(),
         getSuggestionReviewClass: vi.fn(),
         updateField: vi.fn(),
@@ -120,8 +138,8 @@ describe('ResumeWorkspace', () => {
         handleAnalyzeSummary: vi.fn(), handleImproveSummary: vi.fn(), handleImproveExperience: vi.fn(), acceptSummaryRewriteSuggestion: vi.fn(), rejectSummaryRewriteSuggestion: vi.fn(), acceptExperienceRewriteSuggestion: vi.fn(), rejectExperienceRewriteSuggestion: vi.fn(),
         setResumeData: vi.fn(), setChangeMetadata: vi.fn(),
         isPageStyleShelfOpen: false, isPageStyleShelfCompact: false, shelfSurfaceStyle: {}, shelfControlLabelClass: '', shelfSegmentGroupClass: '', shelfSegmentButtonClass: '', shelfSegmentIndicatorClass: '', shelfStepperControlClass: '', shelfStepperLabelClass: '', shelfStepperRowClass: '', shelfStepperButtonClass: '', shelfStepperValueClass: '',
-        pageSize: 'letter', setPageSize: vi.fn(), setTitleFontSize: vi.fn(), headerFontSize: 16, setHeaderFontSize: vi.fn(), setBodyFontSize: vi.fn(), setPageMarginPt: vi.fn(), paperLayoutFormat: 'standard', setPaperLayoutFormat: vi.fn(), setFontPreviewTarget: vi.fn(), setIsMarginPreviewVisible: vi.fn(), setIsPageFormatPreviewVisible: vi.fn(), setIsSectionGapPreviewVisible: vi.fn(),
-        toolbarSurfaceStyle: {}, documentToolButtonClass: '', handleTogglePageStyleShelf: vi.fn(), handleFitZoom: vi.fn(), zoomMode: 'fit', manualZoom: 1, setZoomMode: vi.fn(), setManualZoom: vi.fn(), zoomPercent: 100,
+        pageSize: 'letter', setPageSize: vi.fn(), setTitleFontSize: vi.fn(), headerFontSize: 16, setHeaderFontSize: vi.fn(), setSubHeaderFontSize: vi.fn(), setBodyFontSize: vi.fn(), setPageMarginPt: vi.fn(), paperLayoutFormat: 'standard', setPaperLayoutFormat: vi.fn(), innerSectionGapFormat: 'standard', setInnerSectionGapFormat: vi.fn(), setFontPreviewTarget: vi.fn(), setIsMarginPreviewVisible: vi.fn(), setIsPageFormatPreviewVisible: vi.fn(), setGapPreviewTarget: vi.fn(),
+        toolbarSurfaceStyle: {}, documentToolButtonClass: '', handleTogglePageStyleShelf: vi.fn(), handleFitZoom: vi.fn(), zoomMode: 'manual', manualZoom: 1, setZoomMode: vi.fn(), setManualZoom: vi.fn(), zoomPercent: 100,
         isPdfPreviewOpen: false, pdfPreviewUrl: null, resumeName: 'Test', isGeneratingPdfPreview: false, closePdfPreview: vi.fn(),
         loadingList: false
     };
@@ -155,6 +173,39 @@ describe('ResumeWorkspace', () => {
         fireEvent.click(zoomInBtn);
         expect(defaultProps.setZoomMode).toHaveBeenCalledWith('manual');
         expect(defaultProps.setManualZoom).toHaveBeenCalled();
+    });
+
+    it('renders fit mode as clean paged preview instead of the editable canvas', () => {
+        render(<ResumeWorkspace {...defaultProps} zoomMode="fit" />);
+
+        expect(screen.getByTestId('resume-canvas')).toBeTruthy();
+        expect(screen.queryByTestId('resume-document-editor')).toBeNull();
+        expect(screen.getByLabelText('Page 1')).toBeTruthy();
+    });
+
+    it('keeps 1:1 editor mounted but suppresses canvas hover controls while the shelf is open', () => {
+        render(
+            <ResumeWorkspace
+                {...defaultProps}
+                isPageStyleShelfOpen={true}
+                activeDocumentSection="experience"
+                focusedDocumentSection="summary"
+                hoveredJobId="exp-1"
+                hoveredSummary={true}
+                isExperienceSectionActive={true}
+                isSummarySectionActive={true}
+            />
+        );
+
+        expect(screen.getByTestId('resume-document-editor')).toBeTruthy();
+        const editorProps = mockResumeDocumentEditor.mock.calls[0][0];
+        expect(editorProps.interaction.activeDocumentSection).toBeNull();
+        expect(editorProps.interaction.focusedDocumentSection).toBeNull();
+        expect(editorProps.interaction.hoveredJobId).toBeNull();
+        expect(editorProps.interaction.hoveredSummary).toBe(false);
+        expect(editorProps.interaction.isExperienceSectionActive).toBe(false);
+        expect(editorProps.interaction.isSummarySectionActive).toBe(false);
+        expect(editorProps.interaction.gapPreviewTarget).toBeNull();
     });
 
     it('renders pdf preview mode', () => {

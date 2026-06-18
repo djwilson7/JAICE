@@ -26,6 +26,27 @@ export function Resume() {
     const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(false);
     const [isRightRailCollapsed, setIsRightRailCollapsed] = useState(true);
 
+    const handleToggleLeftRail = () => {
+        const isOpeningLeftRail = isLeftRailCollapsed;
+        setIsLeftRailCollapsed(!isLeftRailCollapsed);
+        if (isOpeningLeftRail) {
+            setIsRightRailCollapsed(true);
+        }
+    };
+
+    const handleToggleRightRail = () => {
+        const isOpeningRightRail = isRightRailCollapsed;
+        setIsRightRailCollapsed(!isRightRailCollapsed);
+        if (isOpeningRightRail) {
+            setIsLeftRailCollapsed(true);
+        }
+    };
+
+    const handleOpenRightRail = () => {
+        setIsLeftRailCollapsed(true);
+        setIsRightRailCollapsed(false);
+    };
+
     const formatting = useResumeFormatting({
         isLightMode,
         isLeftRailCollapsed,
@@ -34,6 +55,7 @@ export function Resume() {
     const {
         canvasViewportRef,
         resumeDocumentContentRef,
+        registerResumeDocumentContentElement,
         pageSize,
         setPageSize,
         zoomMode,
@@ -46,20 +68,23 @@ export function Resume() {
         setTitleFontSize,
         headerFontSize,
         setHeaderFontSize,
+        subHeaderFontSize,
+        setSubHeaderFontSize,
         bodyFontSize,
         setBodyFontSize,
         pageMarginPt,
         setPageMarginPt,
         paperLayoutFormat,
         setPaperLayoutFormat,
+        innerSectionGapFormat,
         fontPreviewTarget,
         setFontPreviewTarget,
         isMarginPreviewVisible,
         setIsMarginPreviewVisible,
         isPageFormatPreviewVisible,
         setIsPageFormatPreviewVisible,
-        isSectionGapPreviewVisible,
-        setIsSectionGapPreviewVisible,
+        gapPreviewTarget,
+        setGapPreviewTarget,
         applyResumeFormatting,
         paperMetrics,
         resumePageCount,
@@ -73,12 +98,16 @@ export function Resume() {
         canvasViewportStyle,
         pdfPreviewViewportStyle,
         bottomControlsViewportStyle,
+        viewableCanvasWidth,
         canvasHorizontalOverflow,
         isPageStyleShelfCompact,
         printWidth,
         printHeight,
         documentSectionGapPx,
         documentSectionGapStyle,
+        documentInnerSectionGapPx,
+        documentInnerSectionGapStyle,
+        documentCssVariables,
         currentResumeFormatting,
         handleFitZoom,
         handleTogglePageStyleShelf,
@@ -157,6 +186,8 @@ export function Resume() {
         updateExperienceField,
         insertExperienceAt,
         removeExperience,
+        moveExperienceUp,
+        moveExperienceDown,
         clearExperience,
         addBulletWithText,
         insertBulletAfter,
@@ -261,7 +292,7 @@ export function Resume() {
             setFontPreviewTarget(null);
             setIsMarginPreviewVisible(false);
             setIsPageFormatPreviewVisible(false);
-            setIsSectionGapPreviewVisible(false);
+            setGapPreviewTarget(null);
         }
     });
     const {
@@ -280,12 +311,19 @@ export function Resume() {
         return openPdfPreview();
     };
 
+    const handleTogglePdfPreview = () => {
+        if (isPdfPreviewOpen) {
+            return togglePdfPreview();
+        }
+        return handleOpenPdfPreview();
+    };
+
 
     const chat = useResumeChat({
         resumeData,
         currentResumeFormatting,
         setError,
-        openChatRail: () => setIsRightRailCollapsed(false)
+        openChatRail: handleOpenRightRail
     });
     const {
         chatInput,
@@ -313,6 +351,7 @@ export function Resume() {
         changeMetadata,
         bodyFontSize,
         headerFontSize,
+        subHeaderFontSize,
         pageMarginPt,
         activeDocumentSection,
         hoveredSummary,
@@ -339,6 +378,7 @@ export function Resume() {
         resumeDividerClass,
         getDynamicInputStyle,
         contactFieldStyle,
+        subHeaderFieldStyle,
         headerMarginAddClass,
         isExperienceSectionActive,
         experienceMarginAddClass,
@@ -419,9 +459,9 @@ export function Resume() {
                 headerActionButtonClass={headerActionButtonClass}
                 headerActionIconClass={headerActionIconClass}
                 isLeftRailCollapsed={isLeftRailCollapsed}
-                setIsLeftRailCollapsed={setIsLeftRailCollapsed}
+                onToggleLeftRail={handleToggleLeftRail}
                 isRightRailCollapsed={isRightRailCollapsed}
-                setIsRightRailCollapsed={setIsRightRailCollapsed}
+                onToggleRightRail={handleToggleRightRail}
                 isMaster={isMaster}
                 setIsMaster={setIsMaster}
                 resumeName={resumeName}
@@ -435,7 +475,7 @@ export function Resume() {
                 handleSaveResume={handleSaveResume}
                 isPdfPreviewOpen={isPdfPreviewOpen}
                 isGeneratingPdfPreview={isGeneratingPdfPreview}
-                togglePdfPreview={togglePdfPreview}
+                togglePdfPreview={handleTogglePdfPreview}
                 openPdfPreview={handleOpenPdfPreview}
             />}
 
@@ -472,11 +512,13 @@ export function Resume() {
                 headerActionIconClass={headerActionIconClass}
                 canvasViewportRef={canvasViewportRef}
                 resumeDocumentContentRef={resumeDocumentContentRef}
+                registerResumeDocumentContentElement={registerResumeDocumentContentElement}
                 canvasNeedsHorizontalScroll={canvasNeedsHorizontalScroll}
                 canvasNeedsVerticalScroll={canvasNeedsVerticalScroll}
                 canvasViewportStyle={canvasViewportStyle}
                 pdfPreviewViewportStyle={pdfPreviewViewportStyle}
                 bottomControlsViewportStyle={bottomControlsViewportStyle}
+                viewableCanvasWidth={viewableCanvasWidth}
                 canvasHorizontalOverflow={canvasHorizontalOverflow}
                 scaledCanvasWidth={scaledCanvasWidth}
                 scaledCanvasHeight={scaledCanvasHeight}
@@ -485,6 +527,7 @@ export function Resume() {
                 animatedCanvasZoom={animatedCanvasZoom}
                 fontPreviewTarget={fontPreviewTarget}
                 bodyFontSize={bodyFontSize}
+                subHeaderFontSize={subHeaderFontSize}
                 resumePageCount={resumePageCount}
                 resumePageStride={resumePageStride}
                 isPageFormatPreviewVisible={isPageFormatPreviewVisible}
@@ -500,6 +543,9 @@ export function Resume() {
                 titleFontSize={titleFontSize}
                 documentSectionGapStyle={documentSectionGapStyle}
                 documentSectionGapPx={documentSectionGapPx}
+                documentInnerSectionGapStyle={documentInnerSectionGapStyle}
+                documentInnerSectionGapPx={documentInnerSectionGapPx}
+                documentCssVariables={documentCssVariables}
                 documentTextStyle={documentTextStyle}
                 sectionHeadingClass={sectionHeadingClass}
                 sectionHeadingStyle={sectionHeadingStyle}
@@ -555,13 +601,14 @@ export function Resume() {
                 isSummarySectionActive={isSummarySectionActive}
                 summaryRewriteHoverAction={summaryRewriteHoverAction}
                 summaryCurrentRewriteClass={summaryCurrentRewriteClass}
-                isSectionGapPreviewVisible={isSectionGapPreviewVisible}
+                gapPreviewTarget={gapPreviewTarget}
                 loadingSummaryImprove={loadingSummaryImprove}
                 loadingExperienceImproveId={loadingExperienceImproveId}
                 renderOverlayInput={renderOverlayInput}
                 renderRewriteActionButtons={renderRewriteActionButtons}
                 getDynamicInputStyle={getDynamicInputStyle}
                 contactFieldStyle={contactFieldStyle}
+                subHeaderFieldStyle={subHeaderFieldStyle}
                 isFieldChanged={isFieldChanged}
                 getSuggestionReviewClass={getSuggestionReviewClass}
                 updateField={updateField}
@@ -573,6 +620,8 @@ export function Resume() {
                 updateExperienceField={updateExperienceField}
                 insertExperienceAt={insertExperienceAt}
                 removeExperience={removeExperience}
+                moveExperienceUp={moveExperienceUp}
+                moveExperienceDown={moveExperienceDown}
                 clearExperience={clearExperience}
                 addBulletWithText={addBulletWithText}
                 insertBulletAfter={insertBulletAfter}
@@ -620,14 +669,16 @@ export function Resume() {
                 setTitleFontSize={setTitleFontSize}
                 headerFontSize={headerFontSize}
                 setHeaderFontSize={setHeaderFontSize}
+                setSubHeaderFontSize={setSubHeaderFontSize}
                 setBodyFontSize={setBodyFontSize}
                 setPageMarginPt={setPageMarginPt}
                 paperLayoutFormat={paperLayoutFormat}
                 setPaperLayoutFormat={setPaperLayoutFormat}
+                innerSectionGapFormat={innerSectionGapFormat}
                 setFontPreviewTarget={setFontPreviewTarget}
                 setIsMarginPreviewVisible={setIsMarginPreviewVisible}
                 setIsPageFormatPreviewVisible={setIsPageFormatPreviewVisible}
-                setIsSectionGapPreviewVisible={setIsSectionGapPreviewVisible}
+                setGapPreviewTarget={setGapPreviewTarget}
                 toolbarSurfaceStyle={toolbarSurfaceStyle}
                 documentToolButtonClass={documentToolButtonClass}
                 handleTogglePageStyleShelf={handleTogglePageStyleShelf}

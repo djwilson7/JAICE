@@ -34,6 +34,8 @@ describe('PageStyleShelf', () => {
         setTitleFontSize: vi.fn(),
         headerFontSize: 16,
         setHeaderFontSize: vi.fn(),
+        subHeaderFontSize: 14,
+        setSubHeaderFontSize: vi.fn(),
         bodyFontSize: 12,
         setBodyFontSize: vi.fn(),
         pageMarginPt: 36,
@@ -43,7 +45,7 @@ describe('PageStyleShelf', () => {
         setFontPreviewTarget: vi.fn(),
         setIsMarginPreviewVisible: vi.fn(),
         setIsPageFormatPreviewVisible: vi.fn(),
-        setIsSectionGapPreviewVisible: vi.fn(),
+        setGapPreviewTarget: vi.fn(),
     };
 
     beforeEach(() => {
@@ -108,6 +110,22 @@ describe('PageStyleShelf', () => {
         expect(incBodyFn(15)).toBe(15); // clamp
     });
 
+    it('handles sub header font size changes', () => {
+        render(<PageStyleShelf {...defaultProps} />);
+        const decSubHeader = screen.getByLabelText('Decrease sub header font size');
+        const incSubHeader = screen.getByLabelText('Increase sub header font size');
+
+        fireEvent.click(decSubHeader);
+        const decSubHeaderFn = vi.mocked(defaultProps.setSubHeaderFontSize).mock.calls[0][0] as Function;
+        expect(decSubHeaderFn(14)).toBe(13);
+        expect(decSubHeaderFn(10)).toBe(10);
+
+        fireEvent.click(incSubHeader);
+        const incSubHeaderFn = vi.mocked(defaultProps.setSubHeaderFontSize).mock.calls[1][0] as Function;
+        expect(incSubHeaderFn(14)).toBe(15);
+        expect(incSubHeaderFn(20)).toBe(20);
+    });
+
     it('handles page margin changes', () => {
         render(<PageStyleShelf {...defaultProps} />);
         const decMargin = screen.getByLabelText('Decrease page margins');
@@ -121,7 +139,15 @@ describe('PageStyleShelf', () => {
         fireEvent.click(incMargin);
         const incMarginFn = vi.mocked(defaultProps.setPageMarginPt).mock.calls[1][0] as Function;
         expect(incMarginFn(36)).toBe(38);
-        expect(incMarginFn(60)).toBe(60); // clamp
+        expect(incMarginFn(72)).toBe(72); // clamp
+    });
+
+    it('labels font stepper values with pt units', () => {
+        render(<PageStyleShelf {...defaultProps} />);
+        expect(screen.getByText('24pt')).toBeInTheDocument();
+        expect(screen.getByText('16pt')).toBeInTheDocument();
+        expect(screen.getByText('14pt')).toBeInTheDocument();
+        expect(screen.getByText('12pt')).toBeInTheDocument();
     });
 
     it('handles format changes', () => {
@@ -130,18 +156,21 @@ describe('PageStyleShelf', () => {
         fireEvent.click(letterBtn);
         expect(defaultProps.setPageSize).toHaveBeenCalledWith('letter');
 
-        const relaxedBtn = screen.getByLabelText('Relaxed layout spacing');
+        const relaxedBtn = screen.getByLabelText('Relaxed document spacing');
         fireEvent.click(relaxedBtn);
         expect(defaultProps.setPaperLayoutFormat).toHaveBeenCalledWith('relaxed');
+
+        expect(screen.queryByText('Section Gap')).toBeNull();
+        expect(screen.queryByText('Inner Gap')).toBeNull();
     });
 
-    it('handles section gap preview mouse events', () => {
+    it('handles spacing preview mouse events', () => {
         render(<PageStyleShelf {...defaultProps} />);
-        const sectionGapControl = screen.getByText('Section Gap').parentElement!;
-        fireEvent.mouseEnter(sectionGapControl);
-        expect(defaultProps.setIsSectionGapPreviewVisible).toHaveBeenCalledWith(true);
-        fireEvent.mouseLeave(sectionGapControl);
-        expect(defaultProps.setIsSectionGapPreviewVisible).toHaveBeenCalledWith(false);
+        const spacingControl = screen.getByText('Spacing').parentElement!;
+        fireEvent.mouseEnter(spacingControl);
+        expect(defaultProps.setGapPreviewTarget).toHaveBeenCalledWith('section');
+        fireEvent.mouseLeave(spacingControl);
+        expect(defaultProps.setGapPreviewTarget).toHaveBeenCalledWith(null);
     });
 
     it('handles mouse enter/leave on sections', () => {
@@ -160,22 +189,28 @@ describe('PageStyleShelf', () => {
         fireEvent.mouseLeave(controls[1]);
         expect(defaultProps.setFontPreviewTarget).toHaveBeenCalledWith(null);
 
-        // body
+        // sub header
         fireEvent.mouseEnter(controls[2]);
-        expect(defaultProps.setFontPreviewTarget).toHaveBeenCalledWith('body');
+        expect(defaultProps.setFontPreviewTarget).toHaveBeenCalledWith('subheader');
         fireEvent.mouseLeave(controls[2]);
         expect(defaultProps.setFontPreviewTarget).toHaveBeenCalledWith(null);
 
-        // margin
+        // body
         fireEvent.mouseEnter(controls[3]);
-        expect(defaultProps.setIsMarginPreviewVisible).toHaveBeenCalledWith(true);
+        expect(defaultProps.setFontPreviewTarget).toHaveBeenCalledWith('body');
         fireEvent.mouseLeave(controls[3]);
+        expect(defaultProps.setFontPreviewTarget).toHaveBeenCalledWith(null);
+
+        // margin
+        fireEvent.mouseEnter(controls[4]);
+        expect(defaultProps.setIsMarginPreviewVisible).toHaveBeenCalledWith(true);
+        fireEvent.mouseLeave(controls[4]);
         expect(defaultProps.setIsMarginPreviewVisible).toHaveBeenCalledWith(false);
 
         // format
-        fireEvent.mouseEnter(controls[4]);
+        fireEvent.mouseEnter(controls[5]);
         expect(defaultProps.setIsPageFormatPreviewVisible).toHaveBeenCalledWith(true);
-        fireEvent.mouseLeave(controls[4]);
+        fireEvent.mouseLeave(controls[5]);
         expect(defaultProps.setIsPageFormatPreviewVisible).toHaveBeenCalledWith(false);
     });
 

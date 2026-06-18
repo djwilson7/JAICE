@@ -39,6 +39,8 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             onMouseEnter={() => setActiveSection(id)}
             onMouseLeave={() => setActiveSection((current) => current === id ? null : current)}
         >
+            <div className="document-hover-section-hit-pad document-hover-section-hit-pad-top" aria-hidden="true" />
+            <div className="document-hover-section-hit-pad document-hover-section-hit-pad-bottom" aria-hidden="true" />
             <div className="document-hover-section-border pointer-events-none absolute z-[1] rounded-sm opacity-0 transition-opacity duration-150" />
             <div className="relative z-[2]">
                 {children}

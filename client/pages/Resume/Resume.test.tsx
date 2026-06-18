@@ -1,5 +1,5 @@
-import { render } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Resume } from "./Resume";
 import { ResumeGlobalStyles } from "./components/ResumeGlobalStyles";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
@@ -22,10 +22,39 @@ vi.mock("./components/ResumePrintDocument", () => ({ ResumePrintDocument: () => 
 vi.mock("./components/ResumeDocumentSurface", () => ({ ResumeDocumentSurface: () => <div data-testid="ResumeDocumentSurface" /> }));
 vi.mock("./components/CloneResumeModal", () => ({ CloneResumeModal: () => <div data-testid="CloneResumeModal" /> }));
 vi.mock("./components/DeleteResumeModal", () => ({ DeleteResumeModal: () => <div data-testid="DeleteResumeModal" /> }));
-vi.mock("./components/ResumeHeader", () => ({ ResumeHeader: () => <div data-testid="ResumeHeader" /> }));
-vi.mock("./components/ResumeSwitcherRail", () => ({ ResumeSwitcherRail: () => <div data-testid="ResumeSwitcherRail" /> }));
-vi.mock("./components/ResumeChatRail", () => ({ ResumeChatRail: () => <div data-testid="ResumeChatRail" /> }));
+vi.mock("./components/ResumeHeader", () => ({
+    ResumeHeader: ({
+        isLeftRailCollapsed,
+        onToggleLeftRail,
+        isRightRailCollapsed,
+        onToggleRightRail,
+        togglePdfPreview
+    }: any) => (
+        <div data-testid="ResumeHeader">
+            <button type="button" onClick={onToggleLeftRail}>
+                {isLeftRailCollapsed ? "Open left rail" : "Close left rail"}
+            </button>
+            <button type="button" onClick={onToggleRightRail}>
+                {isRightRailCollapsed ? "Open right rail" : "Close right rail"}
+            </button>
+            <button type="button" onClick={togglePdfPreview}>Preview PDF</button>
+        </div>
+    )
+}));
+vi.mock("./components/ResumeSwitcherRail", () => ({
+    ResumeSwitcherRail: ({ isLeftRailCollapsed }: any) => (
+        <div data-testid="ResumeSwitcherRail" data-collapsed={String(isLeftRailCollapsed)} />
+    )
+}));
+vi.mock("./components/ResumeChatRail", () => ({
+    ResumeChatRail: ({ isRightRailCollapsed }: any) => (
+        <div data-testid="ResumeChatRail" data-collapsed={String(isRightRailCollapsed)} />
+    )
+}));
 vi.mock("./components/ResumeWorkspace", () => ({ ResumeWorkspace: () => <div data-testid="ResumeWorkspace" /> }));
+
+const mockOpenPdfPreview = vi.fn();
+const mockTogglePdfPreview = vi.fn();
 
 vi.mock("./hooks/useResumeDocumentEditing", () => ({
     useResumeDocumentEditing: () => ({
@@ -57,7 +86,14 @@ vi.mock("./hooks/useResumeRewriteSuggestions", () => ({
     useResumeRewriteSuggestions: () => ({})
 }));
 vi.mock("./hooks/useResumePdfPreview", () => ({
-    useResumePdfPreview: () => ({})
+    useResumePdfPreview: () => ({
+        isPdfPreviewOpen: false,
+        isGeneratingPdfPreview: false,
+        pdfPreviewUrl: null,
+        openPdfPreview: mockOpenPdfPreview,
+        togglePdfPreview: mockTogglePdfPreview,
+        closePdfPreview: vi.fn()
+    })
 }));
 vi.mock("./documentViewModel", () => ({
     useResumeDocumentViewModel: () => ({
@@ -76,9 +112,43 @@ vi.mock("@/pages/settings/provider/settingsContext", () => ({
 }));
 
 describe("Resume Component", () => {
+    beforeEach(() => {
+        mockOpenPdfPreview.mockClear();
+        mockTogglePdfPreview.mockClear();
+    });
+
     it("renders without crashing", () => {
         const { getByTestId } = render(<Resume />);
         expect(getByTestId("ResumeWorkspace")).toBeInTheDocument();
     });
-});
 
+    it("collapses rails before opening PDF preview from the header toggle", () => {
+        render(<Resume />);
+
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
+
+        fireEvent.click(screen.getByRole("button", { name: "Preview PDF" }));
+
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+        expect(mockOpenPdfPreview).toHaveBeenCalledTimes(1);
+        expect(mockTogglePdfPreview).not.toHaveBeenCalled();
+    });
+
+    it("keeps the left and right rails mutually exclusive", () => {
+        render(<Resume />);
+
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+
+        fireEvent.click(screen.getByRole("button", { name: "Open right rail" }));
+
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "false");
+
+        fireEvent.click(screen.getByRole("button", { name: "Open left rail" }));
+
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+    });
+});

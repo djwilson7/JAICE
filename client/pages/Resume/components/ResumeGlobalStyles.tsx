@@ -67,6 +67,22 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
             #print-canvas::-webkit-scrollbar-thumb:hover {
                 background-color: #94a3b8;
             }
+            .resume-document__title {
+                font-size: var(--resume-title-font-size);
+                line-height: var(--resume-title-line-height);
+            }
+            .resume-document__section-title {
+                font-size: var(--resume-header-font-size);
+                line-height: var(--resume-header-line-height);
+            }
+            .resume-document__meta {
+                font-size: var(--resume-subheader-font-size);
+                line-height: var(--resume-subheader-line-height);
+            }
+            .resume-document__body {
+                font-size: var(--resume-body-font-size);
+                line-height: var(--resume-body-line-height);
+            }
             .resume-rail-search {
                 box-shadow: none !important;
             }
@@ -90,6 +106,7 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
             }
             #print-canvas[data-font-preview="title"] .resume-title-font-target,
             #print-canvas[data-font-preview="header"] .resume-header-font-target,
+            #print-canvas[data-font-preview="subheader"] .resume-subheader-font-target,
             #print-canvas[data-font-preview="body"] .resume-body-font-target {
                 outline: 2px solid #38bdf8 !important;
                 outline-offset: 2px !important;
@@ -284,9 +301,10 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
                 column-gap: 1rem;
             }
             .resume-page-style-shelf.is-compact .resume-page-style-shelf-right-controls {
-                grid-template-columns: max-content;
+                grid-template-columns: repeat(2, max-content);
                 grid-template-rows: repeat(2, max-content);
                 justify-content: center;
+                column-gap: 1rem;
                 border-left: 1px solid rgba(148, 163, 184, 0.38);
             }
             html:not([data-theme="light"]) .resume-page-style-shelf.is-compact .resume-page-style-shelf-right-controls {
@@ -365,18 +383,31 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
             }
             .document-hover-section {
                 isolation: isolate;
+                --resume-section-hover-pad-y: 8px;
                 margin-left: -${pageMarginPt}pt;
                 margin-right: -${pageMarginPt}pt;
                 padding-left: ${pageMarginPt}pt;
                 padding-right: ${pageMarginPt}pt;
-                padding-top: 10px;
-                padding-bottom: 10px;
                 width: calc(100% + ${pageMarginPt * 2}pt);
+                overflow: visible;
+            }
+            .document-hover-section-hit-pad {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: var(--resume-section-hover-pad-y);
+                z-index: 2;
+            }
+            .document-hover-section-hit-pad-top {
+                top: calc(-1 * var(--resume-section-hover-pad-y));
+            }
+            .document-hover-section-hit-pad-bottom {
+                bottom: calc(-1 * var(--resume-section-hover-pad-y));
             }
             .document-hover-section-border {
-                top: 0;
+                top: calc(-1 * var(--resume-section-hover-pad-y));
                 right: 0;
-                bottom: 0;
+                bottom: calc(-1 * var(--resume-section-hover-pad-y));
                 left: 0;
                 border: 1px solid rgba(30, 64, 175, 0.52);
                 background: rgba(30, 64, 175, 0.045);
@@ -385,14 +416,11 @@ export const ResumeGlobalStyles: React.FC<ResumeGlobalStylesProps> = ({ paperMet
             .document-hover-section[data-active="true"] > .document-hover-section-border {
                 opacity: 1;
             }
-            .document-hover-section[data-section="header"] {
-                margin-top: -${pageMarginPt}pt;
-                padding-top: ${pageMarginPt}pt;
+            .document-hover-section[data-active="true"] {
+                z-index: 10;
             }
             .document-hover-section[data-section="skills"] {
                 flex: 1 1 auto;
-                margin-bottom: -${pageMarginPt}pt;
-                padding-bottom: ${pageMarginPt}pt;
             }
             @property --experience-ai-angle {
                 syntax: "<angle>";

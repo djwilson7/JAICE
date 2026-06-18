@@ -6,7 +6,9 @@ describe('ResumePrintDocument', () => {
     const defaultFormatting: any = {
         pageSize: 'letter',
         paperLayoutFormat: 'standard',
+        innerSectionGapFormat: 'standard',
         headerFontSize: 16,
+        subHeaderFontSize: 14,
         bodyFontSize: 12,
         pageMarginPt: 36,
         titleFontSize: 24,
@@ -178,5 +180,61 @@ describe('ResumePrintDocument', () => {
         expect(container.textContent).toContain('Profile');
         expect(container.textContent).toContain('Engineering Experience');
         expect(container.textContent).not.toContain('Backend');
+    });
+
+    it('uses bodyFontSize for body text and subHeaderFontSize for meta text', () => {
+        const { container } = render(
+            <ResumePrintDocument
+                resumeData={{
+                    fullName: 'John Doe',
+                    summary: 'Body copy',
+                    experience: [{
+                        id: 'exp-1',
+                        jobTitle: 'Meta Role',
+                        bullets: [{ id: 'bullet-1', text: 'Body bullet' }]
+                    }],
+                    education: [],
+                    skills: []
+                } as any}
+                formatting={{
+                    ...defaultFormatting,
+                    bodyFontSize: 11,
+                    subHeaderFontSize: 15
+                }}
+            />
+        );
+
+        const findTextElement = (text: string) => Array.from(container.querySelectorAll<HTMLElement>('*'))
+            .find((element) => element.textContent === text);
+
+        expect(container.firstChild).toHaveStyle({
+            '--resume-body-font-size': '11pt',
+            '--resume-subheader-font-size': '15pt'
+        });
+        expect(container.querySelector('p')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+        expect(container.querySelector('article > div')).toHaveStyle({ fontSize: 'var(--resume-subheader-font-size)' });
+        expect(findTextElement('Body bullet')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
+    });
+
+    it('uses the body token for the contact strip under the name', () => {
+        const { container } = render(
+            <ResumePrintDocument
+                resumeData={{
+                    fullName: 'John Doe',
+                    email: 'john@example.com',
+                    experience: [],
+                    education: [],
+                    skills: []
+                } as any}
+                formatting={{
+                    ...defaultFormatting,
+                    bodyFontSize: 10,
+                    subHeaderFontSize: 18
+                }}
+            />
+        );
+
+        expect(container.firstChild).toHaveStyle({ '--resume-body-font-size': '10pt' });
+        expect(container.querySelector('section > div')).toHaveStyle({ fontSize: 'var(--resume-body-font-size)' });
     });
 });

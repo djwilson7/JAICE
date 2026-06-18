@@ -23,6 +23,8 @@ type PageStyleShelfProps = {
     setTitleFontSize: React.Dispatch<React.SetStateAction<number>>;
     headerFontSize: number;
     setHeaderFontSize: React.Dispatch<React.SetStateAction<number>>;
+    subHeaderFontSize: number;
+    setSubHeaderFontSize: React.Dispatch<React.SetStateAction<number>>;
     bodyFontSize: number;
     setBodyFontSize: React.Dispatch<React.SetStateAction<number>>;
     pageMarginPt: number;
@@ -32,7 +34,7 @@ type PageStyleShelfProps = {
     setFontPreviewTarget: React.Dispatch<React.SetStateAction<FontPreviewTarget | null>>;
     setIsMarginPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsPageFormatPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    setIsSectionGapPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    setGapPreviewTarget: React.Dispatch<React.SetStateAction<"section" | "inner" | null>>;
 };
 
 export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
@@ -40,9 +42,9 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
         isLightMode, isPageStyleShelfOpen, isPageStyleShelfCompact, shelfControlLabelClass,
         shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass,
         shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass,
-        pageSize, setPageSize, titleFontSize, setTitleFontSize, headerFontSize, setHeaderFontSize, bodyFontSize, setBodyFontSize,
+        pageSize, setPageSize, titleFontSize, setTitleFontSize, headerFontSize, setHeaderFontSize, subHeaderFontSize, setSubHeaderFontSize, bodyFontSize, setBodyFontSize,
         pageMarginPt, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible,
-        setIsPageFormatPreviewVisible, setIsSectionGapPreviewVisible
+        setIsPageFormatPreviewVisible, setGapPreviewTarget
     } = props;
     const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
     const controlLayoutTransition = { duration: 0.2, ease: [0.32, 0.72, 0.32, 1] as const };
@@ -71,7 +73,7 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                     <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Title</span>
                                     <div className={shelfStepperRowClass}>
                                         <button type="button" className={shelfStepperButtonClass} onClick={() => setTitleFontSize((value) => clampNumber(value - 1, 18, 34))} disabled={titleFontSize <= 18} aria-label="Decrease title font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{titleFontSize}</span>
+                                        <span className={shelfStepperValueClass}>{titleFontSize}pt</span>
                                         <button type="button" className={shelfStepperButtonClass} onClick={() => setTitleFontSize((value) => clampNumber(value + 1, 18, 34))} disabled={titleFontSize >= 34} aria-label="Increase title font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
@@ -85,8 +87,22 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                     <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Header</span>
                                     <div className={shelfStepperRowClass}>
                                         <button type="button" className={shelfStepperButtonClass} onClick={() => setHeaderFontSize((value) => clampNumber(value - 1, 12, 22))} disabled={headerFontSize <= 12} aria-label="Decrease header font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{headerFontSize}</span>
+                                        <span className={shelfStepperValueClass}>{headerFontSize}pt</span>
                                         <button type="button" className={shelfStepperButtonClass} onClick={() => setHeaderFontSize((value) => clampNumber(value + 1, 12, 22))} disabled={headerFontSize >= 22} aria-label="Increase header font size"><ShelfPlusIcon /></button>
+                                    </div>
+                                </motion.div>
+                                <motion.div
+                                    layout="position"
+                                    transition={{ layout: controlLayoutTransition }}
+                                    className={`resume-page-style-shelf-control resume-page-style-shelf-subheader-size ${shelfStepperControlClass}`}
+                                    onMouseEnter={() => setFontPreviewTarget("subheader")}
+                                    onMouseLeave={() => setFontPreviewTarget(null)}
+                                >
+                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Sub Header</span>
+                                    <div className={shelfStepperRowClass}>
+                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setSubHeaderFontSize((value) => clampNumber(value - 1, 10, 20))} disabled={subHeaderFontSize <= 10} aria-label="Decrease sub header font size"><ShelfMinusIcon /></button>
+                                        <span className={shelfStepperValueClass}>{subHeaderFontSize}pt</span>
+                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setSubHeaderFontSize((value) => clampNumber(value + 1, 10, 20))} disabled={subHeaderFontSize >= 20} aria-label="Increase sub header font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
                                 <motion.div
@@ -99,10 +115,12 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                     <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Body</span>
                                     <div className={shelfStepperRowClass}>
                                         <button type="button" className={shelfStepperButtonClass} onClick={() => setBodyFontSize((value) => clampNumber(value - 0.5, 9, 15))} disabled={bodyFontSize <= 9} aria-label="Decrease body font size"><ShelfMinusIcon /></button>
-                                        <span className={shelfStepperValueClass}>{bodyFontSize}</span>
+                                        <span className={shelfStepperValueClass}>{bodyFontSize}pt</span>
                                         <button type="button" className={shelfStepperButtonClass} onClick={() => setBodyFontSize((value) => clampNumber(value + 0.5, 9, 15))} disabled={bodyFontSize >= 15} aria-label="Increase body font size"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
+                                </div>
+                                <div className="resume-page-style-shelf-right-controls contents">
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
@@ -112,13 +130,11 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                 >
                                     <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Margins</span>
                                     <div className={shelfStepperRowClass}>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setPageMarginPt((value) => clampNumber(value - 2, 24, 60))} disabled={pageMarginPt <= 24} aria-label="Decrease page margins"><ShelfMinusIcon /></button>
+                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setPageMarginPt((value) => clampNumber(value - 2, 24, 72))} disabled={pageMarginPt <= 24} aria-label="Decrease page margins"><ShelfMinusIcon /></button>
                                         <span className={shelfStepperValueClass}>{pageMarginPt}pt</span>
-                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setPageMarginPt((value) => clampNumber(value + 2, 24, 60))} disabled={pageMarginPt >= 60} aria-label="Increase page margins"><ShelfPlusIcon /></button>
+                                        <button type="button" className={shelfStepperButtonClass} onClick={() => setPageMarginPt((value) => clampNumber(value + 2, 24, 72))} disabled={pageMarginPt >= 72} aria-label="Increase page margins"><ShelfPlusIcon /></button>
                                     </div>
                                 </motion.div>
-                                </div>
-                                <div className="resume-page-style-shelf-right-controls contents">
                                 <motion.div
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
@@ -154,19 +170,19 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                                     layout="position"
                                     transition={{ layout: controlLayoutTransition }}
                                     className={`resume-page-style-shelf-control resume-page-style-shelf-section-gap ${shelfStepperControlClass}`}
-                                    onMouseEnter={() => setIsSectionGapPreviewVisible(true)}
-                                    onMouseLeave={() => setIsSectionGapPreviewVisible(false)}
+                                    onMouseEnter={() => setGapPreviewTarget("section")}
+                                    onMouseLeave={() => setGapPreviewTarget(null)}
                                 >
-                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Section Gap</span>
-                                    <div className={shelfSegmentGroupClass} role="group" aria-label="Section gap">
+                                    <span className={`${shelfControlLabelClass} ${shelfStepperLabelClass}`}>Spacing</span>
+                                    <div className={shelfSegmentGroupClass} role="group" aria-label="Document spacing">
                                         {(["compact", "standard", "relaxed"] as PaperLayoutFormat[]).map((format) => (
                                             <button
                                                 key={format}
                                                 type="button"
                                                 onClick={() => setPaperLayoutFormat(format)}
                                                 className={`${shelfSegmentButtonClass} ${paperLayoutFormat === format ? isLightMode ? "!text-sky-700" : "!text-sky-100" : ""}`}
-                                                title={`${format[0].toUpperCase()}${format.slice(1)} layout spacing`}
-                                                aria-label={`${format[0].toUpperCase()}${format.slice(1)} layout spacing`}
+                                                title={`${format[0].toUpperCase()}${format.slice(1)} document spacing`}
+                                                aria-label={`${format[0].toUpperCase()}${format.slice(1)} document spacing`}
                                                 aria-pressed={paperLayoutFormat === format}
                                             >
                                                 {format[0].toUpperCase()}{format.slice(1)}

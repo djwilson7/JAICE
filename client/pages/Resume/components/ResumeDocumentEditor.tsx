@@ -1,12 +1,13 @@
 import React from "react";
 import { motion } from "framer-motion";
 import type { ContactFieldKey, ContactRenderField, DocumentSectionId, EducationItem, ExperienceItem, ExperienceRewriteSuggestion, ResumeData, ResumeRewriteActionHover, ResumeSectionKey, SummaryRewriteSuggestion } from "../types";
-import { DEFAULT_SECTION_TITLES, getSkillItemsText, hasText } from "../resumeData";
+import { DEFAULT_SECTION_TITLES, getSkillItemsText, getTagColorStyle, hasText } from "../resumeData";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { DocumentSection } from "./DocumentSection";
 import { EditableSectionTitle } from "./EditableSectionTitle";
 import { ExperienceBulletTags } from "./ExperienceBulletTags";
 import { InlineBulletComposer } from "./InlineBulletComposer";
+import { ptToPx } from "../utils/documentUnits";
 
 type OverlayInputParams = {
     path: string;
@@ -47,6 +48,8 @@ type ResumeDocumentEditorFormatting = {
     pageMarginPt: number;
     documentSectionGapStyle: React.CSSProperties;
     documentSectionGapPx: number;
+    documentInnerSectionGapStyle: React.CSSProperties;
+    documentInnerSectionGapPx: number;
     documentTextStyle: React.CSSProperties;
     sectionHeadingClass: string;
     sectionHeadingStyle: React.CSSProperties;
@@ -105,7 +108,7 @@ type ResumeDocumentEditorInteraction = {
     isSummarySectionActive: boolean;
     summaryRewriteHoverAction: "accept" | "reject" | null;
     summaryCurrentRewriteClass: string;
-    isSectionGapPreviewVisible: boolean;
+    gapPreviewTarget: "section" | "inner" | null;
     loadingSummaryImprove: boolean;
     loadingExperienceImproveId: string | null;
 };
@@ -115,6 +118,7 @@ type ResumeDocumentEditorHandlers = {
     renderRewriteActionButtons: (params: { onAccept: () => void; onReject: () => void; onAcceptHover: () => void; onRejectHover: () => void; onClearHover: () => void }) => React.ReactNode;
     getDynamicInputStyle: (value: string | undefined, placeholder: string, font?: string, extraStyles?: React.CSSProperties) => React.CSSProperties;
     contactFieldStyle: (value: string | undefined, placeholder: string) => React.CSSProperties;
+    subHeaderFieldStyle: (value: string | undefined, placeholder: string, weight?: React.CSSProperties["fontWeight"], extraStyles?: React.CSSProperties) => React.CSSProperties;
     isFieldChanged: (path: string) => { changed: boolean; reason?: string };
     getSuggestionReviewClass: (action?: "accept" | "reject") => string;
     updateField: (field: keyof ResumeData, value: string) => void;
@@ -126,6 +130,8 @@ type ResumeDocumentEditorHandlers = {
     updateExperienceField: (id: string, field: keyof ExperienceItem, value: string) => void;
     insertExperienceAt: (index: number) => void;
     removeExperience: (id: string) => void;
+    moveExperienceUp: (id: string) => void;
+    moveExperienceDown: (id: string) => void;
     clearExperience: (id: string) => void;
     addBulletWithText: (expId: string, text: string) => void;
     insertBulletAfter: (expId: string, bulletId: string) => void;
@@ -168,10 +174,24 @@ type ResumeDocumentEditorProps = {
 
 export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data, formatting, interaction, handlers }) => {
     const { resumeData, headerContactRows, showHeaderContactEditors, summaryRewriteSuggestion, experienceRewriteSuggestions } = data;
-    const { titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, experienceMarginClearClass, experienceMarginDeleteClass, summaryMarginImproveClass } = formatting;
-    const { activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId } = interaction;
-    const { renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, getSuggestionReviewClass, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion } = handlers;
+    const { titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentInnerSectionGapStyle, documentInnerSectionGapPx, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, summaryMarginImproveClass } = formatting;
+    const { activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, gapPreviewTarget, loadingSummaryImprove, loadingExperienceImproveId } = interaction;
+    const { renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, subHeaderFieldStyle, getSuggestionReviewClass, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, moveExperienceUp, moveExperienceDown, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion } = handlers;
     const [previewExperienceTag, setPreviewExperienceTag] = React.useState<{ bulletId: string; color: string } | null>(null);
+
+    const clearBtnClass = "resume-edit-control !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-slate-500 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-slate-600 active:scale-95";
+    const deleteBtnClass = "resume-edit-control !inline-flex h-6 !h-6 w-6 !w-6 shrink-0 items-center justify-center rounded-md border border-transparent !bg-transparent !p-0 !text-rose-600 shadow-none transition-[opacity,background,border-color,color,transform] duration-150 hover:!bg-slate-500/10 hover:border-slate-400/20 hover:!text-rose-600 active:scale-95";
+    const isSectionGapPreviewVisible = gapPreviewTarget === "section";
+    const renderInnerGapPreview = (key: string) => gapPreviewTarget === "inner" && documentInnerSectionGapPx > 0 ? (
+        <div
+            key={key}
+            className="resume-section-gap-preview resume-inner-section-gap-preview"
+            style={{
+                height: `${documentInnerSectionGapPx}px`,
+                bottom: `-${documentInnerSectionGapPx}px`
+            }}
+        />
+    ) : null;
 
     const renderSectionTitle = (section: ResumeSectionKey) => (
         <EditableSectionTitle
@@ -218,7 +238,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                     onFocus={() => setFocusedNameSection(true)}
                                     onBlur={() => setFocusedNameSection(false)}
                                     placeholder="YOUR NAME"
-                                    style={getDynamicInputStyle(resumeData.fullName, "YOUR NAME", `bold ${titleFontSize}px Poppins, Arial, sans-serif`, { fontSize: `${titleFontSize}px` })}
+                                    style={getDynamicInputStyle(resumeData.fullName, "YOUR NAME", `bold ${ptToPx(titleFontSize)}px Poppins, Arial, sans-serif`, { fontSize: "var(--resume-title-font-size)" })}
                                 />
                             </div>
 
@@ -473,7 +493,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                         className="experience-ai-hover relative mt-2 rounded-sm border border-sky-300/70 bg-sky-50/70 px-2.5 py-2 text-left text-[#334155] shadow-[0_8px_20px_rgba(14,165,233,0.08)]"
                                         style={{
                                             ...documentTextStyle,
-                                            lineHeight: 1.45,
+                                            lineHeight: "var(--resume-body-line-height)",
                                             fontFamily: "var(--font-body)",
                                             textAlign: "left"
                                         }}
@@ -519,10 +539,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                 <div className="flex items-center gap-2">
                                     {renderSectionTitle("experience")}
                                 </div>
-
-                                <div className={`relative space-y-1.5 transition-[padding] duration-200 ${
-                                    activeDocumentSection === "experience" ? "pb-7" : "pb-0"
-                                }`}>
+                                <div className="relative flex flex-col" style={documentInnerSectionGapStyle}>
                                     {(resumeData.experience || []).map((exp, idx) => {
                                         const expBullets = Array.isArray(exp.bullets) ? exp.bullets : [];
                                         const showExperienceItemControls = isExperienceSectionActive || hoveredJobId === exp.id;
@@ -540,7 +557,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: exp.jobTitle,
                                                 placeholder: "Title",
                                                 className: `${compactFitMetaInputClass} text-[#0f172a] font-bold`,
-                                                style: getDynamicInputStyle(exp.jobTitle, "Title", "bold 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(exp.jobTitle, "Title", 700, { color: "#0f172a" }),
                                                 onChange: (val: string) => updateExperienceField(exp.id, "jobTitle", val)
                                             },
                                             {
@@ -550,7 +567,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: exp.company || "",
                                                 placeholder: "Company Name",
                                                 className: compactFitMetaInputClass,
-                                                style: getDynamicInputStyle(exp.company || "", "Company Name", "600 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(exp.company || "", "Company Name", 600),
                                                 onChange: (val: string) => updateExperienceField(exp.id, "company", val)
                                             },
                                             {
@@ -560,7 +577,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: exp.location || "",
                                                 placeholder: "City, State",
                                                 className: `${compactFitMetaInputClass} text-[#475569]`,
-                                                style: getDynamicInputStyle(exp.location || "", "City, State", "600 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(exp.location || "", "City, State", 600, { color: "#475569" }),
                                                 onChange: (val: string) => updateExperienceField(exp.id, "location", val)
                                             }
                                         ].filter((field) => showExperienceItemControls || hasText(field.value));
@@ -572,7 +589,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: exp.startDate || "",
                                                 placeholder: "Start",
                                                 className: `${compactFitDateInputClass} text-left`,
-                                                style: getDynamicInputStyle(exp.startDate || "", "Start", "500 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(exp.startDate || "", "Start", 500),
                                                 onChange: (val: string) => updateExperienceField(exp.id, "startDate", val)
                                             },
                                             {
@@ -582,7 +599,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: exp.endDate || "",
                                                 placeholder: "End",
                                                 className: `${compactFitDateInputClass} text-left`,
-                                                style: getDynamicInputStyle(exp.endDate || "", "End", "500 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(exp.endDate || "", "End", 500),
                                                 onChange: (val: string) => updateExperienceField(exp.id, "endDate", val)
                                             }
                                         ].filter((field) => showExperienceItemControls || hasText(field.value));
@@ -626,33 +643,59 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                         </svg>
                                                     )}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onMouseEnter={() => setHoveredExperienceClearId(exp.id)}
-                                                    onMouseLeave={() => setHoveredExperienceClearId(null)}
-                                                    onClick={() => clearExperience(exp.id)}
-                                                    className={`${experienceMarginClearClass} top-0`}
-                                                    title="Clear work experience"
-                                                    aria-label="Clear work experience"
-                                                >
-                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 9l-6 6M12 9l6 6" />
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onMouseEnter={() => setHoveredExperienceDeleteId(exp.id)}
-                                                    onMouseLeave={() => setHoveredExperienceDeleteId(null)}
-                                                    onClick={() => removeExperience(exp.id)}
-                                                    className={`${experienceMarginDeleteClass} top-7`}
-                                                    title="Remove work experience"
-                                                    aria-label="Remove work experience"
-                                                >
-                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5h6v2m-8 3 .7 9h8.6l.7-9" />
-                                                    </svg>
-                                                </button>
+                                                <div className={`absolute -right-[50px] top-0 z-30 grid grid-cols-2 gap-1 transition-opacity duration-150 ${showExperienceItemControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                                                    <button
+                                                        type="button"
+                                                        disabled={idx === 0}
+                                                        onClick={() => moveExperienceUp(exp.id)}
+                                                        className={`${clearBtnClass} disabled:opacity-0 disabled:pointer-events-none`}
+                                                        title="Move work experience up"
+                                                        aria-label="Move work experience up"
+                                                    >
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0-7 7m7-7 7 7" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={idx === (resumeData.experience || []).length - 1}
+                                                        onClick={() => moveExperienceDown(exp.id)}
+                                                        className={`${clearBtnClass} disabled:opacity-0 disabled:pointer-events-none`}
+                                                        title="Move work experience down"
+                                                        aria-label="Move work experience down"
+                                                    >
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m0 0-7-7m7 7 7-7" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onMouseEnter={() => setHoveredExperienceClearId(exp.id)}
+                                                        onMouseLeave={() => setHoveredExperienceClearId(null)}
+                                                        onClick={() => clearExperience(exp.id)}
+                                                        className={clearBtnClass}
+                                                        title="Clear work experience"
+                                                        aria-label="Clear work experience"
+                                                    >
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 9l-6 6M12 9l6 6" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onMouseEnter={() => setHoveredExperienceDeleteId(exp.id)}
+                                                        onMouseLeave={() => setHoveredExperienceDeleteId(null)}
+                                                        onClick={() => removeExperience(exp.id)}
+                                                        className={deleteBtnClass}
+                                                        title="Remove work experience"
+                                                        aria-label="Remove work experience"
+                                                    >
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.75">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5h6v2m-8 3 .7 9h8.6l.7-9" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
 
                                                 {(showExperienceItemControls || experienceMetaFields.length > 0 || experienceDateFields.length > 0) && (
                                                     <div
@@ -748,19 +791,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                                             setPreviewExperienceTag((current) => current?.bulletId === b.id ? null : current);
                                                                             return;
                                                                         }
-                                                                        const color = {
-                                                                            "tag-teal": "#0f766e",
-                                                                            "tag-orange": "#c2410c",
-                                                                            "tag-purple": "#7e22ce",
-                                                                            "tag-cyan": "#0e7490",
-                                                                            "tag-rose": "#be123c",
-                                                                            "tag-slate": "#475569",
-                                                                            "tag-fuchsia": "#a21caf",
-                                                                            "tag-violet": "#4f46e5",
-                                                                            "tag-pink": "#db2777",
-                                                                            "tag-zinc": "#52525b",
-                                                                            "tag-stone": "#57534e"
-                                                                        }[tag.colorToken] || "#475569";
+                                                                        const color = getTagColorStyle(tag.colorToken).color;
                                                                         setPreviewExperienceTag({ bulletId: b.id, color });
                                                                     }}
                                                                     onFocusChange={setFocusedField}
@@ -809,7 +840,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                                         className="experience-ai-hover relative rounded-sm border border-sky-300/70 bg-sky-50/70 px-2.5 py-1.5 text-left text-[#334155] shadow-[0_8px_20px_rgba(14,165,233,0.08)]"
                                                                         style={{
                                                                             ...documentTextStyle,
-                                                                            lineHeight: 1.38,
+                                                                            lineHeight: "var(--resume-body-line-height)",
                                                                             fontFamily: "var(--font-body)",
                                                                             textAlign: "left"
                                                                         }}
@@ -862,11 +893,12 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                         </div>
                                                     )}
                                                 </div>
+                                                {idx < (resumeData.experience || []).length - 1 && renderInnerGapPreview(`experience-${exp.id}-inner-gap`)}
                                             </div>
                                             </React.Fragment>
                                         );
                                     })}
-                                    <div className={`resume-edit-control absolute bottom-0 left-0 h-6 w-full overflow-visible transition-opacity duration-300 ${
+                                    <div className={`resume-edit-control absolute left-0 top-full mt-1 h-6 w-full overflow-visible transition-opacity duration-300 ${
                                         activeDocumentSection === "experience"
                                             ? "opacity-100"
                                             : "opacity-0"
@@ -901,9 +933,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                     {renderSectionTitle("education")}
                                 </div>
 
-                                <div className={`relative space-y-1.5 transition-[padding] duration-200 ${
-                                    activeDocumentSection === "education" ? "pb-7" : "pb-0"
-                                }`}>
+                                <div className="relative flex flex-col" style={documentInnerSectionGapStyle}>
                                     {(resumeData.education || []).map((ed) => {
                                         const isClearHovered = hoveredEducationClearId === ed.id;
                                         const isDeleteHovered = hoveredEducationDeleteId === ed.id;
@@ -916,7 +946,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: ed.degree || "",
                                                 placeholder: "Degree / Major",
                                                 className: `${compactFitMetaInputClass} text-[#0f172a] font-bold`,
-                                                style: getDynamicInputStyle(ed.degree || "", "Degree / Major", "bold 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(ed.degree || "", "Degree / Major", 700, { color: "#0f172a" }),
                                                 onChange: (val: string) => updateEducationField(ed.id, "degree", val)
                                             },
                                             {
@@ -926,7 +956,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: ed.school,
                                                 placeholder: "Institution Name",
                                                 className: compactFitMetaInputClass,
-                                                style: getDynamicInputStyle(ed.school, "Institution Name", "600 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(ed.school, "Institution Name", 600),
                                                 onChange: (val: string) => updateEducationField(ed.id, "school", val)
                                             }
                                         ].filter((field) => showEducationFields || hasText(field.value));
@@ -938,7 +968,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: ed.startDate || "",
                                                 placeholder: "Start",
                                                 className: `${compactFitDateInputClass} text-left`,
-                                                style: getDynamicInputStyle(ed.startDate || "", "Start", "500 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(ed.startDate || "", "Start", 500),
                                                 onChange: (val: string) => updateEducationField(ed.id, "startDate", val)
                                             },
                                             {
@@ -948,7 +978,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                 value: ed.endDate || "",
                                                 placeholder: "End",
                                                 className: `${compactFitDateInputClass} text-left`,
-                                                style: getDynamicInputStyle(ed.endDate || "", "End", "500 12px Poppins, Arial, sans-serif"),
+                                                style: subHeaderFieldStyle(ed.endDate || "", "End", 500),
                                                 onChange: (val: string) => updateEducationField(ed.id, "endDate", val)
                                             }
                                         ].filter((field) => showEducationFields || hasText(field.value));
@@ -1108,10 +1138,11 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                     )}
                                                 </div>
                                             )}
+                                            {(resumeData.education || []).findIndex((item) => item.id === ed.id) < (resumeData.education || []).length - 1 && renderInnerGapPreview(`education-${ed.id}-inner-gap`)}
                                         </div>
                                         );
                                     })}
-                                    <div className={`resume-edit-control absolute bottom-0 left-0 h-6 w-full overflow-visible transition-opacity duration-300 ${
+                                    <div className={`resume-edit-control absolute left-0 top-full mt-1 h-6 w-full overflow-visible transition-opacity duration-300 ${
                                         activeDocumentSection === "education"
                                             ? "opacity-100"
                                             : "opacity-0"
@@ -1147,9 +1178,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                 <div className="flex items-center gap-2">
                                     {renderSectionTitle("skills")}
                                 </div>
-                                <div className={`relative space-y-1 transition-[padding] duration-200 ${
-                                    activeDocumentSection === "skills" ? "pb-7" : "pb-0"
-                                }`}>
+                                <div className="relative flex flex-col" style={documentInnerSectionGapStyle}>
                                     {(resumeData.skills || []).map((skill) => {
                                         const itemsPath = `skills.${skill.id}.items`;
                                         const isDeleteHovered = hoveredSkillDeleteId === skill.id;
@@ -1178,7 +1207,7 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                     value: skill.category,
                                                     placeholder: "Category",
                                                     className: `${compactFitMetaInputClass} text-[#0f172a] font-bold`,
-                                                    style: getDynamicInputStyle(skill.category, "Category", "bold 12px Poppins, Arial, sans-serif"),
+                                                    style: subHeaderFieldStyle(skill.category, "Category", 700, { color: "#0f172a" }),
                                                     onChange: (val) => updateSkillCategoryName(skill.id, val),
                                                     disableClear: true
                                                 })}
@@ -1219,10 +1248,11 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = ({ data
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5h6v2m-8 3 .7 9h8.6l.7-9" />
                                                     </svg>
                                                 </button>
+                                                {(resumeData.skills || []).findIndex((item) => item.id === skill.id) < (resumeData.skills || []).length - 1 && renderInnerGapPreview(`skills-${skill.id}-inner-gap`)}
                                             </div>
                                         );
                                     })}
-                                    <div className={`resume-edit-control absolute bottom-0 left-0 h-6 w-full overflow-visible transition-opacity duration-300 ${
+                                    <div className={`resume-edit-control absolute left-0 top-full mt-1 h-6 w-full overflow-visible transition-opacity duration-300 ${
                                         activeDocumentSection === "skills"
                                             ? "opacity-100"
                                             : "opacity-0"

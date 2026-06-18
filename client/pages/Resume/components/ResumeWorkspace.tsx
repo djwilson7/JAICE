@@ -7,6 +7,7 @@ import { ResumeCanvas } from "./ResumeCanvas";
 import { ResumeDocumentEditor } from "./ResumeDocumentEditor";
 import { ResumePdfPreview } from "./ResumePdfPreview";
 import { PageStyleShelf } from "./PageStyleShelf";
+import { ResumePagedPreview } from "./ResumePagedPreview";
 import { saveResumeRenderDiagnostics } from "../resumeApi";
 import { RESUME_RENDER_DIAGNOSTICS_VERSION, buildResumeRenderDiagnostics, isResumeDebugEnabled } from "../resumeDiagnostics";
 
@@ -51,11 +52,13 @@ type ResumeWorkspaceProps = {
     headerActionIconClass: string;
     canvasViewportRef: React.RefObject<HTMLDivElement | null>;
     resumeDocumentContentRef: React.RefObject<HTMLDivElement | null>;
+    registerResumeDocumentContentElement: (element: HTMLDivElement | null) => void;
     canvasNeedsHorizontalScroll: boolean;
     canvasNeedsVerticalScroll: boolean;
     canvasViewportStyle: React.CSSProperties;
     pdfPreviewViewportStyle: React.CSSProperties;
     bottomControlsViewportStyle: React.CSSProperties;
+    viewableCanvasWidth: number;
     canvasHorizontalOverflow: number;
     scaledCanvasWidth: number;
     scaledCanvasHeight: number;
@@ -64,6 +67,7 @@ type ResumeWorkspaceProps = {
     animatedCanvasZoom: number;
     fontPreviewTarget: FontPreviewTarget | null;
     bodyFontSize: number;
+    subHeaderFontSize: number;
     resumePageCount: number;
     resumePageStride: number;
     isPageFormatPreviewVisible: boolean;
@@ -79,6 +83,9 @@ type ResumeWorkspaceProps = {
     titleFontSize: number;
     documentSectionGapStyle: React.CSSProperties;
     documentSectionGapPx: number;
+    documentInnerSectionGapStyle: React.CSSProperties;
+    documentInnerSectionGapPx: number;
+    documentCssVariables: React.CSSProperties;
     documentTextStyle: React.CSSProperties;
     sectionHeadingClass: string;
     sectionHeadingStyle: React.CSSProperties;
@@ -115,23 +122,24 @@ type ResumeWorkspaceProps = {
     hoveredSkillDeleteId: string | null; setHoveredSkillDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
     rewriteActionHover: ResumeRewriteActionHover | null; setRewriteActionHover: React.Dispatch<React.SetStateAction<ResumeRewriteActionHover | null>>;
     isExperienceSectionActive: boolean; isSummarySectionActive: boolean; summaryRewriteHoverAction: "accept" | "reject" | null; summaryCurrentRewriteClass: string;
-    isSectionGapPreviewVisible: boolean; loadingSummaryImprove: boolean; loadingExperienceImproveId: string | null;
+    gapPreviewTarget: "section" | "inner" | null; loadingSummaryImprove: boolean; loadingExperienceImproveId: string | null;
     renderOverlayInput: (params: OverlayInputParams) => React.ReactNode;
     renderRewriteActionButtons: (params: RewriteActionButtonParams) => React.ReactNode;
     getDynamicInputStyle: (value: string | undefined, placeholder: string, font?: string, extraStyles?: React.CSSProperties) => React.CSSProperties;
     contactFieldStyle: (value: string | undefined, placeholder: string) => React.CSSProperties;
+    subHeaderFieldStyle: (value: string | undefined, placeholder: string, weight?: React.CSSProperties["fontWeight"], extraStyles?: React.CSSProperties) => React.CSSProperties;
     isFieldChanged: (path: string) => { changed: boolean; reason?: string };
     getSuggestionReviewClass: (action?: "accept" | "reject") => string;
     updateField: (field: keyof ResumeData, value: string) => void;
     updateSectionTitle: (section: import("../types").ResumeSectionKey, value: string) => void;
     addCustomContactField: () => void; updateCustomContactField: (index: number, field: "label" | "value", val: string) => void; removeCustomContactField: (index: number) => void; removeStandardContactField: (field: ContactFieldKey) => void;
-    updateExperienceField: (id: string, field: keyof ExperienceItem, value: string) => void; insertExperienceAt: (index: number) => void; removeExperience: (id: string) => void; clearExperience: (id: string) => void; addBulletWithText: (expId: string, text: string) => void; insertBulletAfter: (expId: string, bulletId: string) => void; updateBulletText: (expId: string, bulletId: string, value: string) => void; removeBulletIfEmpty: (expId: string, bulletId: string) => void; removeBullet: (expId: string, bulletId: string) => void; toggleBulletTag: (expId: string, bulletId: string, tagId: string) => void; createAndAssignBulletTag: (expId: string, bulletId: string, name: string) => void; deleteBulletTag: (tagId: string) => void;
+    updateExperienceField: (id: string, field: keyof ExperienceItem, value: string) => void; insertExperienceAt: (index: number) => void; removeExperience: (id: string) => void; moveExperienceUp: (id: string) => void; moveExperienceDown: (id: string) => void; clearExperience: (id: string) => void; addBulletWithText: (expId: string, text: string) => void; insertBulletAfter: (expId: string, bulletId: string) => void; updateBulletText: (expId: string, bulletId: string, value: string) => void; removeBulletIfEmpty: (expId: string, bulletId: string) => void; removeBullet: (expId: string, bulletId: string) => void; toggleBulletTag: (expId: string, bulletId: string, tagId: string) => void; createAndAssignBulletTag: (expId: string, bulletId: string, name: string) => void; deleteBulletTag: (tagId: string) => void;
     updateEducationField: (id: string, field: keyof EducationItem, value: string) => void; addEducation: () => void; removeEducation: (id: string) => void; clearEducation: (id: string) => void; addEducationDetailWithText: (educationId: string, text: string) => void; insertEducationDetailAfter: (educationId: string, detailId: string) => void; updateEducationDetailText: (educationId: string, detailId: string, value: string) => void; removeEducationDetailIfEmpty: (educationId: string, detailId: string) => void;
     addSkillCategory: () => void; updateSkillCategoryName: (id: string, value: string) => void; updateSkillCategoryItems: (id: string, value: string) => void; removeSkillCategory: (id: string) => void;
     handleAnalyzeSummary: () => void; handleImproveSummary: () => void | Promise<void>; handleImproveExperience: (experience: ExperienceItem) => void | Promise<void>; acceptSummaryRewriteSuggestion: () => void; rejectSummaryRewriteSuggestion: () => void; acceptExperienceRewriteSuggestion: (experienceId: string, bulletId: string) => void; rejectExperienceRewriteSuggestion: (experienceId: string, bulletId: string) => void;
     setResumeData: React.Dispatch<React.SetStateAction<ResumeData>>; setChangeMetadata: React.Dispatch<React.SetStateAction<{ path: string; before: string; after: string; reason: string }[]>>;
     isPageStyleShelfOpen: boolean; isPageStyleShelfCompact: boolean; shelfSurfaceStyle: React.CSSProperties; shelfControlLabelClass: string; shelfSegmentGroupClass: string; shelfSegmentButtonClass: string; shelfSegmentIndicatorClass: string; shelfStepperControlClass: string; shelfStepperLabelClass: string; shelfStepperRowClass: string; shelfStepperButtonClass: string; shelfStepperValueClass: string;
-    pageSize: PageSize; setPageSize: React.Dispatch<React.SetStateAction<PageSize>>; setTitleFontSize: React.Dispatch<React.SetStateAction<number>>; headerFontSize: number; setHeaderFontSize: React.Dispatch<React.SetStateAction<number>>; setBodyFontSize: React.Dispatch<React.SetStateAction<number>>; setPageMarginPt: React.Dispatch<React.SetStateAction<number>>; paperLayoutFormat: PaperLayoutFormat; setPaperLayoutFormat: React.Dispatch<React.SetStateAction<PaperLayoutFormat>>; setFontPreviewTarget: React.Dispatch<React.SetStateAction<FontPreviewTarget | null>>; setIsMarginPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsPageFormatPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsSectionGapPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    pageSize: PageSize; setPageSize: React.Dispatch<React.SetStateAction<PageSize>>; setTitleFontSize: React.Dispatch<React.SetStateAction<number>>; headerFontSize: number; setHeaderFontSize: React.Dispatch<React.SetStateAction<number>>; setSubHeaderFontSize: React.Dispatch<React.SetStateAction<number>>; setBodyFontSize: React.Dispatch<React.SetStateAction<number>>; setPageMarginPt: React.Dispatch<React.SetStateAction<number>>; paperLayoutFormat: PaperLayoutFormat; setPaperLayoutFormat: React.Dispatch<React.SetStateAction<PaperLayoutFormat>>; innerSectionGapFormat: PaperLayoutFormat; setFontPreviewTarget: React.Dispatch<React.SetStateAction<FontPreviewTarget | null>>; setIsMarginPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setIsPageFormatPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>; setGapPreviewTarget: React.Dispatch<React.SetStateAction<"section" | "inner" | null>>;
     toolbarSurfaceStyle: React.CSSProperties; documentToolButtonClass: string; handleTogglePageStyleShelf: () => void; handleFitZoom: () => void; zoomMode: ZoomMode; manualZoom: number; setZoomMode: React.Dispatch<React.SetStateAction<ZoomMode>>; setManualZoom: React.Dispatch<React.SetStateAction<number>>; zoomPercent: number;
     isPdfPreviewOpen: boolean; pdfPreviewUrl: string | null; resumeName: string; isGeneratingPdfPreview: boolean; closePdfPreview: () => void;
     loadingList: boolean;
@@ -140,14 +148,48 @@ type ResumeWorkspaceProps = {
 export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
     const {
         isLightMode, error, successMessage, setError, setSuccessMessage, headerActionButtonClass, headerActionIconClass,
-        canvasViewportRef, resumeDocumentContentRef, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, bottomControlsViewportStyle, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, resumePageStride, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
-        resumeData, headerContactRows, showHeaderContactEditors, changeMetadata, originalResumeDataBeforeDraft, summaryRewriteSuggestion, experienceRewriteSuggestions, titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, experienceMarginClearClass, experienceMarginDeleteClass, summaryMarginImproveClass,
-        activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, isSectionGapPreviewVisible, loadingSummaryImprove, loadingExperienceImproveId,
-        renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, isFieldChanged, getSuggestionReviewClass, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleAnalyzeSummary, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setResumeData, setChangeMetadata,
-        isPageStyleShelfOpen, isPageStyleShelfCompact, shelfSurfaceStyle, shelfControlLabelClass, shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass, shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass, pageSize, setPageSize, setTitleFontSize, headerFontSize, setHeaderFontSize, setBodyFontSize, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, setFontPreviewTarget, setIsMarginPreviewVisible, setIsPageFormatPreviewVisible, setIsSectionGapPreviewVisible, toolbarSurfaceStyle, documentToolButtonClass, handleTogglePageStyleShelf, handleFitZoom, zoomMode, manualZoom, setZoomMode, setManualZoom, zoomPercent,
+        canvasViewportRef, resumeDocumentContentRef, registerResumeDocumentContentElement, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, bottomControlsViewportStyle, viewableCanvasWidth, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, subHeaderFontSize, resumePageCount, resumePageStride, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
+        resumeData, headerContactRows, showHeaderContactEditors, changeMetadata, originalResumeDataBeforeDraft, summaryRewriteSuggestion, experienceRewriteSuggestions, titleFontSize, documentSectionGapStyle, documentSectionGapPx, documentInnerSectionGapStyle, documentInnerSectionGapPx, documentCssVariables, documentTextStyle, sectionHeadingClass, sectionHeadingStyle, inputStyleClass, boldInputClass, compactFitMetaInputClass, compactFitDateInputClass, contactInputClass, resumeDividerClass, headerMarginAddClass, experienceMarginAddClass, experienceMarginImproveClass, experienceMarginClearClass, experienceMarginDeleteClass, summaryMarginImproveClass,
+        activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredDeleteIndex, setHoveredDeleteIndex, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, rewriteActionHover, setRewriteActionHover, isExperienceSectionActive, isSummarySectionActive, summaryRewriteHoverAction, summaryCurrentRewriteClass, gapPreviewTarget, loadingSummaryImprove, loadingExperienceImproveId,
+        renderOverlayInput, renderRewriteActionButtons, getDynamicInputStyle, contactFieldStyle, subHeaderFieldStyle, isFieldChanged, getSuggestionReviewClass, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, moveExperienceUp, moveExperienceDown, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, handleAnalyzeSummary, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setResumeData, setChangeMetadata,
+        isPageStyleShelfOpen, isPageStyleShelfCompact, shelfSurfaceStyle, shelfControlLabelClass, shelfSegmentGroupClass, shelfSegmentButtonClass, shelfSegmentIndicatorClass, shelfStepperControlClass, shelfStepperLabelClass, shelfStepperRowClass, shelfStepperButtonClass, shelfStepperValueClass, pageSize, setPageSize, setTitleFontSize, headerFontSize, setHeaderFontSize, setSubHeaderFontSize, setBodyFontSize, setPageMarginPt, paperLayoutFormat, setPaperLayoutFormat, innerSectionGapFormat, setFontPreviewTarget, setIsMarginPreviewVisible, setIsPageFormatPreviewVisible, setGapPreviewTarget, toolbarSurfaceStyle, documentToolButtonClass, handleTogglePageStyleShelf, handleFitZoom, zoomMode, manualZoom, setZoomMode, setManualZoom, zoomPercent,
         isPdfPreviewOpen, pdfPreviewUrl, resumeName, isGeneratingPdfPreview, closePdfPreview, loadingList
     } = props;
+    const isFitPagePreviewMode = zoomMode === "fit";
     const lastPostedRenderDiagnosticsFingerprintRef = React.useRef<string | null>(null);
+    const pagePreviewLayoutKey = JSON.stringify({
+        resumeData,
+        formatting: {
+            pageSize,
+            titleFontSize,
+            headerFontSize,
+            subHeaderFontSize,
+            bodyFontSize,
+            pageMarginPt,
+            paperLayoutFormat,
+            innerSectionGapFormat
+        },
+        paperWidth: paperMetrics.width,
+        paperHeight: paperMetrics.height
+    });
+    const [pagePreviewRenderedPageState, setPagePreviewRenderedPageState] = React.useState({
+        layoutKey: pagePreviewLayoutKey,
+        pageCount: resumePageCount
+    });
+    const pagePreviewRenderedPageCount = pagePreviewRenderedPageState.layoutKey === pagePreviewLayoutKey
+        ? pagePreviewRenderedPageState.pageCount
+        : resumePageCount;
+    const handlePagePreviewRenderedPageCountChange = React.useCallback((nextPageCount: number) => {
+        setPagePreviewRenderedPageState((currentState) => {
+            if (currentState.layoutKey === pagePreviewLayoutKey && currentState.pageCount === nextPageCount) {
+                return currentState;
+            }
+            return {
+                layoutKey: pagePreviewLayoutKey,
+                pageCount: nextPageCount
+            };
+        });
+    }, [pagePreviewLayoutKey]);
     const renderDiagnosticsFingerprint = JSON.stringify({
         diagnosticsVersion: RESUME_RENDER_DIAGNOSTICS_VERSION,
         resumeData,
@@ -155,12 +197,36 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
             pageSize,
             titleFontSize,
             headerFontSize,
+            subHeaderFontSize,
             bodyFontSize,
             pageMarginPt,
-            paperLayoutFormat
+            paperLayoutFormat,
+            innerSectionGapFormat
         },
         paperHeight: paperMetrics.height
     });
+    const pagePreviewGapPx = 32;
+    const pagePreviewPageCount = Math.max(resumePageCount, pagePreviewRenderedPageCount);
+    const pagePreviewColumnCount = viewableCanvasWidth / Math.max(animatedCanvasZoom, 0.01) >= paperMetrics.width * 2 + pagePreviewGapPx
+        ? Math.min(2, Math.max(1, pagePreviewPageCount))
+        : 1;
+    const pagePreviewRowCount = Math.ceil(pagePreviewPageCount / pagePreviewColumnCount);
+    const pagePreviewSlotWidth = pagePreviewColumnCount * paperMetrics.width + Math.max(0, pagePreviewColumnCount - 1) * pagePreviewGapPx;
+    const pagePreviewSlotHeight = pagePreviewRowCount * paperMetrics.height + Math.max(0, pagePreviewRowCount - 1) * pagePreviewGapPx;
+    const currentResumeFormatting = {
+        pageSize,
+        titleFontSize,
+        headerFontSize,
+        subHeaderFontSize,
+        bodyFontSize,
+        pageMarginPt,
+        paperLayoutFormat,
+        innerSectionGapFormat
+    };
+    const noopEditorDispatch = React.useCallback<React.Dispatch<React.SetStateAction<any>>>(() => undefined, []);
+    const disableCanvasHoverControls = isPageStyleShelfOpen;
+    const editorActiveDocumentSection = disableCanvasHoverControls ? null : activeDocumentSection;
+    const editorFocusedDocumentSection = disableCanvasHoverControls ? null : focusedDocumentSection;
 
     React.useEffect(() => {
         if (!isResumeDebugEnabled() || isPdfPreviewOpen || loadingList) {
@@ -203,9 +269,11 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     pageSize,
                     titleFontSize,
                     headerFontSize,
+                    subHeaderFontSize,
                     bodyFontSize,
                     pageMarginPt,
-                    paperLayoutFormat
+                    paperLayoutFormat,
+                    innerSectionGapFormat
                 },
                 targets: [
                     {
@@ -244,6 +312,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
     }, [
         bodyFontSize,
         headerFontSize,
+        innerSectionGapFormat,
         isPdfPreviewOpen,
         loadingList,
         pageMarginPt,
@@ -252,6 +321,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         paperMetrics.height,
         renderDiagnosticsFingerprint,
         resumeDocumentContentRef,
+        subHeaderFontSize,
         titleFontSize
     ]);
 
@@ -283,6 +353,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     <ResumeCanvas
                     canvasViewportRef={canvasViewportRef}
                     resumeDocumentContentRef={resumeDocumentContentRef}
+                    registerResumeDocumentContentElement={registerResumeDocumentContentElement}
                     canvasNeedsHorizontalScroll={canvasNeedsHorizontalScroll}
                     canvasNeedsVerticalScroll={canvasNeedsVerticalScroll}
                     canvasViewportStyle={canvasViewportStyle}
@@ -293,13 +364,33 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     resumeCanvasHeight={resumeCanvasHeight}
                     animatedCanvasZoom={animatedCanvasZoom}
                     fontPreviewTarget={fontPreviewTarget}
-                    bodyFontSize={bodyFontSize}
+                    documentCssVariables={documentCssVariables}
                     resumePageCount={resumePageCount}
                     resumePageStride={resumePageStride}
                     isPageFormatPreviewVisible={isPageFormatPreviewVisible}
                     isMarginPreviewVisible={isMarginPreviewVisible}
-                    pageMarginPt={pageMarginPt}
+                    isPagePreviewMode={isFitPagePreviewMode}
+                    pagePreviewSlotWidth={pagePreviewSlotWidth}
+                    pagePreviewSlotHeight={pagePreviewSlotHeight}
+                    pagePreviewContent={
+                        <ResumePagedPreview
+                            resumeData={resumeData}
+                            formatting={currentResumeFormatting}
+                            paperMetrics={paperMetrics}
+                            layoutKey={pagePreviewLayoutKey}
+                            pageCount={resumePageCount}
+                            pageGapPx={pagePreviewGapPx}
+                            columnCount={pagePreviewColumnCount}
+                            fontPreviewTarget={fontPreviewTarget}
+                            isMarginPreviewVisible={isMarginPreviewVisible}
+                            isPageFormatPreviewVisible={isPageFormatPreviewVisible}
+                            isSectionGapPreviewVisible={gapPreviewTarget !== null}
+                            registerResumeDocumentContentElement={registerResumeDocumentContentElement}
+                            onRenderedPageCountChange={handlePagePreviewRenderedPageCountChange}
+                        />
+                    }
                 >
+                            {!isFitPagePreviewMode && (
                             <ResumeDocumentEditor
                                 data={{
                                     resumeData,
@@ -316,6 +407,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     pageMarginPt,
                                     documentSectionGapStyle,
                                     documentSectionGapPx,
+                                    documentInnerSectionGapStyle,
+                                    documentInnerSectionGapPx,
                                     documentTextStyle,
                                     sectionHeadingClass,
                                     sectionHeadingStyle,
@@ -333,47 +426,47 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     summaryMarginImproveClass
                                 }}
                                 interaction={{
-                                    activeDocumentSection,
-                                    focusedDocumentSection,
-                                    setActiveDocumentSection,
-                                    setFocusedField,
-                                    hoveredNameSection,
-                                    setHoveredNameSection,
-                                    focusedNameSection,
-                                    setFocusedNameSection,
-                                    hoveredContactField,
-                                    setHoveredContactField,
-                                    focusedContactField,
-                                    setFocusedContactField,
-                                    hoveredDeleteIndex,
-                                    setHoveredDeleteIndex,
-                                    hoveredSummary,
-                                    setHoveredSummary,
-                                    focusedSummary,
-                                    setFocusedSummary,
-                                    isSummaryImproveHovered,
-                                    setIsSummaryImproveHovered,
-                                    hoveredJobId,
-                                    setHoveredJobId,
-                                    hoveredExperienceImproveId,
-                                    setHoveredExperienceImproveId,
-                                    hoveredExperienceClearId,
-                                    setHoveredExperienceClearId,
-                                    hoveredExperienceDeleteId,
-                                    setHoveredExperienceDeleteId,
-                                    hoveredEducationClearId,
-                                    setHoveredEducationClearId,
-                                    hoveredEducationDeleteId,
-                                    setHoveredEducationDeleteId,
-                                    hoveredSkillDeleteId,
-                                    setHoveredSkillDeleteId,
+                                    activeDocumentSection: editorActiveDocumentSection,
+                                    focusedDocumentSection: editorFocusedDocumentSection,
+                                    setActiveDocumentSection: disableCanvasHoverControls ? noopEditorDispatch : setActiveDocumentSection,
+                                    setFocusedField: disableCanvasHoverControls ? noopEditorDispatch : setFocusedField,
+                                    hoveredNameSection: disableCanvasHoverControls ? false : hoveredNameSection,
+                                    setHoveredNameSection: disableCanvasHoverControls ? noopEditorDispatch : setHoveredNameSection,
+                                    focusedNameSection: disableCanvasHoverControls ? false : focusedNameSection,
+                                    setFocusedNameSection: disableCanvasHoverControls ? noopEditorDispatch : setFocusedNameSection,
+                                    hoveredContactField: disableCanvasHoverControls ? null : hoveredContactField,
+                                    setHoveredContactField: disableCanvasHoverControls ? noopEditorDispatch : setHoveredContactField,
+                                    focusedContactField: disableCanvasHoverControls ? null : focusedContactField,
+                                    setFocusedContactField: disableCanvasHoverControls ? noopEditorDispatch : setFocusedContactField,
+                                    hoveredDeleteIndex: disableCanvasHoverControls ? null : hoveredDeleteIndex,
+                                    setHoveredDeleteIndex: disableCanvasHoverControls ? noopEditorDispatch : setHoveredDeleteIndex,
+                                    hoveredSummary: disableCanvasHoverControls ? false : hoveredSummary,
+                                    setHoveredSummary: disableCanvasHoverControls ? noopEditorDispatch : setHoveredSummary,
+                                    focusedSummary: disableCanvasHoverControls ? false : focusedSummary,
+                                    setFocusedSummary: disableCanvasHoverControls ? noopEditorDispatch : setFocusedSummary,
+                                    isSummaryImproveHovered: disableCanvasHoverControls ? false : isSummaryImproveHovered,
+                                    setIsSummaryImproveHovered: disableCanvasHoverControls ? noopEditorDispatch : setIsSummaryImproveHovered,
+                                    hoveredJobId: disableCanvasHoverControls ? null : hoveredJobId,
+                                    setHoveredJobId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredJobId,
+                                    hoveredExperienceImproveId: disableCanvasHoverControls ? null : hoveredExperienceImproveId,
+                                    setHoveredExperienceImproveId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredExperienceImproveId,
+                                    hoveredExperienceClearId: disableCanvasHoverControls ? null : hoveredExperienceClearId,
+                                    setHoveredExperienceClearId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredExperienceClearId,
+                                    hoveredExperienceDeleteId: disableCanvasHoverControls ? null : hoveredExperienceDeleteId,
+                                    setHoveredExperienceDeleteId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredExperienceDeleteId,
+                                    hoveredEducationClearId: disableCanvasHoverControls ? null : hoveredEducationClearId,
+                                    setHoveredEducationClearId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredEducationClearId,
+                                    hoveredEducationDeleteId: disableCanvasHoverControls ? null : hoveredEducationDeleteId,
+                                    setHoveredEducationDeleteId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredEducationDeleteId,
+                                    hoveredSkillDeleteId: disableCanvasHoverControls ? null : hoveredSkillDeleteId,
+                                    setHoveredSkillDeleteId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredSkillDeleteId,
                                     rewriteActionHover,
                                     setRewriteActionHover,
-                                    isExperienceSectionActive,
-                                    isSummarySectionActive,
+                                    isExperienceSectionActive: disableCanvasHoverControls ? false : isExperienceSectionActive,
+                                    isSummarySectionActive: disableCanvasHoverControls ? false : isSummarySectionActive,
                                     summaryRewriteHoverAction,
                                     summaryCurrentRewriteClass,
-                                    isSectionGapPreviewVisible,
+                                    gapPreviewTarget,
                                     loadingSummaryImprove,
                                     loadingExperienceImproveId
                                 }}
@@ -382,6 +475,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     renderRewriteActionButtons,
                                     getDynamicInputStyle,
                                     contactFieldStyle,
+                                    subHeaderFieldStyle,
                                     isFieldChanged,
                                     getSuggestionReviewClass,
                                     updateField,
@@ -393,6 +487,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     updateExperienceField,
                                     insertExperienceAt,
                                     removeExperience,
+                                    moveExperienceUp,
+                                    moveExperienceDown,
                                     clearExperience,
                                     addBulletWithText,
                                     insertBulletAfter,
@@ -426,6 +522,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     setSuccessMessage
                                 }}
                             />
+                            )}
                     </ResumeCanvas>
                     <div
                         className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center print:hidden transition-[padding] duration-300"
@@ -458,6 +555,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     setTitleFontSize={setTitleFontSize}
                     headerFontSize={headerFontSize}
                     setHeaderFontSize={setHeaderFontSize}
+                    subHeaderFontSize={subHeaderFontSize}
+                    setSubHeaderFontSize={setSubHeaderFontSize}
                     bodyFontSize={bodyFontSize}
                     setBodyFontSize={setBodyFontSize}
                     pageMarginPt={pageMarginPt}
@@ -467,7 +566,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     setFontPreviewTarget={setFontPreviewTarget}
                     setIsMarginPreviewVisible={setIsMarginPreviewVisible}
                     setIsPageFormatPreviewVisible={setIsPageFormatPreviewVisible}
-                    setIsSectionGapPreviewVisible={setIsSectionGapPreviewVisible}
+                    setGapPreviewTarget={setGapPreviewTarget}
                     />
                     {isPageStyleShelfOpen && (
                         <div className={`h-px w-full shrink-0 ${isLightMode ? "bg-slate-300/80" : "bg-white/14"}`} />

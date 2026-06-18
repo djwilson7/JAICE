@@ -68,6 +68,9 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     const showRightCustomAction = isOpen && customActionPlacement === "right" && Boolean(onCustomAction && customActionIcon);
     const showTextStats = shouldShowTextStats && hoveredField === path;
     const textStats = showTextStats ? getTextStats(value) : null;
+    const fontPreviewClass = className.includes("resume-subheader-font-target")
+        ? ""
+        : " resume-body-font-target";
     const buttonsActive = showRightCustomAction || showInlineClear || showInlineDelete;
     let buttonsEnd = 0;
     if (showInlineDelete) {
@@ -139,7 +142,7 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
                 )}
                 <InputComp
                     ref={inputRef}
-                    className={`${className} overlay-item-input resume-body-font-target`}
+                    className={`${className} overlay-item-input${fontPreviewClass}`}
                     value={value}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value)}
                     onFocus={() => setFocusedField(path)}

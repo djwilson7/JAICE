@@ -50,6 +50,37 @@ describe('useResumePdfPreview', () => {
         expect(result.current.canDownloadPdfPreview).toBe(true);
     });
 
+    it('exports the current normalized formatting values with the visible resume data', async () => {
+        (exportResumePdf as any).mockResolvedValue({
+            blob: mockBlob, filename: 'test.pdf', previewUrl: null
+        });
+        const currentResumeFormatting = {
+            pageSize: 'letter',
+            titleFontSize: 27,
+            headerFontSize: 17,
+            subHeaderFontSize: 13,
+            bodyFontSize: 11,
+            pageMarginPt: 48,
+            paperLayoutFormat: 'relaxed',
+            innerSectionGapFormat: 'compact'
+        } as any;
+
+        const { result } = renderHook(() => useResumePdfPreview({
+            ...defaultProps,
+            currentResumeFormatting
+        }));
+        await act(async () => { await result.current.openPdfPreview(); });
+
+        expect(exportResumePdf).toHaveBeenCalledWith(
+            expect.objectContaining({
+                fullName: 'Alice',
+                formatting: currentResumeFormatting
+            }),
+            'My Resume',
+            false
+        );
+    });
+
     it('uses previewUrl from response when provided', async () => {
         (exportResumePdf as any).mockResolvedValue({
             blob: mockBlob, filename: null, previewUrl: 'blob:server-url'

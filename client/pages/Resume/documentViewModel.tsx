@@ -1,5 +1,6 @@
 import React from "react";
 import type { ChangeMetadata, ContactRenderField, ResumeData } from "./types";
+import { buildResumeRenderTokens } from "./formatting";
 import { hasText } from "./resumeData";
 import { OverlayInput } from "./components/OverlayInput";
 import { RESUME_DOCUMENT_TYPOGRAPHY } from "./resumeTypography";
@@ -9,6 +10,7 @@ type UseResumeDocumentViewModelParams = {
     changeMetadata: ChangeMetadata[];
     bodyFontSize: number;
     headerFontSize: number;
+    subHeaderFontSize: number;
     pageMarginPt: number;
     activeDocumentSection: string | null;
     hoveredSummary: boolean;
@@ -27,6 +29,7 @@ export const useResumeDocumentViewModel = ({
     changeMetadata,
     bodyFontSize,
     headerFontSize,
+    subHeaderFontSize,
     pageMarginPt,
     activeDocumentSection,
     hoveredSummary,
@@ -77,37 +80,45 @@ export const useResumeDocumentViewModel = ({
         );
     };
 
+    const renderTokens = buildResumeRenderTokens({
+        bodyFontSize,
+        headerFontSize,
+        subHeaderFontSize,
+        pageMarginPt
+    });
     const inputStyleClass = "w-full bg-transparent border border-transparent hover:bg-slate-100/70 hover:border-slate-300 focus:bg-sky-50/80 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15 rounded-sm outline-none px-1.5 py-0.5 text-[#1e293b] transition-colors duration-150";
     const contentFitInputStyleClass = inputStyleClass.replace("w-full", "w-auto");
     const boldInputClass = `${inputStyleClass} font-bold text-[#0f172a]`;
     const documentTextStyle = {
-        fontSize: `${bodyFontSize}px`,
-        fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.bodyFamily
+        fontSize: renderTokens.bodyTextStyle.fontSize,
+        fontFamily: renderTokens.bodyTextStyle.fontFamily
     };
     const sectionHeadingClass = `resume-header-font-target w-full text-left ${RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingClass} font-bold text-[#0f172a] border-b border-[#cbd5e1] pb-0.5 uppercase`;
     const sectionHeadingStyle = {
-        fontSize: `${headerFontSize}px`,
-        fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingFamily,
-        lineHeight: RESUME_DOCUMENT_TYPOGRAPHY.headingLineHeight,
-        letterSpacing: 0,
-        marginBottom: `${RESUME_DOCUMENT_TYPOGRAPHY.sectionHeadingMarginBottomPx}px`,
-        fontWeight: RESUME_DOCUMENT_TYPOGRAPHY.headingWeight
+        fontSize: renderTokens.headingStyle.fontSize,
+        fontFamily: renderTokens.headingStyle.fontFamily,
+        lineHeight: renderTokens.headingStyle.lineHeight,
+        letterSpacing: renderTokens.headingStyle.letterSpacing,
+        marginBottom: renderTokens.headingStyle.marginBottom,
+        fontWeight: renderTokens.headingStyle.fontWeight
     };
-    const compactFitMetaInputClass = `${contentFitInputStyleClass} shrink-0 leading-[1.25] text-[#1f2937] font-semibold`;
-    const compactFitDateInputClass = `${contentFitInputStyleClass} shrink-0 leading-[1.25] text-[#475569] font-medium`;
+    const compactFitMetaInputClass = `${contentFitInputStyleClass} resume-subheader-font-target shrink-0 leading-[1.25] text-[#1f2937] font-semibold`;
+    const compactFitDateInputClass = `${contentFitInputStyleClass} resume-subheader-font-target shrink-0 leading-[1.25] text-[#475569] font-medium`;
     const contactInputClass = `${inputStyleClass} resume-body-font-target shrink-0 leading-[1.2] text-[#475569] font-medium hover:bg-slate-100/60`;
     const resumeDividerClass = "shrink-0 text-slate-300/70";
 
-    const measureTextWidth = (text: string, font: string = "500 12px Poppins, Arial, sans-serif") => {
+    const bodyFontSizePx = renderTokens.bodyFontSizePx;
+    const subHeaderFontSizePx = renderTokens.subHeaderFontSizePx;
+    const measureTextWidth = (text: string, font: string = `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`) => {
         if (!text) return 0;
         if (typeof document === "undefined") {
-            const charSize = font.includes("24px") ? 14 : 7;
+            const charSize = font.includes(`${renderTokens.titleFontSizePx}px`) ? 14 : 7;
             return text.length * charSize;
         }
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
         if (!context) {
-            const charSize = font.includes("24px") ? 14 : 7;
+            const charSize = font.includes(`${renderTokens.titleFontSizePx}px`) ? 14 : 7;
             return text.length * charSize;
         }
         context.font = font;
@@ -119,7 +130,7 @@ export const useResumeDocumentViewModel = ({
         const weightMatch = font.match(/^(bold|\d{3})\s+/);
         return {
             fontFamily: sizeMatch?.[2] ?? RESUME_DOCUMENT_TYPOGRAPHY.bodyFamily,
-            fontSize: sizeMatch ? `${sizeMatch[1]}px` : `${bodyFontSize}px`,
+            fontSize: sizeMatch ? `${sizeMatch[1]}px` : `${bodyFontSizePx}px`,
             fontWeight: weightMatch?.[1] === "bold" ? 700 : weightMatch?.[1] ?? RESUME_DOCUMENT_TYPOGRAPHY.bodyWeight
         };
     };
@@ -127,7 +138,7 @@ export const useResumeDocumentViewModel = ({
     const getDynamicInputStyle = (
         value: string | undefined,
         placeholder: string,
-        font: string = "500 12px Poppins, Arial, sans-serif",
+        font: string = `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`,
         extraStyles: React.CSSProperties = {}
     ): React.CSSProperties => {
         const content = value?.trim() || placeholder || "";
@@ -146,10 +157,23 @@ export const useResumeDocumentViewModel = ({
     };
 
     const contactFieldStyle = (value: string | undefined, placeholder: string): React.CSSProperties => {
-        return getDynamicInputStyle(value, placeholder, `500 ${bodyFontSize}px Poppins, Arial, sans-serif`, {
-            fontSize: `${bodyFontSize}px`,
-            fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.contactFamily,
-            lineHeight: RESUME_DOCUMENT_TYPOGRAPHY.contactLineHeight
+        return getDynamicInputStyle(value, placeholder, `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`, {
+            fontSize: renderTokens.contactTextStyle.fontSize,
+            fontFamily: renderTokens.contactTextStyle.fontFamily,
+            lineHeight: renderTokens.contactTextStyle.lineHeight
+        });
+    };
+    const subHeaderFieldStyle = (
+        value: string | undefined,
+        placeholder: string,
+        weight: React.CSSProperties["fontWeight"] = 600,
+        extraStyles: React.CSSProperties = {}
+    ): React.CSSProperties => {
+        return getDynamicInputStyle(value, placeholder, `${weight} ${subHeaderFontSizePx}px Poppins, Arial, sans-serif`, {
+            fontSize: renderTokens.metaTextStyle.fontSize,
+            fontFamily: renderTokens.metaTextStyle.fontFamily,
+            lineHeight: renderTokens.metaTextStyle.lineHeight,
+            ...extraStyles
         });
     };
 
@@ -259,6 +283,7 @@ export const useResumeDocumentViewModel = ({
         resumeDividerClass,
         getDynamicInputStyle,
         contactFieldStyle,
+        subHeaderFieldStyle,
         headerMarginAddClass,
         isExperienceSectionActive,
         experienceMarginAddClass,

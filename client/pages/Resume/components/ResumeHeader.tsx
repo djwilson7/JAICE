@@ -7,9 +7,9 @@ type ResumeHeaderProps = {
     headerActionButtonClass: string;
     headerActionIconClass: string;
     isLeftRailCollapsed: boolean;
-    setIsLeftRailCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+    onToggleLeftRail: () => void;
     isRightRailCollapsed: boolean;
-    setIsRightRailCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+    onToggleRightRail: () => void;
     isMaster: boolean;
     setIsMaster: React.Dispatch<React.SetStateAction<boolean>>;
     resumeName: string;
@@ -29,7 +29,7 @@ type ResumeHeaderProps = {
 
 export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
     isLightMode, headerShellStyle, headerActionButtonClass, headerActionIconClass,
-    isLeftRailCollapsed, setIsLeftRailCollapsed, isRightRailCollapsed, setIsRightRailCollapsed,
+    isLeftRailCollapsed, onToggleLeftRail, isRightRailCollapsed, onToggleRightRail,
     isMaster, setIsMaster, resumeName, setResumeName, isDirty, setIsDirty, isDraft,
     loadingSave, autoSaveEnabled, setAutoSaveEnabled, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview
 }) => (
@@ -41,7 +41,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         <button
                             type="button"
-                            onClick={() => setIsLeftRailCollapsed((value) => !value)}
+                            onClick={onToggleLeftRail}
                             className={`${headerActionButtonClass} ${
                                 !isLeftRailCollapsed
                                     ? "!border-sky-500/35 !bg-sky-500/15 !text-sky-500"
@@ -199,7 +199,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         </button>
                         <button
                             type="button"
-                            onClick={() => setIsRightRailCollapsed((value) => !value)}
+                            onClick={onToggleRightRail}
                             className={`${headerActionButtonClass} ${
                                 !isRightRailCollapsed
                                     ? "!border-sky-500/35 !bg-sky-500/15 !text-sky-500"

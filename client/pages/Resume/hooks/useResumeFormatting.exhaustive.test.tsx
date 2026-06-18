@@ -67,7 +67,7 @@ describe('useResumeFormatting final', () => {
         act(() => { result.setFontPreviewTarget('title'); });
         act(() => { result.setIsMarginPreviewVisible(true); });
         act(() => { result.setIsPageFormatPreviewVisible(true); });
-        act(() => { result.setIsSectionGapPreviewVisible(true); });
+        act(() => { result.setGapPreviewTarget('section'); });
 
         act(() => { result.setPageSize('letter'); });
         expect(result.printWidth).toBe('8.5in');
@@ -89,5 +89,132 @@ describe('useResumeFormatting final', () => {
         expect(result.resumeChromeRootClass).toBeDefined();
         
         rerender(<TestComponent p={{ ...mockProps, isLeftRailCollapsed: true }} />);
+    });
+
+    it('reattaches content measurement when the resume canvas remounts', async () => {
+        const observedElements: Element[] = [];
+        vi.stubGlobal('ResizeObserver', class {
+            cb: ResizeObserverCallback;
+            constructor(cb: ResizeObserverCallback) {
+                this.cb = cb;
+            }
+            observe(element: Element) {
+                observedElements.push(element);
+                this.cb([], this as unknown as ResizeObserver);
+            }
+            unobserve() {}
+            disconnect() {}
+        });
+        vi.stubGlobal('requestAnimationFrame', vi.fn(cb => cb(0)));
+
+        let result: ReturnType<typeof useResumeFormatting>;
+        const TestComponent = () => {
+            result = useResumeFormatting(mockProps);
+            return null;
+        };
+
+        render(<TestComponent />);
+
+        const shortContent = document.createElement('div');
+        Object.defineProperty(shortContent, 'scrollHeight', { value: 900, configurable: true });
+        const tallContent = document.createElement('div');
+        Object.defineProperty(tallContent, 'scrollHeight', { value: 2600, configurable: true });
+
+        await act(async () => {
+            result.registerResumeDocumentContentElement(shortContent);
+        });
+        expect(result.resumePageCount).toBe(1);
+
+        await act(async () => {
+            result.registerResumeDocumentContentElement(null);
+        });
+        await act(async () => {
+            result.registerResumeDocumentContentElement(tallContent);
+        });
+
+        expect(observedElements).toContain(shortContent);
+        expect(observedElements).toContain(tallContent);
+        expect(result.resumePageCount).toBeGreaterThan(1);
+    });
+
+    it('keeps fit zoom separate from document formatting values', async () => {
+        const mockViewport = document.createElement('div');
+        Object.defineProperty(mockViewport, 'clientWidth', { value: 1200, configurable: true });
+        Object.defineProperty(mockViewport, 'clientHeight', { value: 900, configurable: true });
+        mockViewport.scrollTo = vi.fn();
+
+        vi.stubGlobal('ResizeObserver', class {
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        });
+        let rafTimestamp = 0;
+        vi.stubGlobal('requestAnimationFrame', vi.fn(cb => {
+            rafTimestamp += 300;
+            cb(rafTimestamp);
+            return 1;
+        }));
+
+        let result: ReturnType<typeof useResumeFormatting>;
+        const TestComponent = () => {
+            result = useResumeFormatting(mockProps);
+            useLayoutEffect(() => {
+                (result.canvasViewportRef as any).current = mockViewport;
+            }, []);
+            return null;
+        };
+
+        render(<TestComponent />);
+        await act(async () => {
+            result.applyResumeFormatting({
+                pageSize: 'letter',
+                titleFontSize: 27,
+                headerFontSize: 17,
+                subHeaderFontSize: 13,
+                bodyFontSize: 11,
+                pageMarginPt: 48,
+                paperLayoutFormat: 'relaxed',
+                innerSectionGapFormat: 'compact'
+            });
+        });
+        const before = result.currentResumeFormatting;
+
+        await act(async () => {
+            result.handleFitZoom();
+        });
+
+        expect(result.zoomMode).toBe('fit');
+        expect(result.currentResumeFormatting).toEqual(before);
+    });
+
+    it('opens the page style shelf without changing the current zoom mode', async () => {
+        vi.stubGlobal('ResizeObserver', class {
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        });
+        vi.stubGlobal('requestAnimationFrame', vi.fn(cb => {
+            cb(0);
+            return 1;
+        }));
+
+        let result: ReturnType<typeof useResumeFormatting>;
+        const TestComponent = () => {
+            result = useResumeFormatting(mockProps);
+            return null;
+        };
+
+        render(<TestComponent />);
+
+        await act(async () => {
+            result.setZoomMode('manual');
+            result.setManualZoom(1);
+        });
+        await act(async () => {
+            result.handleTogglePageStyleShelf();
+        });
+
+        expect(result.isPageStyleShelfOpen).toBe(true);
+        expect(result.zoomMode).toBe('manual');
     });
 });

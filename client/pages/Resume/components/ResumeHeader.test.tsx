@@ -9,9 +9,9 @@ describe('ResumeHeader', () => {
         headerActionButtonClass: 'btn',
         headerActionIconClass: 'icon',
         isLeftRailCollapsed: false,
-        setIsLeftRailCollapsed: vi.fn(),
+        onToggleLeftRail: vi.fn(),
         isRightRailCollapsed: false,
-        setIsRightRailCollapsed: vi.fn(),
+        onToggleRightRail: vi.fn(),
         isMaster: false,
         setIsMaster: vi.fn(),
         resumeName: 'Test Resume',
@@ -44,12 +44,12 @@ describe('ResumeHeader', () => {
         // Left rail toggle
         const leftRailBtn = screen.getByLabelText('Close resume drawer');
         fireEvent.click(leftRailBtn);
-        expect(defaultProps.setIsLeftRailCollapsed).toHaveBeenCalled();
+        expect(defaultProps.onToggleLeftRail).toHaveBeenCalled();
 
         // Right rail toggle
         const rightRailBtn = screen.getByLabelText('Close Jaice drawer');
         fireEvent.click(rightRailBtn);
-        expect(defaultProps.setIsRightRailCollapsed).toHaveBeenCalled();
+        expect(defaultProps.onToggleRightRail).toHaveBeenCalled();
 
         // Master toggle
         const masterBtn = screen.getByTitle('Set as Master Profile');

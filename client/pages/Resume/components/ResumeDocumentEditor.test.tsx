@@ -59,6 +59,7 @@ describe('ResumeDocumentEditor', () => {
             renderRewriteActionButtons: vi.fn(),
             getDynamicInputStyle: vi.fn().mockReturnValue({}),
             contactFieldStyle: vi.fn().mockReturnValue({}),
+            subHeaderFieldStyle: vi.fn().mockReturnValue({}),
             isFieldChanged: vi.fn().mockReturnValue({ changed: false }),
             getSuggestionReviewClass: vi.fn().mockReturnValue(''),
             updateField: vi.fn(),
@@ -140,7 +141,7 @@ describe('ResumeDocumentEditor', () => {
             isSummarySectionActive: false,
             summaryRewriteHoverAction: null,
             summaryCurrentRewriteClass: '',
-            isSectionGapPreviewVisible: false,
+            gapPreviewTarget: null,
             loadingSummaryImprove: false,
             loadingExperienceImproveId: null
         };
@@ -171,6 +172,8 @@ describe('ResumeDocumentEditor', () => {
                 pageMarginPt: 36,
                 documentSectionGapStyle: {},
                 documentSectionGapPx: 10,
+                documentInnerSectionGapStyle: {},
+                documentInnerSectionGapPx: 8,
                 documentTextStyle: {},
                 sectionHeadingClass: '',
                 sectionHeadingStyle: {},
@@ -318,6 +321,30 @@ describe('ResumeDocumentEditor', () => {
         const delBtn = screen.getAllByTitle('Remove work experience')[0];
         fireEvent.click(delBtn);
         expect(handlers.removeExperience).toHaveBeenCalledWith('exp1');
+    });
+
+    it('renders inner gap previews between repeated edit rows', () => {
+        defaultProps.data.resumeData.experience = [
+            { id: 'exp1', jobTitle: 'Engineer', bullets: [{ id: 'b1', text: 'Built things' }] },
+            { id: 'exp2', jobTitle: 'Lead', bullets: [{ id: 'b2', text: 'Led things' }] }
+        ];
+        defaultProps.data.resumeData.education = [
+            { id: 'edu1', degree: 'BS', school: 'School' },
+            { id: 'edu2', degree: 'MS', school: 'Other School' }
+        ];
+        defaultProps.data.resumeData.skills = [
+            { id: 'skill1', category: 'Languages', items: ['TypeScript'] },
+            { id: 'skill2', category: 'Tools', items: ['Vite'] }
+        ];
+        defaultProps.interaction.gapPreviewTarget = 'inner';
+
+        const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
+
+        const innerPreviews = container.querySelectorAll('.resume-inner-section-gap-preview');
+        expect(innerPreviews).toHaveLength(3);
+        innerPreviews.forEach((preview) => {
+            expect(preview).toHaveStyle({ height: '8px', bottom: '-8px' });
+        });
     });
 
     it('handles experience bullet updates and deletions', () => {

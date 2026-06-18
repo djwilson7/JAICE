@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FontPreviewTarget, PageSize, PaperLayoutFormat, ResumeFormatting, ZoomMode } from "../types";
 import {
     PAPER_SIZES,
-    SECTION_GAP_PX,
+    buildResumeRenderTokens,
     clampFitZoom,
     defaultResumeFormatting,
     normalizeResumeFormatting
 } from "../formatting";
+import { ptToPx } from "../utils/documentUnits";
 
 type UseResumeFormattingParams = {
     isLightMode: boolean;
@@ -30,6 +31,7 @@ export const useResumeFormatting = ({
 }: UseResumeFormattingParams) => {
     const canvasViewportRef = useRef<HTMLDivElement>(null);
     const resumeDocumentContentRef = useRef<HTMLDivElement>(null);
+    const [resumeDocumentContentElement, setResumeDocumentContentElement] = useState<HTMLDivElement | null>(null);
     const [canvasViewportSize, setCanvasViewportSize] = useState({ width: 0, height: 0 });
     const [resumeDocumentContentHeight, setResumeDocumentContentHeight] = useState(0);
     const [pageSize, setPageSize] = useState<PageSize>(defaultResumeFormatting().pageSize);
@@ -40,13 +42,15 @@ export const useResumeFormatting = ({
     const [isPageStyleShelfOpen, setIsPageStyleShelfOpen] = useState(false);
     const [titleFontSize, setTitleFontSize] = useState(defaultResumeFormatting().titleFontSize);
     const [headerFontSize, setHeaderFontSize] = useState(defaultResumeFormatting().headerFontSize);
+    const [subHeaderFontSize, setSubHeaderFontSize] = useState(defaultResumeFormatting().subHeaderFontSize);
     const [bodyFontSize, setBodyFontSize] = useState(defaultResumeFormatting().bodyFontSize);
     const [pageMarginPt, setPageMarginPt] = useState(defaultResumeFormatting().pageMarginPt);
     const [paperLayoutFormat, setPaperLayoutFormat] = useState<PaperLayoutFormat>(defaultResumeFormatting().paperLayoutFormat);
+    const [innerSectionGapFormat, setInnerSectionGapFormat] = useState<PaperLayoutFormat>(defaultResumeFormatting().innerSectionGapFormat);
     const [fontPreviewTarget, setFontPreviewTarget] = useState<FontPreviewTarget | null>(null);
     const [isMarginPreviewVisible, setIsMarginPreviewVisible] = useState(false);
     const [isPageFormatPreviewVisible, setIsPageFormatPreviewVisible] = useState(false);
-    const [isSectionGapPreviewVisible, setIsSectionGapPreviewVisible] = useState(false);
+    const [gapPreviewTarget, setGapPreviewTarget] = useState<"section" | "inner" | null>(null);
 
     const measureCanvasViewport = useCallback(() => {
         const container = canvasViewportRef.current;
@@ -58,13 +62,20 @@ export const useResumeFormatting = ({
         });
     }, []);
 
+    const registerResumeDocumentContentElement = useCallback((element: HTMLDivElement | null) => {
+        resumeDocumentContentRef.current = element;
+        setResumeDocumentContentElement(element);
+    }, []);
+
     const getCurrentResumeFormatting = (): ResumeFormatting => ({
         pageSize,
         titleFontSize,
         headerFontSize,
+        subHeaderFontSize,
         bodyFontSize,
         pageMarginPt,
-        paperLayoutFormat
+        paperLayoutFormat,
+        innerSectionGapFormat
     });
 
     const applyResumeFormatting = (formatting?: Partial<ResumeFormatting> | null) => {
@@ -72,9 +83,11 @@ export const useResumeFormatting = ({
         setPageSize(normalizedFormatting.pageSize);
         setTitleFontSize(normalizedFormatting.titleFontSize);
         setHeaderFontSize(normalizedFormatting.headerFontSize);
+        setSubHeaderFontSize(normalizedFormatting.subHeaderFontSize);
         setBodyFontSize(normalizedFormatting.bodyFontSize);
         setPageMarginPt(normalizedFormatting.pageMarginPt);
         setPaperLayoutFormat(normalizedFormatting.paperLayoutFormat);
+        setInnerSectionGapFormat(normalizedFormatting.innerSectionGapFormat);
     };
 
     useEffect(() => {
@@ -94,7 +107,7 @@ export const useResumeFormatting = ({
     }, [measureCanvasViewport]);
 
     useEffect(() => {
-        const content = resumeDocumentContentRef.current;
+        const content = resumeDocumentContentElement;
         if (!content) return;
 
         const updateContentHeight = () => {
@@ -106,15 +119,21 @@ export const useResumeFormatting = ({
         const observer = new ResizeObserver(updateContentHeight);
         observer.observe(content);
         return () => observer.disconnect();
-    }, []);
+    }, [resumeDocumentContentElement]);
+
+    useEffect(() => {
+        setInnerSectionGapFormat(paperLayoutFormat);
+    }, [paperLayoutFormat]);
 
     const paperMetrics = PAPER_SIZES[pageSize];
-    const pageMarginPx = pageMarginPt * (4 / 3);
-    const resumePageContentHeight = Math.max(1, paperMetrics.height - pageMarginPx * 2);
+    const pageMarginPx = ptToPx(pageMarginPt);
+    const paperWidthPx = ptToPx(paperMetrics.widthPt);
+    const paperHeightPx = ptToPx(paperMetrics.heightPt);
+    const resumePageContentHeight = Math.max(1, paperHeightPx - pageMarginPx * 2);
     const resumeDocumentBodyHeight = Math.max(0, resumeDocumentContentHeight - pageMarginPx * 2);
     const resumePageCount = Math.max(1, Math.ceil(resumeDocumentBodyHeight / resumePageContentHeight));
-    const resumePageStride = paperMetrics.height;
-    const resumeCanvasHeight = resumePageCount * paperMetrics.height;
+    const resumePageStride = paperHeightPx;
+    const resumeCanvasHeight = resumePageCount * paperHeightPx;
     const canvasHorizontalInsets = {
         right: isRightRailCollapsed ? CANVAS_EDGE_GUTTER : CANVAS_RAIL_INSET,
         left: isLeftRailCollapsed ? CANVAS_EDGE_GUTTER : CANVAS_RAIL_INSET
@@ -143,17 +162,17 @@ export const useResumeFormatting = ({
         if (!viewableCanvasWidth || !viewableCanvasHeight) return 1;
         return clampFitZoom(Math.min(
             viewableCanvasWidth / paperMetrics.width,
-            viewableCanvasHeight / paperMetrics.height
+            viewableCanvasHeight / paperHeightPx
         ));
     }, [
-        paperMetrics.height,
+        paperHeightPx,
         paperMetrics.width,
         viewableCanvasHeight,
         viewableCanvasWidth
     ]);
     const canvasZoom = zoomMode === "fit" ? fitZoom : manualZoom;
     const zoomPercent = Math.round(animatedCanvasZoom * 100);
-    const scaledCanvasWidth = paperMetrics.width * animatedCanvasZoom;
+    const scaledCanvasWidth = paperWidthPx * animatedCanvasZoom;
     const scaledCanvasHeight = resumeCanvasHeight * animatedCanvasZoom;
     const canvasHorizontalOverflow = Math.max(0, scaledCanvasWidth - viewableCanvasWidth);
     const canvasVerticalPadding = canvasInsets.top + canvasInsets.bottom;
@@ -174,8 +193,12 @@ export const useResumeFormatting = ({
     };
     const printWidth = pageSize === "a4" ? "210mm" : "8.5in";
     const printHeight = pageSize === "a4" ? "297mm" : "11in";
-    const documentSectionGapPx = SECTION_GAP_PX[paperLayoutFormat] ?? SECTION_GAP_PX.standard;
-    const documentSectionGapStyle: React.CSSProperties = { marginBottom: `${documentSectionGapPx}px` };
+    const renderTokens = buildResumeRenderTokens(getCurrentResumeFormatting(), paperMetrics);
+    const documentSectionGapPx = renderTokens.sectionGapPx;
+    const documentCssVariables = renderTokens.documentCssVariables;
+    const documentSectionGapStyle: React.CSSProperties = { marginBottom: "var(--resume-section-gap)" };
+    const documentInnerSectionGapPx = renderTokens.innerSectionGapPx;
+    const documentInnerSectionGapStyle: React.CSSProperties = { rowGap: "var(--resume-inner-section-gap)" };
     const currentResumeFormatting = getCurrentResumeFormatting();
 
     useEffect(() => {
@@ -221,12 +244,7 @@ export const useResumeFormatting = ({
     };
 
     const handleTogglePageStyleShelf = () => {
-        setIsPageStyleShelfOpen((isOpen) => {
-            if (!isOpen) {
-                handleFitZoom();
-            }
-            return !isOpen;
-        });
+        setIsPageStyleShelfOpen((isOpen) => !isOpen);
     };
 
     const closePageStyleShelf = () => {
@@ -305,6 +323,7 @@ export const useResumeFormatting = ({
     return {
         canvasViewportRef,
         resumeDocumentContentRef,
+        registerResumeDocumentContentElement,
         pageSize,
         setPageSize,
         zoomMode,
@@ -317,20 +336,24 @@ export const useResumeFormatting = ({
         setTitleFontSize,
         headerFontSize,
         setHeaderFontSize,
+        subHeaderFontSize,
+        setSubHeaderFontSize,
         bodyFontSize,
         setBodyFontSize,
         pageMarginPt,
         setPageMarginPt,
         paperLayoutFormat,
         setPaperLayoutFormat,
+        innerSectionGapFormat,
+        setInnerSectionGapFormat,
         fontPreviewTarget,
         setFontPreviewTarget,
         isMarginPreviewVisible,
         setIsMarginPreviewVisible,
         isPageFormatPreviewVisible,
         setIsPageFormatPreviewVisible,
-        isSectionGapPreviewVisible,
-        setIsSectionGapPreviewVisible,
+        gapPreviewTarget,
+        setGapPreviewTarget,
         getCurrentResumeFormatting,
         applyResumeFormatting,
         paperMetrics,
@@ -345,12 +368,17 @@ export const useResumeFormatting = ({
         canvasViewportStyle,
         pdfPreviewViewportStyle,
         bottomControlsViewportStyle,
+        viewableCanvasWidth,
+        viewableCanvasHeight,
         canvasHorizontalOverflow,
         isPageStyleShelfCompact,
         printWidth,
         printHeight,
         documentSectionGapPx,
         documentSectionGapStyle,
+        documentInnerSectionGapPx,
+        documentInnerSectionGapStyle,
+        documentCssVariables,
         currentResumeFormatting,
         handleFitZoom,
         handleTogglePageStyleShelf,

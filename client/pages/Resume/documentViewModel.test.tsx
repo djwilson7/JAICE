@@ -44,6 +44,7 @@ const defaultParams = {
     changeMetadata: [] as ChangeMetadata[],
     bodyFontSize: 12,
     headerFontSize: 16,
+    subHeaderFontSize: 14,
     pageMarginPt: 42,
     activeDocumentSection: null as string | null,
     hoveredSummary: false,
