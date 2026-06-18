@@ -90,19 +90,32 @@ export const ResumeExperienceSection: React.FC<
             <div className="resume-editor-item-stack">
                 {experiences.map((experience, index) => {
                     const bullets = Array.isArray(experience.bullets) ? experience.bullets : [];
-                    const showControls = isExperienceSectionActive || hoveredJobId === experience.id;
+                    const isItemHovered = hoveredJobId === experience.id;
+                    const hasExperienceContent = [
+                        experience.jobTitle,
+                        experience.company,
+                        experience.location,
+                        experience.startDate,
+                        experience.endDate
+                    ].some(hasText) || bullets.length > 0;
+                    const showControls =
+                        isItemHovered || (isExperienceSectionActive && !hasExperienceContent);
                     const pendingRewrite = experienceRewriteSuggestions[experience.id] || null;
                     const metaFields = [
                         ["jobTitle", "Job Title", experience.jobTitle, "Title", 700, "#0f172a"],
                         ["company", "Company Name", experience.company || "", "Company Name", 600, undefined],
                         ["location", "City, State", experience.location || "", "City, State", 600, "#475569"]
                     ] as const;
-                    const visibleMeta = metaFields.filter((field) => showControls || hasText(field[2]));
+                    const visibleMeta = metaFields.filter(
+                        (field) => showControls || hasText(field[2])
+                    );
                     const dateFields = [
                         ["startDate", "Start Date", experience.startDate || "", "Start"],
                         ["endDate", "End Date", experience.endDate || "", "End"]
                     ] as const;
-                    const visibleDates = dateFields.filter((field) => showControls || hasText(field[2]));
+                    const visibleDates = dateFields.filter(
+                        (field) => showControls || hasText(field[2])
+                    );
                     if (!showControls && !visibleMeta.length && !visibleDates.length && !bullets.length) {
                         return null;
                     }
@@ -111,6 +124,7 @@ export const ResumeExperienceSection: React.FC<
                         <div
                             key={experience.id}
                             className="group/job resume-editor-item"
+                            data-section-active={isExperienceSectionActive}
                             data-controls-visible={showControls}
                             data-improve-hovered={hoveredExperienceImproveId === experience.id}
                             data-clear-hovered={hoveredExperienceClearId === experience.id}
@@ -369,7 +383,7 @@ export const ResumeExperienceSection: React.FC<
                                         </React.Fragment>
                                     );
                                 })}
-                                {showControls && (
+                                {isItemHovered && (
                                     <div className="resume-editor-bullet-row">
                                         <span className="resume-editor-bullet-marker resume-font--body">
                                             &bull;
