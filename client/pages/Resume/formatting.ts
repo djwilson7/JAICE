@@ -146,7 +146,8 @@ export const buildResumeRenderTokens = (
         "--resume-subheader-line-height": String(subHeaderLineHeight),
         "--resume-body-line-height": String(bodyLineHeight),
         "--resume-line-height": String(bodyLineHeight),
-        "--resume-page-margin": pxCss(pageMarginPx)
+        "--resume-page-margin": pxCss(pageMarginPx),
+        "--resume-page-margin-half": pxCss(pageMarginPx / 2)
     } as React.CSSProperties;
 
     return {

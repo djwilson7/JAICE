@@ -53,6 +53,7 @@
   --resume-subheader-font-size: calc(var(--resume-subheader-font-size-pt) * 1.3333333333px);
   --resume-body-font-size: calc(var(--resume-body-font-size-pt) * 1.3333333333px);
   --resume-page-margin: calc(var(--resume-page-margin-pt) * 1.3333333333px);
+  --resume-page-margin-half: calc(var(--resume-page-margin-pt) * 0.6666666667px);
   --resume-font-family: var(--font-title);
   --resume-title-font-family: var(--font-subheading);
   --resume-heading-font-family: var(--font-subheading);

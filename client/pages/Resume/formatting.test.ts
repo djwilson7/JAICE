@@ -25,6 +25,8 @@ describe("resume formatting render tokens", () => {
         expect(documentCssVariables["--resume-header-line-height"]).toBe("1.15");
         expect(documentCssVariables["--resume-subheader-line-height"]).toBe("1.2");
         expect(documentCssVariables["--resume-body-line-height"]).toBe("1.3");
+        expect(documentCssVariables["--resume-page-margin"]).toBe("64px");
+        expect(documentCssVariables["--resume-page-margin-half"]).toBe("32px");
         expect(tokens.bodyFontSizePx).toBeCloseTo(15.3333);
         expect(tokens.sectionGapPx).toBeCloseTo(21.3333);
         expect(tokens.innerSectionGapPx).toBeCloseTo(5.3333);
