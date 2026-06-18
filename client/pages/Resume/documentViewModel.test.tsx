@@ -225,9 +225,7 @@ describe('useResumeDocumentViewModel – headerContactRows', () => {
                 github: 'gh',
             }),
         });
-        vm.headerContactRows.forEach((row) => {
-            expect(row.length).toBeLessThanOrEqual(3);
-        });
+        expect(vm.headerContactRows.map((row) => row.length)).toEqual([3, 3]);
     });
 
     it('includes custom contact fields', () => {

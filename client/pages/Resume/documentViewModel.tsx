@@ -91,7 +91,7 @@ export const useResumeDocumentViewModel = ({
     const sectionHeadingClass = "resume-editor-section-title resume-font--heading resume-header-font-target";
     const compactFitMetaInputClass = `${contentFitInputStyleClass} resume-editor-input--meta resume-subheader-font-target`;
     const compactFitDateInputClass = `${contentFitInputStyleClass} resume-editor-input--date resume-subheader-font-target`;
-    const contactInputClass = `${inputStyleClass} resume-editor-input--contact resume-body-font-target`;
+    const contactInputClass = `${inputStyleClass} resume-editor-input--contact resume-font--contact`;
     const resumeDividerClass = "resume-editor-divider";
 
     const bodyFontSizePx = renderTokens.bodyFontSizePx;
@@ -118,7 +118,7 @@ export const useResumeDocumentViewModel = ({
         font: string = `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`,
         extraStyles: React.CSSProperties = {}
     ): React.CSSProperties => {
-        const content = value?.trim() || placeholder || "";
+        const content = value && value.length > 0 ? value : placeholder || "";
         const padding = font.includes("24px") ? 24 : 16;
         const contentWidth = Math.ceil(measureTextWidth(content, font) + padding);
         const minWidth = 16;

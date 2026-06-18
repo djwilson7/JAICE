@@ -115,8 +115,6 @@ describe('ResumeDocumentEditor', () => {
             setHoveredContactField: vi.fn(),
             focusedContactField: null,
             setFocusedContactField: vi.fn(),
-            hoveredDeleteIndex: null,
-            setHoveredDeleteIndex: vi.fn(),
             hoveredSummary: false,
             setHoveredSummary: vi.fn(),
             focusedSummary: false,
@@ -209,14 +207,14 @@ describe('ResumeDocumentEditor', () => {
         expect(interaction.setFocusedNameSection).toHaveBeenCalledWith(false);
     });
 
-    it('handles contact field updates and deletions', () => {
-        // Set hovered so delete button appears
+    it('handles contact field updates and removes empty fields on blur', () => {
         interaction.hoveredContactField = 'email';
         interaction.focusedContactField = 'custom1';
         
         render(<ResumeDocumentEditor {...defaultProps} />);
         
         const customInput = screen.getByDisplayValue('Custom');
+        expect(document.activeElement).toBe(customInput);
         fireEvent.change(customInput, { target: { value: 'Custom 2' } });
         expect(handlers.updateCustomContactField).toHaveBeenCalledWith(1, 'value', 'Custom 2');
 
@@ -224,16 +222,24 @@ describe('ResumeDocumentEditor', () => {
         fireEvent.change(emailInput, { target: { value: 'c@d.com' } });
         expect(handlers.updateField).toHaveBeenCalledWith('email', 'c@d.com');
 
-        const deleteButtons = screen.getAllByRole('button', { name: /Delete/i });
-        fireEvent.click(deleteButtons[0]);
+        fireEvent.change(emailInput, { target: { value: '' } });
+        fireEvent.blur(emailInput, { target: { value: '' } });
         expect(handlers.removeStandardContactField).toHaveBeenCalledWith('email');
 
-        fireEvent.click(deleteButtons[1]);
+        fireEvent.change(customInput, { target: { value: '' } });
+        fireEvent.blur(customInput, { target: { value: '' } });
         expect(handlers.removeCustomContactField).toHaveBeenCalledWith(1);
+        expect(screen.queryByTitle('Delete')).toBeNull();
     });
 
     it('handles add custom contact field button', () => {
-        render(<ResumeDocumentEditor {...defaultProps} />);
+        const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
+        expect(container.querySelector('.resume-editor-contact-strip')).toHaveClass(
+            'resume-document__contact-strip'
+        );
+        expect(container.querySelector('.resume-editor-contact-row')).toHaveClass(
+            'resume-document__contact-row'
+        );
         const btn = screen.getByLabelText('Add contact metadata field');
         fireEvent.click(btn);
         expect(handlers.addCustomContactField).toHaveBeenCalled();
@@ -323,6 +329,78 @@ describe('ResumeDocumentEditor', () => {
         expect(handlers.removeExperience).toHaveBeenCalledWith('exp1');
     });
 
+    it('shows the add-bullet composer only for the hovered experience item', () => {
+        defaultProps.data.resumeData.experience = [
+            {
+                id: 'exp1',
+                jobTitle: 'Engineer',
+                company: 'One',
+                startDate: '2020',
+                endDate: '2022',
+                bullets: [{ id: 'b1', text: 'Built one' }]
+            },
+            {
+                id: 'exp2',
+                jobTitle: 'Lead',
+                company: 'Two',
+                startDate: '2022',
+                endDate: '2024',
+                bullets: [{ id: 'b2', text: 'Built two' }]
+            }
+        ];
+        interaction.activeDocumentSection = 'experience';
+        interaction.isExperienceSectionActive = true;
+
+        const { container, rerender } = render(<ResumeDocumentEditor {...defaultProps} />);
+        expect(screen.queryByPlaceholderText('Type to add a new bullet...')).toBeNull();
+        const experienceItems = container.querySelectorAll(
+            '[data-section-id="experience"] .resume-editor-item'
+        );
+        expect(experienceItems).toHaveLength(2);
+        experienceItems.forEach((item) => {
+            expect(item).toHaveAttribute('data-section-active', 'true');
+            expect(item).toHaveAttribute('data-controls-visible', 'false');
+        });
+
+        interaction.hoveredJobId = 'exp2';
+        rerender(<ResumeDocumentEditor {...defaultProps} />);
+
+        expect(screen.getAllByPlaceholderText('Type to add a new bullet...')).toHaveLength(1);
+        expect(experienceItems[0]).toHaveAttribute('data-controls-visible', 'false');
+        expect(experienceItems[1]).toHaveAttribute('data-controls-visible', 'true');
+    });
+
+    it('shows missing metadata fields only for the hovered experience', () => {
+        defaultProps.data.resumeData.experience = [
+            {
+                id: 'exp1',
+                jobTitle: 'Engineer',
+                company: '',
+                location: '',
+                startDate: '',
+                endDate: '2024',
+                bullets: [{ id: 'b1', text: 'Built things' }]
+            }
+        ];
+        interaction.activeDocumentSection = 'experience';
+        interaction.isExperienceSectionActive = true;
+
+        const { container, rerender } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const stableFieldCount = container.querySelectorAll(
+            '[data-testid^="overlay-input-experience."]'
+        ).length;
+
+        interaction.hoveredJobId = 'exp1';
+        rerender(<ResumeDocumentEditor {...defaultProps} />);
+
+        expect(container.querySelectorAll(
+            '[data-testid^="overlay-input-experience."]'
+        ).length).toBeGreaterThan(stableFieldCount);
+        expect(screen.getByTestId('overlay-input-experience.0.company')).toBeTruthy();
+        expect(screen.getByTestId('overlay-input-experience.0.location')).toBeTruthy();
+        expect(screen.getByTestId('overlay-input-experience.0.startDate')).toBeTruthy();
+    });
+
     it('renders inner gap previews between repeated edit rows', () => {
         defaultProps.data.resumeData.experience = [
             { id: 'exp1', jobTitle: 'Engineer', bullets: [{ id: 'b1', text: 'Built things' }] },
@@ -400,6 +478,7 @@ describe('ResumeDocumentEditor', () => {
         ];
         interaction.isExperienceSectionActive = true;
         interaction.activeDocumentSection = 'experience';
+        interaction.hoveredJobId = 'exp1';
         
         const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
         const addExpBtn = screen.getByTitle('Add experience');
@@ -476,6 +555,47 @@ describe('ResumeDocumentEditor', () => {
         // Don't call add with empty text
         fireEvent.change(eduDetailInput, { target: { value: '  ' } });
         expect(handlers.addEducationDetailWithText).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps education document fields stable when the section becomes active', () => {
+        defaultProps.data.resumeData.education = [
+            {
+                id: 'edu1',
+                degree: 'BS',
+                school: '',
+                startDate: '',
+                endDate: '2020',
+                details: [{ id: 'empty-detail', text: '' }]
+            },
+            {
+                id: 'edu2',
+                degree: 'MS',
+                school: 'Other School',
+                startDate: '2021',
+                endDate: '2023',
+                details: [{ id: 'detail', text: 'Honors' }]
+            }
+        ];
+
+        const { container, rerender } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const stableFieldCount = container.querySelectorAll(
+            '[data-testid^="overlay-input-education."]'
+        ).length;
+        const stableItemCount = container.querySelectorAll(
+            '[data-section-id="education"] .resume-editor-item'
+        ).length;
+
+        interaction.activeDocumentSection = 'education';
+        rerender(<ResumeDocumentEditor {...defaultProps} />);
+
+        expect(container.querySelectorAll(
+            '[data-testid^="overlay-input-education."]'
+        )).toHaveLength(stableFieldCount);
+        expect(container.querySelectorAll(
+            '[data-section-id="education"] .resume-editor-item'
+        )).toHaveLength(stableItemCount);
+        expect(screen.queryByPlaceholderText('Institution Name')).toBeNull();
+        expect(screen.queryByPlaceholderText('Start')).toBeNull();
     });
 
     it('handles skills rendering and interactions', () => {
@@ -577,23 +697,14 @@ describe('ResumeDocumentEditor', () => {
         expect(interaction.setFocusedContactField).toHaveBeenCalledWith('email');
         fireEvent.blur(emailInput);
         expect(interaction.setFocusedContactField).toHaveBeenCalled();
+        expect(handlers.removeStandardContactField).not.toHaveBeenCalled();
 
         // Simulate hover on the input's parent
         const contactFieldDiv = emailInput.closest('div[class*="contact-meta-field"]')!;
         fireEvent.mouseEnter(contactFieldDiv);
         fireEvent.mouseLeave(contactFieldDiv);
 
-        // Delete email (with hover logic)
-        const delBtns = container.querySelectorAll('button[title="Delete"]');
-        if (delBtns.length > 0) {
-            const delBtn = delBtns[0] as HTMLButtonElement;
-            fireEvent.mouseEnter(delBtn);
-            expect(interaction.setHoveredDeleteIndex).toHaveBeenCalledWith('email');
-            fireEvent.mouseLeave(delBtn);
-            expect(interaction.setHoveredDeleteIndex).toHaveBeenCalledWith(null);
-            
-            fireEvent.mouseDown(delBtn);
-        }
+        expect(container.querySelector('button[title="Delete"]')).toBeNull();
 
         // Click Add custom link
         const addCustomBtn = container.querySelector('button[title="Add custom link"]') as HTMLButtonElement;
@@ -606,16 +717,7 @@ describe('ResumeDocumentEditor', () => {
         const props = { ...defaultProps, interaction: { ...defaultProps.interaction, hoveredContactField: 'email', focusedContactField: 'email' } };
         const { container } = render(<ResumeDocumentEditor {...props} />);
 
-        // Now the remove button should be rendered
-        const delBtns = container.querySelectorAll('button[title="Delete"]');
-        const delBtn = delBtns[0] as HTMLButtonElement;
-        expect(delBtn).toBeTruthy();
-        
-        fireEvent.mouseEnter(delBtn);
-        expect(props.interaction.setHoveredDeleteIndex).toHaveBeenCalledWith('email');
-        fireEvent.mouseLeave(delBtn);
-        expect(props.interaction.setHoveredDeleteIndex).toHaveBeenCalledWith(null);
-        fireEvent.mouseDown(delBtn);
+        expect(container.querySelector('button[title="Delete"]')).toBeNull();
 
         // Test the functional updates by extracting the mock call arguments
         const contactFieldDiv = container.querySelector('div[class*="contact-meta-field"]')!;
