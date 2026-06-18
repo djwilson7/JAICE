@@ -85,8 +85,6 @@ export type ResumeDocumentEditorInteraction = {
     setHoveredContactField: React.Dispatch<React.SetStateAction<string | null>>;
     focusedContactField: string | null;
     setFocusedContactField: React.Dispatch<React.SetStateAction<string | null>>;
-    hoveredDeleteIndex: string | null;
-    setHoveredDeleteIndex: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredSummary: boolean;
     setHoveredSummary: React.Dispatch<React.SetStateAction<boolean>>;
     focusedSummary: boolean;

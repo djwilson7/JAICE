@@ -110,7 +110,6 @@ describe('ResumeWorkspace', () => {
         focusedNameSection: false, setFocusedNameSection: vi.fn(),
         hoveredContactField: null, setHoveredContactField: vi.fn(),
         focusedContactField: null, setFocusedContactField: vi.fn(),
-        hoveredDeleteIndex: null, setHoveredDeleteIndex: vi.fn(),
         hoveredSummary: false, setHoveredSummary: vi.fn(),
         focusedSummary: false, setFocusedSummary: vi.fn(),
         isSummaryImproveHovered: false, setIsSummaryImproveHovered: vi.fn(),

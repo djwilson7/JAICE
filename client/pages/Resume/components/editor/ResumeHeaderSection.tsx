@@ -32,8 +32,6 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
         setHoveredContactField,
         focusedContactField,
         setFocusedContactField,
-        hoveredDeleteIndex,
-        setHoveredDeleteIndex,
         gapPreviewTarget
     } = interaction;
     const {
@@ -80,7 +78,7 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
 
             {(showHeaderContactEditors || headerContactRows.length > 0) && (
                 <div
-                    className="contact-strip resume-editor-contact-strip"
+                    className="resume-document__contact-strip resume-editor-contact-strip"
                     data-contact-open={Boolean(hoveredContactField || focusedContactField)}
                     data-active={activeDocumentSection === "header"}
                 >
@@ -106,7 +104,7 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                             return (
                                 <div
                                     key={rowIndex}
-                                    className="contact-row resume-editor-contact-row"
+                                    className="resume-document__contact-row resume-editor-contact-row"
                                     style={{ zIndex: isActiveRow ? 70 : 0 }}
                                 >
                                     {row.map((field, fieldIndex) => (
@@ -122,9 +120,8 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                                                 const isOpen =
                                                     hoveredContactField === field.key
                                                     || focusedContactField === field.key;
-                                                const buttonsEnd = 20;
                                                 const overlayLeftPad = 2;
-                                                const overlayRightPad = buttonsEnd + 8;
+                                                const overlayRightPad = 2;
                                                 const fluidEase = [0.32, 0.72, 0.32, 1] as [
                                                     number,
                                                     number,
@@ -158,9 +155,7 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                                                             borderBottomLeftRadius: isOpen ? 5 : 4,
                                                             borderBottomRightRadius: isOpen ? 5 : 4,
                                                             boxShadow: isOpen
-                                                                ? hoveredDeleteIndex === field.key
-                                                                    ? "0 10px 30px rgba(15, 23, 42, 0.15), 0 0 0 1px #dc2626"
-                                                                    : "0 10px 30px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(14, 165, 233, 0.35)"
+                                                                ? "0 10px 30px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(14, 165, 233, 0.35)"
                                                                 : "0 0px 0px rgba(0,0,0,0), 0 0 0 0px rgba(0,0,0,0)"
                                                         }}
                                                         transition={{ duration: 0.28, ease: fluidEase }}
@@ -194,45 +189,8 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                                                                     }
                                                                 }}
                                                                 onFocus={() => setFocusedContactField(field.key)}
-                                                                onBlur={() =>
-                                                                    setFocusedContactField((current) =>
-                                                                        current === field.key ? null : current
-                                                                    )
-                                                                }
-                                                                placeholder={field.placeholder || "Add text"}
-                                                                style={{
-                                                                    ...contactFieldStyle(
-                                                                        field.value,
-                                                                        field.placeholder || "Add text"
-                                                                    ),
-                                                                    color:
-                                                                        hoveredDeleteIndex === field.key
-                                                                            ? "#dc2626"
-                                                                            : isOpen
-                                                                            ? "#0f172a"
-                                                                            : undefined,
-                                                                    textDecoration:
-                                                                        hoveredDeleteIndex === field.key
-                                                                            ? "line-through"
-                                                                            : undefined,
-                                                                    textDecorationColor:
-                                                                        hoveredDeleteIndex === field.key
-                                                                            ? "#dc2626"
-                                                                            : undefined,
-                                                                    borderRadius: isOpen ? 4 : undefined,
-                                                                    transition:
-                                                                        "color 150ms ease, text-decoration 150ms ease, text-decoration-color 150ms ease"
-                                                                }}
-                                                            />
-                                                            {isOpen && (
-                                                                <button
-                                                                    type="button"
-                                                                    onMouseEnter={() =>
-                                                                        setHoveredDeleteIndex(field.key)
-                                                                    }
-                                                                    onMouseLeave={() => setHoveredDeleteIndex(null)}
-                                                                    onMouseDown={(event) => event.preventDefault()}
-                                                                    onClick={() => {
+                                                                onBlur={(event) => {
+                                                                    if (event.currentTarget.value.trim().length === 0) {
                                                                         if (field.isCustom === true) {
                                                                             removeCustomContactField(field.index);
                                                                         } else {
@@ -240,31 +198,23 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                                                                                 field.key as ContactFieldKey
                                                                             );
                                                                         }
-                                                                    }}
-                                                                    className="resume-edit-control resume-editor-contact-delete"
-                                                                    title="Delete"
-                                                                    aria-label={`Delete ${
-                                                                        field.isCustom
-                                                                            ? "custom field"
-                                                                            : field.placeholder
-                                                                    }`}
-                                                                >
-                                                                    <svg
-                                                                        className="h-2.5 w-2.5"
-                                                                        fill="none"
-                                                                        viewBox="0 0 24 24"
-                                                                        stroke="#f87171"
-                                                                        strokeWidth="2.75"
-                                                                        aria-hidden="true"
-                                                                    >
-                                                                        <path
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                            d="M6 7h12M9 7V5h6v2m-8 3 .7 9h8.6l.7-9"
-                                                                        />
-                                                                    </svg>
-                                                                </button>
-                                                            )}
+                                                                    }
+                                                                    setFocusedContactField((current) =>
+                                                                        current === field.key ? null : current
+                                                                    );
+                                                                }}
+                                                                autoFocus={focusedContactField === field.key}
+                                                                placeholder={field.placeholder || "Add text"}
+                                                                style={{
+                                                                    ...contactFieldStyle(
+                                                                        field.value,
+                                                                        field.placeholder || "Add text"
+                                                                    ),
+                                                                    color: isOpen ? "#0f172a" : undefined,
+                                                                    borderRadius: isOpen ? 4 : undefined,
+                                                                    transition: "color 150ms ease"
+                                                                }}
+                                                            />
                                                         </div>
                                                     </motion.div>
                                                 );

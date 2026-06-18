@@ -27,6 +27,7 @@ describe('useResumeDocumentEditing', () => {
         const initialLen = result.current.resumeData.customContact?.length || 0;
         act(() => { result.current.addCustomContactField(); });
         expect(result.current.resumeData.customContact?.length).toBe(initialLen + 1);
+        expect(result.current.focusedContactField).toBe(`custom_${initialLen}`);
     });
 
     it('updateCustomContactField updates label and value', () => {
@@ -333,9 +334,6 @@ describe('useResumeDocumentEditing', () => {
     // ── hover/focus state setters ─────────────────────────────────────────────
     it('hover and focus setters work', () => {
         const { result } = getHook();
-        
-        act(() => result.current.setHoveredDeleteIndex('1'));
-        expect(result.current.hoveredDeleteIndex).toBe('1');
         
         act(() => result.current.setHoveredContactField('email'));
         expect(result.current.hoveredContactField).toBe('email');

@@ -19,7 +19,6 @@ import {
 export const useResumeDocumentEditing = () => {
     const experienceTagRetentionMs = 5500;
     const [resumeData, setResumeData] = useState<ResumeData>(defaultResumeData());
-    const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<string | null>(null);
     const [hoveredContactField, setHoveredContactField] = useState<string | null>(null);
     const [focusedContactField, setFocusedContactField] = useState<string | null>(null);
     const [hoveredNameSection, setHoveredNameSection] = useState(false);
@@ -134,10 +133,12 @@ export const useResumeDocumentEditing = () => {
     };
 
     const addCustomContactField = () => {
+        const nextIndex = (resumeData.customContact || []).length;
         setResumeData((prev) => ({
             ...prev,
             customContact: [...(prev.customContact || []), { label: "Add text", value: "" }]
         }));
+        setFocusedContactField(`custom_${nextIndex}`);
     };
 
     const updateCustomContactField = (index: number, field: "label" | "value", val: string) => {
@@ -552,8 +553,6 @@ export const useResumeDocumentEditing = () => {
     return {
         resumeData,
         setResumeData,
-        hoveredDeleteIndex,
-        setHoveredDeleteIndex,
         hoveredContactField,
         setHoveredContactField,
         focusedContactField,
