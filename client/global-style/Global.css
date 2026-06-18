@@ -4121,10 +4121,20 @@ button.landing-provider-button:disabled {
 }
 
 .resume-tag-menu-panel {
+  min-height: min(14rem, calc(100vh - 1rem));
   padding: 0.25rem;
   background: var(--primary-one);
   border-radius: calc(var(--corner-radius) * 0.65);
   box-shadow: var(--shadow);
+}
+
+.resume-tag-menu-options {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 0.125rem;
 }
 
 .resume-tag-trigger,
@@ -4418,6 +4428,106 @@ button.landing-provider-button:disabled {
 .resume-tag-menu-delete-action:focus-visible {
   background: rgba(239, 68, 68, 0.24) !important;
   color: #dc2626 !important;
+}
+
+.resume-canvas-page-guide {
+  left: -56px;
+  right: -116px;
+  height: 0;
+}
+
+.resume-canvas-page-guide-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0),
+    rgba(56, 189, 248, 0.45) 10%,
+    rgba(56, 189, 248, 0.45) 82%,
+    rgba(56, 189, 248, 0)
+  );
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.18);
+}
+
+.resume-canvas-page-guide-label {
+  position: absolute;
+  right: 0;
+  top: -10px;
+  width: 72px;
+  border-radius: calc(var(--corner-radius) * 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(var(--primary-one-rgb), 0.86);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 6px;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity var(--animation-duration) ease,
+    transform var(--animation-duration) ease;
+}
+
+.resume-canvas-page-guide-label-hidden {
+  opacity: 0;
+  transform: translateX(6px);
+}
+
+.resume-page-preview {
+  position: relative;
+  align-items: start;
+  justify-content: start;
+}
+
+.resume-page-preview-measure {
+  position: absolute;
+  left: -100000px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.resume-page-preview-page {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 2px;
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.resume-page-preview-page::after {
+  content: attr(aria-label);
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  color: rgba(100, 116, 139, 0.72);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.resume-page-preview-clip {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.resume-page-preview-content {
+  transform-origin: top left;
 }
 
 .control-bar {

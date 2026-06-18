@@ -1,10 +1,10 @@
 import React from "react";
 import type { FontPreviewTarget, PaperMetrics } from "../types";
-import { RESUME_DOCUMENT_TYPOGRAPHY } from "../resumeTypography";
 
 type ResumeCanvasProps = {
     canvasViewportRef: React.RefObject<HTMLDivElement | null>;
     resumeDocumentContentRef: React.RefObject<HTMLDivElement | null>;
+    registerResumeDocumentContentElement: (element: HTMLDivElement | null) => void;
     canvasNeedsHorizontalScroll: boolean;
     canvasNeedsVerticalScroll: boolean;
     canvasViewportStyle: React.CSSProperties;
@@ -15,18 +15,22 @@ type ResumeCanvasProps = {
     resumeCanvasHeight: number;
     animatedCanvasZoom: number;
     fontPreviewTarget: FontPreviewTarget | null;
-    bodyFontSize: number;
+    documentCssVariables: React.CSSProperties;
     resumePageCount: number;
     resumePageStride: number;
     isPageFormatPreviewVisible: boolean;
     isMarginPreviewVisible: boolean;
-    pageMarginPt: number;
+    isPagePreviewMode?: boolean;
+    pagePreviewSlotWidth?: number;
+    pagePreviewSlotHeight?: number;
+    pagePreviewContent?: React.ReactNode;
     children: React.ReactNode;
 };
 
 export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     canvasViewportRef,
     resumeDocumentContentRef,
+    registerResumeDocumentContentElement,
     canvasNeedsHorizontalScroll,
     canvasNeedsVerticalScroll,
     canvasViewportStyle,
@@ -37,14 +41,27 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     resumeCanvasHeight,
     animatedCanvasZoom,
     fontPreviewTarget,
-    bodyFontSize,
+    documentCssVariables,
     resumePageCount,
     resumePageStride,
     isPageFormatPreviewVisible,
     isMarginPreviewVisible,
-    pageMarginPt,
+    isPagePreviewMode = false,
+    pagePreviewSlotWidth,
+    pagePreviewSlotHeight,
+    pagePreviewContent,
     children
 }) => {
+    const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
+    const canvasWidth = isPagePreviewMode && pagePreviewSlotWidth ? pagePreviewSlotWidth : paperMetrics.width;
+    const canvasHeight = isPagePreviewMode && pagePreviewSlotHeight ? pagePreviewSlotHeight : resumeCanvasHeight;
+    const scaledSlotWidth = canvasWidth * animatedCanvasZoom;
+    const scaledSlotHeight = canvasHeight * animatedCanvasZoom;
+    const handleContentRef = React.useCallback((element: HTMLDivElement | null) => {
+        resumeDocumentContentRef.current = element;
+        registerResumeDocumentContentElement(element);
+    }, [registerResumeDocumentContentElement, resumeDocumentContentRef]);
+
     React.useEffect(() => {
         const viewport = canvasViewportRef.current;
         if (!viewport) return;
@@ -61,56 +78,73 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                     className="no-scrollbar relative box-border min-h-0 flex-1 overscroll-contain print:p-0"
                     style={{
                         ...canvasViewportStyle,
-                        overflowX: canvasNeedsHorizontalScroll ? "auto" : "hidden",
-                        overflowY: canvasNeedsVerticalScroll ? "auto" : "hidden"
+                        overflowX: isPagePreviewMode || canvasNeedsHorizontalScroll ? "auto" : "hidden",
+                        overflowY: isPagePreviewMode || canvasNeedsVerticalScroll ? "auto" : "hidden"
                     }}
                 >
                     <div
                         id="resume-canvas-slot"
                         className="relative mx-auto print:m-0"
                         style={{
-                            width: `${scaledCanvasWidth}px`,
-                            height: `${scaledCanvasHeight}px`
+                            width: `${isPagePreviewMode ? scaledSlotWidth : scaledCanvasWidth}px`,
+                            height: `${isPagePreviewMode ? scaledSlotHeight : scaledCanvasHeight}px`
                         }}
                     >
                         <div
-                            id="resume-canvas-scale"
-                            className="absolute left-0 top-0 origin-top-left print:origin-top-left"
-                            style={{
-                                width: `${paperMetrics.width}px`,
-                                height: `${resumeCanvasHeight}px`,
+                        id="resume-canvas-scale"
+                        className="absolute left-0 top-0 origin-top-left print:origin-top-left"
+                        onMouseEnter={() => setIsCanvasHovered(true)}
+                        onMouseLeave={() => setIsCanvasHovered(false)}
+                        data-canvas-hovered={isCanvasHovered}
+                        style={{
+                            width: `${canvasWidth}px`,
+                            height: `${canvasHeight}px`,
                                 transform: `scale(${animatedCanvasZoom})`,
                                 transformOrigin: "top left"
                             }}
                         >
+                        {!isPagePreviewMode && (
+                        <div className="pointer-events-none absolute inset-0 z-0 overflow-visible print:hidden" aria-hidden="true">
+                            {Array.from({ length: Math.max(0, resumePageCount - 1) }).map((_, guideIndex) => (
+                                <div
+                                    key={guideIndex}
+                                    className="resume-canvas-page-guide absolute"
+                                    style={{
+                                        top: `${(guideIndex + 1) * resumePageStride}px`
+                                    }}
+                                >
+                                    <div className="resume-canvas-page-guide-line" />
+                                    <div
+                                        className={`resume-canvas-page-guide-label ${
+                                            isCanvasHovered ? "resume-canvas-page-guide-label-hidden" : ""
+                                        }`}
+                                    >
+                                        Page {guideIndex + 2}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        )}
                         <div
                             id="print-canvas"
-                            className="text-[#0f172a] box-border relative transition-shadow duration-300 flex flex-col bg-white shadow-[0_26px_70px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,255,255,0.08)] border border-white/80 rounded-sm print:h-auto"
+                            className={`text-[#0f172a] box-border relative z-10 transition-shadow duration-300 ${
+                                isPagePreviewMode
+                                    ? "bg-transparent shadow-none border-none rounded-none"
+                                    : "flex flex-col bg-white shadow-[0_26px_70px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,255,255,0.08)] border border-white/80 rounded-sm print:h-auto"
+                            }`}
                             data-font-preview={fontPreviewTarget || undefined}
+                            data-page-preview={isPagePreviewMode || undefined}
                             style={{
-                                width: `${paperMetrics.width}px`,
-                                minHeight: `${resumeCanvasHeight}px`,
-                                fontFamily: RESUME_DOCUMENT_TYPOGRAPHY.canvasFamily,
-                                fontSize: `${bodyFontSize}px`,
+                                ...documentCssVariables,
+                                width: `${canvasWidth}px`,
+                                minHeight: `${canvasHeight}px`,
+                                fontFamily: "var(--resume-font-family)",
+                                fontSize: "var(--resume-body-font-size)",
                                 padding: 0
                             }}
                         >
-                            <div className="pointer-events-none absolute inset-0 z-0 print:hidden" aria-hidden="true">
-                                {Array.from({ length: Math.max(0, resumePageCount - 1) }).map((_, guideIndex) => (
-                                    <div
-                                        key={guideIndex}
-                                        className="absolute left-0 right-0"
-                                        style={{
-                                            top: `${(guideIndex + 1) * resumePageStride}px`
-                                        }}
-                                    >
-                                        <div className="h-px w-full bg-sky-500/35" />
-                                        <div className="absolute right-3 top-1 rounded-sm bg-slate-100/90 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-slate-500 shadow-sm">
-                                            Page {guideIndex + 2}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            {isPagePreviewMode ? pagePreviewContent : (
+                            <>
                             {isPageFormatPreviewVisible && (
                                 <div className="resume-page-format-preview">
                                     <span className="resume-page-format-dimension resume-page-format-dimension-width">
@@ -123,15 +157,21 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                             )}
                             {isMarginPreviewVisible && (
                                 <div className="resume-margin-preview">
-                                    <div className="resume-margin-preview-band" style={{ left: 0, right: 0, top: 0, height: `${pageMarginPt}pt` }} />
-                                    <div className="resume-margin-preview-band" style={{ left: 0, right: 0, bottom: 0, height: `${pageMarginPt}pt` }} />
-                                    <div className="resume-margin-preview-band" style={{ left: 0, top: `${pageMarginPt}pt`, bottom: `${pageMarginPt}pt`, width: `${pageMarginPt}pt` }} />
-                                    <div className="resume-margin-preview-band" style={{ right: 0, top: `${pageMarginPt}pt`, bottom: `${pageMarginPt}pt`, width: `${pageMarginPt}pt` }} />
-                                    <div className="resume-margin-preview-content" style={{ inset: `${pageMarginPt}pt` }} />
+                                    <div className="resume-margin-preview-band" style={{ left: 0, right: 0, top: 0, height: "var(--resume-page-margin)" }} />
+                                    <div className="resume-margin-preview-band" style={{ left: 0, right: 0, bottom: 0, height: "var(--resume-page-margin)" }} />
+                                    <div className="resume-margin-preview-band" style={{ left: 0, top: "var(--resume-page-margin)", bottom: "var(--resume-page-margin)", width: "var(--resume-page-margin)" }} />
+                                    <div className="resume-margin-preview-band" style={{ right: 0, top: "var(--resume-page-margin)", bottom: "var(--resume-page-margin)", width: "var(--resume-page-margin)" }} />
+                                    <div className="resume-margin-preview-content" style={{ inset: "var(--resume-page-margin)" }} />
                                 </div>
                             )}
-                            <div ref={resumeDocumentContentRef} className="relative z-10" style={{ padding: `${pageMarginPt}pt` }}>
+                            <div
+                                ref={handleContentRef}
+                                className="relative z-10"
+                                style={{ padding: "var(--resume-page-margin)" }}
+                            >
                             {children}                            </div>
+                            </>
+                            )}
                         </div>
                         </div>
                     </div>
