@@ -21,18 +21,97 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
         activeDocumentSection,
         focusedDocumentSection,
         setActiveDocumentSection,
-        hoveredSkillDeleteId,
-        setHoveredSkillDeleteId,
+        hoveredSkillId,
+        setHoveredSkillId,
         gapPreviewTarget
     } = interaction;
     const {
+        createSkillCategory,
         updateSkillCategoryName,
         updateSkillCategoryItems,
-        removeSkillCategory,
-        addSkillCategory
+        removeSkillCategoryIfEmpty,
+        moveSkillCategoryUp,
+        moveSkillCategoryDown
     } = handlers;
     const skills = resumeData.skills || [];
     const showFields = activeDocumentSection === "skills";
+    const [draftSkillId, setDraftSkillId] = React.useState<string | null>(null);
+    const [draftCategory, setDraftCategory] = React.useState("");
+    const [draftItems, setDraftItems] = React.useState("");
+
+    const visibleSkills = React.useMemo(
+        () => skills.filter((skill) => skill.id !== draftSkillId),
+        [draftSkillId, skills]
+    );
+
+    const ensureDraftSkill = React.useCallback(() => {
+        if (draftSkillId) return draftSkillId;
+        const nextId = createSkillCategory("", "");
+        setDraftSkillId(nextId);
+        return nextId;
+    }, [createSkillCategory, draftSkillId]);
+
+    const handleDraftCategoryChange = React.useCallback((value: string) => {
+        setDraftCategory(value);
+        const id = ensureDraftSkill();
+        updateSkillCategoryName(id, value);
+    }, [ensureDraftSkill, updateSkillCategoryName]);
+
+    const handleDraftItemsChange = React.useCallback((value: string) => {
+        setDraftItems(value);
+        const id = ensureDraftSkill();
+        updateSkillCategoryItems(id, value);
+    }, [ensureDraftSkill, updateSkillCategoryItems]);
+
+    const handleDraftRowBlur = React.useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+        if (draftSkillId) {
+            removeSkillCategoryIfEmpty(draftSkillId);
+        }
+        setDraftSkillId(null);
+        setDraftCategory("");
+        setDraftItems("");
+    }, [draftSkillId, removeSkillCategoryIfEmpty]);
+
+    const handleSkillsSectionMouseMove = React.useCallback(
+        (event: React.MouseEvent<HTMLElement>) => {
+            const itemElements = Array.from(
+                event.currentTarget.querySelectorAll<HTMLElement>("[data-skill-item-id]")
+            );
+            if (itemElements.length === 0) return;
+
+            const nearestItem = itemElements.reduce<{
+                id: string;
+                distance: number;
+            } | null>((nearest, element) => {
+                const id = element.dataset.skillItemId;
+                if (!id) return nearest;
+                const rect = element.getBoundingClientRect();
+                const horizontalDistance = event.clientX < rect.left
+                    ? rect.left - event.clientX
+                    : event.clientX > rect.right
+                    ? event.clientX - rect.right
+                    : 0;
+                const verticalDistance = event.clientY < rect.top
+                    ? rect.top - event.clientY
+                    : event.clientY > rect.bottom
+                    ? event.clientY - rect.bottom
+                    : 0;
+                const distance = Math.hypot(horizontalDistance, verticalDistance);
+
+                return !nearest || distance < nearest.distance
+                    ? { id, distance }
+                    : nearest;
+            }, null);
+
+            if (nearestItem) {
+                setHoveredSkillId((current) =>
+                    current === nearestItem.id ? current : nearestItem.id
+                );
+            }
+        },
+        [setHoveredSkillId]
+    );
 
     return (
         <DocumentSection
@@ -43,23 +122,30 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
             className="group/skills-sec"
             showGapPreview={gapPreviewTarget === "section"}
             gapPreviewHeight={documentSectionGapPx}
+            onMouseMove={handleSkillsSectionMouseMove}
+            onMouseLeave={() => setHoveredSkillId(null)}
         >
             {renderSectionTitle("skills")}
             <div className="resume-editor-item-stack">
-                {skills.map((skill, index) => {
+                {visibleSkills.map((skill, index) => {
                     const itemsText = getSkillItemsText(skill);
                     if (!showFields && !hasText(skill.category) && !hasText(itemsText)) return null;
-                    const deleteHovered = hoveredSkillDeleteId === skill.id;
+                    const isItemHovered = hoveredSkillId === skill.id;
+
                     return (
                         <div
                             key={skill.id}
                             className="resume-editor-skill-row"
-                            data-controls-visible={showFields}
-                            data-delete-hovered={deleteHovered}
+                            data-skill-item-id={skill.id}
+                            data-controls-visible={isItemHovered}
+                            onBlur={(event) => {
+                                if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                                removeSkillCategoryIfEmpty(skill.id);
+                            }}
                         >
                             {(showFields || hasText(skill.category)) && (
                                 <input
-                                    className={`${boldInputClass} resume-subheader-font-target resume-editor-skill-category`}
+                                    className={`${boldInputClass} resume-editor-input--fit resume-subheader-font-target resume-editor-skill-category`}
                                     value={skill.category}
                                     onChange={(event) =>
                                         updateSkillCategoryName(skill.id, event.target.value)
@@ -69,7 +155,7 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
                             )}
                             {(showFields || hasText(itemsText)) && (
                                 <>
-                                    {hasText(skill.category) && <span className="resume-editor-skill-colon">:</span>}
+                                    {(showFields || hasText(skill.category)) && <span className="resume-editor-skill-colon">:</span>}
                                     <input
                                         className={`${inputStyleClass} resume-editor-skill-items`}
                                         value={itemsText}
@@ -81,34 +167,59 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
                                 </>
                             )}
                             {showFields && (
-                                <button
-                                    type="button"
-                                    onMouseEnter={() => setHoveredSkillDeleteId(skill.id)}
-                                    onMouseLeave={() => setHoveredSkillDeleteId(null)}
-                                    onClick={() => removeSkillCategory(skill.id)}
-                                    className="resume-edit-control resume-editor-icon-button resume-editor-icon-button--delete"
-                                    title="Delete skill category"
-                                    aria-label="Delete skill category"
-                                >
-                                    ⌫
-                                </button>
+                                <div className="resume-editor-item-actions" data-visible={isItemHovered}>
+                                    <button
+                                        type="button"
+                                        disabled={index === 0}
+                                        onClick={() => moveSkillCategoryUp(skill.id)}
+                                        className="resume-editor-item-control resume-editor-icon-button"
+                                        title="Move skill category up"
+                                        aria-label="Move skill category up"
+                                    >
+                                        <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="m7 11 5-5 5 5M12 6v12" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={index === visibleSkills.length - 1}
+                                        onClick={() => moveSkillCategoryDown(skill.id)}
+                                        className="resume-editor-item-control resume-editor-icon-button"
+                                        title="Move skill category down"
+                                        aria-label="Move skill category down"
+                                    >
+                                        <svg className="resume-editor-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="m7 13 5 5 5-5M12 18V6" />
+                                        </svg>
+                                    </button>
+                                </div>
                             )}
-                            {index < skills.length - 1
+                            {index < visibleSkills.length - 1
                                 && renderInnerGapPreview(`skill-${skill.id}-inner-gap`)}
                         </div>
                     );
                 })}
-                <div className="resume-editor-add-row" data-visible={showFields}>
-                    <button
-                        type="button"
-                        onClick={addSkillCategory}
-                        className="resume-edit-control resume-margin-control resume-margin-control--left resume-margin-control--add is-visible resume-editor-add-row__button"
-                        title="Add skill category"
-                        aria-label="Add skill category"
+                {showFields && (
+                    <div
+                        className="resume-editor-skill-row resume-editor-skill-row--template"
+                        data-controls-visible="true"
+                        onBlur={handleDraftRowBlur}
                     >
-                        +
-                    </button>
-                </div>
+                        <input
+                            className={`${boldInputClass} resume-editor-input--fit resume-subheader-font-target resume-editor-skill-category`}
+                            value={draftCategory}
+                            onChange={(event) => handleDraftCategoryChange(event.target.value)}
+                            placeholder="Add Skill"
+                        />
+                        <span className="resume-editor-skill-colon">:</span>
+                        <input
+                            className={`${inputStyleClass} resume-editor-skill-items`}
+                            value={draftItems}
+                            onChange={(event) => handleDraftItemsChange(event.target.value)}
+                            placeholder="List the skills under this category"
+                        />
+                    </div>
+                )}
             </div>
         </DocumentSection>
     );

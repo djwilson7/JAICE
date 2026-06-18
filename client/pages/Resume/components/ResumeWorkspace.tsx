@@ -48,7 +48,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         isPageStyleShelfOpen, zoomMode
     } = formatting;
     const {
-        resumeData, activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillDeleteId, setHoveredSkillDeleteId, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, moveExperienceUp, moveExperienceDown, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, setResumeData
+        resumeData, activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredEducationId, setHoveredEducationId, hoveredSkillId, setHoveredSkillId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillClearId, setHoveredSkillClearId, hoveredSkillDeleteId, setHoveredSkillDeleteId, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, moveExperienceUp, moveExperienceDown, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, moveEducationUp, moveEducationDown, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, createSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, removeSkillCategoryIfEmpty, moveSkillCategoryUp, moveSkillCategoryDown, clearSkillCategory, setResumeData
     } = editing;
     const {
         changeMetadata, originalResumeDataBeforeDraft, summaryRewriteSuggestion, experienceRewriteSuggestions, rewriteActionHover, setRewriteActionHover, loadingSummaryImprove, loadingExperienceImproveId, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setChangeMetadata
@@ -198,6 +198,10 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     setIsSummaryImproveHovered: disableCanvasHoverControls ? noopEditorDispatch : setIsSummaryImproveHovered,
                                     hoveredJobId: disableCanvasHoverControls ? null : hoveredJobId,
                                     setHoveredJobId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredJobId,
+                                    hoveredEducationId: disableCanvasHoverControls ? null : hoveredEducationId,
+                                    setHoveredEducationId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredEducationId,
+                                    hoveredSkillId: disableCanvasHoverControls ? null : hoveredSkillId,
+                                    setHoveredSkillId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredSkillId,
                                     hoveredExperienceImproveId: disableCanvasHoverControls ? null : hoveredExperienceImproveId,
                                     setHoveredExperienceImproveId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredExperienceImproveId,
                                     hoveredExperienceClearId: disableCanvasHoverControls ? null : hoveredExperienceClearId,
@@ -208,6 +212,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     setHoveredEducationClearId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredEducationClearId,
                                     hoveredEducationDeleteId: disableCanvasHoverControls ? null : hoveredEducationDeleteId,
                                     setHoveredEducationDeleteId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredEducationDeleteId,
+                                    hoveredSkillClearId: disableCanvasHoverControls ? null : hoveredSkillClearId,
+                                    setHoveredSkillClearId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredSkillClearId,
                                     hoveredSkillDeleteId: disableCanvasHoverControls ? null : hoveredSkillDeleteId,
                                     setHoveredSkillDeleteId: disableCanvasHoverControls ? noopEditorDispatch : setHoveredSkillDeleteId,
                                     rewriteActionHover,
@@ -251,15 +257,22 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     updateEducationField,
                                     addEducation,
                                     removeEducation,
+                                    moveEducationUp,
+                                    moveEducationDown,
                                     clearEducation,
                                     addEducationDetailWithText,
                                     insertEducationDetailAfter,
                                     updateEducationDetailText,
                                     removeEducationDetailIfEmpty,
                                     addSkillCategory,
+                                    createSkillCategory,
                                     updateSkillCategoryName,
                                     updateSkillCategoryItems,
                                     removeSkillCategory,
+                                    removeSkillCategoryIfEmpty,
+                                    moveSkillCategoryUp,
+                                    moveSkillCategoryDown,
+                                    clearSkillCategory,
                                     handleAnalyzeSummary,
                                     handleImproveSummary,
                                     handleImproveExperience,

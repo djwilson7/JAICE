@@ -29,11 +29,14 @@ export const useResumeDocumentEditing = () => {
     const [hoveredField, setHoveredField] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [hoveredJobId, setHoveredJobId] = useState<string | null>(null);
+    const [hoveredEducationId, setHoveredEducationId] = useState<string | null>(null);
+    const [hoveredSkillId, setHoveredSkillId] = useState<string | null>(null);
     const [hoveredExperienceImproveId, setHoveredExperienceImproveId] = useState<string | null>(null);
     const [hoveredExperienceClearId, setHoveredExperienceClearId] = useState<string | null>(null);
     const [hoveredExperienceDeleteId, setHoveredExperienceDeleteId] = useState<string | null>(null);
     const [hoveredEducationClearId, setHoveredEducationClearId] = useState<string | null>(null);
     const [hoveredEducationDeleteId, setHoveredEducationDeleteId] = useState<string | null>(null);
+    const [hoveredSkillClearId, setHoveredSkillClearId] = useState<string | null>(null);
     const [hoveredSkillDeleteId, setHoveredSkillDeleteId] = useState<string | null>(null);
     const [hoveredDocumentSection, setHoveredDocumentSection] = useState<DocumentSectionId | null>(null);
     const [retainedDocumentSection, setRetainedDocumentSection] = useState<DocumentSectionId | null>(null);
@@ -420,6 +423,7 @@ export const useResumeDocumentEditing = () => {
                 { id, school: "", degree: "", startDate: "", endDate: "", details: [] }
             ]
         }));
+        return id;
     };
 
     const removeEducation = (id: string) => {
@@ -427,6 +431,34 @@ export const useResumeDocumentEditing = () => {
             ...prev,
             education: (prev.education || []).filter((ed) => ed.id !== id)
         }));
+    };
+
+    const moveEducationUp = (id: string) => {
+        setResumeData((prev) => {
+            const nextEducation = [...(prev.education || [])];
+            const idx = nextEducation.findIndex((ed) => ed.id === id);
+            if (idx <= 0) return prev;
+            const [item] = nextEducation.splice(idx, 1);
+            nextEducation.splice(idx - 1, 0, item);
+            return {
+                ...prev,
+                education: nextEducation
+            };
+        });
+    };
+
+    const moveEducationDown = (id: string) => {
+        setResumeData((prev) => {
+            const nextEducation = [...(prev.education || [])];
+            const idx = nextEducation.findIndex((ed) => ed.id === id);
+            if (idx === -1 || idx >= nextEducation.length - 1) return prev;
+            const [item] = nextEducation.splice(idx, 1);
+            nextEducation.splice(idx + 1, 0, item);
+            return {
+                ...prev,
+                education: nextEducation
+            };
+        });
     };
 
     const clearEducation = (id: string) => {
@@ -524,6 +556,19 @@ export const useResumeDocumentEditing = () => {
         }));
     };
 
+    const createSkillCategory = (category = "", rawItems = "") => {
+        const id = makeId();
+        const items = parseSkillItems(rawItems);
+        setResumeData((prev) => ({
+            ...prev,
+            skills: [
+                ...(prev.skills || []),
+                { id, category, items, rawItems }
+            ]
+        }));
+        return id;
+    };
+
     const updateSkillCategoryName = (id: string, value: string) => {
         setResumeData((prev) => ({
             ...prev,
@@ -550,6 +595,53 @@ export const useResumeDocumentEditing = () => {
         }));
     };
 
+    const removeSkillCategoryIfEmpty = (id: string) => {
+        const skill = (resumeData.skills || []).find((item) => item.id === id);
+        const itemsText = skill?.rawItems ?? skill?.items?.join(", ") ?? "";
+        if (skill && !skill.category.trim() && !itemsText.trim()) {
+            removeSkillCategory(id);
+        }
+    };
+
+    const moveSkillCategoryUp = (id: string) => {
+        setResumeData((prev) => {
+            const nextSkills = [...(prev.skills || [])];
+            const idx = nextSkills.findIndex((skill) => skill.id === id);
+            if (idx <= 0) return prev;
+            const [item] = nextSkills.splice(idx, 1);
+            nextSkills.splice(idx - 1, 0, item);
+            return {
+                ...prev,
+                skills: nextSkills
+            };
+        });
+    };
+
+    const moveSkillCategoryDown = (id: string) => {
+        setResumeData((prev) => {
+            const nextSkills = [...(prev.skills || [])];
+            const idx = nextSkills.findIndex((skill) => skill.id === id);
+            if (idx === -1 || idx >= nextSkills.length - 1) return prev;
+            const [item] = nextSkills.splice(idx, 1);
+            nextSkills.splice(idx + 1, 0, item);
+            return {
+                ...prev,
+                skills: nextSkills
+            };
+        });
+    };
+
+    const clearSkillCategory = (id: string) => {
+        setResumeData((prev) => ({
+            ...prev,
+            skills: (prev.skills || []).map((skill) =>
+                skill.id === id
+                    ? { ...skill, category: "", items: [], rawItems: "" }
+                    : skill
+            )
+        }));
+    };
+
     return {
         resumeData,
         setResumeData,
@@ -573,6 +665,10 @@ export const useResumeDocumentEditing = () => {
         setFocusedField,
         hoveredJobId,
         setHoveredJobId,
+        hoveredEducationId,
+        setHoveredEducationId,
+        hoveredSkillId,
+        setHoveredSkillId,
         hoveredExperienceImproveId,
         setHoveredExperienceImproveId,
         hoveredExperienceClearId,
@@ -583,6 +679,8 @@ export const useResumeDocumentEditing = () => {
         setHoveredEducationClearId,
         hoveredEducationDeleteId,
         setHoveredEducationDeleteId,
+        hoveredSkillClearId,
+        setHoveredSkillClearId,
         hoveredSkillDeleteId,
         setHoveredSkillDeleteId,
         activeDocumentSection,
@@ -611,6 +709,8 @@ export const useResumeDocumentEditing = () => {
         updateEducationField,
         addEducation,
         removeEducation,
+        moveEducationUp,
+        moveEducationDown,
         clearEducation,
         addEducationDetailWithText,
         insertEducationDetailAfter,
@@ -618,8 +718,13 @@ export const useResumeDocumentEditing = () => {
         updateEducationDetailText,
         removeEducationDetailIfEmpty,
         addSkillCategory,
+        createSkillCategory,
         updateSkillCategoryName,
         updateSkillCategoryItems,
-        removeSkillCategory
+        removeSkillCategory,
+        removeSkillCategoryIfEmpty,
+        moveSkillCategoryUp,
+        moveSkillCategoryDown,
+        clearSkillCategory
     };
 };

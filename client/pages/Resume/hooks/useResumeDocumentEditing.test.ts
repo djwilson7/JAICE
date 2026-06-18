@@ -364,12 +364,18 @@ describe('useResumeDocumentEditing', () => {
         
         act(() => result.current.setHoveredJobId('j1'));
         expect(result.current.hoveredJobId).toBe('j1');
+
+        act(() => result.current.setHoveredEducationId('ed0'));
+        expect(result.current.hoveredEducationId).toBe('ed0');
         
         act(() => result.current.setHoveredExperienceImproveId('e1'));
         expect(result.current.hoveredExperienceImproveId).toBe('e1');
         
         act(() => result.current.setHoveredExperienceClearId('e2'));
         expect(result.current.hoveredExperienceClearId).toBe('e2');
+
+        act(() => result.current.setHoveredEducationClearId('ed2'));
+        expect(result.current.hoveredEducationClearId).toBe('ed2');
         
         act(() => result.current.setHoveredExperienceDeleteId('e3'));
         expect(result.current.hoveredExperienceDeleteId).toBe('e3');

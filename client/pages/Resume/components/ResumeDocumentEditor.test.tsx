@@ -88,6 +88,8 @@ describe('ResumeDocumentEditor', () => {
             updateEducationField: vi.fn(),
             addEducation: vi.fn(),
             removeEducation: vi.fn(),
+            moveEducationUp: vi.fn(),
+            moveEducationDown: vi.fn(),
             addEducationDetailWithText: vi.fn(),
             insertEducationDetailAfter: vi.fn(),
             updateEducationDetailText: vi.fn(),
@@ -96,6 +98,9 @@ describe('ResumeDocumentEditor', () => {
             updateSkillCategoryName: vi.fn(),
             updateSkillCategoryItems: vi.fn(),
             removeSkillCategory: vi.fn(),
+            moveSkillCategoryUp: vi.fn(),
+            moveSkillCategoryDown: vi.fn(),
+            clearSkillCategory: vi.fn(),
             handleAnalyzeSummary: vi.fn(),
             handleImproveSummary: vi.fn(),
             handleImproveExperience: vi.fn(),
@@ -129,14 +134,22 @@ describe('ResumeDocumentEditor', () => {
             setIsSummaryImproveHovered: vi.fn(),
             hoveredJobId: null,
             setHoveredJobId: vi.fn(),
+            hoveredEducationId: null,
+            setHoveredEducationId: vi.fn(),
+            hoveredSkillId: null,
+            setHoveredSkillId: vi.fn(),
             hoveredExperienceImproveId: null,
             setHoveredExperienceImproveId: vi.fn(),
             hoveredExperienceClearId: null,
             setHoveredExperienceClearId: vi.fn(),
             hoveredExperienceDeleteId: null,
             setHoveredExperienceDeleteId: vi.fn(),
+            hoveredEducationClearId: null,
+            setHoveredEducationClearId: vi.fn(),
             hoveredEducationDeleteId: null,
             setHoveredEducationDeleteId: vi.fn(),
+            hoveredSkillClearId: null,
+            setHoveredSkillClearId: vi.fn(),
             hoveredSkillDeleteId: null,
             setHoveredSkillDeleteId: vi.fn(),
             rewriteActionHover: null,
@@ -635,6 +648,13 @@ describe('ResumeDocumentEditor', () => {
         expect(handlers.addEducation).toHaveBeenCalled();
 
         const delBtn = screen.getAllByLabelText('Remove education')[0];
+        const moveUpBtn = screen.getAllByLabelText('Move education up')[0];
+        const moveDownBtn = screen.getAllByLabelText('Move education down')[0];
+        expect(moveUpBtn).toBeDisabled();
+        fireEvent.click(moveUpBtn);
+        expect(handlers.moveEducationUp).not.toHaveBeenCalled();
+        fireEvent.click(moveDownBtn);
+        expect(handlers.moveEducationDown).toHaveBeenCalledWith('edu1');
         fireEvent.mouseEnter(delBtn);
         expect(interaction.setHoveredEducationDeleteId).toHaveBeenCalledWith('edu1');
         fireEvent.mouseLeave(delBtn);
@@ -643,6 +663,7 @@ describe('ResumeDocumentEditor', () => {
         expect(handlers.removeEducation).toHaveBeenCalledWith('edu1');
 
         interaction.activeDocumentSection = 'education';
+        interaction.hoveredEducationId = 'edu1';
         rerender(<ResumeDocumentEditor {...defaultProps} />);
 
         // Test education detail update
@@ -703,6 +724,49 @@ describe('ResumeDocumentEditor', () => {
         expect(screen.queryByPlaceholderText('Start')).toBeNull();
     });
 
+    it('picks the nearest education item when the section is active', () => {
+        defaultProps.data.resumeData.education = [
+            {
+                id: 'edu1',
+                degree: 'BS',
+                school: 'First',
+                startDate: '2016',
+                endDate: '2020',
+                details: [{ id: 'd1', text: 'Detail 1' }]
+            },
+            {
+                id: 'edu2',
+                degree: 'MS',
+                school: 'Second',
+                startDate: '2021',
+                endDate: '2023',
+                details: [{ id: 'd2', text: 'Detail 2' }]
+            }
+        ];
+        interaction.activeDocumentSection = 'education';
+
+        const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const educationSection = screen.getAllByTestId('document-section')
+            .find((section) => section.getAttribute('data-section-id') === 'education');
+        const educationItems = container.querySelectorAll('[data-education-item-id]');
+        const firstItem = educationItems[0] as HTMLElement;
+        const secondItem = educationItems[1] as HTMLElement;
+
+        firstItem.getBoundingClientRect = vi.fn(() => ({
+            left: 0, top: 0, right: 300, bottom: 100, width: 300, height: 100, x: 0, y: 0, toJSON: () => ({})
+        })) as any;
+        secondItem.getBoundingClientRect = vi.fn(() => ({
+            left: 0, top: 220, right: 300, bottom: 320, width: 300, height: 100, x: 0, y: 220, toJSON: () => ({})
+        })) as any;
+
+        fireEvent.mouseMove(educationSection!, { clientX: 40, clientY: 270 });
+        const proximityUpdate = (interaction.setHoveredEducationId as any).mock.lastCall[0];
+        expect(proximityUpdate(null)).toBe('edu2');
+
+        fireEvent.mouseLeave(educationSection!);
+        expect(interaction.setHoveredEducationId).toHaveBeenCalledWith(null);
+    });
+
     it('handles skills rendering and interactions', () => {
         defaultProps.data.resumeData.skills = [
             { id: 's1', category: 'Lang', items: ['JS', 'TS'] }
@@ -722,10 +786,29 @@ describe('ResumeDocumentEditor', () => {
         expect(handlers.addSkillCategory).toHaveBeenCalled();
 
         interaction.activeDocumentSection = 'skills';
+        interaction.hoveredSkillId = 's1';
         rerender(<ResumeDocumentEditor {...defaultProps} />);
         
-        // Test skill delete button hover
+        const moveSkillUpBtn = screen.getAllByLabelText('Move skill category up')[0];
+        const moveSkillDownBtn = screen.getAllByLabelText('Move skill category down')[0];
+        const clearSkillBtn = screen.getAllByLabelText('Clear skill category')[0];
         const delSkillBtn = screen.getAllByTitle('Delete skill category')[0];
+
+        expect(moveSkillUpBtn).toBeDisabled();
+        fireEvent.click(moveSkillUpBtn);
+        expect(handlers.moveSkillCategoryUp).not.toHaveBeenCalled();
+
+        expect(moveSkillDownBtn).toBeDisabled();
+        fireEvent.click(moveSkillDownBtn);
+        expect(handlers.moveSkillCategoryDown).not.toHaveBeenCalled();
+
+        fireEvent.mouseEnter(clearSkillBtn);
+        expect(interaction.setHoveredSkillClearId).toHaveBeenCalledWith('s1');
+        fireEvent.mouseLeave(clearSkillBtn);
+        expect(interaction.setHoveredSkillClearId).toHaveBeenCalledWith(null);
+        fireEvent.click(clearSkillBtn);
+        expect(handlers.clearSkillCategory).toHaveBeenCalledWith('s1');
+
         fireEvent.mouseEnter(delSkillBtn);
         expect(interaction.setHoveredSkillDeleteId).toHaveBeenCalledWith('s1');
         fireEvent.mouseLeave(delSkillBtn);
@@ -736,6 +819,35 @@ describe('ResumeDocumentEditor', () => {
         const delBtn = screen.getAllByLabelText('Delete skill category')[0];
         fireEvent.click(delBtn);
         expect(handlers.removeSkillCategory).toHaveBeenCalledWith('s1');
+    });
+
+    it('picks the nearest skill item when the section is active', () => {
+        defaultProps.data.resumeData.skills = [
+            { id: 's1', category: 'Lang', items: ['JS', 'TS'] },
+            { id: 's2', category: 'Tools', items: ['Git', 'Docker'] }
+        ];
+        interaction.activeDocumentSection = 'skills';
+
+        const { container } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const skillsSection = screen.getAllByTestId('document-section')
+            .find((section) => section.getAttribute('data-section-id') === 'skills');
+        const skillItems = container.querySelectorAll('[data-skill-item-id]');
+        const firstItem = skillItems[0] as HTMLElement;
+        const secondItem = skillItems[1] as HTMLElement;
+
+        firstItem.getBoundingClientRect = vi.fn(() => ({
+            left: 0, top: 0, right: 300, bottom: 60, width: 300, height: 60, x: 0, y: 0, toJSON: () => ({})
+        })) as any;
+        secondItem.getBoundingClientRect = vi.fn(() => ({
+            left: 0, top: 140, right: 300, bottom: 200, width: 300, height: 60, x: 0, y: 140, toJSON: () => ({})
+        })) as any;
+
+        fireEvent.mouseMove(skillsSection!, { clientX: 40, clientY: 180 });
+        const proximityUpdate = (interaction.setHoveredSkillId as any).mock.lastCall[0];
+        expect(proximityUpdate(null)).toBe('s2');
+
+        fireEvent.mouseLeave(skillsSection!);
+        expect(interaction.setHoveredSkillId).toHaveBeenCalledWith(null);
     });
 
     it('handles hover effects', () => {

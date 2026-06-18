@@ -292,6 +292,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-bottom: var(--resume-section-active-extension, 0px);
 }
 
 .document-hover-section {
@@ -508,19 +509,43 @@
   line-height: 1.38;
 }
 
+.resume-editor-education-item {
+  --resume-education-composer-space: 0px;
+}
+
+.resume-editor-education-item[data-controls-visible="true"] {
+  --resume-education-composer-space: 2.125rem;
+  padding-bottom: var(--resume-education-composer-space);
+}
+
 .resume-editor-education-composer {
   position: absolute;
-  top: 100%;
   right: 0;
+  bottom: 0;
   left: 0.75rem;
   z-index: 40;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.35), 0 8px 20px rgba(15, 23, 42, 0.1);
+  background: transparent;
+  box-shadow: none;
+}
+
+.resume-editor-education-composer .resume-editor-bullet-composer {
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: #94a3b8;
+}
+
+.resume-editor-education-composer .resume-editor-bullet-composer:hover,
+.resume-editor-education-composer .resume-editor-bullet-composer:focus {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .resume-editor-add-row {
   position: absolute;
-  top: 100%;
+  top: calc(100% - var(--resume-section-active-extension, 0px));
   left: 0;
   width: 100%;
   height: 1.5rem;
@@ -569,7 +594,7 @@
   isolation: isolate;
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.375rem;
   border-radius: 0.125rem;
 }
@@ -584,6 +609,11 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
+.resume-editor-skill-row[data-clear-hovered="true"]::before {
+  border-color: rgba(100, 116, 139, 0.72);
+  background: rgba(100, 116, 139, 0.1);
+}
+
 .resume-editor-skill-row[data-delete-hovered="true"]::before {
   border-color: rgba(220, 38, 38, 0.72);
   background: rgba(239, 68, 68, 0.1);
@@ -592,11 +622,19 @@
 .resume-editor-skill-category {
   width: auto;
   flex: 0 0 auto;
+  min-width: 3ch;
+  field-sizing: content;
   color: #0f172a;
 }
 
+.resume-editor-skill-category::placeholder {
+  color: rgba(100, 116, 139, 0.6);
+  font-weight: 700;
+}
+
 .resume-editor-skill-colon {
-  padding-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
   color: #0f172a;
   font-weight: 700;
 }
@@ -604,6 +642,10 @@
 .resume-editor-skill-items {
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.resume-editor-skill-items::placeholder {
+  color: rgba(100, 116, 139, 0.6);
 }
 
 .contact-meta-field,
@@ -671,9 +713,11 @@
   isolation: isolate;
   width: calc(100% + 2 * var(--resume-page-margin));
   margin-inline: calc(-1 * var(--resume-page-margin));
+  margin-bottom: var(--resume-section-gap);
   padding-inline: var(--resume-page-margin);
   overflow: visible;
   --resume-section-hover-pad-y: 8px;
+  --resume-section-active-extension: 0px;
 }
 
 .document-hover-section-hit-pad {
@@ -701,6 +745,7 @@
 
 .document-hover-section[data-active="true"] {
   z-index: 10;
+  --resume-section-active-extension: 1.5rem;
 }
 
 .document-hover-section[data-active="true"] > .document-hover-section-border {
