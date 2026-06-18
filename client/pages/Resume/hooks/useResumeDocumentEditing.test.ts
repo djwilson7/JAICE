@@ -97,6 +97,44 @@ describe('useResumeDocumentEditing', () => {
         expect(exp?.bullets).toHaveLength(0);
     });
 
+    it('moveExperienceUp moves the experience entry up in the list', () => {
+        const { result } = getHook();
+        act(() => { result.current.setResumeData({ ...result.current.resumeData, experience: [] }); });
+        act(() => { result.current.insertExperienceAt(0); });
+        act(() => { result.current.insertExperienceAt(1); });
+        act(() => { result.current.insertExperienceAt(2); });
+        
+        const firstId = result.current.resumeData.experience[0].id;
+        const secondId = result.current.resumeData.experience[1].id;
+        const thirdId = result.current.resumeData.experience[2].id;
+
+        act(() => { result.current.moveExperienceUp(firstId); });
+        expect(result.current.resumeData.experience[0].id).toBe(firstId);
+
+        act(() => { result.current.moveExperienceUp(secondId); });
+        expect(result.current.resumeData.experience[0].id).toBe(secondId);
+        expect(result.current.resumeData.experience[1].id).toBe(firstId);
+    });
+
+    it('moveExperienceDown moves the experience entry down in the list', () => {
+        const { result } = getHook();
+        act(() => { result.current.setResumeData({ ...result.current.resumeData, experience: [] }); });
+        act(() => { result.current.insertExperienceAt(0); });
+        act(() => { result.current.insertExperienceAt(1); });
+        act(() => { result.current.insertExperienceAt(2); });
+        
+        const firstId = result.current.resumeData.experience[0].id;
+        const secondId = result.current.resumeData.experience[1].id;
+        const thirdId = result.current.resumeData.experience[2].id;
+
+        act(() => { result.current.moveExperienceDown(thirdId); });
+        expect(result.current.resumeData.experience[2].id).toBe(thirdId);
+
+        act(() => { result.current.moveExperienceDown(secondId); });
+        expect(result.current.resumeData.experience[1].id).toBe(thirdId);
+        expect(result.current.resumeData.experience[2].id).toBe(secondId);
+    });
+
     // ── bullets ───────────────────────────────────────────────────────────────
     it('addBulletWithText appends a bullet', () => {
         const { result } = getHook();

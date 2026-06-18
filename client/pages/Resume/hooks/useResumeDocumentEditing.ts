@@ -201,6 +201,34 @@ export const useResumeDocumentEditing = () => {
         }));
     };
 
+    const moveExperienceUp = (id: string) => {
+        setResumeData((prev) => {
+            const nextExperience = [...(prev.experience || [])];
+            const idx = nextExperience.findIndex((exp) => exp.id === id);
+            if (idx <= 0) return prev;
+            const [item] = nextExperience.splice(idx, 1);
+            nextExperience.splice(idx - 1, 0, item);
+            return {
+                ...prev,
+                experience: nextExperience
+            };
+        });
+    };
+
+    const moveExperienceDown = (id: string) => {
+        setResumeData((prev) => {
+            const nextExperience = [...(prev.experience || [])];
+            const idx = nextExperience.findIndex((exp) => exp.id === id);
+            if (idx === -1 || idx >= nextExperience.length - 1) return prev;
+            const [item] = nextExperience.splice(idx, 1);
+            nextExperience.splice(idx + 1, 0, item);
+            return {
+                ...prev,
+                experience: nextExperience
+            };
+        });
+    };
+
     const clearExperience = (id: string) => {
         setResumeData((prev) => ({
             ...prev,
@@ -570,6 +598,8 @@ export const useResumeDocumentEditing = () => {
         updateExperienceField,
         insertExperienceAt,
         removeExperience,
+        moveExperienceUp,
+        moveExperienceDown,
         clearExperience,
         addBulletWithText,
         insertBulletAfter,
