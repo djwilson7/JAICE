@@ -71,17 +71,6 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     const fontPreviewClass = className.includes("resume-subheader-font-target")
         ? ""
         : " resume-body-font-target";
-    const buttonsActive = showRightCustomAction || showInlineClear || showInlineDelete;
-    let buttonsEnd = 0;
-    if (showInlineDelete) {
-        buttonsEnd = (showRightCustomAction ? 24 : 0) + (showInlineClear ? 24 : 4) + 16;
-    } else if (showInlineClear) {
-        buttonsEnd = (showRightCustomAction ? 24 : 4) + 16;
-    } else if (showRightCustomAction) {
-        buttonsEnd = 4 + 16;
-    }
-    const overlayRightPad = isOpen ? (buttonsActive ? buttonsEnd + 8 : 2) : 0;
-
     useEffect(() => {
         if (focusedField === path && inputRef.current && document.activeElement !== inputRef.current) {
             inputRef.current.focus();
@@ -100,14 +89,6 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
             onHoverStart={() => setHoveredField(path)}
             onHoverEnd={() => setHoveredField(current => current === path ? null : current)}
             animate={{
-                paddingTop: isOpen ? 2 : 0,
-                paddingRight: overlayRightPad,
-                paddingBottom: isOpen ? 1 : 0,
-                paddingLeft: isOpen ? (showLeftCustomAction ? 30 : 2) : 0,
-                marginTop: isOpen ? -2 : 0,
-                marginRight: -overlayRightPad,
-                marginBottom: isOpen ? -1 : 0,
-                marginLeft: isOpen ? (showLeftCustomAction ? -30 : -2) : 0,
                 backgroundColor: isOpen ? "rgba(255, 255, 255, 0.94)" : "rgba(255, 255, 255, 0)",
                 borderTopLeftRadius: isOpen ? 5 : 4,
                 borderTopRightRadius: isOpen ? 5 : 4,

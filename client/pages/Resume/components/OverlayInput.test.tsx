@@ -7,8 +7,14 @@ vi.mock('framer-motion', () => {
     const React = require('react');
     return {
         motion: {
-            div: React.forwardRef(({ onHoverStart, onHoverEnd, ...props }: any, ref: any) => (
-                <div ref={ref} onMouseEnter={onHoverStart} onMouseLeave={onHoverEnd} {...props} />
+            div: React.forwardRef(({ onHoverStart, onHoverEnd, animate, ...props }: any, ref: any) => (
+                <div
+                    ref={ref}
+                    onMouseEnter={onHoverStart}
+                    onMouseLeave={onHoverEnd}
+                    data-animate={JSON.stringify(animate)}
+                    {...props}
+                />
             )),
         },
         AnimatePresence: ({ children }: any) => <>{children}</>,
@@ -106,6 +112,31 @@ describe('OverlayInput', () => {
             expect(res).toBeNull();
         });
         fireEvent.mouseLeave(wrapper);
+    });
+
+    it('keeps hover animation layout-neutral', () => {
+        const { container } = render(
+            <OverlayInput
+                {...defaultProps}
+                hoveredField="test.path"
+                onDelete={vi.fn()}
+                onCustomAction={vi.fn()}
+                customActionIcon={<span>icon</span>}
+                customActionPlacement="left"
+            />
+        );
+        const animation = JSON.parse(
+            (container.firstChild as HTMLElement).dataset.animate || '{}'
+        );
+
+        expect(animation).not.toHaveProperty('paddingTop');
+        expect(animation).not.toHaveProperty('paddingRight');
+        expect(animation).not.toHaveProperty('paddingBottom');
+        expect(animation).not.toHaveProperty('paddingLeft');
+        expect(animation).not.toHaveProperty('marginTop');
+        expect(animation).not.toHaveProperty('marginRight');
+        expect(animation).not.toHaveProperty('marginBottom');
+        expect(animation).not.toHaveProperty('marginLeft');
     });
 
     it('shows text stats', () => {
