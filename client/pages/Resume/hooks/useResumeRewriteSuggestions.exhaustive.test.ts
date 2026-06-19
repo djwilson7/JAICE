@@ -131,4 +131,56 @@ describe('useResumeRewriteSuggestions exhaustive', () => {
         expect(resumeApi.streamResumeTailorSuggestion).toHaveBeenCalledTimes(1);
         await act(async () => resolveStream({ tailorSuggestions: { summary: [] } }));
     });
+
+    it('covers multiple experience bullets and accept/reject branches with remainingItems', async () => {
+        const customProps = {
+            ...baseProps,
+            resumeData: {
+                summary: 'Old summary',
+                experience: [
+                    { id: 'exp1', bullets: [{ id: 'b1', text: 'Old b1' }, { id: 'b2', text: 'Old b2' }, { id: 'b3', text: 'Old b3' }] },
+                    { id: 'exp2', bullets: [{ id: 'b4', text: 'Old b4' }] }
+                ]
+            },
+            setResumeData: vi.fn(),
+            setError: vi.fn(),
+            setSuccessMessage: vi.fn()
+        };
+
+        (resumeApi.streamResumeTailorSuggestion as any).mockImplementation(async (params, cb) => {
+            cb({ event: 'delta', target: 'experience', bullet_index: 0, text: 'Streamed b1' });
+            cb({ event: 'delta', target: 'experience', bullet_index: 1, text: 'Streamed b2' });
+            cb({ event: 'delta', target: 'experience', bullet_index: 2, text: 'Streamed b3' });
+            return {
+                assistantMessage: 'Exp success',
+                tailorSuggestions: {
+                    experience_bullets: [
+                        { bullet_index: 0, suggested_text: 'Final b1', reason: 'Stronger b1' },
+                        { bullet_index: 1, suggested_text: 'Final b2', reason: 'Stronger b2' },
+                        { bullet_index: 2, suggested_text: 'Final b3', reason: 'Stronger b3' }
+                    ]
+                }
+            };
+        });
+
+        const { result } = renderHook(() => useResumeRewriteSuggestions(customProps as any));
+
+        await act(async () => { await result.current.handleImproveExperience(customProps.resumeData.experience[0] as any); });
+        await act(async () => { await vi.runAllTimersAsync(); });
+
+        expect(result.current.experienceRewriteSuggestions['exp1'].items).toHaveLength(3);
+
+        // Accept b1 (leaving b2 and b3 behind - hits remainingItems branch)
+        act(() => { result.current.acceptExperienceRewriteSuggestion('exp1', 'b1'); });
+        expect(customProps.setResumeData).toHaveBeenCalled();
+        expect(result.current.experienceRewriteSuggestions['exp1'].items).toHaveLength(2);
+
+        // Reject b2 (leaving b3 behind - hits remainingItems branch in reject)
+        act(() => { result.current.rejectExperienceRewriteSuggestion('exp1', 'b2'); });
+        expect(result.current.experienceRewriteSuggestions['exp1'].items).toHaveLength(1);
+
+        // Reject b3 (leaving nothing behind - hits else branch in reject)
+        act(() => { result.current.rejectExperienceRewriteSuggestion('exp1', 'b3'); });
+        expect(result.current.experienceRewriteSuggestions['exp1']).toBeUndefined();
+    });
 });

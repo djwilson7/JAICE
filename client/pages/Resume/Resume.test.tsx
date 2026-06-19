@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Resume } from "./Resume";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
@@ -53,6 +53,15 @@ vi.mock("./components/ResumeWorkspace", () => ({ ResumeWorkspace: () => <div dat
 
 const mockOpenPdfPreview = vi.fn();
 const mockTogglePdfPreview = vi.fn();
+const mockSetFontPreviewTarget = vi.fn();
+const mockSetIsMarginPreviewVisible = vi.fn();
+const mockSetIsPageFormatPreviewVisible = vi.fn();
+const mockSetGapPreviewTarget = vi.fn();
+const mockClosePageStyleShelf = vi.fn();
+
+let mockCapturedPersistenceProps: any = null;
+let mockCapturedPdfPreviewProps: any = null;
+let mockCapturedChatProps: any = null;
 
 vi.mock("./hooks/useResumeDocumentEditing", () => ({
     useResumeDocumentEditing: () => ({
@@ -66,32 +75,45 @@ vi.mock("./hooks/useResumeFormatting", () => ({
         zoomPercent: 100,
         handleFitZoom: vi.fn(),
         handleTogglePageStyleShelf: vi.fn(),
-        closePageStyleShelf: vi.fn(),
+        closePageStyleShelf: mockClosePageStyleShelf,
         paperMetrics: {},
+        setFontPreviewTarget: mockSetFontPreviewTarget,
+        setIsMarginPreviewVisible: mockSetIsMarginPreviewVisible,
+        setIsPageFormatPreviewVisible: mockSetIsPageFormatPreviewVisible,
+        setGapPreviewTarget: mockSetGapPreviewTarget,
     })
 }));
 vi.mock("./hooks/useResumePersistence", () => ({
-    useResumePersistence: () => ({
-        handleSaveResume: vi.fn(),
-    })
+    useResumePersistence: (props: any) => {
+        mockCapturedPersistenceProps = props;
+        return {
+            handleSaveResume: vi.fn(),
+        };
+    }
 }));
 vi.mock("./hooks/useResumeChat", () => ({
-    useResumeChat: () => ({
-        chatMessages: [],
-    })
+    useResumeChat: (props: any) => {
+        mockCapturedChatProps = props;
+        return {
+            chatMessages: [],
+        };
+    }
 }));
 vi.mock("./hooks/useResumeRewriteSuggestions", () => ({
     useResumeRewriteSuggestions: () => ({})
 }));
 vi.mock("./hooks/useResumePdfPreview", () => ({
-    useResumePdfPreview: () => ({
-        isPdfPreviewOpen: false,
-        isGeneratingPdfPreview: false,
-        pdfPreviewUrl: null,
-        openPdfPreview: mockOpenPdfPreview,
-        togglePdfPreview: mockTogglePdfPreview,
-        closePdfPreview: vi.fn()
-    })
+    useResumePdfPreview: (props: any) => {
+        mockCapturedPdfPreviewProps = props;
+        return {
+            isPdfPreviewOpen: false,
+            isGeneratingPdfPreview: false,
+            pdfPreviewUrl: null,
+            openPdfPreview: mockOpenPdfPreview,
+            togglePdfPreview: mockTogglePdfPreview,
+            closePdfPreview: vi.fn()
+        };
+    }
 }));
 vi.mock("./documentViewModel", () => ({
     useResumeDocumentViewModel: () => ({
@@ -149,5 +171,50 @@ describe("Resume Component", () => {
 
         expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
         expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+    });
+
+    it("triggers callbacks from hooks for state transitions and clearing previews", () => {
+        render(<Resume />);
+
+        // 1. Trigger openChatRail callback (corresponds to handleOpenRightRail)
+        expect(mockCapturedChatProps).not.toBeNull();
+        fireEvent.click(screen.getByRole("button", { name: "Open left rail" })); // Reset
+        act(() => {
+            mockCapturedChatProps.openChatRail();
+        });
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "false");
+
+        // 2. Trigger resetFormatTransientState callback
+        expect(mockCapturedPersistenceProps).not.toBeNull();
+        mockSetFontPreviewTarget.mockClear();
+        mockSetIsMarginPreviewVisible.mockClear();
+        mockSetIsPageFormatPreviewVisible.mockClear();
+        mockSetGapPreviewTarget.mockClear();
+        mockClosePageStyleShelf.mockClear();
+
+        act(() => {
+            mockCapturedPersistenceProps.resetFormatTransientState();
+        });
+        expect(mockSetFontPreviewTarget).toHaveBeenCalledWith(null);
+        expect(mockSetIsMarginPreviewVisible).toHaveBeenCalledWith(false);
+        expect(mockSetIsPageFormatPreviewVisible).toHaveBeenCalledWith(false);
+        expect(mockSetGapPreviewTarget).toHaveBeenCalledWith(null);
+        expect(mockClosePageStyleShelf).toHaveBeenCalled();
+
+        // 3. Trigger clearFormatPreviews callback
+        expect(mockCapturedPdfPreviewProps).not.toBeNull();
+        mockSetFontPreviewTarget.mockClear();
+        mockSetIsMarginPreviewVisible.mockClear();
+        mockSetIsPageFormatPreviewVisible.mockClear();
+        mockSetGapPreviewTarget.mockClear();
+
+        act(() => {
+            mockCapturedPdfPreviewProps.clearFormatPreviews();
+        });
+        expect(mockSetFontPreviewTarget).toHaveBeenCalledWith(null);
+        expect(mockSetIsMarginPreviewVisible).toHaveBeenCalledWith(false);
+        expect(mockSetIsPageFormatPreviewVisible).toHaveBeenCalledWith(false);
+        expect(mockSetGapPreviewTarget).toHaveBeenCalledWith(null);
     });
 });

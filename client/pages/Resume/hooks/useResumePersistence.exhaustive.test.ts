@@ -65,6 +65,14 @@ describe("useResumePersistence exhaustive", () => {
 
     rerender({ ...mockProps, error: "Oops" });
     act(() => { vi.advanceTimersByTime(8001); });
+
+    // 4. Timer coverage for successMessage and error
+    rerender({ ...mockProps, successMessage: "Done" });
+    act(() => { vi.advanceTimersByTime(4001); });
+    expect(mockProps.setSuccessMessage).toHaveBeenCalledWith(null);
+
+    rerender({ ...mockProps, error: "Oops" });
+    act(() => { vi.advanceTimersByTime(8001); });
     expect(mockProps.setError).toHaveBeenCalledWith(null);
 
     // 5. handleCreateResume with clones
@@ -73,5 +81,41 @@ describe("useResumePersistence exhaustive", () => {
 
     // 6. isDirty with no activeSavedResume
     // Already hit because activeResumeId is null now.
+  });
+
+  it("covers delete master and delete error paths in confirmDeleteResume", async () => {
+    const resumes = [
+        { id: "v1", name: "Ver 1", is_master: false, updated_at: "2023-01-02", resume_data: { fullName: "Alice", formatting: {} } }
+    ];
+    (resumeApi.listSavedResumes as any).mockResolvedValue({ status: "success", resumes });
+    (resumeApi.deleteSavedResume as any).mockRejectedValue(new Error("Delete failed"));
+
+    const { result } = renderHook((p) => useResumePersistence(p), { initialProps: mockProps });
+
+    // Initial fetch
+    await act(async () => { await vi.runAllTimersAsync(); });
+
+    // Set up pendingDeleteResume via handleDeleteResume
+    act(() => { result.current.handleDeleteResume("v1", { stopPropagation: vi.fn() } as any); });
+    expect(result.current.pendingDeleteResume).toBeDefined();
+
+    // Mutate the pendingDeleteResume to make it master to trigger the early return branch
+    act(() => {
+      (result.current.pendingDeleteResume as any).is_master = true;
+    });
+
+    await act(async () => {
+      await result.current.confirmDeleteResume();
+    });
+    expect(mockProps.setError).toHaveBeenCalledWith("The master resume cannot be deleted.");
+    expect(result.current.pendingDeleteResume).toBeNull();
+
+    // Now test the delete API failure path
+    resumes[0].is_master = false;
+    act(() => { result.current.handleDeleteResume("v1", { stopPropagation: vi.fn() } as any); });
+    await act(async () => {
+      await result.current.confirmDeleteResume();
+    });
+    expect(mockProps.setError).toHaveBeenCalledWith("Delete failed");
   });
 });

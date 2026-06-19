@@ -95,9 +95,11 @@ describe('ResumeDocumentEditor', () => {
             updateEducationDetailText: vi.fn(),
             removeEducationDetailIfEmpty: vi.fn(),
             addSkillCategory: vi.fn(),
+            createSkillCategory: vi.fn().mockReturnValue('draft-id'),
             updateSkillCategoryName: vi.fn(),
             updateSkillCategoryItems: vi.fn(),
             removeSkillCategory: vi.fn(),
+            removeSkillCategoryIfEmpty: vi.fn(),
             moveSkillCategoryUp: vi.fn(),
             moveSkillCategoryDown: vi.fn(),
             clearSkillCategory: vi.fn(),
@@ -772,7 +774,7 @@ describe('ResumeDocumentEditor', () => {
             { id: 's1', category: 'Lang', items: ['JS', 'TS'] }
         ];
         
-        const { rerender } = render(<ResumeDocumentEditor {...defaultProps} />);
+        const { container, rerender } = render(<ResumeDocumentEditor {...defaultProps} />);
         const nameInput = screen.getByDisplayValue('Lang');
         fireEvent.change(nameInput, { target: { value: 'Lang2' } });
         expect(handlers.updateSkillCategoryName).toHaveBeenCalledWith('s1', 'Lang2');
@@ -781,9 +783,14 @@ describe('ResumeDocumentEditor', () => {
         fireEvent.change(itemsInput, { target: { value: 'JS, TS, Python' } });
         expect(handlers.updateSkillCategoryItems).toHaveBeenCalledWith('s1', 'JS, TS, Python');
 
-        const addSkillBtn = screen.getByTitle('Add skill category');
-        fireEvent.click(addSkillBtn);
-        expect(handlers.addSkillCategory).toHaveBeenCalled();
+        // Make the section active to render the draft skill category template
+        interaction.activeDocumentSection = 'skills';
+        rerender(<ResumeDocumentEditor {...defaultProps} />);
+
+        const addSkillInput = screen.getByPlaceholderText('Add Skill');
+        fireEvent.change(addSkillInput, { target: { value: 'New Skill Cat' } });
+        expect(handlers.createSkillCategory).toHaveBeenCalledWith('', '');
+        expect(handlers.updateSkillCategoryName).toHaveBeenCalledWith('draft-id', 'New Skill Cat');
 
         interaction.activeDocumentSection = 'skills';
         interaction.hoveredSkillId = 's1';
@@ -791,8 +798,6 @@ describe('ResumeDocumentEditor', () => {
         
         const moveSkillUpBtn = screen.getAllByLabelText('Move skill category up')[0];
         const moveSkillDownBtn = screen.getAllByLabelText('Move skill category down')[0];
-        const clearSkillBtn = screen.getAllByLabelText('Clear skill category')[0];
-        const delSkillBtn = screen.getAllByTitle('Delete skill category')[0];
 
         expect(moveSkillUpBtn).toBeDisabled();
         fireEvent.click(moveSkillUpBtn);
@@ -802,23 +807,10 @@ describe('ResumeDocumentEditor', () => {
         fireEvent.click(moveSkillDownBtn);
         expect(handlers.moveSkillCategoryDown).not.toHaveBeenCalled();
 
-        fireEvent.mouseEnter(clearSkillBtn);
-        expect(interaction.setHoveredSkillClearId).toHaveBeenCalledWith('s1');
-        fireEvent.mouseLeave(clearSkillBtn);
-        expect(interaction.setHoveredSkillClearId).toHaveBeenCalledWith(null);
-        fireEvent.click(clearSkillBtn);
-        expect(handlers.clearSkillCategory).toHaveBeenCalledWith('s1');
-
-        fireEvent.mouseEnter(delSkillBtn);
-        expect(interaction.setHoveredSkillDeleteId).toHaveBeenCalledWith('s1');
-        fireEvent.mouseLeave(delSkillBtn);
-        expect(interaction.setHoveredSkillDeleteId).toHaveBeenCalledWith(null);
-
-        interaction.hoveredSkillDeleteId = 's1';
-        rerender(<ResumeDocumentEditor {...defaultProps} />);
-        const delBtn = screen.getAllByLabelText('Delete skill category')[0];
-        fireEvent.click(delBtn);
-        expect(handlers.removeSkillCategory).toHaveBeenCalledWith('s1');
+        // Verify empty deletion is triggered on blur of the skill row
+        const skillRow = container.querySelector('.resume-editor-skill-row') as HTMLElement;
+        fireEvent.blur(skillRow);
+        expect(handlers.removeSkillCategoryIfEmpty).toHaveBeenCalledWith('s1');
     });
 
     it('picks the nearest skill item when the section is active', () => {

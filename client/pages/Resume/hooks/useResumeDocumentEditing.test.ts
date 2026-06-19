@@ -513,4 +513,198 @@ describe('useResumeDocumentEditing', () => {
         
         expect(result.current.resumeData.skills).toEqual([]);
     });
+
+    it('covers clear timers, retainExperienceSection, and resetEditorTransientState', () => {
+        vi.useFakeTimers();
+        const { result } = getHook();
+        const expId = result.current.resumeData.experience[0].id;
+        const bulletId = result.current.resumeData.experience[0].bullets[0].id;
+
+        // retainExperienceSection is triggered by toggleBulletTag
+        act(() => { result.current.toggleBulletTag(expId, bulletId, 'fake-tag'); });
+        expect(result.current.activeDocumentSection).toBe('experience');
+        
+        // Fast forward timer
+        act(() => { vi.advanceTimersByTime(6000); });
+        expect(result.current.activeDocumentSection).toBeNull();
+
+        // resetEditorTransientState
+        act(() => {
+            result.current.setHoveredContactField('email');
+            result.current.setFocusedContactField('email');
+            result.current.resetEditorTransientState();
+        });
+        expect(result.current.hoveredContactField).toBeNull();
+        expect(result.current.focusedContactField).toBeNull();
+        
+        vi.useRealTimers();
+    });
+
+    it('covers focusedDocumentSection branches for skills and sectionTitles', () => {
+        const { result } = getHook();
+        
+        act(() => { result.current.setFocusedField('skills.0.category'); });
+        expect(result.current.focusedDocumentSection).toBe('skills');
+
+        act(() => { result.current.setFocusedField('sectionTitles.experience'); });
+        expect(result.current.focusedDocumentSection).toBe('experience');
+
+        act(() => { result.current.setFocusedField('invalidFieldPattern'); });
+        expect(result.current.focusedDocumentSection).toBeNull();
+    });
+
+    it('covers setActiveDocumentSection function arg and exit timeouts', () => {
+        vi.useFakeTimers();
+        const { result } = getHook();
+
+        // functional state updater
+        act(() => {
+            result.current.setActiveDocumentSection((prev) => 'education');
+        });
+        expect(result.current.activeDocumentSection).toBe('education');
+
+        // experience exit timeout branch
+        act(() => {
+            result.current.setActiveDocumentSection('experience');
+        });
+        expect(result.current.activeDocumentSection).toBe('experience');
+
+        act(() => {
+            result.current.setActiveDocumentSection(null);
+        });
+        // should still be experience due to exit timeout delay (150ms)
+        expect(result.current.activeDocumentSection).toBe('experience');
+
+        act(() => { vi.advanceTimersByTime(200); });
+        expect(result.current.activeDocumentSection).toBeNull();
+
+        vi.useRealTimers();
+    });
+
+    it('covers deleteBulletTag and remove tag reference from bullets', () => {
+        const { result } = getHook();
+        const expId = result.current.resumeData.experience[0].id;
+        const bulletId = result.current.resumeData.experience[0].bullets[0].id;
+
+        act(() => {
+            result.current.createAndAssignBulletTag(expId, bulletId, 'Cloud');
+        });
+        const tag = result.current.resumeData.tagLibrary?.find(t => t.slug === 'cloud');
+        expect(tag).toBeDefined();
+
+        act(() => {
+            result.current.deleteBulletTag(tag!.id);
+        });
+        expect(result.current.resumeData.tagLibrary?.find(t => t.id === tag!.id)).toBeUndefined();
+        expect(result.current.resumeData.experience[0].bullets[0].tagIds).toEqual([]);
+    });
+
+    it('covers moveEducationUp, moveEducationDown, and clearEducation', () => {
+        const { result } = getHook();
+        act(() => {
+            result.current.setResumeData({ ...result.current.resumeData, education: [] });
+        });
+
+        let ed1Id = '';
+        let ed2Id = '';
+        act(() => {
+            ed1Id = result.current.addEducation();
+            ed2Id = result.current.addEducation();
+        });
+
+        act(() => {
+            result.current.updateEducationField(ed1Id, 'school', 'School 1');
+            result.current.updateEducationField(ed2Id, 'school', 'School 2');
+        });
+
+        // move up (no-op for first)
+        act(() => { result.current.moveEducationUp(ed1Id); });
+        expect(result.current.resumeData.education[0].id).toBe(ed1Id);
+
+        // move second up
+        act(() => { result.current.moveEducationUp(ed2Id); });
+        expect(result.current.resumeData.education[0].id).toBe(ed2Id);
+
+        // move first down (no-op for last)
+        act(() => { result.current.moveEducationDown(ed1Id); });
+        expect(result.current.resumeData.education[1].id).toBe(ed1Id);
+
+        // move second down
+        act(() => { result.current.moveEducationDown(ed2Id); });
+        expect(result.current.resumeData.education[1].id).toBe(ed2Id);
+
+        // clear education
+        act(() => { result.current.clearEducation(ed1Id); });
+        expect(result.current.resumeData.education.find(e => e.id === ed1Id)?.school).toBe('');
+    });
+
+    it('covers insertEducationDetailAfter and edge cases', () => {
+        const { result } = getHook();
+        act(() => {
+            result.current.setResumeData({ ...result.current.resumeData, education: [] });
+        });
+
+        let edId = '';
+        act(() => {
+            edId = result.current.addEducation();
+        });
+
+        act(() => {
+            result.current.addEducationDetailWithText(edId, 'GPA 4.0');
+        });
+        const detailId = result.current.resumeData.education[0].details[0].id;
+
+        act(() => {
+            result.current.insertEducationDetailAfter(edId, detailId);
+        });
+        expect(result.current.resumeData.education[0].details).toHaveLength(2);
+        expect(result.current.resumeData.education[0].details[1].text).toBe('');
+
+        // non-existent
+        act(() => {
+            result.current.insertEducationDetailAfter('fake', 'fake');
+        });
+    });
+
+    it('covers createSkillCategory, removeSkillCategoryIfEmpty, moveSkillCategoryUp/Down, and clearSkillCategory', () => {
+        const { result } = getHook();
+        act(() => {
+            result.current.setResumeData({ ...result.current.resumeData, skills: [] });
+        });
+
+        let s1Id = '';
+        let s2Id = '';
+        act(() => {
+            s1Id = result.current.createSkillCategory('Lang', 'Python, Rust');
+            s2Id = result.current.createSkillCategory('Cloud', 'AWS, GCP');
+        });
+
+        expect(result.current.resumeData.skills).toHaveLength(2);
+        expect(result.current.resumeData.skills[0].category).toBe('Lang');
+
+        // move up (no-op for first)
+        act(() => { result.current.moveSkillCategoryUp(s1Id); });
+        expect(result.current.resumeData.skills[0].id).toBe(s1Id);
+
+        // move second up
+        act(() => { result.current.moveSkillCategoryUp(s2Id); });
+        expect(result.current.resumeData.skills[0].id).toBe(s2Id);
+
+        // move first down (no-op for last)
+        act(() => { result.current.moveSkillCategoryDown(s1Id); });
+        expect(result.current.resumeData.skills[1].id).toBe(s1Id);
+
+        // move second down
+        act(() => { result.current.moveSkillCategoryDown(s2Id); });
+        expect(result.current.resumeData.skills[1].id).toBe(s2Id);
+
+        // clear skill category
+        act(() => { result.current.clearSkillCategory(s1Id); });
+        expect(result.current.resumeData.skills.find(s => s.id === s1Id)?.category).toBe('');
+
+        // remove if empty
+        act(() => { result.current.removeSkillCategoryIfEmpty(s1Id); });
+        expect(result.current.resumeData.skills.find(s => s.id === s1Id)).toBeUndefined();
+    });
 });
+

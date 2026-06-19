@@ -354,4 +354,84 @@ describe('buildResumeRenderDiagnostics', () => {
         expect(row).toHaveProperty('intendedPageHeight');
         expect(row.intendedPageHeight).toBe(1056);
     });
+
+    it('readExperienceHorizontalTrace and estimateLineCount cover all branches when section is present', () => {
+        const root = document.createElement('div');
+        root.innerHTML = `
+            <section data-section="experience">
+                <h2>Work Experience</h2>
+                <article>
+                    <div class="meta-row-info">
+                        <span>Company</span>
+                        <span>Role</span>
+                    </div>
+                    <div class="experience-bullets">
+                        <div class="resume-diagnostic-bullet-row">
+                            <span class="bullet-marker">•</span>
+                            <div class="bullet-text">Achieved great success</div>
+                        </div>
+                        <div class="resume-diagnostic-bullet-row">
+                            <!-- missing marker and text to test null paths -->
+                        </div>
+                    </div>
+                </article>
+                <article>
+                    <div class="experience-bullets">
+                        <!-- article with only bullet stack to test null metaRow -->
+                    </div>
+                </article>
+            </section>
+        `;
+        document.body.appendChild(root);
+
+        try {
+            // Spy on getComputedStyle to return expected properties
+            const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation((element: Element) => {
+                // If element has dynamic line height to test estimateLineCount
+                const isNormalLineHeight = element.classList.contains('bullet-text') && element.textContent === '';
+                return {
+                    paddingTop: '10px', paddingRight: '10px',
+                    paddingBottom: '10px', paddingLeft: '10px',
+                    borderLeftWidth: '0px', borderRightWidth: '0px',
+                    width: '816px', height: '100px',
+                    boxSizing: 'content-box', overflowX: 'hidden', overflowY: 'auto',
+                    marginTop: '0px', marginRight: '0px', marginBottom: '8px', marginLeft: '0px',
+                    gap: '0px', fontFamily: 'Arial', fontSize: '12px', fontWeight: '400',
+                    lineHeight: isNormalLineHeight ? 'normal' : '18px', letterSpacing: '0px', whiteSpace: 'normal',
+                    overflowWrap: 'break-word', wordBreak: 'normal',
+                } as unknown as CSSStyleDeclaration;
+            });
+
+            // Mock getBoundingClientRect
+            const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+            Element.prototype.getBoundingClientRect = function() {
+                return {
+                    x: 0, y: 0, width: 800, height: 100,
+                    top: 0, right: 800, bottom: 100, left: 0,
+                    toJSON: () => ({}),
+                } as DOMRect;
+            };
+
+            const result = buildResumeRenderDiagnostics({
+                phase: 'test',
+                formatting: defaultFormatting,
+                targets: [{ label: 'page', element: root, intendedPageHeight: 1056 }],
+            });
+
+            const diag = result.surfaces[0] as any;
+            expect(diag.experienceHorizontalTrace).toBeDefined();
+            expect(diag.experienceHorizontalTrace.section).toBeDefined();
+            expect(diag.experienceHorizontalTrace.items).toHaveLength(2);
+            expect(diag.experienceHorizontalTrace.bullets).toHaveLength(2);
+            expect(diag.experienceHorizontalTrace.bullets[0].fullText).toBe('Achieved great success');
+            expect(diag.experienceHorizontalTrace.bullets[0].estimatedLineCount).toBeGreaterThan(0);
+            expect(diag.experienceHorizontalTrace.bullets[1].fullText).toBe('');
+            expect(diag.experienceHorizontalTrace.bullets[1].estimatedLineCount).toBeNull(); // because elements are null/normal
+
+            // Restore getBoundingClientRect
+            Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+        } finally {
+            document.body.removeChild(root);
+        }
+    });
 });

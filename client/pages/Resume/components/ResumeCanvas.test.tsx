@@ -195,4 +195,67 @@ describe('ResumeCanvas', () => {
             behavior: 'auto'
         });
     });
+
+    it('sets up ResizeObserver on the content element and disconnects it on unmount', () => {
+        const observeSpy = vi.fn();
+        const disconnectSpy = vi.fn();
+        let capturedCallback: any = null;
+
+        class MockResizeObserver {
+            constructor(callback: any) {
+                capturedCallback = callback;
+            }
+            observe = observeSpy;
+            disconnect = disconnectSpy;
+        }
+        window.ResizeObserver = MockResizeObserver as any;
+
+        const originalRequestAnimationFrame = window.requestAnimationFrame;
+        const originalCancelAnimationFrame = window.cancelAnimationFrame;
+        const requestAnimationFrameSpy = vi.fn(() => 123);
+        const cancelAnimationFrameSpy = vi.fn();
+        window.requestAnimationFrame = requestAnimationFrameSpy as any;
+        window.cancelAnimationFrame = cancelAnimationFrameSpy as any;
+
+        const props = {
+            canvasViewportRef: { current: null },
+            registerCanvasViewportElement: vi.fn(),
+            resumeDocumentContentRef: { current: null },
+            registerResumeDocumentContentElement: vi.fn(),
+            canvasNeedsHorizontalScroll: false,
+            canvasNeedsVerticalScroll: false,
+            canvasViewportStyle: {},
+            canvasHorizontalOverflow: 0,
+            scaledCanvasWidth: 800,
+            scaledCanvasHeight: 1000,
+            paperMetrics: { width: 8.5, height: 11, dimensionLabel: { width: '8.5in', height: '11in' } } as any,
+            resumeCanvasHeight: 1000,
+            animatedCanvasZoom: 1,
+            fontPreviewTarget: null,
+            documentCssVariables,
+            resumePageCount: 1,
+            resumePageStride: 1000,
+            isPageFormatPreviewVisible: false,
+            isMarginPreviewVisible: false,
+            isPagePreviewMode: false,
+            children: (
+                <div data-resume-segment-id="segment-1">Child</div>
+            ),
+        };
+
+        const { unmount, rerender } = render(<ResumeCanvas {...props} />);
+        expect(observeSpy).toHaveBeenCalled();
+        expect(requestAnimationFrameSpy).toHaveBeenCalled();
+
+        // Rerender with isPagePreviewMode: true
+        rerender(<ResumeCanvas {...props} isPagePreviewMode={true} />);
+
+        unmount();
+        expect(disconnectSpy).toHaveBeenCalled();
+        expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(123);
+
+        window.requestAnimationFrame = originalRequestAnimationFrame;
+        window.cancelAnimationFrame = originalCancelAnimationFrame;
+        delete (window as any).ResizeObserver;
+    });
 });
