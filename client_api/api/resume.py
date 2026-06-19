@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Body, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Any, List, Optional
 import uuid
 import json
@@ -98,7 +98,7 @@ def _resume_pdf_debug_host_path(filename: str) -> Optional[str]:
 class ResumeBullet(BaseModel):
     id: Optional[str] = None
     text: str
-    tagIds: List[str] = []
+    tagIds: List[str] = Field(default_factory=list)
 
 
 class ResumeTag(BaseModel):
@@ -124,7 +124,7 @@ class ExperienceItem(BaseModel):
     location: Optional[str] = None
     startDate: Optional[str] = None
     endDate: Optional[str] = None
-    bullets: List[ResumeBullet] = []
+    bullets: List[ResumeBullet] = Field(default_factory=list)
 
 
 class EducationItem(BaseModel):
@@ -133,13 +133,13 @@ class EducationItem(BaseModel):
     degree: Optional[str] = None
     startDate: Optional[str] = None
     endDate: Optional[str] = None
-    details: List[ResumeBullet] = []
+    details: List[ResumeBullet] = Field(default_factory=list)
 
 
 class SkillCategory(BaseModel):
     id: Optional[str] = None
     category: str = "Skills"
-    items: List[str] = []
+    items: List[str] = Field(default_factory=list)
 
     @field_validator("items", mode="before")
     @classmethod
@@ -174,14 +174,14 @@ class ResumeData(BaseModel):
     linkedin: Optional[str] = None
     github: Optional[str] = None
     summary: Optional[str] = None
-    experience: List[ExperienceItem] = []
-    education: List[EducationItem] = []
-    skills: List[SkillCategory] = []
-    customContact: List[CustomContactField] = []
-    hiddenContactFields: List[str] = []
-    formatting: ResumeFormatting = ResumeFormatting()
-    sectionTitles: ResumeSectionTitles = ResumeSectionTitles()
-    tagLibrary: List[ResumeTag] = []
+    experience: List[ExperienceItem] = Field(default_factory=list)
+    education: List[EducationItem] = Field(default_factory=list)
+    skills: List[SkillCategory] = Field(default_factory=list)
+    customContact: List[CustomContactField] = Field(default_factory=list)
+    hiddenContactFields: List[str] = Field(default_factory=list)
+    formatting: ResumeFormatting = Field(default_factory=ResumeFormatting)
+    sectionTitles: ResumeSectionTitles = Field(default_factory=ResumeSectionTitles)
+    tagLibrary: List[ResumeTag] = Field(default_factory=list)
 
     @field_validator("skills", mode="before")
     @classmethod
@@ -943,32 +943,60 @@ async def save_resume(
             # Transaction block
             async with conn.transaction():
                 # If setting as master, clear any existing master badges for this user
-                if payload.is_master:
+                if payload.is_master and not source_id:
                     logging.info(f"[{trace_id}] Setting new master; clearing old master(s) for user {uid}")
                     await conn.execute(
                         "UPDATE public.resumes SET is_master = FALSE WHERE user_uid = $1", uid
                     )
 
-                query = """
-                    INSERT INTO public.resumes (
-                        user_uid, name, is_master, schema_version, source_resume_id, 
-                        resume_data, target_job_title, target_job_description, 
-                        created_at, updated_at
-                    ) VALUES ($1, $2, $3, 1, $4, $5, $6, $7, now(), now())
-                    RETURNING id, name, is_master, schema_version, source_resume_id, 
-                              resume_data, target_job_title, target_job_description, 
-                              created_at, updated_at
-                """
-                row = await conn.fetchrow(
-                    query,
-                    uid,
-                    payload.name,
-                    payload.is_master,
-                    source_id,
-                    payload.resume_data.model_dump_json(),
-                    payload.target_job_title,
-                    payload.target_job_description
-                )
+                if source_id:
+                    # Snapshot the owned master inside the database transaction. jsonb values
+                    # are copied into the new row, so the version cannot share mutable state
+                    # with either the request object or its source record.
+                    query = """
+                        INSERT INTO public.resumes (
+                            user_uid, name, is_master, schema_version, source_resume_id,
+                            resume_data, target_job_title, target_job_description,
+                            created_at, updated_at
+                        )
+                        SELECT $1, $2, FALSE, 1, source.id, source.resume_data,
+                               $4, $5, now(), now()
+                        FROM public.resumes AS source
+                        WHERE source.id = $3 AND source.user_uid = $1 AND source.is_master = TRUE
+                        RETURNING id, name, is_master, schema_version, source_resume_id,
+                                  resume_data, target_job_title, target_job_description,
+                                  created_at, updated_at
+                    """
+                    row = await conn.fetchrow(
+                        query,
+                        uid,
+                        payload.name,
+                        source_id,
+                        payload.target_job_title,
+                        payload.target_job_description,
+                    )
+                    if not row:
+                        raise HTTPException(status_code=404, detail="Master resume source not found or access denied")
+                else:
+                    query = """
+                        INSERT INTO public.resumes (
+                            user_uid, name, is_master, schema_version, source_resume_id,
+                            resume_data, target_job_title, target_job_description,
+                            created_at, updated_at
+                        ) VALUES ($1, $2, $3, 1, NULL, $4, $5, $6, now(), now())
+                        RETURNING id, name, is_master, schema_version, source_resume_id,
+                                  resume_data, target_job_title, target_job_description,
+                                  created_at, updated_at
+                    """
+                    row = await conn.fetchrow(
+                        query,
+                        uid,
+                        payload.name,
+                        payload.is_master,
+                        payload.resume_data.model_dump_json(),
+                        payload.target_job_title,
+                        payload.target_job_description,
+                    )
 
                 if not row:
                     raise HTTPException(status_code=500, detail="Failed to insert resume record")
@@ -986,6 +1014,8 @@ async def save_resume(
                 res_dict["updated_at"] = res_dict["updated_at"].isoformat()
                 return {"status": "success", "resume": res_dict}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"[{trace_id}] Error creating resume: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to create resume: {e}")
@@ -1080,12 +1110,14 @@ async def delete_resume(
 
     try:
         async with get_connection() as conn:
-            # Verify ownership
-            exists = await conn.fetchval(
-                "SELECT 1 FROM public.resumes WHERE id = $1 AND user_uid = $2", res_uuid, uid
+            # Master deletion is intentionally outside the version-delete flow.
+            is_master = await conn.fetchval(
+                "SELECT is_master FROM public.resumes WHERE id = $1 AND user_uid = $2", res_uuid, uid
             )
-            if not exists:
+            if is_master is None:
                 raise HTTPException(status_code=404, detail="Resume not found or access denied")
+            if is_master:
+                raise HTTPException(status_code=409, detail="The master resume cannot be deleted")
 
             await conn.execute(
                 "DELETE FROM public.resumes WHERE id = $1 AND user_uid = $2", res_uuid, uid

@@ -30,10 +30,11 @@ class Transaction:
 
 
 class ResumeConn:
-    def __init__(self, *, rows=None, row=None, exists=True) -> None:
+    def __init__(self, *, rows=None, row=None, exists=True, delete_is_master=False) -> None:
         self.rows = rows or []
         self.row = row
         self.exists = exists
+        self.delete_is_master = delete_is_master
         self.executed = []
         self.fetchrow_calls = []
         self.fetchval_calls = []
@@ -50,6 +51,8 @@ class ResumeConn:
 
     async def fetchval(self, query, *args):
         self.fetchval_calls.append((query, args))
+        if "SELECT is_master" in query:
+            return self.delete_is_master if self.exists else None
         return 1 if self.exists else None
 
     async def execute(self, query, *args):
@@ -268,14 +271,17 @@ async def test_resume_crud_endpoints(monkeypatch, user):
     saved = await resume.save_resume(
         resume.SaveResumeRequest(
             name="Master",
-            is_master=True,
+            is_master=False,
             source_resume_id="22222222-2222-2222-2222-222222222222",
             resume_data=sample_resume_data(),
         ),
         user,
     )
     assert saved["status"] == "success"
-    assert save_conn.executed
+    clone_query, clone_args = save_conn.fetchrow_calls[0]
+    assert "source.resume_data" in clone_query
+    assert "source.is_master = TRUE" in clone_query
+    assert sample_resume_data().model_dump_json() not in clone_args
 
     with pytest.raises(HTTPException) as bad_source:
         await resume.save_resume(
@@ -320,6 +326,13 @@ async def test_resume_crud_endpoints(monkeypatch, user):
     deleted = await resume.delete_resume("11111111-1111-1111-1111-111111111111", user)
     assert deleted == {"status": "success", "deleted_id": "11111111-1111-1111-1111-111111111111"}
     assert delete_conn.executed
+
+    master_delete_conn = ResumeConn(exists=True, delete_is_master=True)
+    monkeypatch.setattr(resume, "get_connection", lambda: conn_context(master_delete_conn))
+    with pytest.raises(HTTPException) as master_delete:
+        await resume.delete_resume("11111111-1111-1111-1111-111111111111", user)
+    assert master_delete.value.status_code == 409
+    assert not master_delete_conn.executed
 
     missing_delete = ResumeConn(exists=False)
     monkeypatch.setattr(resume, "get_connection", lambda: conn_context(missing_delete))

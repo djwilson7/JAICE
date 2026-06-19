@@ -53,10 +53,11 @@ class Transaction:
 
 
 class Conn:
-    def __init__(self, *, rows=(), row=None, exists=True):
+    def __init__(self, *, rows=(), row=None, exists=True, delete_is_master=False):
         self.rows = rows
         self.row = row
         self.exists = exists
+        self.delete_is_master = delete_is_master
         self.execute_calls = []
 
     def transaction(self):
@@ -68,7 +69,9 @@ class Conn:
     async def fetchrow(self, *_args):
         return self.row
 
-    async def fetchval(self, *_args):
+    async def fetchval(self, query, *_args):
+        if "SELECT is_master" in query:
+            return self.delete_is_master if self.exists else None
         return 1 if self.exists else None
 
     async def execute(self, query, *args):
