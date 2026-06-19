@@ -793,3 +793,238 @@ def test_decode_gmail_pubsub_data_raw_json_extra():
 def test_gmail_worker_import_direct():
     import gmail.gmail_worker
     assert gmail.gmail_worker is not None
+
+def test_pubsub_listener_build_celery_client(monkeypatch):
+    from gmail import pubsub_listener
+    monkeypatch.setenv("CELERY_BROKER_URL_LOCAL", "redis://localhost:6379/0")
+    client = pubsub_listener.build_celery_client()
+    assert client.conf.broker_url == "redis://localhost:6379/0"
+
+def test_pubsub_listener_main_callback(monkeypatch):
+    _install_pubsub_stub()
+    from gmail import pubsub_listener
+    from google.cloud import pubsub_v1
+    import types
+
+    # Mock subscription_path and validate_google_credentials_file to succeed
+    monkeypatch.setattr(pubsub_listener, "subscription_path", lambda: "projects/p/subscriptions/s")
+    monkeypatch.setattr(pubsub_listener, "validate_google_credentials_file", lambda: None)
+    
+    # Mock celery client and task dispatching
+    class MockCelery:
+        def __init__(self, *args, **kwargs):
+            self.conf = types.SimpleNamespace(broker_url="mock")
+            self.sent_tasks = []
+        def update(self, **kwargs):
+            pass
+        def send_task(self, name, args, queue, headers):
+            self.sent_tasks.append((name, args, queue, headers))
+            return None
+            
+    mock_celery = MockCelery()
+    monkeypatch.setattr(pubsub_listener, "build_celery_client", lambda: mock_celery)
+
+    captured_callback = None
+    
+    class MockSubscriberClient:
+        def subscribe(self, sub_path, callback):
+            nonlocal captured_callback
+            captured_callback = callback
+            return types.SimpleNamespace(result=lambda: None, cancel=lambda: None)
+        def close(self):
+            pass
+
+    monkeypatch.setattr(pubsub_v1, "SubscriberClient", MockSubscriberClient)
+
+    # Run main to set up the subscriber and capture the callback
+    pubsub_listener.main()
+    assert captured_callback is not None
+
+    # Test callback with valid message
+    class MockMessage:
+        def __init__(self, message_id, data):
+            self.message_id = message_id
+            self.data = data
+            self.acked = False
+            self.nacked = False
+        def ack(self):
+            self.acked = True
+        def nack(self):
+            self.nacked = True
+
+    # 1. Valid data
+    valid_data = json.dumps({"emailAddress": "test@example.com", "historyId": 123}).encode()
+    msg = MockMessage("msg1", valid_data)
+    captured_callback(msg)
+    assert msg.acked is True
+    assert len(mock_celery.sent_tasks) == 1
+    assert mock_celery.sent_tasks[0][1][1] == "test@example.com"
+
+    # 2. InvalidPubSubPayload
+    invalid_data = b"\x00\xff"
+    msg2 = MockMessage("msg2", invalid_data)
+    captured_callback(msg2)
+    assert msg2.acked is True # Invalid payload is acknowledged (dropped)
+
+    # 3. Random exception (e.g. missing fields triggers ValueError)
+    incomplete_data = json.dumps({"emailAddress": "test@example.com"}).encode() # missing historyId
+    msg3 = MockMessage("msg3", incomplete_data)
+    captured_callback(msg3)
+    assert msg3.nacked is True # Random error causes nack
+
+
+def test_gmail_tasks_remaining_coverage(monkeypatch):
+    from gmail import gmail_tasks
+    import pytest
+    from datetime import datetime, timezone, timedelta
+    from unittest.mock import MagicMock
+
+    # Mock Redis to avoid connection timeout
+    class MockRedis:
+        def set(self, *args, **kwargs):
+            return True
+        def delete(self, *args, **kwargs):
+            return None
+    monkeypatch.setattr(gmail_tasks, "r", MockRedis())
+
+    # 1. _topic_name errors
+    monkeypatch.setattr(gmail_tasks, "GMAIL_PUBSUB_TOPIC", None)
+    with pytest.raises(ValueError, match="GMAIL_PUBSUB_TOPIC_NAME environment variable is not set"):
+        gmail_tasks._topic_name()
+
+    monkeypatch.setattr(gmail_tasks, "GMAIL_PUBSUB_TOPIC", "some-topic")
+    monkeypatch.setattr(gmail_tasks, "GMAIL_PUBSUB_PROJECT_ID", None)
+    with pytest.raises(ValueError, match="GMAIL_PUBSUB_PROJECT_ID environment variable is not set"):
+        gmail_tasks._topic_name()
+
+    orig_ensure_watch = gmail_tasks.ensure_gmail_watch
+    orig_sync_history = gmail_tasks.sync_history_for_user
+
+    # 2. ensure_watch retry
+    mock_self = MagicMock()
+    mock_self.retry.side_effect = RuntimeError("retry_called")
+    monkeypatch.setattr(gmail_tasks, "ensure_gmail_watch", MagicMock(side_effect=Exception("sync_failed")))
+    # mock mark_gmail_sync_error to raise exception as well to cover line 78
+    monkeypatch.setattr(gmail_tasks, "mark_gmail_sync_error", MagicMock(side_effect=Exception("db_failed")))
+    with pytest.raises(RuntimeError, match="retry_called"):
+        gmail_tasks.ensure_watch(mock_self, "u1", "t1")
+
+    # 3. catch_up_sync retry
+    mock_self = MagicMock()
+    mock_self.retry.side_effect = RuntimeError("retry_called")
+    monkeypatch.setattr(gmail_tasks, "sync_history_for_user", MagicMock(side_effect=Exception("sync_failed")))
+    with pytest.raises(RuntimeError, match="retry_called"):
+        gmail_tasks.catch_up_sync(mock_self, "u1", "t1")
+
+    # 4. process_history_event retry
+    mock_self = MagicMock()
+    mock_self.retry.side_effect = RuntimeError("retry_called")
+    monkeypatch.setattr(gmail_tasks, "sync_history_for_user", MagicMock(side_effect=Exception("sync_failed")))
+    with pytest.raises(RuntimeError, match="retry_called"):
+        gmail_tasks.process_history_event(mock_self, "msg-id", "test@example.com", "123", "t1")
+
+    # Restore orig functions for remaining tests
+    monkeypatch.setattr(gmail_tasks, "ensure_gmail_watch", orig_ensure_watch)
+    monkeypatch.setattr(gmail_tasks, "sync_history_for_user", orig_sync_history)
+
+
+    # 5. ensure_gmail_watch
+    # 5a. No sync state
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: None)
+    res = gmail_tasks.ensure_gmail_watch("u1", "t1")
+    assert res["status"] == "skipped"
+
+    # 5b. Active expiration (with skew) and no tzinfo vs with tzinfo
+    now = datetime.now(timezone.utc)
+    future_date = now + timedelta(days=2)
+    state = {
+        "google_refresh_token": "enc_token",
+        "gmail_watch_expiration": future_date,
+        "gmail_history_id": "hist-1"
+    }
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: state)
+    res = gmail_tasks.ensure_gmail_watch("u1", "t1")
+    assert res["status"] == "active"
+
+    # with tzinfo is None
+    future_date_no_tz = datetime.now() + timedelta(days=2)
+    state_no_tz = {
+        "google_refresh_token": "enc_token",
+        "gmail_watch_expiration": future_date_no_tz,
+        "gmail_history_id": "hist-1"
+    }
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: state_no_tz)
+    res = gmail_tasks.ensure_gmail_watch("u1", "t1")
+    assert res["status"] == "active"
+
+    # 5c. watch response did not include historyId/expiration
+    monkeypatch.setattr(gmail_tasks, "decrypt_token", lambda tok: "dec")
+    monkeypatch.setattr(gmail_tasks, "get_access_token_from_refresh", lambda tok, tid: "acc")
+    
+    mock_service = MagicMock()
+    mock_service.users().watch().execute.return_value = {} # empty response
+    monkeypatch.setattr(gmail_tasks, "build_gmail_service", lambda acc: mock_service)
+    monkeypatch.setattr(gmail_tasks, "_topic_name", lambda: "projects/p/topics/t")
+    
+    # Needs to fail watch checks
+    state_expired = {
+        "google_refresh_token": "enc_token",
+        "gmail_watch_expiration": datetime.now(timezone.utc) - timedelta(days=1),
+        "gmail_history_id": "hist-1"
+    }
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: state_expired)
+    with pytest.raises(RuntimeError, match="Gmail watch response did not include historyId"):
+        gmail_tasks.ensure_gmail_watch("u1", "t1")
+
+    # 6. stop_gmail_watch_for_user exception stop failed
+    state_valid = {
+        "google_refresh_token": "enc_token"
+    }
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: state_valid)
+    mock_service_stop = MagicMock()
+    mock_service_stop.users().stop().execute.side_effect = Exception("stop failed")
+    monkeypatch.setattr(gmail_tasks, "build_gmail_service", lambda acc: mock_service_stop)
+    cleared = False
+    def mock_clear(uid):
+        nonlocal cleared
+        cleared = True
+    monkeypatch.setattr(gmail_tasks, "clear_gmail_sync_state", mock_clear)
+    gmail_tasks.stop_gmail_watch_for_user("u1", "t1")
+    assert cleared is True
+
+    # 7. sync_history_for_user non-invalid history error
+    from googleapiclient.errors import HttpError
+    mock_resp = MagicMock()
+    mock_resp.status = 500
+    mock_resp.reason = "Internal Server Error"
+    
+    state_for_sync = {
+        "google_refresh_token": "enc_token",
+        "gmail_history_id": "12345"
+    }
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: state_for_sync)
+    
+    def mock_fetch_history(*args):
+        raise HttpError(resp=mock_resp, content=b"error")
+        
+    monkeypatch.setattr(gmail_tasks, "fetch_history_message_ids", mock_fetch_history)
+    with pytest.raises(HttpError):
+        gmail_tasks.sync_history_for_user("u1", "t1")
+
+    # 8. fallback_time_window_sync: next_history_id is empty
+    state_fb = {
+        "google_refresh_token": "enc_token"
+    }
+    monkeypatch.setattr(gmail_tasks, "get_gmail_sync_state", lambda uid: state_fb)
+    monkeypatch.setattr(gmail_tasks, "fetch_message_ids", lambda *args, **kwargs: ["m1"])
+    monkeypatch.setattr(gmail_tasks, "enqueue_fetch_batches", lambda *args: 1)
+    monkeypatch.setattr(gmail_tasks, "ensure_gmail_watch", lambda *args, **kwargs: {})
+    history_updated = False
+    def mock_update_history_id(uid, hid):
+        nonlocal history_updated
+        history_updated = True
+    monkeypatch.setattr(gmail_tasks, "update_gmail_history_id", mock_update_history_id)
+    gmail_tasks.fallback_time_window_sync("u1", "t1")
+    assert history_updated is False # because next_history_id is empty
+
+

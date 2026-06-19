@@ -16,7 +16,7 @@ def test_shared_resume_render_assets_are_valid():
     assert spec["version"]
     assert spec["paperSizes"]["a4"]["printName"] == "A4"
     assert ".resume-document__section" in load_document_css()
-    assert "--resume-default-body-font-size-pt: 12" in load_formatting_css()
+    assert "--resume-default-body-font-size-pt: 9" in load_formatting_css()
     assert load_formatting_tokens()["resume-default-page-margin-pt"] == 54
 
 
@@ -34,7 +34,7 @@ def test_css_tokens_drive_backend_defaults_and_independent_inner_spacing():
             "innerSectionGapFormat": "compact",
         }
     )
-    assert normalized.body_font_size == 12
+    assert normalized.body_font_size == 9
     assert normalized.page_margin_pt == 54
     assert normalized.section_gap_pt == 16
     assert normalized.inner_section_gap_pt == 4
@@ -60,3 +60,33 @@ def test_backend_html_uses_canonical_tokens_and_semantic_classes_only():
     assert "page-break-inside: avoid" in document
     assert " contact-row" not in document
     assert " body-text" not in document
+
+
+def test_normalize_formatting_edge_cases():
+    from client_api.services.resume_pdf.formatting import normalize_formatting, paper_viewport_dimensions
+    
+    normalized = normalize_formatting(
+        {
+            "pageSize": "invalid_page_size",
+            "paperLayoutFormat": "invalid_density",
+            "innerSectionGapFormat": "invalid_inner_density",
+            "pageMarginPt": "not_a_number",
+            "titleFontSize": None,
+        }
+    )
+    # Checks fallbacks were applied
+    assert normalized.page_size == "a4"
+    assert normalized.layout_density == "standard"
+    assert normalized.inner_density == "standard"
+    assert normalized.page_margin_pt == 54.0
+    assert normalized.title_font_size == 18.0
+
+    # Test paper_viewport_dimensions
+    dim_letter = paper_viewport_dimensions("Letter")
+    assert "width" in dim_letter
+    assert "height" in dim_letter
+    
+    dim_a4 = paper_viewport_dimensions("A4")
+    assert "width" in dim_a4
+    assert "height" in dim_a4
+
