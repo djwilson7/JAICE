@@ -1,4 +1,5 @@
 import React from "react";
+import { ResumePageLoadingSkeleton } from "./ResumePageLoadingSkeleton";
 
 type ResumePdfPreviewProps = {
     isLightMode: boolean;
@@ -46,28 +47,7 @@ export const ResumePdfPreview: React.FC<ResumePdfPreviewProps> = ({
             <div className={`relative min-h-0 flex-1 ${isLightMode ? "bg-slate-200" : "bg-slate-900"}`}>
                 {isGeneratingPdfPreview || !pdfPreviewUrl ? (
                     <div className="flex h-full items-start justify-center overflow-hidden p-6">
-                        <div className="aspect-[8.5/11] h-full max-h-full max-w-full animate-pulse overflow-hidden rounded-sm border border-slate-300 bg-white p-[9%] shadow-[0_18px_44px_rgba(15,23,42,0.2)]">
-                            <div className="mx-auto mb-[7%] h-3 w-2/5 rounded-sm bg-slate-300" />
-                            <div className="mx-auto mb-[10%] h-2 w-3/5 rounded-sm bg-slate-200" />
-                            <div className="mb-[4%] h-2.5 w-1/3 rounded-sm bg-slate-300" />
-                            <div className="space-y-2">
-                                <div className="h-2 w-full rounded-sm bg-slate-200" />
-                                <div className="h-2 w-11/12 rounded-sm bg-slate-200" />
-                                <div className="h-2 w-4/5 rounded-sm bg-slate-200" />
-                            </div>
-                            <div className="mb-[4%] mt-[10%] h-2.5 w-2/5 rounded-sm bg-slate-300" />
-                            <div className="space-y-2">
-                                <div className="h-2 w-3/4 rounded-sm bg-slate-200" />
-                                <div className="h-2 w-full rounded-sm bg-slate-200" />
-                                <div className="h-2 w-11/12 rounded-sm bg-slate-200" />
-                                <div className="h-2 w-4/5 rounded-sm bg-slate-200" />
-                            </div>
-                            <div className="mb-[4%] mt-[10%] h-2.5 w-1/3 rounded-sm bg-slate-300" />
-                            <div className="space-y-2">
-                                <div className="h-2 w-full rounded-sm bg-slate-200" />
-                                <div className="h-2 w-5/6 rounded-sm bg-slate-200" />
-                            </div>
-                        </div>
+                        <ResumePageLoadingSkeleton />
                     </div>
                 ) : (
                     <object

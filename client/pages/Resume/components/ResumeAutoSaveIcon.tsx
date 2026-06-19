@@ -16,7 +16,7 @@ export const ResumeAutoSaveIcon: React.FC<ResumeAutoSaveIconProps> = ({
         <path
             d="M18.7 7.9C17.32 5.98 14.98 4.8 12.25 4.8C8.28 4.8 5.02 7.68 4.42 11.45M4.42 11.45L3.45 8.96M4.42 11.45L6.91 10.48"
             stroke="currentColor"
-            strokeWidth="1.15"
+            strokeWidth="1.2"
             strokeLinecap="round"
             strokeLinejoin="round"
         />
@@ -30,7 +30,7 @@ export const ResumeAutoSaveIcon: React.FC<ResumeAutoSaveIconProps> = ({
         <path
             d="M5.3 16.1C6.68 18.02 9.02 19.2 11.75 19.2C15.72 19.2 18.98 16.32 19.58 12.55M19.58 12.55L20.55 15.04M19.58 12.55L17.09 13.52"
             stroke="currentColor"
-            strokeWidth="1.15"
+            strokeWidth="1.2"
             strokeLinecap="round"
             strokeLinejoin="round"
         />

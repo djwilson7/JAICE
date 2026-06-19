@@ -123,7 +123,8 @@ describe("Resume Component", () => {
     it("collapses rails before opening PDF preview from the header toggle", () => {
         render(<Resume />);
 
-        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
 
         fireEvent.click(screen.getByRole("button", { name: "Preview PDF" }));
 
@@ -136,7 +137,7 @@ describe("Resume Component", () => {
     it("keeps the left and right rails mutually exclusive", () => {
         render(<Resume />);
 
-        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
         expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
 
         fireEvent.click(screen.getByRole("button", { name: "Open right rail" }));

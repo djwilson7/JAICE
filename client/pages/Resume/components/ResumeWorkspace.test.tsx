@@ -144,7 +144,8 @@ describe('ResumeWorkspace', () => {
         pageSize: 'letter', setPageSize: vi.fn(), setTitleFontSize: vi.fn(), headerFontSize: 16, setHeaderFontSize: vi.fn(), setSubHeaderFontSize: vi.fn(), setBodyFontSize: vi.fn(), setPageMarginPt: vi.fn(), paperLayoutFormat: 'standard', setPaperLayoutFormat: vi.fn(), innerSectionGapFormat: 'standard', setInnerSectionGapFormat: vi.fn(), setFontPreviewTarget: vi.fn(), setIsMarginPreviewVisible: vi.fn(), setIsPageFormatPreviewVisible: vi.fn(), setGapPreviewTarget: vi.fn(),
         toolbarSurfaceStyle: {}, documentToolButtonClass: '', handleTogglePageStyleShelf: vi.fn(), handleFitZoom: vi.fn(), zoomMode: 'manual', manualZoom: 1, setZoomMode: vi.fn(), setManualZoom: vi.fn(), zoomPercent: 100,
         isPdfPreviewOpen: false, pdfPreviewUrl: null, resumeName: 'Test', isGeneratingPdfPreview: false, closePdfPreview: vi.fn(),
-        loadingList: false
+        loadingList: false,
+        initialLoadState: 'loaded'
     };
 
     const renderWorkspace = (overrides: Record<string, unknown> = {}) => {
@@ -193,6 +194,20 @@ describe('ResumeWorkspace', () => {
         fireEvent.click(zoomInBtn);
         expect(defaultProps.setZoomMode).toHaveBeenCalledWith('manual');
         expect(defaultProps.setManualZoom).toHaveBeenCalled();
+    });
+
+    it('shows the shared page skeleton during initial resume loading', () => {
+        renderWorkspace({ initialLoadState: 'loading' });
+
+        expect(screen.getByTestId('resume-page-loading-skeleton')).toBeTruthy();
+        expect(screen.queryByTestId('resume-document-editor')).toBeNull();
+    });
+
+    it('shows the fallback editor after initial loading fails', () => {
+        renderWorkspace({ initialLoadState: 'failed' });
+
+        expect(screen.getByTestId('resume-document-editor')).toBeTruthy();
+        expect(screen.queryByTestId('resume-page-loading-skeleton')).toBeNull();
     });
 
     it('renders fit mode as clean paged preview instead of the editable canvas', () => {

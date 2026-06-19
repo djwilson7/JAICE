@@ -9,9 +9,9 @@ describe('AutoResizeTextarea', () => {
         const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
         expect(textarea).toBeTruthy();
         expect(textarea.value).toBe('test');
-        // Because JSDOM doesn't actually layout, scrollHeight is usually 0,
-        // height becomes "2px" based on fallback logic in adjustHeight.
-        expect(textarea.style.height).toBe('2px');
+        // JSDOM does not lay out the textarea, so both content and border
+        // measurements are zero.
+        expect(textarea.style.height).toBe('0px');
     });
 
     it('handles ref correctly as a function', () => {
@@ -73,6 +73,6 @@ describe('AutoResizeTextarea', () => {
         fireEvent(window, new Event('resize'));
         
         // Should recalculate and set new height
-        expect(textarea.style.height).toBe('202px'); // scrollHeight(200) + default fallback border(2)
+        expect(textarea.style.height).toBe('200px');
     });
 });

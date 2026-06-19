@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { normalizeResumeDataForPayload } from "./resumeData";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
@@ -17,6 +17,7 @@ import { useResumeRewriteSuggestions } from "./hooks/useResumeRewriteSuggestions
 import { useResumePdfPreview } from "./hooks/useResumePdfPreview";
 import { useResumeDocumentViewModel } from "./documentViewModel";
 import { isResumeDebugEnabled } from "./resumeDiagnostics";
+import { getResumeDocumentTextStats, getResumeFieldTextStats } from "./resumeTextStats";
 import "./resume.css";
 import "./resume-editor.css";
 import "./resume-preview.css";
@@ -25,7 +26,7 @@ export function Resume() {
     const { theme } = useSettings();
     const isLightMode = theme === "light";
     const resumeDebugEnabled = isResumeDebugEnabled();
-    const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(false);
+    const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(true);
     const [isRightRailCollapsed, setIsRightRailCollapsed] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -128,6 +129,14 @@ export function Resume() {
     });
 
     const handleAnalyzeSummary = () => chat.handleAnalyzeSummary(resumeData.summary);
+    const documentTextStats = useMemo(
+        () => getResumeDocumentTextStats(resumeData),
+        [resumeData]
+    );
+    const activeFieldTextStats = useMemo(
+        () => getResumeFieldTextStats(resumeData, documentEditing.hoveredField),
+        [documentEditing.hoveredField, resumeData]
+    );
     const printResumeData = normalizeResumeDataForPayload({
         ...resumeData,
         formatting: formatting.currentResumeFormatting
@@ -202,6 +211,8 @@ export function Resume() {
                     isGeneratingPdfPreview={pdfPreview.isGeneratingPdfPreview}
                     togglePdfPreview={handleTogglePdfPreview}
                     openPdfPreview={handleOpenPdfPreview}
+                    documentTextStats={documentTextStats}
+                    activeFieldTextStats={activeFieldTextStats}
                 />
             )}
 
@@ -230,7 +241,8 @@ export function Resume() {
                     pdfPreview={pdfPreview}
                     persistence={{
                         resumeName: persistence.resumeName,
-                        loadingList: persistence.loadingList
+                        loadingList: persistence.loadingList,
+                        initialLoadState: persistence.initialLoadState
                     }}
                     onAnalyzeSummary={handleAnalyzeSummary}
                 />

@@ -18,6 +18,8 @@ type UseResumePersistenceParams = {
     autoSaveDelayMs?: number;
 };
 
+export type ResumeInitialLoadState = "loading" | "loaded" | "failed";
+
 export const useResumePersistence = ({
     resumeData,
     setResumeData,
@@ -36,7 +38,8 @@ export const useResumePersistence = ({
     const [isMaster, setIsMaster] = useState(false);
     const [showCloneModal, setShowCloneModal] = useState(false);
     const [dontAskClone, setDontAskClone] = useState(false);
-    const [loadingList, setLoadingList] = useState(false);
+    const [loadingList, setLoadingList] = useState(true);
+    const [initialLoadState, setInitialLoadState] = useState<ResumeInitialLoadState>("loading");
     const [loadingSave, setLoadingSave] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
@@ -176,10 +179,15 @@ export const useResumePersistence = ({
                 } else {
                     await handleCreateResume(false, true);
                 }
+                setInitialLoadState("loaded");
+            } else {
+                setError("Failed to load saved resumes.");
+                setInitialLoadState("failed");
             }
         } catch (err) {
             console.error(err);
             setError((err as Error).message || "Failed to load saved resumes.");
+            setInitialLoadState("failed");
         } finally {
             setLoadingList(false);
         }
@@ -379,6 +387,7 @@ export const useResumePersistence = ({
         successMessage,
         setSuccessMessage,
         loadingList,
+        initialLoadState,
         loadingSave,
         isDirty,
         setIsDirty,

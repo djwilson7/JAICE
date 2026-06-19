@@ -10,9 +10,12 @@ export const AutoResizeTextarea = React.forwardRef<
         const textarea = localRef.current;
         if (!textarea) return;
         textarea.style.height = "auto";
-        // Calculate the exact border height to prevent scrollHeight border-box clipping.
-        // Falls back to 2px if the element is not currently visible in the layout.
-        const borderHeight = (textarea.offsetHeight - textarea.clientHeight) || 2;
+        const computedStyle = window.getComputedStyle(textarea);
+        const measuredBorderHeight = textarea.offsetHeight - textarea.clientHeight;
+        const computedBorderHeight =
+            (Number.parseFloat(computedStyle.borderTopWidth) || 0)
+            + (Number.parseFloat(computedStyle.borderBottomWidth) || 0);
+        const borderHeight = measuredBorderHeight || computedBorderHeight;
         textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;
     };
 
@@ -62,4 +65,3 @@ export const AutoResizeTextarea = React.forwardRef<
     );
 });
 AutoResizeTextarea.displayName = "AutoResizeTextarea";
-

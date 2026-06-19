@@ -67,7 +67,7 @@ export const ResumeFormattingToolbar: React.FC<ResumeFormattingToolbarProps> = (
                     aria-label="Fit page to available workspace"
                     aria-pressed={formatting.zoomMode === "fit"}
                 >
-                    <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l6 6M21 3l-6 6M3 21l6-6M21 21l-6-6" />
                     </svg>
@@ -96,7 +96,7 @@ export const ResumeFormattingToolbar: React.FC<ResumeFormattingToolbarProps> = (
                         title="Zoom out"
                         aria-label="Zoom out"
                     >
-                        <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                         </svg>
                     </button>
@@ -113,7 +113,7 @@ export const ResumeFormattingToolbar: React.FC<ResumeFormattingToolbarProps> = (
                         title="Zoom in"
                         aria-label="Zoom in"
                     >
-                        <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
                         </svg>
                     </button>

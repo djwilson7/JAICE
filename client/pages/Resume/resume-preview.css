@@ -167,47 +167,26 @@
   transform-origin: center;
 }
 
-.resume-canvas-page-guide {
-  right: -116px;
-  left: -56px;
-  height: 0;
-}
-
-.resume-canvas-page-guide-line {
+.resume-canvas-page-break {
   position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.45) 10% 82%, transparent);
-  box-shadow: 0 0 10px rgba(14, 165, 233, 0.18);
-}
-
-.resume-canvas-page-guide-label {
-  position: absolute;
-  top: -10px;
   right: 0;
-  width: 72px;
-  padding: 4px 6px;
-  border: 1px solid rgba(56, 189, 248, 0.28);
-  border-radius: calc(var(--corner-radius) * 0.55);
-  background: rgba(var(--primary-one-rgb), 0.86);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
-  color: var(--text-secondary);
+  left: 0;
+  border-top: 1px dashed rgba(100, 116, 139, 0.48);
+}
+
+.resume-canvas-page-break__label {
+  position: absolute;
+  top: 0;
+  right: calc(var(--resume-page-margin) / 2);
+  padding: 0 8px;
+  background: #fff;
+  color: rgba(71, 85, 105, 0.72);
   font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
-  opacity: 1;
-  text-align: center;
-  transform: translateX(0);
-  transition: opacity var(--animation-duration) ease, transform var(--animation-duration) ease;
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-}
-
-.resume-canvas-page-guide-label-hidden {
-  opacity: 0;
-  transform: translateX(6px);
+  white-space: nowrap;
+  transform: translate(50%, -50%);
 }
 
 .resume-page-preview {

@@ -3,10 +3,11 @@ import { ResumeAlerts } from "./ResumeAlerts";
 import { ResumeCanvas } from "./ResumeCanvas";
 import { ResumeDocumentEditor } from "./ResumeDocumentEditor";
 import { ResumePdfPreview } from "./ResumePdfPreview";
-import { ResumePagedPreview } from "./ResumePagedPreview";
+import { ResumePagedPreview, type PageBreakAnchor } from "./ResumePagedPreview";
 import { ResumeFormattingToolbar } from "./ResumeFormattingToolbar";
 import { ResumeRenderDiagnosticsBridge } from "./ResumeRenderDiagnosticsBridge";
 import { useResumePagePreviewLayout } from "../hooks/useResumePagePreviewLayout";
+import { ResumePageLoadingSkeleton } from "./ResumePageLoadingSkeleton";
 
 type ResumeWorkspaceProps = {
     theme: {
@@ -25,7 +26,7 @@ type ResumeWorkspaceProps = {
     pdfPreview: ReturnType<typeof import("../hooks/useResumePdfPreview").useResumePdfPreview>;
     persistence: Pick<
         ReturnType<typeof import("../hooks/useResumePersistence").useResumePersistence>,
-        "resumeName" | "loadingList"
+        "resumeName" | "loadingList" | "initialLoadState"
     >;
     onAnalyzeSummary: () => void;
 };
@@ -39,16 +40,16 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         rewrite,
         viewModel,
         pdfPreview,
-        persistence: { resumeName, loadingList },
+        persistence: { resumeName, loadingList, initialLoadState },
         onAnalyzeSummary: handleAnalyzeSummary
     } = props;
     const {
-        canvasViewportRef, resumeDocumentContentRef, registerResumeDocumentContentElement, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, viewableCanvasWidth, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, resumePageStride, resumePageBreakOffset, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
+        canvasViewportRef, resumeDocumentContentRef, registerResumeDocumentContentElement, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, viewableCanvasWidth, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
         titleFontSize, documentSectionGapPx, documentInnerSectionGapPx, documentCssVariables,
         isPageStyleShelfOpen, zoomMode
     } = formatting;
     const {
-        resumeData, activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredEducationId, setHoveredEducationId, hoveredSkillId, setHoveredSkillId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillClearId, setHoveredSkillClearId, hoveredSkillDeleteId, setHoveredSkillDeleteId, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, moveExperienceUp, moveExperienceDown, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, moveEducationUp, moveEducationDown, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, createSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, removeSkillCategoryIfEmpty, moveSkillCategoryUp, moveSkillCategoryDown, clearSkillCategory, setResumeData
+        resumeData, activeDocumentSection, focusedDocumentSection, setActiveDocumentSection, setFocusedField, setHoveredField, hoveredNameSection, setHoveredNameSection, focusedNameSection, setFocusedNameSection, hoveredContactField, setHoveredContactField, focusedContactField, setFocusedContactField, hoveredSummary, setHoveredSummary, focusedSummary, setFocusedSummary, isSummaryImproveHovered, setIsSummaryImproveHovered, hoveredJobId, setHoveredJobId, hoveredEducationId, setHoveredEducationId, hoveredSkillId, setHoveredSkillId, hoveredExperienceImproveId, setHoveredExperienceImproveId, hoveredExperienceClearId, setHoveredExperienceClearId, hoveredExperienceDeleteId, setHoveredExperienceDeleteId, hoveredEducationClearId, setHoveredEducationClearId, hoveredEducationDeleteId, setHoveredEducationDeleteId, hoveredSkillClearId, setHoveredSkillClearId, hoveredSkillDeleteId, setHoveredSkillDeleteId, updateField, updateSectionTitle, addCustomContactField, updateCustomContactField, removeCustomContactField, removeStandardContactField, updateExperienceField, insertExperienceAt, removeExperience, moveExperienceUp, moveExperienceDown, clearExperience, addBulletWithText, insertBulletAfter, updateBulletText, removeBulletIfEmpty, removeBullet, toggleBulletTag, createAndAssignBulletTag, deleteBulletTag, updateEducationField, addEducation, removeEducation, moveEducationUp, moveEducationDown, clearEducation, addEducationDetailWithText, insertEducationDetailAfter, updateEducationDetailText, removeEducationDetailIfEmpty, addSkillCategory, createSkillCategory, updateSkillCategoryName, updateSkillCategoryItems, removeSkillCategory, removeSkillCategoryIfEmpty, moveSkillCategoryUp, moveSkillCategoryDown, clearSkillCategory, setResumeData
     } = editing;
     const {
         changeMetadata, originalResumeDataBeforeDraft, summaryRewriteSuggestion, experienceRewriteSuggestions, rewriteActionHover, setRewriteActionHover, loadingSummaryImprove, loadingExperienceImproveId, handleImproveSummary, handleImproveExperience, acceptSummaryRewriteSuggestion, rejectSummaryRewriteSuggestion, acceptExperienceRewriteSuggestion, rejectExperienceRewriteSuggestion, setChangeMetadata
@@ -62,6 +63,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
     const gapPreviewTarget = formatting.gapPreviewTarget;
     const isFitPagePreviewMode = zoomMode === "fit";
     const currentResumeFormatting = formatting.currentResumeFormatting;
+    const [pageBreakAnchors, setPageBreakAnchors] = React.useState<PageBreakAnchor[]>([]);
     const pagePreviewLayout = useResumePagePreviewLayout({
         resumeData,
         formatting: currentResumeFormatting,
@@ -94,7 +96,14 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     loadingList={loadingList}
                 />
 
-                {isPdfPreviewOpen ? (
+                {initialLoadState === "loading" ? (
+                    <div
+                        className="absolute inset-0 flex items-start justify-center overflow-hidden p-20 print:hidden"
+                        style={canvasViewportStyle}
+                    >
+                        <ResumePageLoadingSkeleton />
+                    </div>
+                ) : isPdfPreviewOpen ? (
                     <ResumePdfPreview
                         isLightMode={isLightMode}
                         pdfPreviewUrl={pdfPreviewUrl}
@@ -120,9 +129,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                     animatedCanvasZoom={animatedCanvasZoom}
                     fontPreviewTarget={fontPreviewTarget}
                     documentCssVariables={documentCssVariables}
-                    resumePageCount={resumePageCount}
-                    resumePageStride={resumePageStride}
-                    resumePageBreakOffset={resumePageBreakOffset}
+                    pageBreakAnchors={pageBreakAnchors}
                     isPageFormatPreviewVisible={isPageFormatPreviewVisible}
                     isMarginPreviewVisible={isMarginPreviewVisible}
                     isPagePreviewMode={isFitPagePreviewMode}
@@ -143,6 +150,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                             isSectionGapPreviewVisible={gapPreviewTarget !== null}
                             registerResumeDocumentContentElement={registerResumeDocumentContentElement}
                             onRenderedPageCountChange={pagePreviewLayout.onRenderedPageCountChange}
+                            onPageBreakAnchorsChange={setPageBreakAnchors}
                         />
                     }
                 >
@@ -182,6 +190,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     focusedDocumentSection: editorFocusedDocumentSection,
                                     setActiveDocumentSection: disableCanvasHoverControls ? noopEditorDispatch : setActiveDocumentSection,
                                     setFocusedField: disableCanvasHoverControls ? noopEditorDispatch : setFocusedField,
+                                    setHoveredField: disableCanvasHoverControls ? noopEditorDispatch : setHoveredField,
                                     hoveredNameSection: disableCanvasHoverControls ? false : hoveredNameSection,
                                     setHoveredNameSection: disableCanvasHoverControls ? noopEditorDispatch : setHoveredNameSection,
                                     focusedNameSection: disableCanvasHoverControls ? false : focusedNameSection,
@@ -287,6 +296,25 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                             />
                             )}
                     </ResumeCanvas>
+                    {!isFitPagePreviewMode && (
+                        <ResumePagedPreview
+                            resumeData={resumeData}
+                            formatting={currentResumeFormatting}
+                            paperMetrics={paperMetrics}
+                            layoutKey={pagePreviewLayout.layoutKey}
+                            pageCount={resumePageCount}
+                            pageGapPx={pagePreviewLayout.pageGapPx}
+                            columnCount={1}
+                            fontPreviewTarget={fontPreviewTarget}
+                            isMarginPreviewVisible={false}
+                            isPageFormatPreviewVisible={false}
+                            isSectionGapPreviewVisible={false}
+                            registerResumeDocumentContentElement={() => undefined}
+                            onRenderedPageCountChange={pagePreviewLayout.onRenderedPageCountChange}
+                            measurementOnly
+                            onPageBreakAnchorsChange={setPageBreakAnchors}
+                        />
+                    )}
                     <ResumeFormattingToolbar
                         isLightMode={isLightMode}
                         formatting={formatting}
