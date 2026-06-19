@@ -37,6 +37,9 @@ describe('ResumeCanvas', () => {
         };
         const props = {
             canvasViewportRef: ref,
+            registerCanvasViewportElement: (element: HTMLDivElement | null) => {
+                ref.current = element as any;
+            },
             resumeDocumentContentRef: { current: null },
             registerResumeDocumentContentElement: vi.fn(),
             canvasNeedsHorizontalScroll: true,
@@ -82,6 +85,9 @@ describe('ResumeCanvas', () => {
         const ref = { current: null };
         const props = {
             canvasViewportRef: ref,
+            registerCanvasViewportElement: (element: HTMLDivElement | null) => {
+                ref.current = element;
+            },
             resumeDocumentContentRef: { current: null },
             registerResumeDocumentContentElement: vi.fn(),
             canvasNeedsHorizontalScroll: false,
@@ -120,6 +126,9 @@ describe('ResumeCanvas', () => {
         const ref = { current: null };
         const props = {
             canvasViewportRef: ref,
+            registerCanvasViewportElement: (element: HTMLDivElement | null) => {
+                ref.current = element;
+            },
             resumeDocumentContentRef: { current: null },
             registerResumeDocumentContentElement: vi.fn(),
             canvasNeedsHorizontalScroll: false,
@@ -147,6 +156,9 @@ describe('ResumeCanvas', () => {
         const ref = { current: null };
         const props = {
             canvasViewportRef: ref,
+            registerCanvasViewportElement: (element: HTMLDivElement | null) => {
+                ref.current = element;
+            },
             resumeDocumentContentRef: { current: null },
             registerResumeDocumentContentElement: vi.fn(),
             canvasNeedsHorizontalScroll: false,

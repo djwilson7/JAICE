@@ -54,6 +54,7 @@ describe('ResumeWorkspace', () => {
         headerActionButtonClass: '',
         headerActionIconClass: '',
         canvasViewportRef: { current: null },
+        registerCanvasViewportElement: vi.fn(),
         resumeDocumentContentRef: { current: null },
         registerResumeDocumentContentElement: vi.fn(),
         canvasNeedsHorizontalScroll: false,
@@ -240,14 +241,16 @@ describe('ResumeWorkspace', () => {
         expect(editorProps.interaction.gapPreviewTarget).toBeNull();
     });
 
-    it('renders pdf preview mode', () => {
-        renderWorkspace({ isPdfPreviewOpen: true });
+    it('returns from pdf preview to the editable canvas mode', () => {
+        const setZoomMode = vi.fn();
+        renderWorkspace({ isPdfPreviewOpen: true, zoomMode: 'fit', setZoomMode });
         
         expect(screen.getByTestId('resume-pdf-preview')).toBeTruthy();
         expect(screen.queryByTestId('resume-canvas')).toBeNull();
 
         const backBtn = screen.getByText('Back to edit');
         fireEvent.click(backBtn);
+        expect(setZoomMode).toHaveBeenCalledWith('manual');
         expect(defaultProps.closePdfPreview).toHaveBeenCalled();
     });
 

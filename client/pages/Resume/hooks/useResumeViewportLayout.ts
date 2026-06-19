@@ -33,6 +33,7 @@ export const useResumeViewportLayout = ({
     manualZoom
 }: UseResumeViewportLayoutParams) => {
     const canvasViewportRef = useRef<HTMLDivElement>(null);
+    const [canvasViewportElement, setCanvasViewportElement] = useState<HTMLDivElement | null>(null);
     const resumeDocumentContentRef = useRef<HTMLDivElement>(null);
     const [resumeDocumentContentElement, setResumeDocumentContentElement] = useState<HTMLDivElement | null>(null);
     const [canvasViewportSize, setCanvasViewportSize] = useState({ width: 0, height: 0 });
@@ -50,13 +51,24 @@ export const useResumeViewportLayout = ({
         });
     }, []);
 
+    const registerCanvasViewportElement = useCallback((element: HTMLDivElement | null) => {
+        canvasViewportRef.current = element;
+        setCanvasViewportElement(element);
+        if (element) {
+            setCanvasViewportSize({
+                width: element.clientWidth,
+                height: element.clientHeight
+            });
+        }
+    }, []);
+
     const registerResumeDocumentContentElement = useCallback((element: HTMLDivElement | null) => {
         resumeDocumentContentRef.current = element;
         setResumeDocumentContentElement(element);
     }, []);
 
     useEffect(() => {
-        const container = canvasViewportRef.current;
+        const container = canvasViewportElement;
         if (!container) return;
         measureCanvasViewport();
         const observer = new ResizeObserver(measureCanvasViewport);
@@ -66,7 +78,7 @@ export const useResumeViewportLayout = ({
             observer.disconnect();
             window.removeEventListener("resize", measureCanvasViewport);
         };
-    }, [measureCanvasViewport]);
+    }, [canvasViewportElement, measureCanvasViewport]);
 
     useEffect(() => {
         const content = resumeDocumentContentElement;
@@ -177,6 +189,7 @@ export const useResumeViewportLayout = ({
 
     return {
         canvasViewportRef,
+        registerCanvasViewportElement,
         resumeDocumentContentRef,
         registerResumeDocumentContentElement,
         animatedCanvasZoom,

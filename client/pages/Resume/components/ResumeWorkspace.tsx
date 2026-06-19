@@ -44,7 +44,7 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         onAnalyzeSummary: handleAnalyzeSummary
     } = props;
     const {
-        canvasViewportRef, resumeDocumentContentRef, registerResumeDocumentContentElement, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, viewableCanvasWidth, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
+        canvasViewportRef, registerCanvasViewportElement, resumeDocumentContentRef, registerResumeDocumentContentElement, canvasNeedsHorizontalScroll, canvasNeedsVerticalScroll, canvasViewportStyle, pdfPreviewViewportStyle, viewableCanvasWidth, canvasHorizontalOverflow, scaledCanvasWidth, scaledCanvasHeight, paperMetrics, resumeCanvasHeight, animatedCanvasZoom, fontPreviewTarget, bodyFontSize, resumePageCount, isPageFormatPreviewVisible, isMarginPreviewVisible, pageMarginPt,
         titleFontSize, documentSectionGapPx, documentInnerSectionGapPx, documentCssVariables,
         isPageStyleShelfOpen, zoomMode
     } = formatting;
@@ -63,6 +63,10 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
     const gapPreviewTarget = formatting.gapPreviewTarget;
     const isFitPagePreviewMode = zoomMode === "fit";
     const currentResumeFormatting = formatting.currentResumeFormatting;
+    const handleBackToEdit = () => {
+        formatting.setZoomMode("manual");
+        closePdfPreview();
+    };
     const [pageBreakAnchors, setPageBreakAnchors] = React.useState<PageBreakAnchor[]>([]);
     const pagePreviewLayout = useResumePagePreviewLayout({
         resumeData,
@@ -110,12 +114,13 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                         documentTitle={resumeName}
                         isGeneratingPdfPreview={isGeneratingPdfPreview}
                         viewportStyle={pdfPreviewViewportStyle}
-                        onBackToEdit={closePdfPreview}
+                        onBackToEdit={handleBackToEdit}
                     />
                 ) : (
                     <>
                     <ResumeCanvas
                     canvasViewportRef={canvasViewportRef}
+                    registerCanvasViewportElement={registerCanvasViewportElement}
                     resumeDocumentContentRef={resumeDocumentContentRef}
                     registerResumeDocumentContentElement={registerResumeDocumentContentElement}
                     canvasNeedsHorizontalScroll={canvasNeedsHorizontalScroll}

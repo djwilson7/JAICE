@@ -4,6 +4,7 @@ import type { PageBreakAnchor } from "./ResumePagedPreview";
 
 type ResumeCanvasProps = {
     canvasViewportRef: React.RefObject<HTMLDivElement | null>;
+    registerCanvasViewportElement: (element: HTMLDivElement | null) => void;
     resumeDocumentContentRef: React.RefObject<HTMLDivElement | null>;
     registerResumeDocumentContentElement: (element: HTMLDivElement | null) => void;
     canvasNeedsHorizontalScroll: boolean;
@@ -29,6 +30,7 @@ type ResumeCanvasProps = {
 
 export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     canvasViewportRef,
+    registerCanvasViewportElement,
     resumeDocumentContentRef,
     registerResumeDocumentContentElement,
     canvasNeedsHorizontalScroll,
@@ -158,7 +160,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
 
     return (
                 <div
-                    ref={canvasViewportRef}
+                    ref={registerCanvasViewportElement}
                     onWheelCapture={handleDocumentFieldWheel}
                     className="no-scrollbar relative box-border min-h-0 flex-1 overscroll-contain print:p-0"
                     style={{
