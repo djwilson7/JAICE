@@ -221,6 +221,85 @@ describe('ResumePagedPreview', () => {
         }
     });
 
+    it('includes canonical inter-bullet spacing when measuring a page boundary', async () => {
+        const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+        HTMLElement.prototype.getBoundingClientRect = function () {
+            const segmentId = (this as HTMLElement).dataset.previewSegmentId;
+            const height = segmentId ? 10 : 0;
+            return {
+                x: 0,
+                y: 0,
+                width: 200,
+                height,
+                top: 0,
+                right: 200,
+                bottom: height,
+                left: 0,
+                toJSON: () => ({})
+            } as DOMRect;
+        };
+
+        try {
+            const { container } = render(
+                <ResumePagedPreview
+                    resumeData={{
+                        fullName: 'Ada Lovelace',
+                        experience: [{
+                            id: 'exp-1',
+                            jobTitle: 'Engineer',
+                            company: 'Difference Engines',
+                            bullets: [
+                                { id: 'bullet-1', text: 'Built reliable tooling.' },
+                                { id: 'bullet-2', text: 'Improved release quality.' }
+                            ]
+                        }],
+                        education: [],
+                        skills: []
+                    } as any}
+                    formatting={{
+                        pageSize: 'letter',
+                        titleFontSize: 24,
+                        headerFontSize: 16,
+                        subHeaderFontSize: 14,
+                        bodyFontSize: 12,
+                        pageMarginPt: 24,
+                        paperLayoutFormat: 'standard',
+                        innerSectionGapFormat: 'standard'
+                    }}
+                    paperMetrics={{
+                        widthPt: 270,
+                        heightPt: 94,
+                        width: 360,
+                        height: 125.333,
+                        printName: 'Letter',
+                        label: 'Letter',
+                        standardLabel: 'US & Canada',
+                        dimensionLabel: { width: '8.5 in', height: '11 in' }
+                    }}
+                    layoutKey="bullet-gap-boundary"
+                    pageCount={1}
+                    pageGapPx={32}
+                    columnCount={1}
+                    fontPreviewTarget={null}
+                    isMarginPreviewVisible={false}
+                    isPageFormatPreviewVisible={false}
+                    isSectionGapPreviewVisible={false}
+                    registerResumeDocumentContentElement={vi.fn()}
+                    onRenderedPageCountChange={vi.fn()}
+                />
+            );
+
+            const measuredBullets = container.querySelectorAll<HTMLElement>(
+                '.resume-page-preview-measure .resume-document__bullet-row--paginated'
+            );
+            expect(measuredBullets[0]).toHaveStyle({ marginBottom: '2px' });
+            expect(measuredBullets[1].style.marginBottom).toBe('');
+            await waitFor(() => expect(screen.getByLabelText('Page 2')).toBeTruthy());
+        } finally {
+            HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+        }
+    });
+
     it('uses edit-mode typography sizing for title, contact, meta, and date rows', () => {
         render(
             <ResumePagedPreview

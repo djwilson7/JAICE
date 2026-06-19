@@ -131,14 +131,33 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         };
     };
 
-    const makeBulletSegment = (id: string, text: string): PageSegment => {
-        const estimatedHeight = estimateWrappedTextHeight(text, bulletTextWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
+    const makeBulletSegment = (id: string, text: string, hasFollowingBullet = false): PageSegment => {
+        const trailingGapPt = hasFollowingBullet
+            ? pxToPt(RESUME_CSS_LAYOUT.educationDetailGapPx)
+            : 0;
+        const estimatedHeight =
+            estimateWrappedTextHeight(
+                text,
+                bulletTextWidthPt,
+                renderTokens.formatting.bodyFontSize,
+                bodyLineHeight,
+                fieldPaddingPt
+            ) + trailingGapPt;
         return {
             id,
             editorAnchorId: id,
             estimatedHeight,
             render: (key) => (
-                <div key={key} className="resume-document__bullet-row resume-document__bullet-row--paginated resume-diagnostic-bullet-row" data-resume-diagnostic="bullet-row">
+                <div
+                    key={key}
+                    className="resume-document__bullet-row resume-document__bullet-row--paginated resume-diagnostic-bullet-row"
+                    data-resume-diagnostic="bullet-row"
+                    style={{
+                        marginBottom: hasFollowingBullet
+                            ? pxCss(RESUME_CSS_LAYOUT.educationDetailGapPx)
+                            : undefined
+                    }}
+                >
                     <span className="resume-document__bullet-marker resume-font--body resume-body-font-target">&bull;</span>
                     <div className="resume-document__body resume-document__bullet-text resume-font--body resume-body-font-target">{text}</div>
                 </div>
@@ -279,8 +298,12 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                         )
                     });
                 }
-                exp.bullets.forEach((bullet) => {
-                    nextSegments.push(makeBulletSegment(`${exp.id}-${bullet.id}`, bullet.text));
+                exp.bullets.forEach((bullet, bulletIndex) => {
+                    nextSegments.push(makeBulletSegment(
+                        `${exp.id}-${bullet.id}`,
+                        bullet.text,
+                        bulletIndex < exp.bullets.length - 1
+                    ));
                 });
                 if (expIndex < visibleExperience.length - 1) {
                     nextSegments.push(makeGapSegment(`${exp.id}-gap`, innerSectionGap, true));
@@ -325,8 +348,12 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                         )
                     });
                 }
-                ed.details.forEach((detail) => {
-                    nextSegments.push(makeBulletSegment(`${ed.id}-${detail.id}`, detail.text));
+                ed.details.forEach((detail, detailIndex) => {
+                    nextSegments.push(makeBulletSegment(
+                        `${ed.id}-${detail.id}`,
+                        detail.text,
+                        detailIndex < ed.details.length - 1
+                    ));
                 });
                 if (edIndex < visibleEducation.length - 1) {
                     nextSegments.push(makeGapSegment(`${ed.id}-gap`, innerSectionGap, true));
