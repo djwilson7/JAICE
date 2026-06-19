@@ -85,6 +85,13 @@ export const paginateSegments = (segments: PageSegment[], pageContentHeight: num
             segment.keepWithNext && nextSegment ? nextSegment.estimatedHeight : 0
         );
         if (currentPage.length > 0 && requiredHeight > remainingHeight) {
+            if (segment.split) {
+                const { head, tail } = segment.split(remainingHeight);
+                if (head) currentPage.push(head);
+                finishPage();
+                if (tail) queue.unshift(tail);
+                continue;
+            }
             finishPage();
             queue.unshift(segment);
             continue;

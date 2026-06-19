@@ -57,4 +57,56 @@ describe("resume pagination", () => {
     it("includes vertical margins in measured segment height", () => {
         expect(outerHeightPx(24, 2, 10)).toBe(36);
     });
+
+    it("handles segment splitting on empty current page", () => {
+        // Case: head is null, tail is present, empty page
+        const splittableSegmentNoHead: PageSegment = {
+            id: "splittable-no-head",
+            estimatedHeight: 150,
+            render: () => "splittable-no-head",
+            split: (avail) => ({ head: null, tail: segment("tail", 150) })
+        };
+        const pages1 = paginateSegments([splittableSegmentNoHead], 100);
+        expect(pages1.map((p) => p.map((item) => item.id))).toEqual([
+            ["tail"]
+        ]);
+
+        // Case: head and tail present, empty page
+        const splittableSegmentWithHead: PageSegment = {
+            id: "splittable-with-head",
+            estimatedHeight: 150,
+            render: () => "splittable-with-head",
+            split: (avail) => ({ head: segment("head", 60), tail: segment("tail", 90) })
+        };
+        const pages2 = paginateSegments([splittableSegmentWithHead], 100);
+        expect(pages2.map((p) => p.map((item) => item.id))).toEqual([
+            ["head"],
+            ["tail"]
+        ]);
+    });
+
+    it("handles segment splitting on non-empty current page", () => {
+        const splittableSegment: PageSegment = {
+            id: "splittable",
+            estimatedHeight: 80,
+            render: () => "splittable",
+            split: (avail) => ({ head: segment("head", avail), tail: segment("tail", 80 - avail) })
+        };
+        const pages = paginateSegments([
+            segment("prior", 60),
+            splittableSegment
+        ], 100);
+        expect(pages.map((p) => p.map((item) => item.id))).toEqual([
+            ["prior", "head"],
+            ["tail"]
+        ]);
+    });
+
+    it("covers splitWordsForHeight edge cases", () => {
+        // single word
+        expect(splitWordsForHeight("one", 30, 100, 10, 1)).toEqual({ head: "", tail: "one" });
+        // height too small for first word
+        expect(splitWordsForHeight("onelongword", 2, 100, 10, 1)).toEqual({ head: "", tail: "onelongword" });
+    });
 });
+
