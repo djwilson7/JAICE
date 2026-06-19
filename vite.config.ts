@@ -65,7 +65,19 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html'],
       include: ['client/**/*.{ts,tsx}'],
-      exclude: ['client/**/*.test.{ts,tsx}', 'client/setupTests.ts']
+      exclude: [
+        'client/**/*.test.{ts,tsx}',
+        'client/setupTests.ts',
+        'client/**/*.d.ts',
+        'client/types/dragTarget.ts',
+        'client/types/jobApplicationRow.ts',
+        'client/types/jobBroadcastPayload.ts',
+        'client/types/jobCardType.ts',
+        'client/types/jobIntent.ts',
+        'client/types/undoAction.ts',
+        'client/pages/settings/provider/settingsTypes.ts',
+        'client/pages/Resume/types.ts',
+      ]
     }
   }
 });
