@@ -192,7 +192,10 @@ export const ResumeEducationSection: React.FC<ResumeEditorSectionProps> = ({
                                 </button>
                             </div>
                             {(visibleMeta.length > 0 || visibleDates.length > 0) && (
-                                <div className="resume-editor-meta-row">
+                                <div
+                                    className="resume-editor-meta-row"
+                                    data-resume-segment-id={`${item.id}-meta`}
+                                >
                                     <div className="resume-editor-meta-group">
                                         {visibleMeta.map(([key, label, value, placeholder, weight], fieldIndex) => (
                                             <React.Fragment key={key}>
@@ -240,6 +243,7 @@ export const ResumeEducationSection: React.FC<ResumeEditorSectionProps> = ({
                                             key={detail.id}
                                             className="resume-diagnostic-bullet-row resume-editor-bullet-row"
                                             data-resume-diagnostic="bullet-row"
+                                            data-resume-segment-id={`${item.id}-${detail.id}`}
                                         >
                                             <span className="resume-editor-bullet-marker resume-font--body">
                                                 &bull;
@@ -256,7 +260,6 @@ export const ResumeEducationSection: React.FC<ResumeEditorSectionProps> = ({
                                                         wordBreak: "break-word"
                                                     },
                                                     isAutoResize: true,
-                                                    showTextStats: true,
                                                     onChange: (value) =>
                                                         updateEducationDetailText(item.id, detail.id, value),
                                                     onBlur: () =>

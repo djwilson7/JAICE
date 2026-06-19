@@ -250,7 +250,10 @@ export const ResumeExperienceSection: React.FC<
                             </div>
 
                             {(visibleMeta.length > 0 || visibleDates.length > 0) && (
-                                <div className="resume-editor-meta-row">
+                                <div
+                                    className="resume-editor-meta-row"
+                                    data-resume-segment-id={`${experience.id}-meta`}
+                                >
                                     <div className="resume-editor-meta-group">
                                         {visibleMeta.map(([key, label, value, placeholder, weight, color], fieldIndex) => (
                                             <React.Fragment key={key}>
@@ -312,6 +315,7 @@ export const ResumeExperienceSection: React.FC<
                                             <div
                                                 className="resume-diagnostic-bullet-row resume-editor-bullet-row"
                                                 data-resume-diagnostic="bullet-row"
+                                                data-resume-segment-id={`${experience.id}-${bullet.id}`}
                                             >
                                                 <ExperienceBulletTags
                                                     bulletId={bullet.id}
@@ -372,7 +376,6 @@ export const ResumeExperienceSection: React.FC<
                                                                     : undefined
                                                         } as React.CSSProperties,
                                                         isAutoResize: true,
-                                                        showTextStats: true,
                                                         onChange: (value) =>
                                                             updateBulletText(experience.id, bullet.id, value),
                                                         onBlur: () =>

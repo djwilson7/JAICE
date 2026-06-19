@@ -61,7 +61,24 @@ describe('ResumeCanvas', () => {
         expect(container.querySelector('.resume-canvas-document-content')).toHaveClass('resume-page-content');
     });
 
-    it('renders page split guides at physical page-height intervals', () => {
+    it('places a page divider between the retained and reflowed editor segments', () => {
+        const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+        HTMLElement.prototype.getBoundingClientRect = function () {
+            const segmentId = (this as HTMLElement).dataset.resumeSegmentId;
+            const top = segmentId === 'segment-a' ? 100 : segmentId === 'segment-b' ? 200 : 0;
+            const height = segmentId ? 20 : 0;
+            return {
+                x: 0,
+                y: top,
+                width: 800,
+                height,
+                top,
+                right: 800,
+                bottom: top + height,
+                left: 0,
+                toJSON: () => ({})
+            } as DOMRect;
+        };
         const ref = { current: null };
         const props = {
             canvasViewportRef: ref,
@@ -78,85 +95,25 @@ describe('ResumeCanvas', () => {
             animatedCanvasZoom: 1,
             fontPreviewTarget: null,
             documentCssVariables,
-            resumePageCount: 3,
-            resumePageStride: 1123,
+            pageBreakAnchors: [{ pageNumber: 2, segmentId: 'segment-b' }],
             isPageFormatPreviewVisible: false,
             isMarginPreviewVisible: false,
-            children: <div>Child</div>,
+            children: (
+                <>
+                    <div data-resume-segment-id="segment-a">First segment</div>
+                    <div data-resume-segment-id="segment-b">Second segment</div>
+                </>
+            ),
         };
 
-        render(<ResumeCanvas {...props} />);
-
-        const firstGuide = screen.getByText('Page 2').closest('.resume-canvas-page-guide');
-        const secondGuide = screen.getByText('Page 3').closest('.resume-canvas-page-guide');
-
-        expect(firstGuide).toHaveStyle({ top: '1123px' });
-        expect(secondGuide).toHaveStyle({ top: '2246px' });
-    });
-
-    it('offsets edit guides by the first margin and printable content height', () => {
-        const props = {
-            canvasViewportRef: { current: null },
-            resumeDocumentContentRef: { current: null },
-            registerResumeDocumentContentElement: vi.fn(),
-            canvasNeedsHorizontalScroll: false,
-            canvasNeedsVerticalScroll: true,
-            canvasViewportStyle: {},
-            canvasHorizontalOverflow: 0,
-            scaledCanvasWidth: 816,
-            scaledCanvasHeight: 2112,
-            paperMetrics: { width: 816, height: 1056, dimensionLabel: { width: '8.5 in', height: '11 in' } } as any,
-            resumeCanvasHeight: 2112,
-            animatedCanvasZoom: 1,
-            fontPreviewTarget: null,
-            documentCssVariables,
-            resumePageCount: 2,
-            resumePageStride: 960,
-            resumePageBreakOffset: 48,
-            isPageFormatPreviewVisible: false,
-            isMarginPreviewVisible: false,
-            children: <div>Child</div>,
-        };
-
-        render(<ResumeCanvas {...props} />);
-        expect(screen.getByText('Page 2').closest('.resume-canvas-page-guide')).toHaveStyle({ top: '1008px' });
-    });
-
-    it('hides page number labels while hovering the canvas', () => {
-        const ref = { current: null };
-        const props = {
-            canvasViewportRef: ref,
-            resumeDocumentContentRef: { current: null },
-            registerResumeDocumentContentElement: vi.fn(),
-            canvasNeedsHorizontalScroll: false,
-            canvasNeedsVerticalScroll: true,
-            canvasViewportStyle: {},
-            canvasHorizontalOverflow: 0,
-            scaledCanvasWidth: 816,
-            scaledCanvasHeight: 2112,
-            paperMetrics: { width: 816, height: 1056, dimensionLabel: { width: '8.5 in', height: '11 in' } } as any,
-            resumeCanvasHeight: 2112,
-            animatedCanvasZoom: 1,
-            fontPreviewTarget: null,
-            documentCssVariables,
-            resumePageCount: 2,
-            resumePageStride: 1056,
-            isPageFormatPreviewVisible: false,
-            isMarginPreviewVisible: false,
-            children: <div>Child</div>,
-        };
-
-        const { container } = render(<ResumeCanvas {...props} />);
-        const canvasScale = container.querySelector('#resume-canvas-scale') as HTMLElement;
-        const label = screen.getByText('Page 2');
-
-        expect(label).not.toHaveClass('resume-canvas-page-guide-label-hidden');
-
-        fireEvent.mouseEnter(canvasScale);
-        expect(label).toHaveClass('resume-canvas-page-guide-label-hidden');
-
-        fireEvent.mouseLeave(canvasScale);
-        expect(label).not.toHaveClass('resume-canvas-page-guide-label-hidden');
+        try {
+            render(<ResumeCanvas {...props} />);
+            expect(screen.getByText('Page 2').closest('.resume-canvas-page-break')).toHaveStyle({
+                top: '160px'
+            });
+        } finally {
+            HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+        }
     });
 
     it('handles null viewport ref safely', () => {

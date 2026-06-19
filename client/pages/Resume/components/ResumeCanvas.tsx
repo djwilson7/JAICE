@@ -1,5 +1,6 @@
 import React from "react";
 import type { FontPreviewTarget, PaperMetrics } from "../types";
+import type { PageBreakAnchor } from "./ResumePagedPreview";
 
 type ResumeCanvasProps = {
     canvasViewportRef: React.RefObject<HTMLDivElement | null>;
@@ -16,9 +17,7 @@ type ResumeCanvasProps = {
     animatedCanvasZoom: number;
     fontPreviewTarget: FontPreviewTarget | null;
     documentCssVariables: React.CSSProperties;
-    resumePageCount: number;
-    resumePageStride: number;
-    resumePageBreakOffset?: number;
+    pageBreakAnchors?: PageBreakAnchor[];
     isPageFormatPreviewVisible: boolean;
     isMarginPreviewVisible: boolean;
     isPagePreviewMode?: boolean;
@@ -43,9 +42,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     animatedCanvasZoom,
     fontPreviewTarget,
     documentCssVariables,
-    resumePageCount,
-    resumePageStride,
-    resumePageBreakOffset = 0,
+    pageBreakAnchors = [],
     isPageFormatPreviewVisible,
     isMarginPreviewVisible,
     isPagePreviewMode = false,
@@ -54,7 +51,11 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
     pagePreviewContent,
     children
 }) => {
-    const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
+    const canvasDocumentRef = React.useRef<HTMLDivElement | null>(null);
+    const [pageBreakPositions, setPageBreakPositions] = React.useState<Array<{
+        pageNumber: number;
+        top: number;
+    }>>([]);
     const canvasWidth = isPagePreviewMode && pagePreviewSlotWidth ? pagePreviewSlotWidth : paperMetrics.width;
     const canvasHeight = isPagePreviewMode && pagePreviewSlotHeight ? pagePreviewSlotHeight : resumeCanvasHeight;
     const scaledSlotWidth = canvasWidth * animatedCanvasZoom;
@@ -63,6 +64,69 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
         resumeDocumentContentRef.current = element;
         registerResumeDocumentContentElement(element);
     }, [registerResumeDocumentContentElement, resumeDocumentContentRef]);
+    const measurePageBreakPositions = React.useCallback(() => {
+        const canvasDocument = canvasDocumentRef.current;
+        const content = resumeDocumentContentRef.current;
+        if (!canvasDocument || !content || isPagePreviewMode) {
+            setPageBreakPositions([]);
+            return;
+        }
+
+        const segmentElements = Array.from(
+            content.querySelectorAll<HTMLElement>("[data-resume-segment-id]")
+        );
+        const canvasRect = canvasDocument.getBoundingClientRect();
+        const zoom = Math.max(animatedCanvasZoom, 0.01);
+        const nextPositions = pageBreakAnchors.flatMap((anchor) => {
+            const targetIndex = segmentElements.findIndex(
+                (element) => element.dataset.resumeSegmentId === anchor.segmentId
+            );
+            if (targetIndex < 0) return [];
+
+            const targetRect = segmentElements[targetIndex].getBoundingClientRect();
+            const previousRect = targetIndex > 0
+                ? segmentElements[targetIndex - 1].getBoundingClientRect()
+                : null;
+            const targetTop = (targetRect.top - canvasRect.top) / zoom;
+            const previousBottom = previousRect
+                ? (previousRect.bottom - canvasRect.top) / zoom
+                : targetTop;
+
+            return [{
+                pageNumber: anchor.pageNumber,
+                top: Math.max(0, (previousBottom + targetTop) / 2)
+            }];
+        });
+
+        setPageBreakPositions((current) => (
+            current.length === nextPositions.length
+            && current.every((position, index) => (
+                position.pageNumber === nextPositions[index].pageNumber
+                && Math.abs(position.top - nextPositions[index].top) < 0.5
+            ))
+                ? current
+                : nextPositions
+        ));
+    }, [animatedCanvasZoom, isPagePreviewMode, pageBreakAnchors, resumeDocumentContentRef]);
+
+    React.useLayoutEffect(() => {
+        if (isPagePreviewMode) return;
+        measurePageBreakPositions();
+        const content = resumeDocumentContentRef.current;
+        if (!content || typeof ResizeObserver === "undefined") return;
+
+        const observer = new ResizeObserver(measurePageBreakPositions);
+        observer.observe(content);
+        content
+            .querySelectorAll<HTMLElement>("[data-resume-segment-id]")
+            .forEach((element) => observer.observe(element));
+        const frameId = window.requestAnimationFrame(measurePageBreakPositions);
+
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            observer.disconnect();
+        };
+    }, [isPagePreviewMode, measurePageBreakPositions, resumeDocumentContentRef]);
     const handleDocumentFieldWheel = React.useCallback((event: React.WheelEvent<HTMLDivElement>) => {
         if (event.ctrlKey || event.metaKey) return;
         const target = event.target;
@@ -114,9 +178,6 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                         <div
                         id="resume-canvas-scale"
                         className="absolute left-0 top-0 origin-top-left print:origin-top-left"
-                        onMouseEnter={() => setIsCanvasHovered(true)}
-                        onMouseLeave={() => setIsCanvasHovered(false)}
-                        data-canvas-hovered={isCanvasHovered}
                         style={{
                             width: `${canvasWidth}px`,
                             height: `${canvasHeight}px`,
@@ -124,29 +185,8 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                                 transformOrigin: "top left"
                             }}
                         >
-                        {!isPagePreviewMode && (
-                        <div className="pointer-events-none absolute inset-0 z-0 overflow-visible print:hidden" aria-hidden="true">
-                            {Array.from({ length: Math.max(0, resumePageCount - 1) }).map((_, guideIndex) => (
-                                <div
-                                    key={guideIndex}
-                                    className="resume-canvas-page-guide absolute"
-                                    style={{
-                                        top: `${resumePageBreakOffset + (guideIndex + 1) * resumePageStride}px`
-                                    }}
-                                >
-                                    <div className="resume-canvas-page-guide-line" />
-                                    <div
-                                        className={`resume-canvas-page-guide-label ${
-                                            isCanvasHovered ? "resume-canvas-page-guide-label-hidden" : ""
-                                        }`}
-                                    >
-                                        Page {guideIndex + 2}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        )}
                         <div
+                            ref={canvasDocumentRef}
                             id="print-canvas"
                             className={`resume-formatting-context resume-canvas-document text-[#0f172a] box-border relative z-10 transition-shadow duration-300 ${
                                 isPagePreviewMode
@@ -163,6 +203,22 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                         >
                             {isPagePreviewMode ? pagePreviewContent : (
                             <>
+                            <div
+                                className="resume-canvas-page-break-layer pointer-events-none absolute inset-0 z-[5] print:hidden"
+                                aria-hidden="true"
+                            >
+                                {pageBreakPositions.map((position) => (
+                                    <div
+                                        key={position.pageNumber}
+                                        className="resume-canvas-page-break"
+                                        style={{ top: `${position.top}px` }}
+                                    >
+                                        <span className="resume-canvas-page-break__label">
+                                            Page {position.pageNumber}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                             {isPageFormatPreviewVisible && (
                                 <div className="resume-page-format-preview">
                                     <span className="resume-page-format-dimension resume-page-format-dimension-width">

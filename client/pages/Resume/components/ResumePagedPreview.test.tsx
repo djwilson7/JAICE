@@ -67,6 +67,7 @@ describe('ResumePagedPreview', () => {
     it('moves a whole bullet to the next page instead of splitting its text', () => {
         const longText = Array.from({ length: 30 }, (_, index) => `word${index}`).join(' ');
         const onRenderedPageCountChange = vi.fn();
+        const onPageBreakAnchorsChange = vi.fn();
 
         const { container } = render(
             <ResumePagedPreview
@@ -118,6 +119,7 @@ describe('ResumePagedPreview', () => {
                 isSectionGapPreviewVisible={true}
                 registerResumeDocumentContentElement={vi.fn()}
                 onRenderedPageCountChange={onRenderedPageCountChange}
+                onPageBreakAnchorsChange={onPageBreakAnchorsChange}
             />
         );
 
@@ -133,6 +135,11 @@ describe('ResumePagedPreview', () => {
         expect(visibleBulletRows[0].textContent).toContain(longText);
         expect(screen.getAllByText('8.5 in').length).toBeGreaterThan(0);
         expect(onRenderedPageCountChange).toHaveBeenCalled();
+        expect(onPageBreakAnchorsChange).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                expect.objectContaining({ pageNumber: 2 })
+            ])
+        );
     });
 
     it('uses measured segment heights so preview pages fill available space before wrapping', async () => {

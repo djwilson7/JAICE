@@ -21,6 +21,7 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
         activeDocumentSection,
         focusedDocumentSection,
         setActiveDocumentSection,
+        setHoveredField = () => undefined,
         hoveredSkillId,
         setHoveredSkillId,
         gapPreviewTarget
@@ -137,6 +138,7 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
                             key={skill.id}
                             className="resume-editor-skill-row"
                             data-skill-item-id={skill.id}
+                            data-resume-segment-id={`${skill.id}-skill`}
                             data-controls-visible={isItemHovered}
                             onBlur={(event) => {
                                 if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
@@ -147,6 +149,10 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
                                 <input
                                     className={`${boldInputClass} resume-editor-input--fit resume-subheader-font-target resume-editor-skill-category`}
                                     value={skill.category}
+                                    onMouseEnter={() => setHoveredField(`skills.${skill.id}.category`)}
+                                    onMouseLeave={() => setHoveredField((current) =>
+                                        current === `skills.${skill.id}.category` ? null : current
+                                    )}
                                     onChange={(event) =>
                                         updateSkillCategoryName(skill.id, event.target.value)
                                     }
@@ -159,6 +165,10 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
                                     <input
                                         className={`${inputStyleClass} resume-editor-skill-items`}
                                         value={itemsText}
+                                        onMouseEnter={() => setHoveredField(`skills.${skill.id}.items`)}
+                                        onMouseLeave={() => setHoveredField((current) =>
+                                            current === `skills.${skill.id}.items` ? null : current
+                                        )}
                                         onChange={(event) =>
                                             updateSkillCategoryItems(skill.id, event.target.value)
                                         }

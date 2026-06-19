@@ -24,6 +24,7 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
         activeDocumentSection,
         focusedDocumentSection,
         setActiveDocumentSection,
+        setHoveredField = () => undefined,
         hoveredNameSection,
         setHoveredNameSection,
         focusedNameSection,
@@ -52,13 +53,17 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
             setActiveSection={setActiveDocumentSection}
             showGapPreview={gapPreviewTarget === "section"}
             gapPreviewHeight={documentSectionGapPx}
+            segmentId="header"
         >
             <div
                 className="resume-editor-name"
                 data-active={activeDocumentSection === "header"}
                 data-highlighted={hoveredNameSection || focusedNameSection}
                 onMouseEnter={() => setHoveredNameSection(true)}
-                onMouseLeave={() => setHoveredNameSection(false)}
+                onMouseLeave={() => {
+                    setHoveredNameSection(false);
+                    setHoveredField((current) => current === "fullName" ? null : current);
+                }}
             >
                 <input
                     className={`${boldInputClass} resume-title-font-target resume-editor-name__input`}
@@ -66,6 +71,7 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                     onChange={(event) => updateField("fullName", event.target.value)}
                     onFocus={() => setFocusedNameSection(true)}
                     onBlur={() => setFocusedNameSection(false)}
+                    onMouseEnter={() => setHoveredField("fullName")}
                     placeholder="YOUR NAME"
                     style={getDynamicInputStyle(
                         resumeData.fullName,
@@ -132,12 +138,18 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                                                     <motion.div
                                                         className="contact-meta-field resume-editor-contact-field"
                                                         data-open={isOpen}
-                                                        onHoverStart={() => setHoveredContactField(field.key)}
-                                                        onHoverEnd={() =>
+                                                        onHoverStart={() => {
+                                                            setHoveredContactField(field.key);
+                                                            setHoveredField(`contact.${field.key}`);
+                                                        }}
+                                                        onHoverEnd={() => {
                                                             setHoveredContactField((current) =>
                                                                 current === field.key ? null : current
-                                                            )
-                                                        }
+                                                            );
+                                                            setHoveredField((current) =>
+                                                                current === `contact.${field.key}` ? null : current
+                                                            );
+                                                        }}
                                                         animate={{
                                                             paddingTop: isOpen ? 2 : 0,
                                                             paddingRight: overlayRightPad,

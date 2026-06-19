@@ -14,6 +14,7 @@ export type DocumentSectionProps = {
     title?: string;
     onMouseMove?: React.MouseEventHandler<HTMLElement>;
     onMouseLeave?: React.MouseEventHandler<HTMLElement>;
+    segmentId?: string;
 };
 
 export const DocumentSection: React.FC<DocumentSectionProps> = ({
@@ -28,7 +29,8 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
     gapPreviewHeight = 0,
     title,
     onMouseMove,
-    onMouseLeave
+    onMouseLeave,
+    segmentId
 }) => {
     const isActive = activeSection === id;
 
@@ -38,6 +40,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
                 data-section={id}
                 data-active={isActive}
                 data-focused={focusedSection === id}
+                data-resume-segment-id={segmentId}
                 title={title}
             style={style}
             onMouseMove={onMouseMove}

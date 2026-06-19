@@ -2,6 +2,7 @@ import type React from "react";
 
 export type PageSegment = {
     id: string;
+    editorAnchorId?: string;
     estimatedHeight: number;
     render: (key: string) => React.ReactNode;
     split?: (availableHeight: number) => { head: PageSegment | null; tail: PageSegment | null };

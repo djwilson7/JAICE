@@ -27,6 +27,13 @@ type ResumePagedPreviewProps = {
     isSectionGapPreviewVisible: boolean;
     registerResumeDocumentContentElement: (element: HTMLDivElement | null) => void;
     onRenderedPageCountChange: (pageCount: number) => void;
+    measurementOnly?: boolean;
+    onPageBreakAnchorsChange?: (anchors: PageBreakAnchor[]) => void;
+};
+
+export type PageBreakAnchor = {
+    pageNumber: number;
+    segmentId: string;
 };
 
 type MeasuredSegmentHeightsState = {
@@ -64,7 +71,9 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
     isPageFormatPreviewVisible,
     isSectionGapPreviewVisible,
     registerResumeDocumentContentElement,
-    onRenderedPageCountChange
+    onRenderedPageCountChange,
+    measurementOnly = false,
+    onPageBreakAnchorsChange
 }) => {
     const measurementRef = React.useRef<HTMLDivElement | null>(null);
     const [measuredSegmentHeightsState, setMeasuredSegmentHeightsState] = React.useState<MeasuredSegmentHeightsState>({
@@ -99,22 +108,24 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
 
     const makeHeadingSegment = (id: string, title: string): PageSegment => ({
         id,
+        editorAnchorId: id,
         estimatedHeight: headingHeight,
         keepWithNext: true,
         render: (key) => <h2 key={key} className="resume-document__section-title resume-font--heading resume-header-font-target">{title}</h2>
     });
 
-    const makeParagraphSegment = (id: string, text: string): PageSegment => {
+    const makeParagraphSegment = (id: string, text: string, editorAnchorId = id): PageSegment => {
         const estimatedHeight = estimateWrappedTextHeight(text, textWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
         return {
             id,
+            editorAnchorId,
             estimatedHeight,
             render: (key) => <p key={key} className="resume-document__body resume-font--body resume-body-font-target">{text}</p>,
             split: (availableHeight) => {
                 const split = splitWordsForHeight(text, availableHeight, textWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
                 return {
-                    head: split.head ? makeParagraphSegment(`${id}-head`, split.head) : null,
-                    tail: split.tail ? makeParagraphSegment(`${id}-tail`, split.tail) : null
+                    head: split.head ? makeParagraphSegment(`${id}-head`, split.head, editorAnchorId) : null,
+                    tail: split.tail ? makeParagraphSegment(`${id}-tail`, split.tail, editorAnchorId) : null
                 };
             }
         };
@@ -124,6 +135,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         const estimatedHeight = estimateWrappedTextHeight(text, bulletTextWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
         return {
             id,
+            editorAnchorId: id,
             estimatedHeight,
             render: (key) => (
                 <div key={key} className="resume-document__bullet-row resume-document__bullet-row--paginated resume-diagnostic-bullet-row" data-resume-diagnostic="bullet-row">
@@ -134,7 +146,12 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         };
     };
 
-    const makeSkillSegment = (id: string, category: string, items: string[]): PageSegment => {
+    const makeSkillSegment = (
+        id: string,
+        category: string,
+        items: string[],
+        editorAnchorId = id
+    ): PageSegment => {
         const visibleItems = items.filter(Boolean);
         const itemsText = visibleItems.join(", ");
         const text = `${category || ""}${category && itemsText ? ": " : ""}${itemsText}`;
@@ -148,6 +165,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
 
         return {
             id,
+            editorAnchorId,
             estimatedHeight,
         render: (key) => (
                 <div key={key} className="resume-document__skill-row resume-font--body">
@@ -163,8 +181,8 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
 
                 const split = splitWordsForHeight(itemsText, availableHeight, textWidthPt, renderTokens.formatting.bodyFontSize, bodyLineHeight, fieldPaddingPt);
                 return {
-                    head: split.head ? makeSkillSegment(`${id}-head`, category, split.head.split(/,\s*|\s+/).filter(Boolean)) : null,
-                    tail: split.tail ? makeSkillSegment(`${id}-tail`, category, split.tail.split(/,\s*|\s+/).filter(Boolean)) : null
+                    head: split.head ? makeSkillSegment(`${id}-head`, category, split.head.split(/,\s*|\s+/).filter(Boolean), editorAnchorId) : null,
+                    tail: split.tail ? makeSkillSegment(`${id}-tail`, category, split.tail.split(/,\s*|\s+/).filter(Boolean), editorAnchorId) : null
                 };
             }
         };
@@ -186,6 +204,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
         const nextSegments: PageSegment[] = [];
         nextSegments.push({
             id: "header",
+            editorAnchorId: "header",
             estimatedHeight:
                 renderTokens.formatting.titleFontSize * titleLineHeight +
                 pxToPt(RESUME_CSS_LAYOUT.titleVerticalPaddingPx * 2) +
@@ -233,6 +252,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                 if (metaFields.length > 0 || dateFields.length > 0) {
                     nextSegments.push({
                         id: `${exp.id}-meta`,
+                        editorAnchorId: `${exp.id}-meta`,
                         estimatedHeight: renderTokens.formatting.subHeaderFontSize * subHeaderLineHeight + fieldPaddingPt + pxToPt(RESUME_CSS_LAYOUT.metaRowToBulletGapPx),
                         keepWithNext: exp.bullets.length > 0,
                         render: (key) => (
@@ -278,6 +298,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
                 if (metaFields.length > 0 || dateFields.length > 0) {
                     nextSegments.push({
                         id: `${ed.id}-meta`,
+                        editorAnchorId: `${ed.id}-meta`,
                         estimatedHeight: renderTokens.formatting.subHeaderFontSize * subHeaderLineHeight + fieldPaddingPt,
                         keepWithNext: ed.details.length > 0,
                         render: (key) => (
@@ -422,10 +443,23 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
     const pages = paginateSegments(measuredSegments, contentHeightPt);
     const renderedPages = pages.length >= pageCount ? pages : [...pages, ...Array.from({ length: pageCount - pages.length }, () => [] as PageSegment[])];
     const previewColumnCount = Math.min(Math.max(1, columnCount), Math.max(1, renderedPages.length));
+    const pageBreakAnchors = pages.slice(1).flatMap((page, pageIndex) => {
+        const firstAnchoredSegment = page.find((segment) => segment.editorAnchorId);
+        return firstAnchoredSegment?.editorAnchorId
+            ? [{ pageNumber: pageIndex + 2, segmentId: firstAnchoredSegment.editorAnchorId }]
+            : [];
+    });
+    const pageBreakAnchorSignature = pageBreakAnchors
+        .map((anchor) => `${anchor.pageNumber}:${anchor.segmentId}`)
+        .join("|");
 
     React.useEffect(() => {
         onRenderedPageCountChange(renderedPages.length);
     }, [onRenderedPageCountChange, renderedPages.length]);
+
+    React.useEffect(() => {
+        onPageBreakAnchorsChange?.(pageBreakAnchors);
+    }, [onPageBreakAnchorsChange, pageBreakAnchorSignature]);
 
     const previewCssVariables = {
         ...documentCssVariables,
@@ -451,7 +485,7 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
             >
                 {segments.map((segment, index) => renderMeasuredSegment(segment, `measure-${segment.id}-${index}`))}
             </div>
-            {renderedPages.map((pageSegments, pageIndex) => (
+            {!measurementOnly && renderedPages.map((pageSegments, pageIndex) => (
                 <div
                     key={`resume-page-preview-${pageIndex}`}
                     className="resume-page-preview-page"

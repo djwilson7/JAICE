@@ -31,7 +31,6 @@ export type OverlayInputParams = {
     customActionTitle?: string;
     customActionIcon?: React.ReactNode;
     isAutoResize?: boolean;
-    showTextStats?: boolean;
     customActionPlacement?: "tray" | "left" | "right";
     disableClear?: boolean;
     disableDelete?: boolean;
@@ -77,6 +76,7 @@ export type ResumeDocumentEditorInteraction = {
     focusedDocumentSection: DocumentSectionId | null;
     setActiveDocumentSection: React.Dispatch<React.SetStateAction<DocumentSectionId | null>>;
     setFocusedField: React.Dispatch<React.SetStateAction<string | null>>;
+    setHoveredField: React.Dispatch<React.SetStateAction<string | null>>;
     hoveredNameSection: boolean;
     setHoveredNameSection: React.Dispatch<React.SetStateAction<boolean>>;
     focusedNameSection: boolean;
@@ -216,7 +216,12 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = (props)
         sectionHeadingClass,
         documentInnerSectionGapPx
     } = formatting;
-    const { activeDocumentSection, setFocusedField, gapPreviewTarget } = interaction;
+    const {
+        activeDocumentSection,
+        setFocusedField,
+        setHoveredField = () => undefined,
+        gapPreviewTarget
+    } = interaction;
     const { updateSectionTitle } = handlers;
     const [previewExperienceTag, setPreviewExperienceTag] = React.useState<{
         bulletId: string;
@@ -238,8 +243,10 @@ export const ResumeDocumentEditor: React.FC<ResumeDocumentEditorProps> = (props)
             fallbackTitle={DEFAULT_SECTION_TITLES[section]}
             isEditing={activeDocumentSection === section}
             className={sectionHeadingClass}
+            segmentId={`${section}-heading`}
             onChange={(value) => updateSectionTitle(section, value)}
             onFocusChange={setFocusedField}
+            onHoverChange={setHoveredField}
         />
     );
 

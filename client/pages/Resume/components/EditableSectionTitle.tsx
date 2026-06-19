@@ -8,8 +8,10 @@ type EditableSectionTitleProps = {
     isEditing: boolean;
     className: string;
     style?: React.CSSProperties;
+    segmentId?: string;
     onChange: (value: string) => void;
     onFocusChange: (fieldPath: string | null) => void;
+    onHoverChange?: (fieldPath: string | null) => void;
 };
 
 export const EditableSectionTitle: React.FC<EditableSectionTitleProps> = ({
@@ -19,8 +21,10 @@ export const EditableSectionTitle: React.FC<EditableSectionTitleProps> = ({
     isEditing,
     className,
     style,
+    segmentId,
     onChange,
-    onFocusChange
+    onFocusChange,
+    onHoverChange
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const fieldPath = `sectionTitles.${section}`;
@@ -33,7 +37,13 @@ export const EditableSectionTitle: React.FC<EditableSectionTitleProps> = ({
 
     if (!isEditing) {
         return (
-            <h2 className={className} style={style}>
+            <h2
+                className={className}
+                style={style}
+                data-resume-segment-id={segmentId}
+                onMouseEnter={() => onHoverChange?.(fieldPath)}
+                onMouseLeave={() => onHoverChange?.(null)}
+            >
                 {title.trim() || fallbackTitle}
             </h2>
         );
@@ -45,11 +55,14 @@ export const EditableSectionTitle: React.FC<EditableSectionTitleProps> = ({
             aria-label={`${fallbackTitle} section title`}
             className={`${className} bg-white outline-none transition-colors hover:bg-slate-50 focus:border-sky-500 focus:bg-sky-50/80 focus:ring-2 focus:ring-sky-500/15`}
             style={style}
+            data-resume-segment-id={segmentId}
             value={title}
             placeholder={fallbackTitle}
             onChange={(event) => onChange(event.target.value)}
             onFocus={() => onFocusChange(fieldPath)}
             onBlur={() => onFocusChange(null)}
+            onMouseEnter={() => onHoverChange?.(fieldPath)}
+            onMouseLeave={() => onHoverChange?.(null)}
             onKeyDown={(event) => {
                 if (event.key === "Enter") {
                     event.preventDefault();
