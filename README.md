@@ -503,22 +503,22 @@ Local inference performance depends on the machine running the stack. Smaller mo
 
 ## **Frontend Test Coverage**
 
-The frontend test suite currently includes **189 passing test files** and **876 passing tests**.
+The frontend test suite currently includes **200 passing test files** and **990 passing tests**.
 
 Coverage is generated with **Vitest** using the **V8 coverage provider**.
 
 | Metric | Coverage | Covered / Total |
 | :--- | ---: | ---: |
-| Statements | **93.01%** | 4686 / 5038 |
-| Branches | **82.96%** | 3462 / 4173 |
-| Functions | **93.70%** | 1265 / 1350 |
-| Lines | **94.68%** | 4398 / 4645 |
+| Statements | **92.15%** | 5818 / 6313 |
+| Branches | **82.40%** | 3879 / 4707 |
+| Functions | **92.43%** | 1516 / 1640 |
+| Lines | **94.19%** | 5418 / 5752 |
 
 ### Coverage Highlights
 
 - Broad frontend coverage across application layout, navigation, global components, services, dashboard views, resume tooling, home workflow, and settings pages.
 - Several core areas are at or near full coverage, including app initialization, layout components, settings display, settings providers, home contexts, home providers, and shared UI components.
-- Statements, functions, and lines are all above **93%**.
+- Statements, functions, and lines are all above **92%**.
 - Branch coverage is above **82%**, with remaining gaps concentrated in conditional-heavy UI flows such as resume editing, dashboard cards, home hooks, modals, and account settings.
 
 ### Detailed Results
@@ -549,22 +549,22 @@ The HTML report is a generated static artifact. Re-run the coverage command afte
 
 ## **Backend Test Coverage**
 
-The backend test suite currently includes **487 passing tests**.
+The backend test suite currently includes **498 passing tests**.
 
 Coverage is generated with **pytest** across the Python service layers, including the client API, Gmail workers, classification pipeline, shared worker utilities, database helpers, security utilities, and resume chat services.
 
 | Metric | Coverage | Covered / Total |
 | :--- | ---: | ---: |
-| Statements | **97.53%** | 4818 / 4940 |
-| Branches | **96.72%** | 1240 / 1282 |
-| Functions | **97.95%** | 335 / 342 |
-| Lines | **97.53%** | 4818 / 4940 |
+| Statements | **98.58%** | 5127 / 5201 |
+| Branches | **97.01%** | 1298 / 1338 |
+| Functions | **97.88%** | 370 / 378 |
+| Lines | **98.58%** | 5127 / 5201 |
 
 ### Coverage Highlights
 
 - Strong backend coverage across the client API, classification system, Gmail ingestion pipeline, shared worker library, database query helpers, and resume chat service.
 - Most backend modules are at or near **100% coverage** across statements, branches, functions, and lines.
-- Statements, branches, functions, and lines are all above **96%**.
+- Statements, branches, functions, and lines are all above **97%**.
 - Remaining gaps are concentrated in a small number of operationally dense modules, including Gmail task handling, Pub/Sub listener behavior, auth API edge cases, and select classification task branches.
 
 ### Detailed Results
