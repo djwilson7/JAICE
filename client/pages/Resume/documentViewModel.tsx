@@ -59,7 +59,6 @@ export const useResumeDocumentViewModel = ({
         customActionTitle?: string;
         customActionIcon?: React.ReactNode;
         isAutoResize?: boolean;
-        showTextStats?: boolean;
         customActionPlacement?: "tray" | "left" | "right";
         disableClear?: boolean;
         disableDelete?: boolean;

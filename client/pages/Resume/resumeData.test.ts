@@ -255,7 +255,7 @@ describe('normalizeSkillCategories', () => {
 
 describe('getTextStats', () => {
     it('returns correct char and word count', () => {
-        expect(getTextStats('hello world')).toEqual({ chars: 11, words: 2 });
+        expect(getTextStats('hello world')).toEqual({ chars: 10, words: 2 });
     });
 
     it('returns zeros for empty string', () => {
@@ -267,7 +267,7 @@ describe('getTextStats', () => {
     });
 
     it('handles multi-space words', () => {
-        expect(getTextStats('a  b   c')).toEqual({ chars: 8, words: 3 });
+        expect(getTextStats('a  b   c')).toEqual({ chars: 3, words: 3 });
     });
 });
 

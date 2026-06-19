@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getTextStats } from "../resumeData";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 
 export type OverlayInputProps = {
@@ -16,7 +15,6 @@ export type OverlayInputProps = {
     customActionTitle?: string;
     customActionIcon?: React.ReactNode;
     isAutoResize?: boolean;
-    showTextStats?: boolean;
     customActionPlacement?: "tray" | "left" | "right";
     disableClear?: boolean;
     disableDelete?: boolean;
@@ -42,7 +40,6 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     customActionTitle,
     customActionIcon,
     isAutoResize,
-    showTextStats: shouldShowTextStats = false,
     customActionPlacement = "tray",
     disableClear = false,
     disableDelete = false,
@@ -66,8 +63,6 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     const showInlineDelete = isOpen && Boolean(onDelete) && !disableDelete;
     const showLeftCustomAction = isOpen && customActionPlacement === "left" && Boolean(onCustomAction && customActionIcon);
     const showRightCustomAction = isOpen && customActionPlacement === "right" && Boolean(onCustomAction && customActionIcon);
-    const showTextStats = shouldShowTextStats && hoveredField === path;
-    const textStats = showTextStats ? getTextStats(value) : null;
     const fontPreviewClass = className.includes("resume-subheader-font-target")
         ? ""
         : " resume-body-font-target";
@@ -196,13 +191,6 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
                     </button>
                 )}
             </div>
-            {showTextStats && textStats && (
-                <div
-                    className="resume-text-stat-pill pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-200 shadow-[0_10px_24px_rgba(2,6,23,0.30),inset_0_1px_0_rgba(255,255,255,0.12)]"
-                >
-                    {textStats.chars} chars • {textStats.words} words
-                </div>
-            )}
             <AnimatePresence initial={false}>
                 {isOpen && customActionPlacement === "tray" && onCustomAction && (
                     <motion.div

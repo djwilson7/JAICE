@@ -165,7 +165,7 @@ export const normalizeSkillCategories = (skills: unknown): SkillCategory[] => {
 export const getTextStats = (text?: string) => {
     const value = text || "";
     return {
-        chars: value.length,
+        chars: value.replace(/\s/g, "").length,
         words: value.split(/\s+/).filter(Boolean).length
     };
 };

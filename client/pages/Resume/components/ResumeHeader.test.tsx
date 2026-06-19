@@ -24,7 +24,9 @@ describe('ResumeHeader', () => {
         isGeneratingPdfPreview: false,
         handleSaveResume: vi.fn(),
         togglePdfPreview: vi.fn(),
-        openPdfPreview: vi.fn()
+        openPdfPreview: vi.fn(),
+        documentTextStats: { chars: 420, words: 72 },
+        activeFieldTextStats: null
     };
 
     it('renders and handles interactions', () => {
@@ -72,6 +74,7 @@ describe('ResumeHeader', () => {
 
         fireEvent.click(screen.getByLabelText('Disable auto-save'));
         expect(defaultProps.setAutoSaveEnabled).toHaveBeenCalled();
+        expect(screen.getByLabelText('Disable auto-save')).toHaveClass('resume-auto-save-button--active');
     });
 
     it('renders with collapsed rails and master mode', () => {
@@ -91,5 +94,36 @@ describe('ResumeHeader', () => {
     it('handles loading states', () => {
         render(<ResumeHeader {...defaultProps} loadingSave={true} isGeneratingPdfPreview={true} isPdfPreviewOpen={true} />);
         expect(screen.getByLabelText('Back to editing')).toBeTruthy();
+    });
+
+    it('replaces document totals with hovered-field statistics at the save-status font size', () => {
+        const { rerender } = render(<ResumeHeader {...defaultProps} />);
+        const statistics = screen.getByLabelText('Resume text statistics');
+
+        expect(statistics).toHaveTextContent('72 words · 420 characters');
+        expect(statistics).toHaveClass('resume-header-status-text');
+
+        rerender(
+            <ResumeHeader
+                {...defaultProps}
+                activeFieldTextStats={{ label: 'Summary', chars: 85, words: 14 }}
+            />
+        );
+
+        expect(statistics).toHaveTextContent('14/72 words · 85/420 characters');
+        expect(statistics).toHaveClass('resume-header-status-text');
+    });
+
+    it('uses singular labels for one character and one word', () => {
+        render(
+            <ResumeHeader
+                {...defaultProps}
+                documentTextStats={{ chars: 1, words: 1 }}
+            />
+        );
+
+        expect(screen.getByLabelText('Resume text statistics')).toHaveTextContent(
+            '1 word · 1 character'
+        );
     });
 });

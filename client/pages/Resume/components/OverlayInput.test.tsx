@@ -139,9 +139,9 @@ describe('OverlayInput', () => {
         expect(animation).not.toHaveProperty('marginLeft');
     });
 
-    it('shows text stats', () => {
-        const { container } = render(<OverlayInput {...defaultProps} hoveredField="test.path" showTextStats={true} value="hello world" />);
-        expect(container.textContent).toContain('11 chars • 2 words');
+    it('does not render field-level text statistics', () => {
+        const { container } = render(<OverlayInput {...defaultProps} hoveredField="test.path" value="hello world" />);
+        expect(container.textContent).not.toContain('11 chars');
     });
 
     it('renders auto resize textarea', () => {

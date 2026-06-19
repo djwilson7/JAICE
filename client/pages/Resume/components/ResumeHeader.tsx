@@ -1,5 +1,16 @@
 import React from "react";
 import { ResumeAutoSaveIcon } from "./ResumeAutoSaveIcon";
+import type { ResumeTextStatContext } from "../resumeTextStats";
+
+const formatTextStat = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+
+const formatContextualTextStat = (
+    fieldCount: number,
+    totalCount: number,
+    singular: string,
+    plural: string
+) => `${fieldCount}/${totalCount} ${totalCount === 1 ? singular : plural}`;
 
 type ResumeHeaderProps = {
     isLightMode: boolean;
@@ -22,13 +33,16 @@ type ResumeHeaderProps = {
     handleSaveResume: () => void | Promise<void>;
     togglePdfPreview: () => void | Promise<void>;
     openPdfPreview: () => void | Promise<void>;
+    documentTextStats: { chars: number; words: number };
+    activeFieldTextStats: ResumeTextStatContext | null;
 };
 
 export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
     isLightMode,
     isLeftRailCollapsed, onToggleLeftRail, isRightRailCollapsed, onToggleRightRail,
     isMaster, setIsMaster, resumeName, setResumeName, isDirty, setIsDirty, isDraft,
-    loadingSave, autoSaveEnabled, setAutoSaveEnabled, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview
+    loadingSave, autoSaveEnabled, setAutoSaveEnabled, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview,
+    documentTextStats = { chars: 0, words: 0 }, activeFieldTextStats = null
 }) => (
             <header 
                 className="resume-header resume-chrome-surface print:hidden"
@@ -89,37 +103,68 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         </div>
                     </div>
 
-                    <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-2 select-none">
-                        {loadingSave ? (
-                            <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-600" : "text-slate-400"} whitespace-nowrap font-medium tracking-wide`}>
+                    <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-3 select-none">
+                        <div className="flex items-center gap-2">
+                            {loadingSave ? (
+                            <span className="resume-header-status-text whitespace-nowrap font-medium tracking-wide">
                                 Saving...
                             </span>
                         ) : (isDirty || isDraft) ? (
                             <>
                                 <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_7px_rgba(251,191,36,0.55)]" />
-                                <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-600" : "text-slate-400"} whitespace-nowrap font-medium tracking-wide`}>
+                                <span className="resume-header-status-text whitespace-nowrap font-medium tracking-wide">
                                     {isDraft ? "Unsaved AI draft" : "Unsaved changes"}
                                 </span>
                             </>
                         ) : (
-                            <span style={{ fontSize: "10px" }} className={`${isLightMode ? "text-slate-500" : "text-slate-500"} whitespace-nowrap font-medium tracking-wide`}>Saved</span>
-                        )}
+                            <span className="resume-header-status-text whitespace-nowrap font-medium tracking-wide">Saved</span>
+                            )}
+                        </div>
+                        <span className={`h-3 w-px ${isLightMode ? "bg-slate-300" : "bg-slate-700"}`} />
+                        <div
+                            className="resume-header-status-text flex items-center whitespace-nowrap font-medium tracking-wide"
+                            aria-label="Resume text statistics"
+                        >
+                            <span>
+                                {activeFieldTextStats
+                                    ? formatContextualTextStat(
+                                        activeFieldTextStats.words,
+                                        documentTextStats.words,
+                                        "word",
+                                        "words"
+                                    )
+                                    : formatTextStat(
+                                        documentTextStats.words,
+                                        "word",
+                                        "words"
+                                    )}{" "}
+                                ·{" "}
+                                {activeFieldTextStats
+                                    ? formatContextualTextStat(
+                                        activeFieldTextStats.chars,
+                                        documentTextStats.chars,
+                                        "character",
+                                        "characters"
+                                    )
+                                    : formatTextStat(
+                                        documentTextStats.chars,
+                                        "character",
+                                        "characters"
+                                    )}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                         <button
                             type="button"
                             onClick={() => setAutoSaveEnabled((enabled) => !enabled)}
-                            className={`resume-action-button ${
-                                autoSaveEnabled
-                                    ? "!border-violet-500/35 !bg-violet-500/12 !text-violet-500"
-                                    : ""
-                            }`}
+                            className={`resume-action-button${autoSaveEnabled ? " resume-auto-save-button--active" : ""}`}
                             title={autoSaveEnabled ? "Disable auto-save" : "Enable auto-save"}
                             aria-label={autoSaveEnabled ? "Disable auto-save" : "Enable auto-save"}
                             aria-pressed={autoSaveEnabled}
                         >
-                            <ResumeAutoSaveIcon className="h-5 w-5" />
+                            <ResumeAutoSaveIcon className="h-7 w-7" />
                         </button>
                         <button
                             onClick={() => {
@@ -148,7 +193,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             aria-label="Save current resume changes"
                         >
                             {loadingSave ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                                <div className="h-5 w-5 animate-spin rounded-full border-b border-current"></div>
                             ) : (
                                 <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h9.5L19 5.5V19a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" />
@@ -166,7 +211,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             aria-pressed={isPdfPreviewOpen}
                         >
                             {isGeneratingPdfPreview ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                                <div className="h-5 w-5 animate-spin rounded-full border-b border-current"></div>
                             ) : (
                                 <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.3">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
@@ -182,7 +227,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             aria-label="Preview PDF before download"
                         >
                             {isGeneratingPdfPreview ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                                <div className="h-5 w-5 animate-spin rounded-full border-b border-current"></div>
                             ) : (
                                 <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />

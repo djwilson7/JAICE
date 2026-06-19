@@ -25,6 +25,7 @@ export const ResumeSummarySection: React.FC<ResumeEditorSectionProps> = ({
         setHoveredSummary,
         focusedSummary,
         setFocusedSummary,
+        setHoveredField = () => undefined,
         isSummaryImproveHovered,
         setIsSummaryImproveHovered,
         setRewriteActionHover,
@@ -78,9 +79,16 @@ export const ResumeSummarySection: React.FC<ResumeEditorSectionProps> = ({
             </button>
             <motion.div
                 className={`summary-meta-field resume-editor-summary${isSummaryImproveHovered ? " experience-ai-hover" : ""}`}
+                data-resume-segment-id="summary-body"
                 data-open={isOpen}
-                onHoverStart={() => setHoveredSummary(true)}
-                onHoverEnd={() => setHoveredSummary(false)}
+                onHoverStart={() => {
+                    setHoveredSummary(true);
+                    setHoveredField("summary");
+                }}
+                onHoverEnd={() => {
+                    setHoveredSummary(false);
+                    setHoveredField((current) => current === "summary" ? null : current);
+                }}
                 animate={{
                     paddingTop: isExpanded ? 2 : 0,
                     paddingRight: isExpanded ? 2 : 0,
@@ -133,12 +141,6 @@ export const ResumeSummarySection: React.FC<ResumeEditorSectionProps> = ({
                         }}
                     />
                 </div>
-                {hoveredSummary && (
-                    <div className="resume-text-stat-pill resume-editor-text-stats">
-                        {(resumeData.summary || "").length} chars &bull;{" "}
-                        {(resumeData.summary || "").split(/\s+/).filter(Boolean).length} words
-                    </div>
-                )}
             </motion.div>
             {(loadingSummaryImprove || summaryRewriteSuggestion) && (
                 <div
