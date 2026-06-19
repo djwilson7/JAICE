@@ -97,6 +97,32 @@ export const useResumeDocumentEditing = () => {
         focusedSummary
     ]);
     const activeDocumentSection = focusedDocumentSection ?? hoveredDocumentSection ?? retainedDocumentSection;
+
+    const resetEditorTransientState = useCallback(() => {
+        clearRetainedSectionTimer();
+        clearHoverExitTimer();
+        setHoveredContactField(null);
+        setFocusedContactField(null);
+        setHoveredNameSection(false);
+        setFocusedNameSection(false);
+        setHoveredSummary(false);
+        setFocusedSummary(false);
+        setIsSummaryImproveHovered(false);
+        setHoveredField(null);
+        setFocusedField(null);
+        setHoveredJobId(null);
+        setHoveredEducationId(null);
+        setHoveredSkillId(null);
+        setHoveredExperienceImproveId(null);
+        setHoveredExperienceClearId(null);
+        setHoveredExperienceDeleteId(null);
+        setHoveredEducationClearId(null);
+        setHoveredEducationDeleteId(null);
+        setHoveredSkillClearId(null);
+        setHoveredSkillDeleteId(null);
+        setHoveredDocumentSection(null);
+        setRetainedDocumentSection(null);
+    }, [clearHoverExitTimer, clearRetainedSectionTimer]);
     const setActiveDocumentSection = useCallback<Dispatch<SetStateAction<DocumentSectionId | null>>>((value) => {
         setHoveredDocumentSection((current) => {
             const next = typeof value === "function"
@@ -685,6 +711,7 @@ export const useResumeDocumentEditing = () => {
         setHoveredSkillDeleteId,
         activeDocumentSection,
         focusedDocumentSection,
+        resetEditorTransientState,
         setActiveDocumentSection,
         updateField,
         updateSectionTitle,

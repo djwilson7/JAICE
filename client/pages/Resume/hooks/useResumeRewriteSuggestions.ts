@@ -39,11 +39,19 @@ export const useResumeRewriteSuggestions = ({
     const [experienceRewriteSuggestions, setExperienceRewriteSuggestions] = useState<Record<string, ExperienceRewriteSuggestion>>({});
     const [rewriteActionHover, setRewriteActionHover] = useState<ResumeRewriteActionHover | null>(null);
     const rewriteQueueRef = useRef<Promise<void>>(Promise.resolve());
+    const rewriteGenerationRef = useRef(0);
 
     const resetDraftState = () => {
+        rewriteGenerationRef.current += 1;
+        rewriteQueueRef.current = Promise.resolve();
         setIsDraft(false);
         setOriginalResumeDataBeforeDraft(null);
         setChangeMetadata([]);
+        setLoadingSummaryImprove(false);
+        setLoadingExperienceImproveId(null);
+        setSummaryRewriteSuggestion(null);
+        setExperienceRewriteSuggestions({});
+        setRewriteActionHover(null);
     };
 
     const getRewriteUserMessage = (message?: string | null, fallback = REWRITE_REVIEWABLE_MESSAGE) => {
@@ -68,6 +76,7 @@ export const useResumeRewriteSuggestions = ({
         if (!resumeData.summary) return;
         if (summaryRewriteSuggestion?.isStreaming) return;
         const currentSummary = resumeData.summary || "";
+        const rewriteGeneration = rewriteGenerationRef.current;
         const queuedSuggestion: SummaryRewriteSuggestion = {
             target: "summary",
             assistantMessage: "",
@@ -81,6 +90,7 @@ export const useResumeRewriteSuggestions = ({
         setError(null);
 
         enqueueRewriteJob(async () => {
+            if (rewriteGeneration !== rewriteGenerationRef.current) return;
             setLoadingSummaryImprove(true);
             setSummaryRewriteSuggestion((current) =>
                 current
@@ -94,6 +104,7 @@ export const useResumeRewriteSuggestions = ({
                     summary_text: currentSummary,
                     guidance: "Rewrite this professional summary to be clearer and tighter without adding new factual claims. Safe synonyms and cleaner phrasing are allowed when they preserve the same meaning. If the source text is too thin to improve truthfully, return it unchanged."
                 }, (event) => {
+                    if (rewriteGeneration !== rewriteGenerationRef.current) return;
                     if (event.event === "delta" && event.target === "summary" && event.text !== undefined) {
                         setSummaryRewriteSuggestion((current) =>
                             current
@@ -102,6 +113,7 @@ export const useResumeRewriteSuggestions = ({
                         );
                     }
                 });
+                if (rewriteGeneration !== rewriteGenerationRef.current) return;
                 const summarySuggestion = result.tailorSuggestions?.summary?.[0];
                 if (!summarySuggestion?.suggested_text?.trim()) {
                     setSummaryRewriteSuggestion(null);
@@ -118,11 +130,12 @@ export const useResumeRewriteSuggestions = ({
                     isStreaming: false
                 });
             } catch (err) {
+                if (rewriteGeneration !== rewriteGenerationRef.current) return;
                 console.error(err);
                 setSummaryRewriteSuggestion((current) => current?.isStreaming ? null : current);
                 setError(getRewriteErrorMessage(err as ApiError));
             } finally {
-                setLoadingSummaryImprove(false);
+                if (rewriteGeneration === rewriteGenerationRef.current) setLoadingSummaryImprove(false);
             }
         });
     };
@@ -173,6 +186,7 @@ export const useResumeRewriteSuggestions = ({
         if (!bullets.length) return;
         if (experienceRewriteSuggestions[experience.id]?.isStreaming) return;
         const roleTitle = [experience.jobTitle, experience.company].filter(Boolean).join(" at ") || "Work experience";
+        const rewriteGeneration = rewriteGenerationRef.current;
 
         const queuedSuggestion: ExperienceRewriteSuggestion = {
             target: "experience",
@@ -199,6 +213,7 @@ export const useResumeRewriteSuggestions = ({
 
         bullets.forEach((bullet, index) => {
             enqueueRewriteJob(async () => {
+                if (rewriteGeneration !== rewriteGenerationRef.current) return;
                 setLoadingExperienceImproveId(experience.id);
                 updateExperienceRewriteItem(experience.id, bullet.id, (item) => ({
                     ...item,
@@ -217,6 +232,7 @@ export const useResumeRewriteSuggestions = ({
                         }],
                         guidance: "Rewrite this single work-experience bullet conservatively. Use a direct action verb and cleaner phrasing when the source text supports it. Only use an XYZ-style shape when this exact bullet already contains the outcome, measure, and method. Do not use role title, company, other bullets, or resume context. Do not invent missing metrics, outcomes, tools, teams, production scope, reliability claims, customer context, or business impact. If the bullet is thin, keep the rewrite close to the original."
                     }, (event) => {
+                        if (rewriteGeneration !== rewriteGenerationRef.current) return;
                         if (event.event === "delta" && event.target === "experience" && event.bullet_index === index && event.text !== undefined) {
                             updateExperienceRewriteItem(experience.id, bullet.id, (item) => ({
                                 ...item,
@@ -226,6 +242,7 @@ export const useResumeRewriteSuggestions = ({
                             }));
                         }
                     });
+                    if (rewriteGeneration !== rewriteGenerationRef.current) return;
                     const suggestion = (result.tailorSuggestions?.experience_bullets || [])
                         .find((item) => item.bullet_index === index && item.suggested_text?.trim());
 
@@ -243,11 +260,12 @@ export const useResumeRewriteSuggestions = ({
                         isStreaming: false
                     }));
                 } catch (err) {
+                    if (rewriteGeneration !== rewriteGenerationRef.current) return;
                     console.error(err);
                     removeExperienceRewriteItem(experience.id, bullet.id);
                     setError(getRewriteErrorMessage(err as ApiError));
                 } finally {
-                    setLoadingExperienceImproveId(null);
+                    if (rewriteGeneration === rewriteGenerationRef.current) setLoadingExperienceImproveId(null);
                 }
             });
         });

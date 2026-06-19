@@ -10,6 +10,7 @@ vi.mock('../resumeData', () => ({ normalizeResumeDataForPayload: (d: any) => d }
 const mockBlob = new Blob(['%PDF'], { type: 'application/pdf' });
 
 const defaultProps = {
+    activeResumeId: 'resume-1',
     resumeData: { fullName: 'Alice', experience: [], education: [], skills: [] } as any,
     resumeName: 'My Resume',
     currentResumeFormatting: {} as any,
@@ -33,6 +34,27 @@ describe('useResumePdfPreview', () => {
     it('initialises with isPdfPreviewOpen=false', () => {
         const { result } = renderHook(() => useResumePdfPreview(defaultProps));
         expect(result.current.isPdfPreviewOpen).toBe(false);
+    });
+
+    it('clears preview state and ignores an old PDF response after a version switch', async () => {
+        let resolveExport!: (value: any) => void;
+        (exportResumePdf as any).mockImplementation(() => new Promise((resolve) => { resolveExport = resolve; }));
+        const { result, rerender } = renderHook(
+            (props) => useResumePdfPreview(props),
+            { initialProps: defaultProps }
+        );
+
+        let openPromise!: Promise<void>;
+        act(() => { openPromise = result.current.openPdfPreview(); });
+        rerender({ ...defaultProps, activeResumeId: 'resume-2' });
+        await act(async () => {
+            resolveExport({ blob: mockBlob, filename: 'old.pdf', previewUrl: 'blob:old' });
+            await openPromise;
+        });
+
+        expect(result.current.isPdfPreviewOpen).toBe(false);
+        expect(result.current.pdfPreviewUrl).toBeNull();
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:old');
     });
 
     it('openPdfPreview sets isPdfPreviewOpen=true and resolves url', async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
     makeId,
+    cloneResumeData,
     hasText,
     TAG_COLOR_TOKENS,
     TAG_COLOR_STYLES,
@@ -18,6 +19,34 @@ import {
     normalizeResumeDataForPayload,
 } from './resumeData';
 import type { SkillCategory } from './types';
+
+describe('cloneResumeData snapshot isolation', () => {
+    it('creates independent nested editable data in both directions', () => {
+        const master = defaultResumeData();
+        master.customContact = [{ label: 'Portfolio', value: 'master.example' }];
+        master.tagLibrary = [{
+            id: 'tag-1', name: 'Backend', slug: 'backend', colorToken: 'tag-teal', createdAt: '2026-01-01'
+        }];
+        master.experience[0].bullets[0].tagIds = ['tag-1'];
+        const version = cloneResumeData(master);
+
+        expect(version).not.toBe(master);
+        expect(version.experience).not.toBe(master.experience);
+        expect(version.experience[0]).not.toBe(master.experience[0]);
+        expect(version.experience[0].bullets[0]).not.toBe(master.experience[0].bullets[0]);
+        expect(version.experience[0].bullets[0].tagIds).not.toBe(master.experience[0].bullets[0].tagIds);
+        expect(version.skills).not.toBe(master.skills);
+        expect(version.customContact).not.toBe(master.customContact);
+        expect(version.formatting).not.toBe(master.formatting);
+        expect(version.sectionTitles).not.toBe(master.sectionTitles);
+        expect(version.tagLibrary).not.toBe(master.tagLibrary);
+
+        version.experience[0].bullets[0].text = 'version edit';
+        expect(master.experience[0].bullets[0].text).not.toBe('version edit');
+        master.skills![0].items[0] = 'master edit';
+        expect(version.skills![0].items[0]).not.toBe('master edit');
+    });
+});
 
 // ─── makeId ─────────────────────────────────────────────────────────────────
 

@@ -5,6 +5,7 @@ import { normalizeResumeDataForPayload } from "../resumeData";
 import { streamResumeChatResponse } from "../resumeApi";
 
 type UseResumeChatParams = {
+    activeResumeId: string | null;
     resumeData: ResumeData;
     currentResumeFormatting: ResumeFormatting;
     setError: (message: string | null) => void;
@@ -24,6 +25,7 @@ export const getChatErrorMessage = (err: ApiError) => {
 };
 
 export const useResumeChat = ({
+    activeResumeId,
     resumeData,
     currentResumeFormatting,
     setError,
@@ -40,6 +42,7 @@ export const useResumeChat = ({
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
     const lastScrollTopRef = useRef(0);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const chatGenerationRef = useRef(0);
     const copyStatusTimeoutRef = useRef<number | null>(null);
     const [isChatInputCollapsed, setIsChatInputCollapsed] = useState(false);
     const [showBackToBottom, setShowBackToBottom] = useState(false);
@@ -49,6 +52,22 @@ export const useResumeChat = ({
     });
     const [isChatResponding, setIsChatResponding] = useState(false);
     const [copiedChatMessageIndex, setCopiedChatMessageIndex] = useState<number | null>(null);
+
+    useEffect(() => {
+        chatGenerationRef.current += 1;
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        setChatInput("");
+        setChatMessages([{
+            sender: "assistant",
+            text: "Hi there! I'm Jaice, your AI assistant. I can help you tailor your resume to target job listings, draft professional descriptions, or suggest high-impact improvements. What are we working on today?"
+        }]);
+        setIsChatInputCollapsed(false);
+        setShowBackToBottom(false);
+        setChatScrollShadow({ top: false, bottom: false });
+        setIsChatResponding(false);
+        setCopiedChatMessageIndex(null);
+    }, [activeResumeId]);
 
     useEffect(() => {
         return () => {
@@ -184,6 +203,7 @@ export const useResumeChat = ({
         if (!chatInput.trim() || isChatResponding) return;
         const userMsg = chatInput.trim();
         const history = chatMessages.slice(-10);
+        const chatGeneration = chatGenerationRef.current;
         setChatMessages(prev => [...prev, { sender: "user", text: userMsg }]);
         setChatInput("");
         setIsChatResponding(true);
@@ -205,13 +225,19 @@ export const useResumeChat = ({
             const { receivedText } = await streamResumeChatResponse(
                 payload,
                 abortControllerRef.current?.signal,
-                applyStreamEvent,
-                appendToLastAssistantMessage
+                (event) => {
+                    if (chatGeneration === chatGenerationRef.current) applyStreamEvent(event);
+                },
+                (text) => {
+                    if (chatGeneration === chatGenerationRef.current) appendToLastAssistantMessage(text);
+                }
             );
+            if (chatGeneration !== chatGenerationRef.current) return;
             if (!receivedText) {
                 appendToLastAssistantMessage("I did not receive a response from the local model.");
             }
         } catch (err) {
+            if (chatGeneration !== chatGenerationRef.current) return;
             const errorName = (err as Error)?.name;
             if (errorName === "AbortError") {
                 setChatMessages(prev => {
@@ -235,8 +261,10 @@ export const useResumeChat = ({
                 }
             ]);
         } finally {
-            setIsChatResponding(false);
-            abortControllerRef.current = null;
+            if (chatGeneration === chatGenerationRef.current) {
+                setIsChatResponding(false);
+                abortControllerRef.current = null;
+            }
         }
     };
 

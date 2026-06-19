@@ -70,6 +70,14 @@ export function Resume() {
         currentResumeFormatting: formatting.currentResumeFormatting,
         applyResumeFormatting: formatting.applyResumeFormatting,
         resetDraftState: rewrite.resetDraftState,
+        resetEditorTransientState: documentEditing.resetEditorTransientState,
+        resetFormatTransientState: () => {
+            formatting.setFontPreviewTarget(null);
+            formatting.setIsMarginPreviewVisible(false);
+            formatting.setIsPageFormatPreviewVisible(false);
+            formatting.setGapPreviewTarget(null);
+            formatting.closePageStyleShelf();
+        },
         error,
         setError,
         successMessage,
@@ -77,6 +85,7 @@ export function Resume() {
     });
 
     const pdfPreview = useResumePdfPreview({
+        activeResumeId: persistence.activeResumeId,
         resumeData,
         resumeName: persistence.resumeName,
         currentResumeFormatting: formatting.currentResumeFormatting,
@@ -103,6 +112,7 @@ export function Resume() {
             : handleOpenPdfPreview();
 
     const chat = useResumeChat({
+        activeResumeId: persistence.activeResumeId,
         resumeData,
         currentResumeFormatting: formatting.currentResumeFormatting,
         setError,
@@ -232,6 +242,7 @@ export function Resume() {
                 />
 
                 <ResumeWorkspace
+                    key={persistence.activeResumeId ?? "new-resume"}
                     theme={{ isLightMode }}
                     alerts={{ error, successMessage, setError, setSuccessMessage }}
                     formatting={formatting}

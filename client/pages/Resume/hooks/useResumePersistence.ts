@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import type { ResumeData, ResumeFormatting, SavedResume } from "../types";
 import { defaultResumeFormatting } from "../formatting";
-import { defaultResumeData, normalizeResumeData, normalizeResumeDataForPayload } from "../resumeData";
+import { cloneResumeData, defaultResumeData, normalizeResumeData, normalizeResumeDataForPayload } from "../resumeData";
 import { createSavedResume, deleteSavedResume, listSavedResumes, updateSavedResume } from "../resumeApi";
 
 type UseResumePersistenceParams = {
@@ -11,6 +11,8 @@ type UseResumePersistenceParams = {
     currentResumeFormatting: ResumeFormatting;
     applyResumeFormatting: (formatting?: Partial<ResumeFormatting>) => void;
     resetDraftState: () => void;
+    resetEditorTransientState?: () => void;
+    resetFormatTransientState?: () => void;
     error: string | null;
     setError: React.Dispatch<React.SetStateAction<string | null>>;
     successMessage: string | null;
@@ -26,6 +28,8 @@ export const useResumePersistence = ({
     currentResumeFormatting,
     applyResumeFormatting,
     resetDraftState,
+    resetEditorTransientState = () => undefined,
+    resetFormatTransientState = () => undefined,
     error,
     setError,
     successMessage,
@@ -55,9 +59,11 @@ export const useResumePersistence = ({
     const [isDeletingResume, setIsDeletingResume] = useState(false);
     const loadingSaveRef = useRef(false);
     const isDirtyRef = useRef(false);
-    const fetchResumesRef = useRef<(preferredActiveResumeId?: string) => Promise<void>>(
-        async () => undefined
-    );
+    const activeResumeIdRef = useRef<string | null>(null);
+    const documentGenerationRef = useRef(0);
+    const saveRequestRef = useRef(0);
+    const listRequestRef = useRef(0);
+    const loadResumeIntoWorkspaceRef = useRef<(resume: SavedResume) => void>(() => undefined);
 
     const activeSavedResume = useMemo(() => {
         return resumesList.find((r) => r.id === activeResumeId) || null;
@@ -79,20 +85,38 @@ export const useResumePersistence = ({
     }, [resumesList, searchQuery]);
 
     const loadResumeIntoWorkspace = (res: SavedResume) => {
+        documentGenerationRef.current += 1;
+        saveRequestRef.current += 1;
+        activeResumeIdRef.current = res.id;
+        loadingSaveRef.current = false;
+        isDirtyRef.current = false;
+        setLoadingSave(false);
+        setIsDirty(false);
+        resetEditorTransientState();
+        resetFormatTransientState();
+        resetDraftState();
         setActiveResumeId(res.id);
         setResumeName(res.name);
         setIsMaster(res.is_master);
-        const normalizedData = normalizeResumeData(res.resume_data);
+        const normalizedData = normalizeResumeData(cloneResumeData(res.resume_data));
         setResumeData(normalizedData);
         applyResumeFormatting(normalizedData.formatting);
-        resetDraftState();
         setError(null);
         setSuccessMessage(null);
     };
+    loadResumeIntoWorkspaceRef.current = loadResumeIntoWorkspace;
 
     const handleCreateResume = async (cloneMaster: boolean, forceMaster: boolean = false) => {
         setShowCloneModal(false);
+        documentGenerationRef.current += 1;
+        const createGeneration = documentGenerationRef.current;
+        saveRequestRef.current += 1;
+        activeResumeIdRef.current = null;
+        loadingSaveRef.current = false;
+        setLoadingSave(false);
         setActiveResumeId(null);
+        resetEditorTransientState();
+        resetFormatTransientState();
         resetDraftState();
         setError(null);
         setSuccessMessage(null);
@@ -109,7 +133,7 @@ export const useResumePersistence = ({
         } else if (cloneMaster) {
             const master = resumesList.find((r) => r.is_master);
             if (master) {
-                nextData = normalizeResumeData(JSON.parse(JSON.stringify(master.resume_data)));
+                nextData = normalizeResumeData(cloneResumeData(master.resume_data));
                 nextName = `Copy of ${master.name}`;
                 sourceResumeId = master.id;
             } else {
@@ -140,6 +164,8 @@ export const useResumePersistence = ({
                 resume_data: normalizeResumeDataForPayload(nextData)
             });
 
+            if (createGeneration !== documentGenerationRef.current) return;
+
             if (resp.status === "success") {
                 loadResumeIntoWorkspace(resp.resume);
                 await fetchResumes(resp.resume.id);
@@ -152,27 +178,34 @@ export const useResumePersistence = ({
                 );
             }
         } catch (err) {
+            if (createGeneration !== documentGenerationRef.current) return;
             console.error(err);
             setError((err as Error).message || "Failed to create resume.");
         } finally {
-            setLoadingSave(false);
+            if (createGeneration === documentGenerationRef.current) setLoadingSave(false);
         }
     };
 
     const fetchResumes = async (preferredActiveResumeId?: string) => {
+        const requestId = ++listRequestRef.current;
+        const requestDocumentGeneration = documentGenerationRef.current;
         setLoadingList(true);
         setError(null);
         try {
             const resp = await listSavedResumes();
+            if (requestId !== listRequestRef.current) return;
             if (resp.status === "success") {
                 setResumesList(resp.resumes);
                 if (resp.resumes.length > 0) {
-                    if (preferredActiveResumeId) {
+                    if (
+                        preferredActiveResumeId &&
+                        requestDocumentGeneration === documentGenerationRef.current
+                    ) {
                         const preferred = resp.resumes.find((r) => r.id === preferredActiveResumeId);
                         if (preferred) {
                             loadResumeIntoWorkspace(preferred);
                         }
-                    } else if (!activeResumeId) {
+                    } else if (!activeResumeIdRef.current) {
                         const master = resp.resumes.find((r) => r.is_master) || resp.resumes[0];
                         loadResumeIntoWorkspace(master);
                     }
@@ -185,11 +218,12 @@ export const useResumePersistence = ({
                 setInitialLoadState("failed");
             }
         } catch (err) {
+            if (requestId !== listRequestRef.current) return;
             console.error(err);
             setError((err as Error).message || "Failed to load saved resumes.");
             setInitialLoadState("failed");
         } finally {
-            setLoadingList(false);
+            if (requestId === listRequestRef.current) setLoadingList(false);
         }
     };
 
@@ -210,11 +244,12 @@ export const useResumePersistence = ({
         }
     };
 
-    fetchResumesRef.current = fetchResumes;
-
     const performSaveResume = useCallback(async (source: "manual" | "auto") => {
         if (loadingSaveRef.current || !isDirtyRef.current) return;
 
+        const targetResumeId = activeResumeIdRef.current;
+        const documentGeneration = documentGenerationRef.current;
+        const requestId = ++saveRequestRef.current;
         loadingSaveRef.current = true;
         setError(null);
         setSuccessMessage(null);
@@ -226,8 +261,8 @@ export const useResumePersistence = ({
 
         setLoadingSave(true);
         try {
-            const resp = activeResumeId
-                ? await updateSavedResume(activeResumeId, {
+            const resp = targetResumeId
+                ? await updateSavedResume(targetResumeId, {
                     name: resumeName,
                     is_master: isMaster,
                     resume_data: finalPayloadData
@@ -235,30 +270,49 @@ export const useResumePersistence = ({
                 : await createSavedResume({
                     name: resumeName,
                     is_master: isMaster,
-                    source_resume_id: resumesList.find((r) => r.is_master)?.id || null,
+                    source_resume_id: null,
                     resume_data: finalPayloadData
                 });
 
-            if (resp.status === "success") {
+            if (
+                resp.status === "success" &&
+                requestId === saveRequestRef.current &&
+                documentGeneration === documentGenerationRef.current &&
+                targetResumeId === activeResumeIdRef.current
+            ) {
+                setResumesList((current) => {
+                    const nextResume = { ...resp.resume, resume_data: cloneResumeData(resp.resume.resume_data) };
+                    const index = current.findIndex((item) => item.id === nextResume.id);
+                    if (index < 0) return [nextResume, ...current];
+                    const next = [...current];
+                    next[index] = nextResume;
+                    return next;
+                });
+                if (!targetResumeId) {
+                    loadResumeIntoWorkspaceRef.current(resp.resume);
+                } else {
+                    resetDraftState();
+                    isDirtyRef.current = false;
+                    setIsDirty(false);
+                }
                 setSuccessMessage(source === "auto" ? "Resume auto-saved." : "Resume saved successfully!");
-                resetDraftState();
-                await fetchResumesRef.current(resp.resume.id);
             }
         } catch (err) {
+            if (requestId !== saveRequestRef.current || documentGeneration !== documentGenerationRef.current) return;
             console.error(err);
             setError((err as Error).message || "Failed to save resume.");
         } finally {
-            loadingSaveRef.current = false;
-            setLoadingSave(false);
+            if (requestId === saveRequestRef.current) {
+                loadingSaveRef.current = false;
+                setLoadingSave(false);
+            }
         }
     }, [
-        activeResumeId,
         currentResumeFormatting,
         isMaster,
         resetDraftState,
         resumeData,
         resumeName,
-        resumesList,
         setError,
         setSuccessMessage
     ]);
@@ -268,6 +322,10 @@ export const useResumePersistence = ({
     const handleDeleteResume = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         const resume = resumesList.find((item) => item.id === id);
+        if (resume?.is_master) {
+            setError("The master resume cannot be deleted.");
+            return;
+        }
         if (resume) setPendingDeleteResume(resume);
     };
 
@@ -277,6 +335,11 @@ export const useResumePersistence = ({
 
     const confirmDeleteResume = async () => {
         if (!pendingDeleteResume || isDeletingResume) return;
+        if (pendingDeleteResume.is_master) {
+            setPendingDeleteResume(null);
+            setError("The master resume cannot be deleted.");
+            return;
+        }
 
         const id = pendingDeleteResume.id;
         setIsDeletingResume(true);
@@ -288,7 +351,16 @@ export const useResumePersistence = ({
                 setPendingDeleteResume(null);
                 setSuccessMessage("Resume deleted.");
                 if (activeResumeId === id) {
+                    documentGenerationRef.current += 1;
+                    saveRequestRef.current += 1;
+                    activeResumeIdRef.current = null;
+                    loadingSaveRef.current = false;
+                    isDirtyRef.current = false;
                     setActiveResumeId(null);
+                    setIsDirty(false);
+                    resetEditorTransientState();
+                    resetFormatTransientState();
+                    resetDraftState();
                     const nextData = defaultResumeData();
                     setResumeData(nextData);
                     applyResumeFormatting(nextData.formatting);

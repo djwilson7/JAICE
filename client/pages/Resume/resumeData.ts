@@ -13,6 +13,11 @@ import { defaultResumeFormatting, normalizeResumeFormatting } from "./formatting
 
 export const makeId = () => Math.random().toString(36).slice(2, 10);
 
+export const cloneResumeData = <T>(data: T): T => {
+    if (typeof structuredClone === "function") return structuredClone(data);
+    return JSON.parse(JSON.stringify(data)) as T;
+};
+
 export const hasText = (value: unknown) => String(value ?? "").trim().length > 0;
 
 export const DEFAULT_SECTION_TITLES: ResumeSectionTitles = {

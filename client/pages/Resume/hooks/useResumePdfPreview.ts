@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ResumeData, ResumeFormatting } from "../types";
 import { normalizeResumeDataForPayload } from "../resumeData";
 import { exportResumePdf } from "../resumeApi";
 import { isResumeDebugEnabled } from "../resumeDiagnostics";
 
 type UseResumePdfPreviewParams = {
+    activeResumeId: string | null;
     resumeData: ResumeData;
     resumeName: string;
     currentResumeFormatting: ResumeFormatting;
@@ -14,6 +15,7 @@ type UseResumePdfPreviewParams = {
 };
 
 export const useResumePdfPreview = ({
+    activeResumeId,
     resumeData,
     resumeName,
     currentResumeFormatting,
@@ -26,6 +28,7 @@ export const useResumePdfPreview = ({
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
     const [pdfPreviewBlob, setPdfPreviewBlob] = useState<Blob | null>(null);
     const [pdfPreviewFilename, setPdfPreviewFilename] = useState("resume.pdf");
+    const previewGenerationRef = useRef(0);
 
     const revokePdfPreviewUrl = (url: string | null) => {
         if (url) {
@@ -34,6 +37,7 @@ export const useResumePdfPreview = ({
     };
 
     const closePdfPreview = () => {
+        previewGenerationRef.current += 1;
         setIsPdfPreviewOpen(false);
         setPdfPreviewBlob(null);
         setPdfPreviewFilename("resume.pdf");
@@ -44,6 +48,7 @@ export const useResumePdfPreview = ({
     };
 
     const openPdfPreview = async () => {
+        const previewGeneration = ++previewGenerationRef.current;
         clearFormatPreviews();
         setError(null);
         setSuccessMessage(null);
@@ -60,6 +65,10 @@ export const useResumePdfPreview = ({
 
         try {
             const { blob, filename, previewUrl } = await exportResumePdf(exportData, resumeName, isResumeDebugEnabled());
+            if (previewGeneration !== previewGenerationRef.current) {
+                if (previewUrl) URL.revokeObjectURL(previewUrl);
+                return;
+            }
             const resolvedFilename = filename || requestedFilename;
             const pdfFile = new File([blob], resolvedFilename, { type: "application/pdf" });
             const objectUrl = previewUrl || URL.createObjectURL(pdfFile);
@@ -70,11 +79,12 @@ export const useResumePdfPreview = ({
             setPdfPreviewBlob(pdfFile);
             setPdfPreviewFilename(resolvedFilename);
         } catch (err) {
+            if (previewGeneration !== previewGenerationRef.current) return;
             console.error(err);
             closePdfPreview();
             setError((err as Error).message || "Failed to generate PDF preview.");
         } finally {
-            setIsGeneratingPdfPreview(false);
+            if (previewGeneration === previewGenerationRef.current) setIsGeneratingPdfPreview(false);
         }
     };
 
@@ -99,6 +109,12 @@ export const useResumePdfPreview = ({
         URL.revokeObjectURL(url);
         setSuccessMessage("PDF exported.");
     };
+
+    useEffect(() => {
+        closePdfPreview();
+        // The active document owns its preview blob and measurement lifecycle.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeResumeId]);
 
     useEffect(() => {
         return () => {

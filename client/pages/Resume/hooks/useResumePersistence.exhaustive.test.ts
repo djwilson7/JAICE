@@ -44,14 +44,19 @@ describe("useResumePersistence exhaustive", () => {
     // 1. Initial fetch
     await act(async () => { await vi.runAllTimersAsync(); });
 
-    // 2. handleDeleteResume (ACTIVE one)
+    // 2. Master deletion is blocked; deleting an active version returns to master.
     act(() => { result.current.handleDeleteResume("m1", { stopPropagation: vi.fn() } as any); });
+    expect(result.current.pendingDeleteResume).toBeNull();
+    act(() => { result.current.loadResumeIntoWorkspace(resumes[1] as any); });
+    act(() => { result.current.handleDeleteResume("v1", { stopPropagation: vi.fn() } as any); });
     await act(async () => { await result.current.confirmDeleteResume(); });
-    expect(result.current.activeResumeId).toBeNull();
+    expect(result.current.activeResumeId).toBe("m1");
 
-    // 3. handleSaveResume (create new since active is null)
+    // 3. handleSaveResume targets the safely loaded master.
+    act(() => { result.current.setIsDirty(true); });
+    await act(async () => { await Promise.resolve(); });
     await act(async () => { await result.current.handleSaveResume(); });
-    expect(resumeApi.createSavedResume).toHaveBeenCalled();
+    expect(resumeApi.updateSavedResume).toHaveBeenCalled();
 
     // 4. Timer coverage for successMessage and error
     rerender({ ...mockProps, successMessage: "Done" });

@@ -1,4 +1,4 @@
-import { render, act } from '@testing-library/react';
+import { render, renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useResumeChat, getChatErrorMessage } from './useResumeChat';
 import { streamResumeChatResponse } from "../resumeApi";
@@ -19,6 +19,7 @@ vi.mock('../resumeData', () => ({
 }));
 
 const defaultProps = {
+    activeResumeId: 'resume-1',
     resumeData: { contact: {}, summary: '', experience: [], education: [], skills: [] } as any,
     currentResumeFormatting: { paperMetrics: {} } as any,
     setError: vi.fn(),
@@ -46,6 +47,24 @@ describe('useResumeChat exhaustive', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.unstubAllGlobals();
+    });
+
+    it('clears resume-specific assistant state when switching versions', () => {
+        const { result, rerender } = renderHook(
+            (props) => useResumeChat(props),
+            { initialProps: defaultProps }
+        );
+        act(() => {
+            result.current.setChatInput('master-only prompt');
+            result.current.setIsChatInputCollapsed(true);
+        });
+
+        rerender({ ...defaultProps, activeResumeId: 'resume-2' });
+
+        expect(result.current.chatInput).toBe('');
+        expect(result.current.chatMessages).toHaveLength(1);
+        expect(result.current.isChatInputCollapsed).toBe(false);
+        expect(result.current.isChatResponding).toBe(false);
     });
 
     it('covers getChatErrorMessage', () => {
