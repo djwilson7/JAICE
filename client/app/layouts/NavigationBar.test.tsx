@@ -22,6 +22,10 @@ vi.mock("@/global-services/api", () => ({
   api: vi.fn().mockResolvedValue({}),
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 vi.mock("framer-motion", () => ({
   motion: {
     nav: ({ children, onMouseEnter, onMouseLeave, ...rest }: React.HTMLAttributes<HTMLElement>) => (

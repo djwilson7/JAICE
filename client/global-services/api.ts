@@ -1,9 +1,50 @@
 // import { localfiles } from "@/directory/path/to/localimport";
 
-import { getIdToken, getGoogleAccessToken, hasGmailAccess, logOut } from "./auth";
 import { API_BASE_URL } from "./apiBaseUrl";
+import { IS_DEMO_MODE } from "./projectMode";
+
+function getDemoResponse(path: string) {
+    if (
+        path === "/api/jobs/latest-jobs" ||
+        path === "/api/jobs/archive" ||
+        path === "/api/jobs/trash"
+    ) {
+        return { status: "success", jobs: [], demo: true };
+    }
+
+    if (path === "/api/resume/resumes") {
+        return { status: "success", resumes: [], demo: true };
+    }
+
+    if (path === "/api/auth/gmail-consent-status") {
+        return { status: "success", isConnected: false, demo: true };
+    }
+
+    if (path === "/api/auth/setup-frontend-rls-session") {
+        return { status: "success", rls_jwt: null, demo: true };
+    }
+
+    if (path === "/api/dashboard/grit-score") {
+        return {
+            status: "success",
+            demo: true,
+            data: {
+                score: 0,
+                weekly_apps: 0,
+                followups: 0,
+                consistency: 0,
+            },
+        };
+    }
+
+    return { status: "success", demo: true };
+}
 
 async function handleUnauthorizedResponse() {
+    if (IS_DEMO_MODE) return;
+
+    const { logOut } = await import("./auth");
+
     try {
         await logOut();
     } catch (error) {
@@ -17,18 +58,24 @@ async function handleUnauthorizedResponse() {
 
 export async function api(path: string, init: RequestInit = {}) 
 {
+    if (IS_DEMO_MODE) {
+        return getDemoResponse(path);
+    }
+
     let token;
 
-    // for gmail endpoints use google access tokens if available
-    if (path.startsWith('/gmail/'))
+    if (!IS_DEMO_MODE && path.startsWith('/gmail/'))
     {
+        const { getGoogleAccessToken, hasGmailAccess } = await import("./auth");
+
         if (!hasGmailAccess())
         {
             throw new Error("User does not have Gmail access.");
         }
         token = getGoogleAccessToken(); // get google OAuth token
         console.log("Using Google access token for Gmail API request.");
-    } else {
+    } else if (!IS_DEMO_MODE) {
+        const { getIdToken } = await import("./auth");
         token = await getIdToken(); // get Firebase ID token
         console.log("Using Firebase ID token for API request.");
     }   
@@ -63,7 +110,15 @@ export async function api(path: string, init: RequestInit = {})
 }
 
 export async function apiBlob(path: string, init: RequestInit = {}) {
-    const token = await getIdToken();
+    if (IS_DEMO_MODE) {
+        return {
+            blob: new Blob(),
+            filename: null,
+            previewUrl: null,
+        };
+    }
+
+    const token = await (await import("./auth")).getIdToken();
     const headers = new Headers(init.headers || {});
 
     if (token) headers.set("Authorization", `Bearer ${token}`);

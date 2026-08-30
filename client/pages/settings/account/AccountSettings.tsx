@@ -1,5 +1,4 @@
 import Button from "@/global-components/button";
-import { getIdToken, logOut } from "@/global-services/auth";
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import userIcon from "@/assets/icons/user.svg";
@@ -15,6 +14,7 @@ import {
   SettingHeader,
 } from "@/pages/settings/display/display-components/Cards";
 import { API_BASE_URL } from "@/global-services/apiBaseUrl";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 const GMAIL_CONSENT_URL =
   import.meta.env.VITE_GMAIL_CONSENT_URL ?? "/api/auth/consent";
@@ -33,10 +33,11 @@ export function AccountSettings() {
   const [showChangePhotoModal, setShowChangePhotoModal] = useState(false);
 
   const handleShowChangePhotoModal = () => {
+    if (IS_DEMO_MODE) return;
     setShowChangePhotoModal(true);
   };
 
-  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState(IS_DEMO_MODE);
   const [gmailBusy, setGmailBusy] = useState(false);
   const [showDaysToSync, setShowDaysToSync] = useState(false);
   const [showUnlinkGmailModal, setShowUnlinkGmailModal] = useState(false);
@@ -68,6 +69,8 @@ export function AccountSettings() {
   const handleSaveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (IS_DEMO_MODE) return;
+
     setSaveProfileError(null);
 
     if (!user) {
@@ -98,10 +101,13 @@ export function AccountSettings() {
   };
   // Get the inital Gmail connection status for the user when they load the page
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
     checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
 
   async function handleShowModal() {
+    if (IS_DEMO_MODE) return;
+
     if (gmailConnected) {
       setShowUnlinkGmailModal(true);
     } else {
@@ -145,11 +151,14 @@ export function AccountSettings() {
   }
 
   async function linkGmail(days: number = 180) {
+    if (IS_DEMO_MODE) return { status: "disabled" };
+
     const res = await api("/api/auth/setup-rls-session", {
       method: "POST",
       body: JSON.stringify({ daysToSync: days }),
     });
     console.log("Setup RLS session response:", res);
+    const { getIdToken } = await import("@/global-services/auth");
     const token = await getIdToken();
     console.log(`Redirecting to Gmail consent flow for ${days} days of email sync.`);
     window.location.href = `${API_BASE_URL}${GMAIL_CONSENT_URL}?token=${token}&days=${days}`;
@@ -157,6 +166,8 @@ export function AccountSettings() {
   }
 
   async function unlinkGmail() {
+    if (IS_DEMO_MODE) return { status: "disabled" };
+
     try {
       const revoke = await api("/api/auth/revoke-gmail-consent", {
         method: "POST",
@@ -176,6 +187,7 @@ export function AccountSettings() {
         console.error("Backend logout failed after unlinking Gmail:", error);
       } finally {
         try {
+          const { logOut } = await import("@/global-services/auth");
           await logOut();
         } finally {
           navigate("/", { replace: true });
@@ -201,11 +213,14 @@ export function AccountSettings() {
   const gmailButtonColor = gmailConnected ? "red" : "green";
 
   async function handleDelete() {
+    if (IS_DEMO_MODE) return;
     setShowDeleteModal(true);
     return;
   }
 
   async function deleteAccount() {
+    if (IS_DEMO_MODE) return;
+
     setDeleteAccountError(null);
     try {
       setBusy(true);
@@ -232,6 +247,7 @@ export function AccountSettings() {
       }
 
       try {
+        const { logOut } = await import("@/global-services/auth");
         await logOut();
       } finally {
         navigate("/", { replace: true });
@@ -286,6 +302,7 @@ export function AccountSettings() {
                     onChange={(event) =>
                       handleFirstNameInput(event.target.value)
                     }
+                    disabled={IS_DEMO_MODE}
                   />
                 </label>
                 <label className="settings-profile-field">
@@ -302,6 +319,7 @@ export function AccountSettings() {
                     onChange={(event) =>
                       handleLastNameInput(event.target.value)
                     }
+                    disabled={IS_DEMO_MODE}
                   />
                 </label>
               </div>
@@ -310,12 +328,14 @@ export function AccountSettings() {
                 <Button
                   className="settings-page-button settings-action-button"
                   onClick={handleShowChangePhotoModal}
+                  disabled={IS_DEMO_MODE}
                 >
                   Change Photo
                 </Button>
                 <Button
                   className="settings-page-button settings-action-button"
                   type="submit"
+                  disabled={IS_DEMO_MODE}
                 >
                   Update Profile
                 </Button>
@@ -337,6 +357,7 @@ export function AccountSettings() {
                 <Button
                   onClick={handleShowModal}
                   className={`settings-page-button settings-action-button settings-account-action-button ${gmailButtonColor}`}
+                  disabled={IS_DEMO_MODE}
                 >
                   {gmailButtonText}
                 </Button>
@@ -356,6 +377,7 @@ export function AccountSettings() {
                   onClick={handleDelete}
                   aria-busy={busy}
                   className="settings-page-button settings-action-button settings-account-action-button red"
+                  disabled={IS_DEMO_MODE}
                 >
                   {busy ? "Deleting..." : "Delete Account"}
                 </Button>

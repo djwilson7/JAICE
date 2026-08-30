@@ -5,7 +5,7 @@ import { MainHeader } from "@/app/nav-components/MainHeader";
 
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { logOut } from "@/global-services/auth";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 // Icons
 import homeIcon from "@/assets/icons/home.svg";
@@ -103,6 +103,11 @@ export function NavigationBar() {
   const handleButtonClick = async (route: string, buttonId: string) => {
     setSelectedButton(buttonId);
     if (route === "/") {
+      if (IS_DEMO_MODE) {
+        navigate(route, { replace: true });
+        return;
+      }
+
       console.log("Logging out...");
       try {
         await api("/api/auth/logout", { method: "POST" });
@@ -110,6 +115,7 @@ export function NavigationBar() {
         console.error("Backend logout failed:", error);
       } finally {
         try {
+          const { logOut } = await import("@/global-services/auth");
           await logOut();
         } finally {
           navigate(route, { replace: true });
@@ -135,7 +141,7 @@ export function NavigationBar() {
 
       <div className={`app-content`}>
         <motion.nav
-          className={`flex absolute left-0 top-0 h-full primary-color z-40`}
+          className="flex absolute left-0 top-0 h-full primary-color z-40"
           id="navigation-bar"
           animate={{ width: targetNavWidth }}
           transition={navTransition}

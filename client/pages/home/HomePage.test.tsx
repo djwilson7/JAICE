@@ -35,9 +35,8 @@ vi.mock("@/pages/home/hooks/useKanbanColumns", () => ({
 vi.mock("@/pages/home/hooks/useKanbanJobs", () => ({
   useKanbanJobs: () => ({ applied: [<div key="j1" data-testid="job-card">Job</div>] }),
 }));
-vi.mock("@/global-services/auth", () => ({
-  getCurrentUserInfo: () => ({ uid: "user-123" }),
-  getIdToken: vi.fn().mockResolvedValue("fake-token"),
+vi.mock("@/global-components/authContext", () => ({
+  useAuth: () => ({ user: { uid: "user-123" } }),
 }));
 vi.mock("@/pages/home/hooks/useRealTimeJobs", () => ({
   useRealtimeJobs: vi.fn(),
@@ -270,11 +269,9 @@ describe("HomePage", () => {
     removeSpy.mockRestore();
   });
 
-  // ── getCurrentUserInfo returns null ───────────────────────────────────────
+  // ── Auth context user ID ──────────────────────────────────────────────────
 
-  it("handles null user info gracefully (uid defaults to empty string)", () => {
-    // The auth mock factory returns { uid: 'user-123' } by default;
-    // rendering without a uid still works because userId falls back to ""
+  it("uses the authenticated user supplied by context", () => {
     (useJobsLoader as ReturnType<typeof vi.fn>).mockReturnValue(
       makeJobsLoader({ jobs: [] })
     );

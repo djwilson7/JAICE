@@ -3,6 +3,7 @@ import unlinkIcon from "@/assets/icons/unlink.svg";
 import linkIcon from "@/assets/icons/link.svg";
 import { useEffect, useState } from "react";
 import { checkGmailStatus } from "@/pages/home/utils/checkGmailStatus";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 interface ConnectEmailButtonProps {
   setIsOpen: (value: boolean) => void;
@@ -10,7 +11,7 @@ interface ConnectEmailButtonProps {
 }
 
 export function ConnectEmailButton({ setIsOpen, compact = false }: ConnectEmailButtonProps) {
-  const [gmailConnected, setGmailConnected] = useState<boolean>(false); // Placeholder for actual gmail connection status
+  const [gmailConnected, setGmailConnected] = useState<boolean>(IS_DEMO_MODE);
   const [, setGmailError] = useState<string | null>(null);
 
   const connectEmailIcon = gmailConnected ? linkIcon : unlinkIcon;
@@ -18,6 +19,7 @@ export function ConnectEmailButton({ setIsOpen, compact = false }: ConnectEmailB
   const connectEmailLabel = gmailConnected ? "Connected" : "Disconnected";
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
     checkGmailStatus({ setGmailConnected, setGmailError });
   }, []);
 
@@ -30,6 +32,7 @@ export function ConnectEmailButton({ setIsOpen, compact = false }: ConnectEmailB
       prominent={gmailConnected ? false : true}
       alt="Connect Email Icon"
       compact={compact}
+      disabled={IS_DEMO_MODE}
     />
   );
 }

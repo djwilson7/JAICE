@@ -18,6 +18,10 @@ vi.mock("@/utils/useGritScore", () => ({
   useGritScore: vi.fn(),
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 describe("UserBlock", () => {
   beforeEach(() => {
     vi.clearAllMocks();

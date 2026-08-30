@@ -4,12 +4,13 @@ import { Chart } from "react-chartjs-2";
 import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 import { Chart as ChartJS } from "chart.js";
 import type { ChartOptions } from "chart.js";
-import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
+import { Card, ChartEmpty, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 // Register the matrix controller
 ChartJS.register(MatrixController, MatrixElement);
@@ -148,6 +149,8 @@ export function ActivityHeatmapCard({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     applyChartDefaults();
     let alive = true;
 
@@ -298,6 +301,10 @@ export function ActivityHeatmapCard({
   };
 
   const content = () => {
+    if (IS_DEMO_MODE) {
+      return <ChartEmpty />;
+    }
+
     if (loading) {
       return <ChartSkeleton variant="heatmap" />;
     }

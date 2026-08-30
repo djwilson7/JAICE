@@ -6,6 +6,10 @@ vi.mock("@/global-services/api", () => ({
   api: vi.fn(),
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 describe("checkGmailStatus", () => {
   it("sets connected state when api succeeds", async () => {
     vi.mocked(api).mockResolvedValueOnce({ isConnected: true });

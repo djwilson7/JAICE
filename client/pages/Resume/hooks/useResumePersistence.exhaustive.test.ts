@@ -5,6 +5,8 @@ import * as resumeApi from "../resumeApi";
 import { defaultResumeFormatting } from "../formatting";
 
 vi.mock("../resumeApi");
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
 
 describe("useResumePersistence exhaustive", () => {
   const mockProps = {

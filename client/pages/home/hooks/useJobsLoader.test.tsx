@@ -8,6 +8,10 @@ vi.mock("@/global-services/api", () => ({
   api: vi.fn(),
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 vi.mock("@/global-components/bannerNotificationContext", () => ({
   useBannerNotifications: vi.fn(),
 }));

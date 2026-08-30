@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActivityHeatmapCard } from "./ActivityHeatmapCard";
 import { api } from "@/global-services/api";
 
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
+
 vi.mock("@/global-services/api", () => ({
   api: vi.fn()
 }));

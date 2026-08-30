@@ -10,6 +10,10 @@ vi.mock("@/global-services/firebase", () => ({
   }
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 describe("openGmailMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -18,18 +22,18 @@ describe("openGmailMessage", () => {
     });
   });
 
-  it("should open gmail message in a new tab if user is logged in", () => {
+  it("should open gmail message in a new tab if user is logged in", async () => {
     (auth as any).currentUser = { email: "test@example.com" };
-    openGmailMessage("msg123");
+    await openGmailMessage("msg123");
     expect(window.open).toHaveBeenCalledWith(
       "https://mail.google.com/mail/u/test@example.com/#inbox/msg123",
       "_blank"
     );
   });
 
-  it("should do nothing if user is not logged in", () => {
+  it("should do nothing if user is not logged in", async () => {
     (auth as any).currentUser = null;
-    openGmailMessage("msg123");
+    await openGmailMessage("msg123");
     expect(window.open).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,10 @@ vi.mock("@/global-services/api", () => ({
   api: vi.fn(),
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 vi.mock("@/pages/home/hooks/useJobRealtime", () => ({
   useJobRealtime: vi.fn(),
 }));

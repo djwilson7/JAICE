@@ -3,16 +3,23 @@ import { api } from "@/global-services/api";
 import { convertToJobCardArray } from "@/pages/home/utils/convertToJobCard";
 import type { JobCardType } from "@/types/jobCardType";
 import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 export function useJobsLoader() {
   const [jobs, setJobs] = useState<JobCardType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!IS_DEMO_MODE);
   const hasLoadedRef = useRef(false);
   const hasSyncedGmailRef = useRef(false);
   const { showBanner } = useBannerNotifications();
 
   const load = useCallback(
     async (force = false) => {
+      if (IS_DEMO_MODE) {
+        hasLoadedRef.current = true;
+        setIsLoading(false);
+        return;
+      }
+
       if (!force && hasLoadedRef.current) return;
 
       const showPageLoader = !hasLoadedRef.current;
@@ -49,10 +56,12 @@ export function useJobsLoader() {
 
   // initial load
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
     load();
   }, [load]);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
     if (hasSyncedGmailRef.current) return;
     hasSyncedGmailRef.current = true;
     let cancelled = false;

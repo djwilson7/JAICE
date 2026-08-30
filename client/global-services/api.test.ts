@@ -9,6 +9,10 @@ vi.mock('./auth', () => ({
   logOut: vi.fn(),
 }));
 
+vi.mock('./projectMode', () => ({
+  IS_DEMO_MODE: false,
+}));
+
 vi.mock('./apiBaseUrl', () => ({
   API_BASE_URL: 'http://test.api'
 }));

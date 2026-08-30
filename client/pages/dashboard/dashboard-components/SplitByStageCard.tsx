@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import type { Chart, ChartData, ChartOptions, TooltipItem, TooltipModel } from "chart.js";
-import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
+import { Card, ChartEmpty, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { getDashboardChartTheme } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 const splitByStageTooltipHandler = (context: {
   chart: Chart<"bar">;
@@ -97,6 +98,8 @@ export function SplitByStageCard({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     applyChartDefaults();
     let alive = true;
 
@@ -224,6 +227,10 @@ export function SplitByStageCard({
   };
 
   const content = () => {
+    if (IS_DEMO_MODE) {
+      return <ChartEmpty />;
+    }
+
     if (loading) {
       return <ChartSkeleton variant="bar" />;
     }

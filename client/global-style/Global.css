@@ -5817,6 +5817,23 @@ button.landing-provider-button:disabled {
   box-shadow: var(--shadow-hover);
 }
 
+.control-bar-container-disabled,
+.control-bar-container-disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+  transform: none;
+}
+
+.control-bar-disabled,
+.user-block-disabled {
+  cursor: default;
+}
+
+.control-bar-disabled {
+  opacity: 0.52;
+}
+
 .control-bar-container-red:hover {
   background: var(--white-color);
   color: var(--red-color);
@@ -6091,6 +6108,11 @@ button.landing-provider-button:disabled {
   border-color: rgba(var(--primary-five-rgb), 0.12);
   box-shadow: none;
   transform: none;
+}
+
+.home-action-toolbar .control-bar-container-disabled:hover {
+  background: transparent;
+  border-color: transparent;
 }
 
 .home-action-toolbar .undo-redo-control:disabled {

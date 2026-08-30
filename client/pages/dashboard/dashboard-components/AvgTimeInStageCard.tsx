@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
+import { Card, ChartEmpty, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 type AvgStageAges = {
   applied: number | null;
@@ -62,6 +63,8 @@ export function AvgTimeInStageCard({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     applyChartDefaults();
     let alive = true;
 
@@ -105,6 +108,10 @@ export function AvgTimeInStageCard({
   const stageColors = chartTheme.stageColors;
 
   const renderSquares = () => {
+    if (IS_DEMO_MODE) {
+      return <ChartEmpty />;
+    }
+
     if (loading) {
       return <ChartSkeleton variant="tiles" />;
     }

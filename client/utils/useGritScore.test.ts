@@ -7,6 +7,10 @@ vi.mock('@/global-services/api', () => ({
   api: vi.fn(),
 }));
 
+vi.mock('@/global-services/projectMode', () => ({
+  IS_DEMO_MODE: false,
+}));
+
 describe('useGritScore', () => {
   it('should return loading initially, then fetch score successfully', async () => {
     vi.mocked(api).mockResolvedValue({

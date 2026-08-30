@@ -4,6 +4,7 @@ import type { ResumeData, ResumeFormatting, SavedResume } from "../types";
 import { defaultResumeFormatting } from "../formatting";
 import { cloneResumeData, defaultResumeData, normalizeResumeData, normalizeResumeDataForPayload } from "../resumeData";
 import { createSavedResume, deleteSavedResume, listSavedResumes, updateSavedResume } from "../resumeApi";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 type UseResumePersistenceParams = {
     resumeData: ResumeData;
@@ -42,8 +43,10 @@ export const useResumePersistence = ({
     const [isMaster, setIsMaster] = useState(false);
     const [showCloneModal, setShowCloneModal] = useState(false);
     const [dontAskClone, setDontAskClone] = useState(false);
-    const [loadingList, setLoadingList] = useState(true);
-    const [initialLoadState, setInitialLoadState] = useState<ResumeInitialLoadState>("loading");
+    const [loadingList, setLoadingList] = useState(!IS_DEMO_MODE);
+    const [initialLoadState, setInitialLoadState] = useState<ResumeInitialLoadState>(
+        IS_DEMO_MODE ? "loaded" : "loading"
+    );
     const [loadingSave, setLoadingSave] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
@@ -376,6 +379,8 @@ export const useResumePersistence = ({
     };
 
     useEffect(() => {
+        if (IS_DEMO_MODE) return;
+
         fetchResumes();
         // Intentionally run once on mount to preserve the original resume-loading flow.
         // eslint-disable-next-line react-hooks/exhaustive-deps

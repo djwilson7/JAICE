@@ -22,6 +22,8 @@ vi.mock('@/global-services/auth', () => ({
   logOut: vi.fn(),
 }));
 
+vi.mock('@/global-services/projectMode', () => ({ IS_DEMO_MODE: false }));
+
 describe('AccountSettings', () => {
   const applyProfileUpdateMock = vi.fn();
 

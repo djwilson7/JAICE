@@ -3,6 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { AppsByStageCard } from "./AppsByStageCard";
 import { api } from "@/global-services/api";
 
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
+
 vi.mock("@/pages/settings/provider/settingsContext", () => ({
   useSettings: vi.fn(() => ({ settings: {}, theme: "dark" })),
 }));

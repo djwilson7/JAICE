@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/global-services/api";
-import { getCurrentUserInfo } from "@/global-services/auth";
 import { useJobRealtime } from "@/pages/home/hooks/useJobRealtime";
+import { useAuth } from "@/global-components/authContext";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 export function useDashboardRealtimeRefresh() {
-  const userId = getCurrentUserInfo()?.uid ?? "";
+  const { user } = useAuth();
+  const userId = user?.uid ?? "";
   const [rlsToken, setRlsToken] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (!userId) return;
+    if (IS_DEMO_MODE || !userId) return;
     let cancelled = false;
 
     (async () => {

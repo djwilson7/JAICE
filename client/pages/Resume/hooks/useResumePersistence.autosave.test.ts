@@ -6,6 +6,8 @@ import * as resumeApi from "../resumeApi";
 import { useResumePersistence } from "./useResumePersistence";
 
 vi.mock("../resumeApi");
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
 
 const savedResume = {
     id: "resume-1",

@@ -11,6 +11,7 @@ export const NavButton = ({
   hoverMode,
   title,
   showLabel,
+  disabled = false,
 }: {
   icon: string;
   label: string;
@@ -19,6 +20,7 @@ export const NavButton = ({
   hoverMode: NavigationBehavior;
   title?: string;
   showLabel: boolean;
+  disabled?: boolean;
 }) => {
   const isExpanded = hoverMode === "open" || showLabel;
   const labelVariants = {
@@ -57,6 +59,7 @@ export const NavButton = ({
           isExpanded ? "navButtonExpanded" : "navButtonCollapsed"
         }`}
         title={title}
+        disabled={disabled}
       >
         <div className="navButtonIconSlot">
           <img src={icon} alt={label} className="h-3.5 w-3.5 flex-shrink-0 icon" />

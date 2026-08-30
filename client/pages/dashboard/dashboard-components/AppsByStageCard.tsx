@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { Chart, ChartData, ChartOptions, TooltipModel } from "chart.js";
-import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
+import { Card, ChartEmpty, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 type ExternalTooltipContext<T extends "doughnut"> = {
   chart: Chart<T>;
@@ -95,6 +96,8 @@ export function AppsByStageCard({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     applyChartDefaults();
     let alive = true;
 
@@ -189,6 +192,10 @@ export function AppsByStageCard({
       label: stage,
       color: themedStageColors[stage],
     }));
+
+    if (IS_DEMO_MODE) {
+      return <ChartEmpty />;
+    }
 
     if (loading) {
       return <ChartSkeleton variant="donut" />;

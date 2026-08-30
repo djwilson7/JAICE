@@ -2,6 +2,7 @@
 import { useEffect, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 import type { JobBroadcastPayload } from "@/types/jobBroadcastPayload";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 // Establishes a Supabase Realtime subscription for job application changes
 // This hook literally allows users to see real-time updates to their job applications from supabase 
@@ -12,7 +13,7 @@ export function useJobRealtime(
   onChange: (payload: JobBroadcastPayload) => void
 ) {
   const supabase = useMemo(() => {
-    if (!rlsToken) return null;
+    if (IS_DEMO_MODE || !rlsToken) return null;
     console.log("Creating stable Supabase client");
     return createClient(
       import.meta.env.VITE_SUPABASE_URL,
@@ -24,6 +25,8 @@ export function useJobRealtime(
   }, [rlsToken]);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     if (!userId || !supabase) {
       console.warn("Realtime not started — missing userId or Supabase client");
       return;

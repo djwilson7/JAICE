@@ -4,6 +4,7 @@ import { useJobRealtime } from "@/pages/home/hooks/useJobRealtime";
 import { convertToJobCardArray } from "@/pages/home/utils/convertToJobCard";
 import type { JobCardType } from "@/types/jobCardType";
 import type { JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 export const JOB_REALTIME_CHANGE_EVENT = "jaice:job-realtime-change";
 
@@ -19,7 +20,7 @@ export function useRealtimeJobs(
 
   // mint token
   useEffect(() => {
-    if (!userId) return;
+    if (IS_DEMO_MODE || !userId) return;
     let cancelled = false;
 
     (async () => {
@@ -40,7 +41,7 @@ export function useRealtimeJobs(
 
   // refresh token
   useEffect(() => {
-    if (!userId) return;
+    if (IS_DEMO_MODE || !userId) return;
 
     const REFRESH_MS = 25 * 60 * 1000;
     const id = setInterval(async () => {
@@ -59,6 +60,8 @@ export function useRealtimeJobs(
   }, [userId]);
 
   const refreshJobs = useCallback(async () => {
+    if (IS_DEMO_MODE) return;
+
     refreshPendingRef.current = true;
     if (refreshInFlightRef.current) return;
 

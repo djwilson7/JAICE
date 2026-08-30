@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
+import { Card, ChartEmpty, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { Line } from "react-chartjs-2";
 import type { Chart, ChartOptions, TooltipModel } from "chart.js";
 import { applyChartDefaults } from "./chartSetup";
@@ -7,6 +7,7 @@ import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 // Generate the last N days as labels
 function lastNDaysLabels(n: number) {
@@ -133,6 +134,8 @@ export function AppsOverTimeCard({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     applyChartDefaults();
     let alive = true;
 
@@ -337,9 +340,10 @@ export function AppsOverTimeCard({
       height={height ?? "16rem"}
     >
       <ChartHost>
-        {loading && <ChartSkeleton variant="line" />}
-        {error && <ChartError message={error} />}
-        {!loading && !error && (
+        {IS_DEMO_MODE && <ChartEmpty />}
+        {!IS_DEMO_MODE && loading && <ChartSkeleton variant="line" />}
+        {!IS_DEMO_MODE && error && <ChartError message={error} />}
+        {!IS_DEMO_MODE && !loading && !error && (
           <div className="flex h-full min-h-0 w-full flex-col">
             <div className="min-h-0 flex-1">
               <Line data={data} options={options} />

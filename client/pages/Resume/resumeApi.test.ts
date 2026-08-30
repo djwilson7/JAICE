@@ -24,6 +24,10 @@ vi.mock('@/global-services/auth', () => ({
     getIdToken: vi.fn().mockResolvedValue('fake-token'),
 }));
 
+vi.mock('@/global-services/projectMode', () => ({
+    IS_DEMO_MODE: false,
+}));
+
 import { api, apiBlob } from '@/global-services/api';
 import { getIdToken } from '@/global-services/auth';
 

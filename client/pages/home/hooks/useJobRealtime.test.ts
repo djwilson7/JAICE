@@ -7,6 +7,10 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
+
 describe("useJobRealtime", () => {
   const userId = "test-user-id";
   const rlsToken = "test-token";

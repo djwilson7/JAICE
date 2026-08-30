@@ -35,6 +35,8 @@ vi.mock('@/global-services/auth', () => ({
   logOut: vi.fn(),
 }));
 
+vi.mock('@/global-services/projectMode', () => ({ IS_DEMO_MODE: false }));
+
 // Mock framer-motion and react-dom for portals
 vi.mock("framer-motion", () => ({
   motion: {

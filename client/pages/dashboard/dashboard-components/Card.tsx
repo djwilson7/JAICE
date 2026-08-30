@@ -348,6 +348,16 @@ export function ChartError({ message }: { message: string }) {
     );
 }
 
+export const DASHBOARD_EMPTY_MESSAGE = "No activity data available yet.";
+
+export function ChartEmpty({ message = DASHBOARD_EMPTY_MESSAGE }: { message?: string }) {
+    return (
+        <div className="flex h-full items-center justify-center text-sm opacity-70">
+            {message}
+        </div>
+    );
+}
+
 export type ChartLegendItem = {
     label: string;
     color: string;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 type GritData = {
   score: number;
@@ -34,10 +35,12 @@ function getJaiceTier(score: number): TierInfo {
  */
 export function useGritScore() {
   const [data, setData] = useState<GritData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!IS_DEMO_MODE);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     async function fetchData() {
       try {
         const res = await api("/api/dashboard/grit-score");

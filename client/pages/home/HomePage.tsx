@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ControlBar } from "@/pages/home/home-components/control-bar/ControlBar";
 import { Column } from "@/pages/home/home-components/column/Column";
 import type { JobCardType } from "@/types/jobCardType";
-import { getCurrentUserInfo } from "@/global-services/auth";
+import { useAuth } from "@/global-components/authContext";
 import { MultiSelectBar } from "@/pages/home/home-components/modal/MultiSelectBar";
 import { AnimatePresence } from "framer-motion";
 import { UndoRedo } from "@/pages/home/home-components/modal/UndoRedo";
@@ -34,8 +34,10 @@ import {
   JOB_LOCAL_CHANGE_EVENT,
   type JobLocalChangeDetail,
 } from "@/pages/home/utils/jobLocalChangeEvent";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 export function HomePage() {
+  const { user } = useAuth();
   const [jobAppModalPayload, setJobAppModalPayload] = useState<
     string | JobCardType | null
   >(null);
@@ -76,8 +78,7 @@ export function HomePage() {
     openJobAppModal,
   });
 
-  const userInfo = getCurrentUserInfo();
-  const userId = userInfo?.uid || "";
+  const userId = user?.uid || "";
   useRealtimeJobs(userId, setJobs);
 
   // trash/archive modal state
@@ -121,7 +122,11 @@ export function HomePage() {
           <PageContent>
             {/* Control Bar */}
             <div className="home-action-toolbar-wrap p-1">
-              <ControlBar fitParent className="home-action-toolbar">
+              <ControlBar
+                fitParent
+                className="home-action-toolbar"
+                disabled={IS_DEMO_MODE}
+              >
                 <div className="home-action-group home-action-group-left">
                   <ExpandCollapseButton compact />
                   <ReadAllButton jobs={jobs} compact />

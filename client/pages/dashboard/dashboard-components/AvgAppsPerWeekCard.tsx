@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 import type { Chart, ChartData, ChartOptions, TooltipModel } from "chart.js";
-import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
+import { Card, ChartEmpty, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 function normalizeWeekLabel(label: string) {
   return label.replace(/^\((WK\s+\d+)\)$/i, "$1");
@@ -115,6 +116,8 @@ export function AvgAppsPerWeekCard({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (IS_DEMO_MODE) return;
+
     applyChartDefaults();
 
     async function fetchData() {
@@ -144,6 +147,20 @@ export function AvgAppsPerWeekCard({
       if (el) el.remove();
     };
   }, []);
+
+  if (IS_DEMO_MODE) {
+    return (
+      <Card
+        title="Avg Applications per Week"
+        subtitle="12-week trend"
+        infoDescription={chartDescText.avgAppsPerWeek}
+        className={className}
+        height={height ?? "16rem"}
+      >
+        <ChartHost><ChartEmpty /></ChartHost>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

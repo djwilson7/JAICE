@@ -1,6 +1,6 @@
 import { api, apiBlob } from "@/global-services/api";
 import { API_BASE_URL } from "@/global-services/apiBaseUrl";
-import { getIdToken } from "@/global-services/auth";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 import type {
     ApiError,
     ResumeChatMessage,
@@ -21,6 +21,30 @@ type ResumeListResponse = {
 type ResumeMutationResponse = {
     status: "success";
     resume: SavedResume;
+};
+
+const createDemoSavedResume = (
+    payload: {
+        name: string;
+        is_master: boolean;
+        source_resume_id: string | null;
+        resume_data: ResumeData;
+    },
+    id = "demo-resume"
+): SavedResume => {
+    const now = new Date().toISOString();
+    return {
+        id,
+        name: payload.name,
+        is_master: payload.is_master,
+        schema_version: 1,
+        source_resume_id: payload.source_resume_id,
+        resume_data: payload.resume_data,
+        target_job_title: null,
+        target_job_description: null,
+        created_at: now,
+        updated_at: now
+    };
 };
 
 export type ResumeChatStreamPayload = {
@@ -44,6 +68,10 @@ const readResponseError = async (response: Response) => {
 };
 
 export const listSavedResumes = () => {
+    if (IS_DEMO_MODE) {
+        return Promise.resolve({ status: "success", resumes: [] }) as Promise<ResumeListResponse>;
+    }
+
     return api("/api/resume/resumes") as Promise<ResumeListResponse>;
 };
 
@@ -53,6 +81,13 @@ export const createSavedResume = (payload: {
     source_resume_id: string | null;
     resume_data: ResumeData;
 }) => {
+    if (IS_DEMO_MODE) {
+        return Promise.resolve({
+            status: "success",
+            resume: createDemoSavedResume(payload)
+        }) as Promise<ResumeMutationResponse>;
+    }
+
     return api("/api/resume/resumes", {
         method: "POST",
         body: JSON.stringify(payload)
@@ -67,6 +102,16 @@ export const updateSavedResume = (
         resume_data: ResumeData;
     }
 ) => {
+    if (IS_DEMO_MODE) {
+        return Promise.resolve({
+            status: "success",
+            resume: createDemoSavedResume({
+                ...payload,
+                source_resume_id: null
+            }, id)
+        }) as Promise<ResumeMutationResponse>;
+    }
+
     return api(`/api/resume/resumes/${id}`, {
         method: "PUT",
         body: JSON.stringify(payload)
@@ -74,12 +119,24 @@ export const updateSavedResume = (
 };
 
 export const deleteSavedResume = (id: string) => {
+    if (IS_DEMO_MODE) {
+        return Promise.resolve({ status: "success", id });
+    }
+
     return api(`/api/resume/resumes/${id}`, {
         method: "DELETE"
     }) as Promise<{ status: "success" }>;
 };
 
 export const exportResumePdf = (resumeData: ResumeData, documentTitle: string, debugPdf = false) => {
+    if (IS_DEMO_MODE) {
+        return Promise.resolve({
+            blob: new Blob(),
+            filename: null,
+            previewUrl: null
+        });
+    }
+
     const params = new URLSearchParams({ document_title: documentTitle });
     if (debugPdf) params.set("debug_pdf", "1");
     const path = `/api/resume/export-pdf?${params.toString()}`;
@@ -90,6 +147,16 @@ export const exportResumePdf = (resumeData: ResumeData, documentTitle: string, d
 };
 
 export const saveResumeRenderDiagnostics = (payload: unknown) => {
+    if (IS_DEMO_MODE) {
+        return Promise.resolve({
+            status: "success" as const,
+            latest_path: "",
+            snapshot_path: "",
+            host_latest_path: null,
+            host_snapshot_path: null
+        });
+    }
+
     return api("/api/resume/debug/render-diagnostics?debug_pdf=1", {
         method: "POST",
         body: JSON.stringify(payload)
@@ -106,6 +173,11 @@ export const streamResumeTailorSuggestion = async (
     payload: ResumeRewriteSectionRequest,
     onEvent: (event: ResumeRewriteStreamEvent) => void
 ): Promise<{ assistantMessage: string; tailorSuggestions: ResumeChatTailorSuggestions | null }> => {
+    if (IS_DEMO_MODE) {
+        throw new Error("Resume rewriting is unavailable in demo mode.");
+    }
+
+    const { getIdToken } = await import("@/global-services/auth");
     const token = await getIdToken();
     const response = await fetch(`${API_BASE_URL}/api/resume/rewrite-suggestion/stream`, {
         method: "POST",
@@ -189,6 +261,11 @@ export const streamResumeChatResponse = async (
     onEvent: (event: ResumeChatStreamEvent) => void,
     onTextFallback: (text: string) => void
 ) => {
+    if (IS_DEMO_MODE) {
+        throw new Error("Resume chat is unavailable in demo mode.");
+    }
+
+    const { getIdToken } = await import("@/global-services/auth");
     const token = await getIdToken();
     const response = await fetch(`${API_BASE_URL}/api/resume/chat/stream`, {
         method: "POST",

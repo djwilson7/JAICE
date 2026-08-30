@@ -5,9 +5,11 @@ import { useThemeData } from "@/utils/getThemeData";
 export const ThemeToggleButton = ({
   hoverMode,
   showLabel,
+  disabled = false,
 }: {
   hoverMode: NavigationBehavior;
   showLabel: boolean;
+  disabled?: boolean;
 }) => {
   const theme = useThemeData();
   const handleThemeToggle = () => {
@@ -41,6 +43,7 @@ export const ThemeToggleButton = ({
       hoverMode={hoverMode}
       title={theme.title}
       showLabel={showLabel}
+      disabled={disabled}
     />
   );
 };

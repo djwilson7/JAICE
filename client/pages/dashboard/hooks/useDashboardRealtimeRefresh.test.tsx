@@ -2,15 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { useDashboardRealtimeRefresh } from "./useDashboardRealtimeRefresh";
 import { api } from "@/global-services/api";
-import { getCurrentUserInfo } from "@/global-services/auth";
 import { useJobRealtime } from "@/pages/home/hooks/useJobRealtime";
 
 vi.mock("@/global-services/api", () => ({
   api: vi.fn(),
 }));
 
-vi.mock("@/global-services/auth", () => ({
-  getCurrentUserInfo: vi.fn(),
+vi.mock("@/global-components/authContext", () => ({
+  useAuth: () => ({ user: { uid: "user1" } }),
+}));
+
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
 }));
 
 vi.mock("@/pages/home/hooks/useJobRealtime", () => ({
@@ -34,7 +37,6 @@ const TestComponent = () => {
 describe("useDashboardRealtimeRefresh", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (getCurrentUserInfo as any).mockReturnValue({ uid: "user1" });
   });
 
   it("sets up token on mount", async () => {

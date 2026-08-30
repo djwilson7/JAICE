@@ -25,6 +25,22 @@ vi.mock("@/pages/home/HomePage", () => ({
   HomePage: () => null,
 }));
 
+vi.mock("@/pages/about/about.meta", () => ({
+  AuthAboutRoute: { path: "/auth-about", element: null },
+}));
+
+vi.mock("@/pages/dashboard/dashboard.meta", () => ({
+  DashboardRoute: { path: "/dashboard", element: null },
+}));
+
+vi.mock("@/pages/Resume/resume.meta", () => ({
+  ResumeRoute: { path: "/resume", element: null },
+}));
+
+vi.mock("@/pages/settings/settings.meta", () => ({
+  SettingsRoute: { path: "/settings", element: null },
+}));
+
 import { demoRouter } from "@/global-services/demoRouter";
 
 describe("demoRouter", () => {
@@ -44,5 +60,9 @@ describe("demoRouter", () => {
     expect(homeRoute).toBeTruthy();
     expect(appLayout?.loader).toBeUndefined();
     expect(homeRoute?.loader).toBeUndefined();
+
+    expect(appLayout?.children?.map((route) => route.path)).toEqual(
+      expect.arrayContaining(["/home", "/auth-about", "/dashboard", "/resume", "/settings"])
+    );
   });
 });
