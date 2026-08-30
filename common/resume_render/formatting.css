@@ -54,10 +54,10 @@
   --resume-body-font-size: calc(var(--resume-body-font-size-pt) * 1.3333333333px);
   --resume-page-margin: calc(var(--resume-page-margin-pt) * 1.3333333333px);
   --resume-page-margin-half: calc(var(--resume-page-margin-pt) * 0.6666666667px);
-  --resume-font-family: var(--font-title);
-  --resume-title-font-family: var(--font-subheading);
-  --resume-heading-font-family: var(--font-subheading);
-  --resume-contact-font-family: var(--font-subheading);
+  --resume-font-family: Arial, sans-serif;
+  --resume-title-font-family: Arial, sans-serif;
+  --resume-heading-font-family: Arial, sans-serif;
+  --resume-contact-font-family: Arial, sans-serif;
   --resume-field-padding: calc(var(--resume-field-vertical-padding-px) * 1px) calc(var(--resume-field-horizontal-padding-px) * 1px);
   --resume-field-padding-y: calc(var(--resume-field-vertical-padding-px) * 1px);
   --resume-title-padding: calc(var(--resume-title-vertical-padding-px) * 1px) calc(var(--resume-title-horizontal-padding-px) * 1px);
@@ -78,13 +78,6 @@
   box-sizing: border-box;
   width: 100%;
   padding: var(--resume-page-margin);
-}
-
-.resume-formatting-context[data-resume-document-surface="pdf"] {
-  --resume-font-family: "Libre Baskerville", serif;
-  --resume-title-font-family: Poppins, Arial, sans-serif;
-  --resume-heading-font-family: Poppins, Arial, sans-serif;
-  --resume-contact-font-family: Poppins, Arial, sans-serif;
 }
 
 .resume-formatting-context[data-resume-layout-density="compact"] {

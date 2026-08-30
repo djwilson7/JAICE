@@ -5,7 +5,6 @@ from typing import Any
 
 from common.resume_render.spec import load_document_css, load_formatting_css
 
-from .fonts import build_font_face_css
 from .formatting import format_pt, format_px_from_pt, normalize_formatting
 from .model import build_resume_render_model
 
@@ -15,6 +14,28 @@ FORMATTING_CSS = load_formatting_css()
 
 def _safe(value: Any) -> str:
     return html.escape(str(value or "").strip())
+
+
+def _rich_text(value: Any, ranges: Any) -> str:
+    text = str(value or "")
+    parts = []
+    cursor = 0
+    for item in ranges or []:
+        start = max(cursor, min(len(text), int(_read_range(item, "start"))))
+        end = max(start, min(len(text), int(_read_range(item, "end"))))
+        if start > cursor:
+            parts.append(html.escape(text[cursor:start]))
+        if end > start:
+            parts.append(f"<strong>{html.escape(text[start:end])}</strong>")
+        cursor = end
+    parts.append(html.escape(text[cursor:]))
+    return "".join(parts)
+
+
+def _read_range(value: Any, key: str) -> Any:
+    if isinstance(value, dict):
+        return value.get(key, 0)
+    return getattr(value, key, 0)
 
 
 def _separator(value: str = "&bull;") -> str:
@@ -78,7 +99,7 @@ def _bullet_stack_html(bullets: list[dict[str, str]], education: bool = False) -
         "<div class='resume-document__bullet-row resume-diagnostic-bullet-row' "
         "data-resume-diagnostic='bullet-row'>"
         "<span class='resume-document__bullet-marker resume-font--body'>&bull;</span>"
-        f"<div class='resume-document__body resume-document__bullet-text resume-font--body'>{_safe(item['text'])}</div>"
+        f"<div class='resume-document__body resume-document__bullet-text resume-font--body'>{_rich_text(item['text'], item.get('boldRanges'))}</div>"
         "</div>"
         for item in bullets
     )
@@ -190,7 +211,6 @@ def render_resume_pdf_html(
     normalized = normalize_formatting(formatting)
     model = build_resume_render_model(payload)
     css = f"""
-        {build_font_face_css()}
         @page {{ size: {normalized.page_name}; margin: {format_pt(normalized.page_margin_pt)}; }}
         html, body {{
             {_document_variables(formatting)}
@@ -205,7 +225,8 @@ def render_resume_pdf_html(
         [data-resume-document-surface="pdf"],
         [data-resume-document-surface="pdf"] * {{
             font-variant-ligatures: none;
-            font-feature-settings: "liga" 0, "clig" 0;
+            font-kerning: none;
+            font-feature-settings: "liga" 0, "clig" 0, "kern" 0;
         }}
         body {{
             font-family: var(--resume-font-family);

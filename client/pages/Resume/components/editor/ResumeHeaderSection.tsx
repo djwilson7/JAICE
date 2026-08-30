@@ -76,7 +76,7 @@ export const ResumeHeaderSection: React.FC<ResumeDocumentEditorProps> = ({
                     style={getDynamicInputStyle(
                         resumeData.fullName,
                         "YOUR NAME",
-                        `bold ${ptToPx(titleFontSize)}px Poppins, Arial, sans-serif`,
+                        `bold ${ptToPx(titleFontSize)}px Arial, sans-serif`,
                         { fontSize: "var(--resume-title-font-size)" }
                     )}
                 />

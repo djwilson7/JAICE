@@ -95,10 +95,16 @@ def _resume_pdf_debug_host_path(filename: str) -> Optional[str]:
 # Pydantic Schemas for Resume Data
 # ---------------------------------------
 
+class BoldRange(BaseModel):
+    start: int
+    end: int
+
+
 class ResumeBullet(BaseModel):
     id: Optional[str] = None
     text: str
     tagIds: List[str] = Field(default_factory=list)
+    boldRanges: List[BoldRange] = Field(default_factory=list)
 
 
 class ResumeTag(BaseModel):

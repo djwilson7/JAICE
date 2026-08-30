@@ -80,7 +80,7 @@ async def test_generated_pdf_preserves_ligatures_fonts_and_page_boundary_content
         "experience": [
             {
                 "id": "experience-1",
-                "jobTitle": "Software Engineer",
+                "jobTitle": "Portfolio Software Engineer",
                 "company": "Fifty Five Labs",
                 "location": "Remote",
                 "startDate": "2020",
@@ -110,7 +110,8 @@ async def test_generated_pdf_preserves_ligatures_fonts_and_page_boundary_content
     complete_text = _normalized(" ".join(page_texts))
 
     assert len(page_texts) >= 3
-    assert "Software Engineer" in complete_text
+    assert "Portfolio Software Engineer" in complete_text
+    assert "Port folio" not in complete_text
     assert "efficient offline workflows" in complete_text
     assert "conflict-free delivery systems" in complete_text
     assert "flexible platforms" in complete_text

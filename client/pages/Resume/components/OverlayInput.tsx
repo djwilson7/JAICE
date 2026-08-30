@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
+import type { BoldRange } from "../types";
+import { RichTextEditable } from "./RichTextEditable";
 
 export type OverlayInputProps = {
     path: string;
@@ -22,6 +24,9 @@ export type OverlayInputProps = {
     inputContainerClassName?: string;
     onBlur?: () => void;
     onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    boldRanges?: BoldRange[];
+    onRichTextChange?: (value: string, boldRanges: BoldRange[]) => void;
+    onToggleBold?: (start: number, end: number) => void;
     hoveredField: string | null;
     setHoveredField: React.Dispatch<React.SetStateAction<string | null>>;
     focusedField: string | null;
@@ -47,6 +52,9 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     inputContainerClassName = "",
     onBlur,
     onKeyDown,
+    boldRanges,
+    onRichTextChange,
+    onToggleBold,
     hoveredField,
     setHoveredField,
     focusedField,
@@ -66,6 +74,7 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
     const fontPreviewClass = className.includes("resume-subheader-font-target")
         ? ""
         : " resume-body-font-target";
+    const hasRichText = isAutoResize && boldRanges !== undefined && Boolean(onRichTextChange && onToggleBold);
     useEffect(() => {
         if (focusedField === path && inputRef.current && document.activeElement !== inputRef.current) {
             inputRef.current.focus();
@@ -116,7 +125,24 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
                         {customActionIcon}
                     </button>
                 )}
-                <InputComp
+                {hasRichText ? (
+                    <RichTextEditable
+                        ref={inputRef as React.Ref<HTMLDivElement>}
+                        className={`${className} overlay-item-input${fontPreviewClass} resume-rich-text-editor`}
+                        value={value}
+                        boldRanges={boldRanges || []}
+                        onChange={onRichTextChange!}
+                        onToggleBold={onToggleBold!}
+                        onFocus={() => setFocusedField(path)}
+                        onBlur={() => {
+                            onBlur?.();
+                            setFocusedField(current => current === path ? null : current);
+                        }}
+                        onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLElement>}
+                        placeholder={placeholder}
+                        style={style}
+                    />
+                ) : <InputComp
                     ref={inputRef}
                     className={`${className} overlay-item-input${fontPreviewClass}`}
                     value={value}
@@ -137,7 +163,7 @@ export const OverlayInput: React.FC<OverlayInputProps> = ({
                         borderRadius: isOpen ? 4 : undefined,
                         transition: "color 150ms ease, opacity 150ms ease, text-decoration 150ms ease, text-decoration-color 150ms ease"
                     }}
-                />
+                />}
                 {(showRightCustomAction || showInlineClear || showInlineDelete) && (
                     <div
                         className="pointer-events-none absolute left-full top-1/2 z-10 h-4 w-px -translate-y-1/2 bg-black/15"

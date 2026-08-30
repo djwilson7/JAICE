@@ -2,6 +2,7 @@ import React from "react";
 import type { ResumeData, ResumeFormatting } from "../types";
 import { buildResumeRenderTokens } from "../formatting";
 import { buildResumeRenderModel, type ResumeRenderBullet, type ResumeRenderMetaField } from "./renderModel";
+import { splitBoldText } from "../boldText";
 import "../../../../common/resume_render/formatting.css";
 import "../../../../common/resume_render/document.css";
 
@@ -63,7 +64,13 @@ const BulletStack: React.FC<{ bullets: ResumeRenderBullet[]; education?: boolean
                     data-resume-diagnostic="bullet-row"
                 >
                     <span className="resume-document__bullet-marker">&bull;</span>
-                    <div className="resume-document__body resume-document__bullet-text">{bullet.text}</div>
+                    <div className="resume-document__body resume-document__bullet-text">
+                        {splitBoldText(bullet.text, bullet.boldRanges).map((segment, index) =>
+                            segment.bold
+                                ? <strong key={index}>{segment.text}</strong>
+                                : <React.Fragment key={index}>{segment.text}</React.Fragment>
+                        )}
+                    </div>
                 </div>
             ))}
         </div>

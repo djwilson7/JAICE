@@ -1,5 +1,5 @@
 import React from "react";
-import type { ChangeMetadata, ContactRenderField, ResumeData } from "./types";
+import type { BoldRange, ChangeMetadata, ContactRenderField, ResumeData } from "./types";
 import { buildResumeRenderTokens } from "./formatting";
 import { hasText } from "./resumeData";
 import { OverlayInput } from "./components/OverlayInput";
@@ -66,6 +66,9 @@ export const useResumeDocumentViewModel = ({
         inputContainerClassName?: string;
         onBlur?: () => void;
         onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+        boldRanges?: BoldRange[];
+        onRichTextChange?: (value: string, boldRanges: BoldRange[]) => void;
+        onToggleBold?: (start: number, end: number) => void;
     }) => {
         return (
             <OverlayInput
@@ -95,7 +98,7 @@ export const useResumeDocumentViewModel = ({
 
     const bodyFontSizePx = renderTokens.bodyFontSizePx;
     const subHeaderFontSizePx = renderTokens.subHeaderFontSizePx;
-    const measureTextWidth = (text: string, font: string = `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`) => {
+    const measureTextWidth = (text: string, font: string = `500 ${bodyFontSizePx}px Arial, sans-serif`) => {
         if (!text) return 0;
         if (typeof document === "undefined") {
             const charSize = font.includes(`${renderTokens.titleFontSizePx}px`) ? 14 : 7;
@@ -114,7 +117,7 @@ export const useResumeDocumentViewModel = ({
     const getDynamicInputStyle = (
         value: string | undefined,
         placeholder: string,
-        font: string = `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`,
+        font: string = `500 ${bodyFontSizePx}px Arial, sans-serif`,
         extraStyles: React.CSSProperties = {}
     ): React.CSSProperties => {
         const content = value && value.length > 0 ? value : placeholder || "";
@@ -131,7 +134,7 @@ export const useResumeDocumentViewModel = ({
     };
 
     const contactFieldStyle = (value: string | undefined, placeholder: string): React.CSSProperties => {
-        return getDynamicInputStyle(value, placeholder, `500 ${bodyFontSizePx}px Poppins, Arial, sans-serif`, {
+        return getDynamicInputStyle(value, placeholder, `500 ${bodyFontSizePx}px Arial, sans-serif`, {
             fontSize: "var(--resume-body-font-size)",
             lineHeight: "var(--resume-body-line-height)"
         });
@@ -142,7 +145,7 @@ export const useResumeDocumentViewModel = ({
         weight: React.CSSProperties["fontWeight"] = 600,
         extraStyles: React.CSSProperties = {}
     ): React.CSSProperties => {
-        return getDynamicInputStyle(value, placeholder, `${weight} ${subHeaderFontSizePx}px Poppins, Arial, sans-serif`, {
+        return getDynamicInputStyle(value, placeholder, `${weight} ${subHeaderFontSizePx}px Arial, sans-serif`, {
             fontSize: "var(--resume-subheader-font-size)",
             lineHeight: "var(--resume-subheader-line-height)",
             ...extraStyles

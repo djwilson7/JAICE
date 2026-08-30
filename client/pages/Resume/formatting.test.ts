@@ -70,6 +70,10 @@ describe("resume formatting render tokens", () => {
             pageMarginPt: 54
         });
         expect(RESUME_FORMATTING_CSS).toContain("--resume-standard-section-gap-pt: 12");
+        expect(RESUME_FORMATTING_CSS).toContain("--resume-font-family: Arial, sans-serif");
+        expect(RESUME_FORMATTING_CSS).not.toContain("Poppins");
+        expect(RESUME_FORMATTING_CSS).not.toContain("Libre Baskerville");
         expect(RESUME_FORMATTING_CSS).toContain(".resume-page-content");
     });
+
 });

@@ -1,5 +1,6 @@
 import type { ResumeBullet, ResumeData } from "../types";
 import { getSectionTitle, hasText } from "../resumeData";
+import { trimBoldRanges } from "../boldText";
 
 export type ResumeRenderMetaTone = "primary" | "secondary" | "tertiary";
 
@@ -8,7 +9,7 @@ export type ResumeRenderMetaField = {
     tone: ResumeRenderMetaTone;
 };
 
-export type ResumeRenderBullet = Pick<ResumeBullet, "id" | "text">;
+export type ResumeRenderBullet = Pick<ResumeBullet, "id" | "text" | "boldRanges">;
 
 export type ResumeRenderExperience = {
     id: string;
@@ -84,7 +85,15 @@ export const buildResumeRenderModel = (resumeData: ResumeData): ResumeRenderMode
         const dates = [experience.startDate, experience.endDate].map(trimmed).filter(Boolean);
         const bullets = (experience.bullets || [])
             .filter((bullet) => hasText(bullet.text))
-            .map((bullet) => ({ id: bullet.id, text: trimmed(bullet.text) }));
+            .map((bullet) => {
+                const text = trimmed(bullet.text);
+                const boldRanges = trimBoldRanges(bullet.text, bullet.boldRanges);
+                return {
+                    id: bullet.id,
+                    text,
+                    ...(boldRanges.length ? { boldRanges } : {})
+                };
+            });
         if (!meta.length && !dates.length && !bullets.length) return [];
         return [{
             id: experience.id,

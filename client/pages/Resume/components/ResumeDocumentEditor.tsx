@@ -1,5 +1,6 @@
 import React from "react";
 import type {
+    BoldRange,
     ContactRenderField,
     DocumentSectionId,
     EducationItem,
@@ -38,6 +39,9 @@ export type OverlayInputParams = {
     inputContainerClassName?: string;
     onBlur?: () => void;
     onKeyDown?: React.KeyboardEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    boldRanges?: BoldRange[];
+    onRichTextChange?: (value: string, boldRanges: BoldRange[]) => void;
+    onToggleBold?: (start: number, end: number) => void;
 };
 
 export type ResumeDocumentEditorData = {
@@ -161,6 +165,18 @@ export type ResumeDocumentEditorHandlers = {
     addBulletWithText: (experienceId: string, text: string) => void;
     insertBulletAfter: (experienceId: string, bulletId: string) => void;
     updateBulletText: (experienceId: string, bulletId: string, value: string) => void;
+    toggleBulletBold: (
+        experienceId: string,
+        bulletId: string,
+        selectionStart: number,
+        selectionEnd: number
+    ) => void;
+    updateBulletRichText: (
+        experienceId: string,
+        bulletId: string,
+        value: string,
+        boldRanges: BoldRange[]
+    ) => void;
     removeBulletIfEmpty: (experienceId: string, bulletId: string) => void;
     removeBullet: (experienceId: string, bulletId: string) => void;
     toggleBulletTag: (experienceId: string, bulletId: string, tagId: string) => void;

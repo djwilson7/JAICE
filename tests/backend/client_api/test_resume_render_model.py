@@ -17,6 +17,9 @@ def test_shared_resume_render_assets_are_valid():
     assert spec["paperSizes"]["a4"]["printName"] == "A4"
     assert ".resume-document__section" in load_document_css()
     assert "--resume-default-body-font-size-pt: 9" in load_formatting_css()
+    assert "--resume-font-family: Arial, sans-serif" in load_formatting_css()
+    assert "Poppins" not in load_formatting_css()
+    assert "Libre Baskerville" not in load_formatting_css()
     assert load_formatting_tokens()["resume-default-page-margin-pt"] == 54
 
 
@@ -55,11 +58,32 @@ def test_backend_html_uses_canonical_tokens_and_semantic_classes_only():
     assert "resume-font--title" in document
     assert "resume-font--body" in document
     assert "font-variant-ligatures: none" in document
-    assert 'font-feature-settings: "liga" 0, "clig" 0' in document
+    assert 'font-feature-settings: "liga" 0, "clig" 0, "kern" 0' in document
+    assert "font-family: Arial, sans-serif" in document
+    assert "font-kerning: none" in document
     assert "break-inside: avoid" in document
     assert "page-break-inside: avoid" in document
     assert " contact-row" not in document
     assert " body-text" not in document
+
+
+def test_backend_html_renders_escaped_experience_bullet_bold_ranges():
+    document, *_ = render_resume_pdf_html(
+        {
+            "fullName": "Ada Lovelace",
+            "experience": [{
+                "jobTitle": "Engineer",
+                "bullets": [{
+                    "id": "bullet-1",
+                    "text": "Built <safe> APIs",
+                    "boldRanges": [{"start": 6, "end": 12}],
+                }],
+            }],
+        }
+    )
+    assert "Built <strong>&lt;safe&gt;</strong> APIs" in document
+
+
 
 
 def test_normalize_formatting_edge_cases():
@@ -89,4 +113,3 @@ def test_normalize_formatting_edge_cases():
     dim_a4 = paper_viewport_dimensions("A4")
     assert "width" in dim_a4
     assert "height" in dim_a4
-

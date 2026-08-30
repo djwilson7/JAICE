@@ -10,6 +10,7 @@ import type {
     SkillCategory
 } from "./types";
 import { defaultResumeFormatting, normalizeResumeFormatting } from "./formatting";
+import { normalizeBoldRanges } from "./boldText";
 
 export const makeId = () => Math.random().toString(36).slice(2, 10);
 
@@ -243,6 +244,7 @@ export const normalizeResumeData = (data?: ResumeDataInput | string | null): Res
                         .filter((bullet) => String(bullet.text || "").trim())
                         .map((bullet) => ({
                             ...bullet,
+                            boldRanges: normalizeBoldRanges(bullet.boldRanges, String(bullet.text || "").length),
                             tagIds: Array.isArray(bullet.tagIds)
                                 ? bullet.tagIds.map(String)
                                 : []

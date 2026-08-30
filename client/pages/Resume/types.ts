@@ -1,7 +1,13 @@
+export type BoldRange = {
+    start: number;
+    end: number;
+};
+
 export type ResumeBullet = {
     id: string;
     text: string;
     tagIds?: string[];
+    boldRanges?: BoldRange[];
 };
 
 export type ResumeSectionKey = "summary" | "experience" | "education" | "skills";

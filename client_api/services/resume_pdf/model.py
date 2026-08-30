@@ -46,15 +46,42 @@ def _contact_rows(payload: Any) -> list[list[str]]:
     return [filtered[index:index + 3] for index in range(0, len(filtered), 3)]
 
 
-def _bullets(value: Any, key: str) -> list[dict[str, str]]:
-    return [
-        {
+def _bold_ranges(bullet: Any, raw_text: str) -> list[dict[str, int]]:
+    leading = len(raw_text) - len(raw_text.lstrip())
+    trimmed_length = len(raw_text.strip())
+    ranges = []
+    for value in _items(bullet, "boldRanges"):
+        try:
+            start = max(0, min(trimmed_length, int(_read(value, "start")) - leading))
+            end = max(0, min(trimmed_length, int(_read(value, "end")) - leading))
+        except (TypeError, ValueError):
+            continue
+        if start < end:
+            ranges.append({"start": start, "end": end})
+    ranges.sort(key=lambda item: (item["start"], item["end"]))
+    merged: list[dict[str, int]] = []
+    for value in ranges:
+        if merged and value["start"] <= merged[-1]["end"]:
+            merged[-1]["end"] = max(merged[-1]["end"], value["end"])
+        else:
+            merged.append(value)
+    return merged
+
+
+def _bullets(value: Any, key: str) -> list[dict[str, Any]]:
+    result = []
+    for bullet in _items(value, key):
+        raw_text = str(_read(bullet, "text") or "")
+        text = raw_text.strip()
+        if not text:
+            continue
+        bold_ranges = _bold_ranges(bullet, raw_text)
+        result.append({
             "id": _text(_read(bullet, "id")),
-            "text": _text(_read(bullet, "text")),
-        }
-        for bullet in _items(value, key)
-        if _text(_read(bullet, "text"))
-    ]
+            "text": text,
+            **({"boldRanges": bold_ranges} if bold_ranges else {}),
+        })
+    return result
 
 
 def build_resume_render_model(payload: Any) -> dict[str, Any]:

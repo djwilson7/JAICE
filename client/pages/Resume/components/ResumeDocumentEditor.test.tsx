@@ -81,6 +81,8 @@ describe('ResumeDocumentEditor', () => {
             addBulletWithText: vi.fn(),
             insertBulletAfter: vi.fn(),
             updateBulletText: vi.fn(),
+            toggleBulletBold: vi.fn(),
+            updateBulletRichText: vi.fn(),
             removeBulletIfEmpty: vi.fn(),
             removeBullet: vi.fn(),
             toggleBulletTag: vi.fn(),

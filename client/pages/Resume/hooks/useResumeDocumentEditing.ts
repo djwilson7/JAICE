@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type {
+    BoldRange,
     ContactFieldKey,
     DocumentSectionId,
     EducationItem,
@@ -15,6 +16,7 @@ import {
     normalizeTagSlug,
     parseSkillItems
 } from "../resumeData";
+import { remapBoldRanges, toggleBoldRange } from "../boldText";
 
 export const useResumeDocumentEditing = () => {
     const experienceTagRetentionMs = 5500;
@@ -333,7 +335,13 @@ export const useResumeDocumentEditing = () => {
                     ? {
                         ...exp,
                         bullets: (exp.bullets || []).map((b) =>
-                            b.id === bulletId ? { ...b, text: value } : b
+                            b.id === bulletId
+                                ? {
+                                    ...b,
+                                    text: value,
+                                    boldRanges: remapBoldRanges(b.text, value, b.boldRanges)
+                                }
+                                : b
                         )
                     }
                     : exp
@@ -456,6 +464,60 @@ export const useResumeDocumentEditing = () => {
         setResumeData((prev) => ({
             ...prev,
             education: (prev.education || []).filter((ed) => ed.id !== id)
+        }));
+    };
+
+    const toggleBulletBold = (
+        expId: string,
+        bulletId: string,
+        selectionStart: number,
+        selectionEnd: number
+    ) => {
+        setResumeData((prev) => ({
+            ...prev,
+            experience: (prev.experience || []).map((exp) =>
+                exp.id === expId
+                    ? {
+                        ...exp,
+                        bullets: (exp.bullets || []).map((bullet) =>
+                            bullet.id === bulletId
+                                ? {
+                                    ...bullet,
+                                    boldRanges: toggleBoldRange(
+                                        bullet.boldRanges,
+                                        selectionStart,
+                                        selectionEnd,
+                                        bullet.text.length
+                                    )
+                                }
+                                : bullet
+                        )
+                    }
+                    : exp
+            )
+        }));
+    };
+
+    const updateBulletRichText = (
+        expId: string,
+        bulletId: string,
+        value: string,
+        boldRanges: BoldRange[]
+    ) => {
+        setResumeData((prev) => ({
+            ...prev,
+            experience: (prev.experience || []).map((exp) =>
+                exp.id === expId
+                    ? {
+                        ...exp,
+                        bullets: (exp.bullets || []).map((bullet) =>
+                            bullet.id === bulletId
+                                ? { ...bullet, text: value, boldRanges }
+                                : bullet
+                        )
+                    }
+                    : exp
+            )
         }));
     };
 
@@ -728,6 +790,8 @@ export const useResumeDocumentEditing = () => {
         addBulletWithText,
         insertBulletAfter,
         updateBulletText,
+        toggleBulletBold,
+        updateBulletRichText,
         removeBulletIfEmpty,
         removeBullet,
         toggleBulletTag,

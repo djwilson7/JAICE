@@ -65,6 +65,8 @@ export const ResumeExperienceSection: React.FC<
         addBulletWithText,
         insertBulletAfter,
         updateBulletText,
+        toggleBulletBold,
+        updateBulletRichText,
         removeBulletIfEmpty,
         removeBullet,
         toggleBulletTag,
@@ -376,6 +378,16 @@ export const ResumeExperienceSection: React.FC<
                                                                     : undefined
                                                         } as React.CSSProperties,
                                                         isAutoResize: true,
+                                                        boldRanges: bullet.boldRanges || [],
+                                                        onRichTextChange: (value, boldRanges) =>
+                                                            updateBulletRichText(
+                                                                experience.id,
+                                                                bullet.id,
+                                                                value,
+                                                                boldRanges
+                                                            ),
+                                                        onToggleBold: (start, end) =>
+                                                            toggleBulletBold(experience.id, bullet.id, start, end),
                                                         onChange: (value) =>
                                                             updateBulletText(experience.id, bullet.id, value),
                                                         onBlur: () =>
