@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, ChartEmpty, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
+import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { Line } from "react-chartjs-2";
 import type { Chart, ChartOptions, TooltipModel } from "chart.js";
 import { applyChartDefaults } from "./chartSetup";
@@ -8,6 +8,7 @@ import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { DASHBOARD_DEMO_DATA } from "@/demo-data/dashboardDemoData";
 
 // Generate the last N days as labels
 function lastNDaysLabels(n: number) {
@@ -125,18 +126,33 @@ export function AppsOverTimeCard({
   const chartTheme = getDashboardChartTheme(theme);
   const range = 90;
 
-  const [applied, setApplied] = useState<number[]>([]);
-  const [interview, setInterview] = useState<number[]>([]);
-  const [offer, setOffer] = useState<number[]>([]);
-  const [accepted, setAccepted] = useState<number[]>([]);
+  const [applied, setApplied] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.stagesOverTime.stage_counts.applied]
+      : []
+  );
+  const [interview, setInterview] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.stagesOverTime.stage_counts.interview]
+      : []
+  );
+  const [offer, setOffer] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.stagesOverTime.stage_counts.offer]
+      : []
+  );
+  const [accepted, setAccepted] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.stagesOverTime.stage_counts.accepted]
+      : []
+  );
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!IS_DEMO_MODE);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (IS_DEMO_MODE) return;
-
     applyChartDefaults();
+    if (IS_DEMO_MODE) return;
     let alive = true;
 
     async function load() {
@@ -340,10 +356,9 @@ export function AppsOverTimeCard({
       height={height ?? "16rem"}
     >
       <ChartHost>
-        {IS_DEMO_MODE && <ChartEmpty />}
-        {!IS_DEMO_MODE && loading && <ChartSkeleton variant="line" />}
-        {!IS_DEMO_MODE && error && <ChartError message={error} />}
-        {!IS_DEMO_MODE && !loading && !error && (
+        {loading && <ChartSkeleton variant="line" />}
+        {error && <ChartError message={error} />}
+        {!loading && !error && (
           <div className="flex h-full min-h-0 w-full flex-col">
             <div className="min-h-0 flex-1">
               <Line data={data} options={options} />

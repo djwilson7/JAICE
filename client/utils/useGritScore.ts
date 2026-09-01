@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/global-services/api";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { DASHBOARD_DEMO_DATA } from "@/demo-data/dashboardDemoData";
 
 type GritData = {
   score: number;
@@ -34,7 +35,9 @@ function getJaiceTier(score: number): TierInfo {
  * Can be used in multiple components to access the same grit score information
  */
 export function useGritScore() {
-  const [data, setData] = useState<GritData | null>(null);
+  const [data, setData] = useState<GritData | null>(() =>
+    IS_DEMO_MODE ? { ...DASHBOARD_DEMO_DATA.gritScore } : null
+  );
   const [loading, setLoading] = useState(!IS_DEMO_MODE);
   const [error, setError] = useState<Error | null>(null);
 

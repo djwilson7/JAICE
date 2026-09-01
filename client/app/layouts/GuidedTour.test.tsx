@@ -48,7 +48,7 @@ describe("GuidedTour", () => {
   it.each([
     ["About", "/auth-about"],
     ["Dashboard", "/dashboard"],
-  ])("moves the %s guide with the scroll position", (_page, currentPath) => {
+  ])("moves the %s guide only at the scroll boundary", (_page, currentPath) => {
     const { container } = render(
       <>
         <div className="outlet-container" data-testid="tour-scroll-canvas" />
@@ -65,6 +65,20 @@ describe("GuidedTour", () => {
     fireEvent.click(screen.getByRole("button", { name: /let’s begin/i }));
 
     const scrollCanvas = screen.getByTestId("tour-scroll-canvas");
+    const guideCard = document.querySelector<HTMLElement>(
+      '[data-guided-tour="guided-tour-card"]'
+    )!;
+    vi.spyOn(guideCard, "getBoundingClientRect").mockReturnValue({
+      width: 400,
+      height: 180,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
     Object.defineProperties(scrollCanvas, {
       clientHeight: { configurable: true, value: 500 },
       scrollHeight: { configurable: true, value: 1_200 },
@@ -73,26 +87,49 @@ describe("GuidedTour", () => {
 
     fireEvent.scroll(scrollCanvas);
     expect(
-      document.querySelector('[data-guided-tour="guided-tour-card"]')
+      guideCard
     ).toHaveAttribute("data-guide-placement", "bottom");
+    expect(guideCard.style.getPropertyValue("--guided-tour-card-lift")).toBe(
+      "0px"
+    );
 
     scrollCanvas.scrollTop = 700;
     fireEvent.scroll(scrollCanvas);
     expect(
-      document.querySelector('[data-guided-tour="guided-tour-card"]')
+      guideCard
     ).toHaveAttribute("data-guide-placement", "top");
+    expect(
+      Number.parseFloat(
+        guideCard.style.getPropertyValue("--guided-tour-card-lift")
+      )
+    ).toBeGreaterThan(0);
 
     scrollCanvas.scrollTop = 550;
     fireEvent.scroll(scrollCanvas);
     expect(
-      document.querySelector('[data-guided-tour="guided-tour-card"]')
-    ).toHaveAttribute("data-guide-placement", "moving");
+      guideCard
+    ).toHaveAttribute("data-guide-placement", "bottom");
+    expect(guideCard.style.getPropertyValue("--guided-tour-card-lift")).toBe(
+      "0px"
+    );
+
+    scrollCanvas.scrollTop = 698;
+    fireEvent.scroll(scrollCanvas);
+    expect(
+      guideCard
+    ).toHaveAttribute("data-guide-placement", "bottom");
+    expect(guideCard.style.getPropertyValue("--guided-tour-card-lift")).toBe(
+      "0px"
+    );
 
     scrollCanvas.scrollTop = 0;
     fireEvent.scroll(scrollCanvas);
     expect(
-      document.querySelector('[data-guided-tour="guided-tour-card"]')
+      guideCard
     ).toHaveAttribute("data-guide-placement", "bottom");
+    expect(guideCard.style.getPropertyValue("--guided-tour-card-lift")).toBe(
+      "0px"
+    );
 
     expect(container.querySelector(".outlet-container")).toBe(scrollCanvas);
   });
@@ -103,13 +140,15 @@ describe("GuidedTour", () => {
 
     render(
       <>
-        <div data-guided-tour="dashboard-grit-card">Grit</div>
-        <div data-guided-tour="dashboard-reading-card">Reading</div>
-        <div data-guided-tour="dashboard-avg-time-card">
-          <button data-guided-tour="dashboard-avg-time-info">Info</button>
-        </div>
-        <div data-guided-tour="dashboard-stages-over-time-card">
-          <div role="img" aria-label="Stages chart" />
+        <div className="outlet-container" data-testid="dashboard-scroll-canvas">
+          <div data-guided-tour="dashboard-grit-card">Grit</div>
+          <div data-guided-tour="dashboard-reading-card">Reading</div>
+          <div data-guided-tour="dashboard-avg-time-card">
+            <button data-guided-tour="dashboard-avg-time-info">Info</button>
+          </div>
+          <div data-guided-tour="dashboard-stages-over-time-card">
+            <div role="img" aria-label="Stages chart" />
+          </div>
         </div>
         <button data-guided-tour="app-resume-navigation">Resume</button>
         <GuidedTour
@@ -122,13 +161,51 @@ describe("GuidedTour", () => {
       </>
     );
 
+    const scrollCanvas = screen.getByTestId("dashboard-scroll-canvas");
+    const secondRow = document.querySelector<HTMLElement>(
+      '[data-guided-tour="dashboard-avg-time-card"]'
+    )!;
+    const scrollTo = vi.fn(({ top }: ScrollToOptions) => {
+      scrollCanvas.scrollTop = top ?? 0;
+    });
+    Object.defineProperty(scrollCanvas, "scrollTo", {
+      configurable: true,
+      value: scrollTo,
+    });
+    vi.spyOn(scrollCanvas, "getBoundingClientRect").mockReturnValue({
+      width: 900,
+      height: 600,
+      top: 72,
+      right: 900,
+      bottom: 672,
+      left: 0,
+      x: 0,
+      y: 72,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(secondRow, "getBoundingClientRect").mockImplementation(() => ({
+      width: 300,
+      height: 256,
+      top: 420 - scrollCanvas.scrollTop,
+      right: 300,
+      bottom: 676 - scrollCanvas.scrollTop,
+      left: 0,
+      x: 0,
+      y: 420 - scrollCanvas.scrollTop,
+      toJSON: () => ({}),
+    }));
+
     fireEvent.click(screen.getByRole("button", { name: /let’s begin/i }));
     expect(screen.getByText("Your progress at a glance")).toBeInTheDocument();
     expect(screen.getByText("1/6")).toBeInTheDocument();
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("locked");
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Your Grit Score")).toBeInTheDocument();
     expect(screen.getByText("2/6")).toBeInTheDocument();
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("closed");
+    expect(scrollCanvas.style.overflowY).toBe("hidden");
+    expect(scrollTo).not.toHaveBeenCalled();
     expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(
       4
     );
@@ -136,12 +213,19 @@ describe("GuidedTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Reading the Dashboard")).toBeInTheDocument();
     expect(screen.getByText("3/6")).toBeInTheDocument();
+    expect(scrollCanvas.style.overflowY).toBe("hidden");
+    expect(scrollTo).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(
       screen.getByText("Learn more about each metric")
     ).toBeInTheDocument();
     expect(screen.getByText("4/6")).toBeInTheDocument();
+    expect(scrollCanvas.style.overflowY).toBe("hidden");
+    expect(scrollTo).toHaveBeenLastCalledWith({
+      top: 324,
+      behavior: "smooth",
+    });
     expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(
       4
     );
@@ -158,6 +242,11 @@ describe("GuidedTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Inspect specific values")).toBeInTheDocument();
     expect(screen.getByText("5/6")).toBeInTheDocument();
+    expect(scrollCanvas.style.overflowY).toBe("hidden");
+    expect(scrollTo).toHaveBeenLastCalledWith({
+      top: 324,
+      behavior: "smooth",
+    });
 
     fireEvent.pointerOver(screen.getByRole("img", { name: "Stages chart" }));
     expect(screen.getByText("Inspect specific values")).toBeInTheDocument();
@@ -166,6 +255,11 @@ describe("GuidedTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Explore, then continue")).toBeInTheDocument();
     expect(screen.getByText("6/6")).toBeInTheDocument();
+    expect(scrollCanvas.style.overflowY).toBe("");
+    expect(scrollTo).toHaveBeenLastCalledWith({
+      top: 0,
+      behavior: "smooth",
+    });
     expect(onNavigationModeChange).toHaveBeenLastCalledWith("resume-only");
     expect(
       screen.getByRole("button", { name: "Select Resume" })

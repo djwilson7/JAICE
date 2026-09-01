@@ -580,29 +580,18 @@ export function GuidedTour({
         scrollCanvas.clientHeight;
       const hasScrollableContent =
         scrollCanvas.scrollHeight > scrollCanvas.clientHeight + 1;
-      const travelRange = Math.min(
-        320,
-        Math.max(160, scrollCanvas.clientHeight * 0.35)
-      );
-      const scrollProgress = hasScrollableContent
-        ? Math.min(1, Math.max(0, 1 - remainingScroll / travelRange))
-        : 0;
+      const isAtBottom = hasScrollableContent && remainingScroll <= 1;
       const topEdge = 96;
-      const bottomEdge =
+      const bottomAnchoredTop =
         window.innerHeight - guideCard.getBoundingClientRect().height - 24;
-      const travelDistance = Math.max(0, bottomEdge - topEdge);
-      const offset = travelDistance * (1 - scrollProgress);
+      const travelDistance = Math.max(0, bottomAnchoredTop - topEdge);
+      const lift = isAtBottom ? travelDistance : 0;
 
       guideCard.style.setProperty(
-        "--guided-tour-card-offset",
-        `${offset}px`
+        "--guided-tour-card-lift",
+        `${lift}px`
       );
-      guideCard.dataset.guidePlacement =
-        scrollProgress >= 0.99
-          ? "top"
-          : scrollProgress <= 0.01
-            ? "bottom"
-            : "moving";
+      guideCard.dataset.guidePlacement = isAtBottom ? "top" : "bottom";
     };
 
     updateGuidePlacement();
@@ -614,10 +603,47 @@ export function GuidedTour({
     return () => {
       scrollCanvas.removeEventListener("scroll", updateGuidePlacement);
       window.removeEventListener("resize", updateGuidePlacement);
-      guideCard.style.removeProperty("--guided-tour-card-offset");
+      guideCard.style.removeProperty("--guided-tour-card-lift");
       guideCard.dataset.guidePlacement = "bottom";
     };
-  }, [section.route, showSteps]);
+  }, [section.route, showSteps, stepIndex]);
+
+  useEffect(() => {
+    if (!showSteps || (!step.lockScroll && !step.scrollPosition)) return;
+
+    const scrollCanvas = document.querySelector<HTMLElement>(
+      ".outlet-container"
+    );
+    if (!scrollCanvas) return;
+
+    const previousOverflowY = scrollCanvas.style.overflowY;
+
+    if (step.scrollPosition) {
+      let scrollTop = 0;
+      if (step.scrollPosition === "dashboard-second-row") {
+        const secondRow = document.querySelector<HTMLElement>(
+          '[data-guided-tour="dashboard-avg-time-card"]'
+        );
+        if (secondRow) {
+          scrollTop = Math.max(
+            0,
+            scrollCanvas.scrollTop +
+              secondRow.getBoundingClientRect().top -
+              scrollCanvas.getBoundingClientRect().top -
+              24
+          );
+        }
+      }
+
+      scrollCanvas.scrollTo({ top: scrollTop, behavior: "smooth" });
+    }
+
+    if (step.lockScroll) scrollCanvas.style.overflowY = "hidden";
+
+    return () => {
+      scrollCanvas.style.overflowY = previousOverflowY;
+    };
+  }, [section.route, showSteps, step.lockScroll, step.scrollPosition]);
 
   useEffect(() => {
     if (!showWelcome) return;

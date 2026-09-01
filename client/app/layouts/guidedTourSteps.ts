@@ -56,6 +56,8 @@ export type GuidedTourStep = {
   demoDataState?: GuidedTourDemoDataState;
   homeInteractionState?: GuidedTourHomeInteractionState;
   navigationMode?: Exclude<GuidedTourNavigationMode, "closed">;
+  scrollPosition?: "top" | "dashboard-second-row";
+  lockScroll?: boolean;
   waitForNavigation?: boolean;
   waitForAction?: boolean;
   actionLabel?: string;
@@ -255,18 +257,21 @@ export const GUIDED_TOUR_SECTIONS: readonly GuidedTourSection[] = [
         title: "Your progress at a glance",
         description:
           "The Dashboard turns your application history into a clear view of momentum, consistency, stage balance, and recent activity.",
+        navigationMode: "locked",
       },
       {
         title: "Your Grit Score",
         description:
           "Your Grit Score combines application activity, consistency, and follow-through into one signal that reflects the momentum behind your search.",
         spotlight: "dashboard-grit-card",
+        lockScroll: true,
       },
       {
         title: "Reading the Dashboard",
         description:
           "Use this quick reference to understand what the Dashboard summarizes and how each signal can help you evaluate your search.",
         spotlight: "dashboard-reading-card",
+        lockScroll: true,
       },
       {
         title: "Learn more about each metric",
@@ -274,12 +279,16 @@ export const GUIDED_TOUR_SECTIONS: readonly GuidedTourSection[] = [
           "Hover over the highlighted info icon to see what this metric shows, how it is calculated, and how to interpret it. Click Next when you’re ready.",
         spotlight: "dashboard-avg-time-card",
         shimmer: "dashboard-avg-time-info",
+        scrollPosition: "dashboard-second-row",
+        lockScroll: true,
       },
       {
         title: "Inspect specific values",
         description:
           "Hover over any graph or chart to see the specific metrics behind each point. Click Next when you’re ready to continue.",
         spotlight: "dashboard-stages-over-time-card",
+        scrollPosition: "dashboard-second-row",
+        lockScroll: true,
       },
       {
         title: "Explore, then continue",
@@ -290,6 +299,7 @@ export const GUIDED_TOUR_SECTIONS: readonly GuidedTourSection[] = [
         connector: false,
         waitForNavigation: true,
         actionLabel: "Select Resume",
+        scrollPosition: "top",
       },
     ],
   },

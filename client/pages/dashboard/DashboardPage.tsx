@@ -24,15 +24,24 @@ export function DashboardPage() {
         {/* Top: Grit score + stage timing */}
         <section className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-3">
           <div className="md:col-span-2">
-            <GritCard height="14rem" />
+            <div data-guided-tour="dashboard-grit-card">
+              <GritCard height="14rem" />
+            </div>
           </div>
-          <DashboardContextCard />
+          <div data-guided-tour="dashboard-reading-card">
+            <DashboardContextCard />
+          </div>
         </section>
 
         {/* Bento dashboard grid */}
         <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <AvgTimeInStageCard className="h-full" />
-          <div className="md:col-span-2">
+          <div data-guided-tour="dashboard-avg-time-card">
+            <AvgTimeInStageCard className="h-full" />
+          </div>
+          <div
+            className="md:col-span-2"
+            data-guided-tour="dashboard-stages-over-time-card"
+          >
             <AppsOverTimeCard className="h-full" />
           </div>
 

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, ChartEmpty, ChartError, ChartHost, ChartSkeleton } from "./Card";
+import { Card, ChartError, ChartHost, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { DASHBOARD_DEMO_DATA } from "@/demo-data/dashboardDemoData";
 
 type AvgStageAges = {
   applied: number | null;
@@ -58,14 +59,15 @@ export function AvgTimeInStageCard({
 }) {
   const { theme } = useSettings();
   const chartTheme = getDashboardChartTheme(theme);
-  const [values, setValues] = useState<AvgStageAges | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [values, setValues] = useState<AvgStageAges | null>(() =>
+    IS_DEMO_MODE ? { ...DASHBOARD_DEMO_DATA.avgTimeInStage } : null
+  );
+  const [loading, setLoading] = useState(!IS_DEMO_MODE);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (IS_DEMO_MODE) return;
-
     applyChartDefaults();
+    if (IS_DEMO_MODE) return;
     let alive = true;
 
     async function load() {
@@ -108,10 +110,6 @@ export function AvgTimeInStageCard({
   const stageColors = chartTheme.stageColors;
 
   const renderSquares = () => {
-    if (IS_DEMO_MODE) {
-      return <ChartEmpty />;
-    }
-
     if (loading) {
       return <ChartSkeleton variant="tiles" />;
     }
@@ -233,6 +231,7 @@ export function AvgTimeInStageCard({
       title="Avg Time in Stage"
       subtitle="Rolling 90-day averages"
       infoDescription={chartDescText.avgTimeInStage}
+      infoGuidedTourTarget="dashboard-avg-time-info"
       className={className}
       height={height ?? "16rem"}
     >

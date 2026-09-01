@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { Chart, ChartData, ChartOptions, TooltipModel } from "chart.js";
-import { Card, ChartEmpty, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
+import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { getDashboardChartTheme } from "./chartTheme";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { DASHBOARD_DEMO_DATA } from "@/demo-data/dashboardDemoData";
 
 type ExternalTooltipContext<T extends "doughnut"> = {
   chart: Chart<T>;
@@ -90,15 +91,18 @@ export function AppsByStageCard({
 }) {
   const { theme } = useSettings();
   const chartTheme = getDashboardChartTheme(theme);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [values, setValues] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [labels, setLabels] = useState<string[]>(() =>
+    IS_DEMO_MODE ? [...DASHBOARD_DEMO_DATA.appsByStage.labels] : []
+  );
+  const [values, setValues] = useState<number[]>(() =>
+    IS_DEMO_MODE ? [...DASHBOARD_DEMO_DATA.appsByStage.values] : []
+  );
+  const [loading, setLoading] = useState(!IS_DEMO_MODE);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (IS_DEMO_MODE) return;
-
     applyChartDefaults();
+    if (IS_DEMO_MODE) return;
     let alive = true;
 
     async function fetchData() {
@@ -192,10 +196,6 @@ export function AppsByStageCard({
       label: stage,
       color: themedStageColors[stage],
     }));
-
-    if (IS_DEMO_MODE) {
-      return <ChartEmpty />;
-    }
 
     if (loading) {
       return <ChartSkeleton variant="donut" />;

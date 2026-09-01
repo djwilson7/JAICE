@@ -19,6 +19,7 @@ export type CardProps = {
     subtitle?: string;
     titleIcon?: React.ReactNode;
     infoDescription?: CardInfoDescription;
+    infoGuidedTourTarget?: string;
     className?: string;
     children: React.ReactNode;
     footer?: React.ReactNode;
@@ -53,7 +54,7 @@ function useCardStyles(variant: Variant, rounded: boolean) {
 }
 
 export function Card({
-    title, subtitle, titleIcon, infoDescription, className = "", children, footer,
+    title, subtitle, titleIcon, infoDescription, infoGuidedTourTarget, className = "", children, footer,
     variant = "teal", size = "md", height, rounded = true,
     expandable, onExpand }: CardProps) {
     const style = useCardStyles(variant, rounded);
@@ -119,6 +120,7 @@ export function Card({
                             {infoDescription && (
                                 <button
                                     ref={infoButtonRef}
+                                    data-guided-tour={infoGuidedTourTarget}
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import type { Chart, ChartData, ChartOptions, TooltipItem, TooltipModel } from "chart.js";
-import { Card, ChartEmpty, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
+import { Card, ChartError, ChartHost, ChartLegend, ChartSkeleton } from "./Card";
 import { getDashboardChartTheme } from "./chartTheme";
 import { applyChartDefaults } from "./chartSetup";
 import { api } from "@/global-services/api";
 import { chartDescText } from "./chartDescText";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { DASHBOARD_DEMO_DATA } from "@/demo-data/dashboardDemoData";
 
 const splitByStageTooltipHandler = (context: {
   chart: Chart<"bar">;
@@ -88,19 +89,36 @@ export function SplitByStageCard({
 }) {
   const { theme } = useSettings();
   const chartTheme = getDashboardChartTheme(theme);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [applied, setApplied] = useState<number[]>([]);
-  const [interview, setInterview] = useState<number[]>([]);
-  const [offer, setOffer] = useState<number[]>([]);
-  const [accepted, setAccepted] = useState<number[]>([]);
+  const [labels, setLabels] = useState<string[]>(() =>
+    IS_DEMO_MODE ? [...DASHBOARD_DEMO_DATA.splitByStageMonthly.labels] : []
+  );
+  const [applied, setApplied] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.splitByStageMonthly.stage_counts.applied]
+      : []
+  );
+  const [interview, setInterview] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.splitByStageMonthly.stage_counts.interview]
+      : []
+  );
+  const [offer, setOffer] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.splitByStageMonthly.stage_counts.offer]
+      : []
+  );
+  const [accepted, setAccepted] = useState<number[]>(() =>
+    IS_DEMO_MODE
+      ? [...DASHBOARD_DEMO_DATA.splitByStageMonthly.stage_counts.accepted]
+      : []
+  );
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!IS_DEMO_MODE);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (IS_DEMO_MODE) return;
-
     applyChartDefaults();
+    if (IS_DEMO_MODE) return;
     let alive = true;
 
     async function load() {
@@ -227,10 +245,6 @@ export function SplitByStageCard({
   };
 
   const content = () => {
-    if (IS_DEMO_MODE) {
-      return <ChartEmpty />;
-    }
-
     if (loading) {
       return <ChartSkeleton variant="bar" />;
     }
