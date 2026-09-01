@@ -288,7 +288,9 @@ export function LandingPage({ projectMode = PROJECT_MODE }: LandingPageProps) {
     return (
       <DemoLandingPage
         brandImg={brandImg}
-        onOpenProduct={() => navigate("/home")}
+        onOpenProduct={() =>
+          navigate("/home", { state: { startGuidedTour: true } })
+        }
       />
     );
   }
