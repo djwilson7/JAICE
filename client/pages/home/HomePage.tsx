@@ -35,9 +35,11 @@ import {
   type JobLocalChangeDetail,
 } from "@/pages/home/utils/jobLocalChangeEvent";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
 
 export function HomePage() {
   const { user } = useAuth();
+  const { homeInteractionState } = useGuidedTourSession();
   const [jobAppModalPayload, setJobAppModalPayload] = useState<
     string | JobCardType | null
   >(null);
@@ -86,9 +88,41 @@ export function HomePage() {
 
   const [isJobAppModalOpen, setIsJobAppModalOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState<string | null>(null); // to track if a column is highlighted
+  const demoControlsEnabled =
+    !IS_DEMO_MODE ||
+    [
+      "select-control",
+      "selecting-cards",
+      "bulk-selected",
+      "delete-confirmation",
+      "trash-ready",
+      "trash-open",
+      "free",
+    ].includes(homeInteractionState);
+  const guidedControlRestriction = IS_DEMO_MODE
+    ? homeInteractionState === "select-control"
+      ? {
+          target: "home-multi-select-control" as const,
+          interactive: true,
+        }
+      : ["selecting-cards", "bulk-selected", "delete-confirmation"].includes(
+            homeInteractionState
+          )
+        ? {
+            target: "home-multi-select-control" as const,
+            interactive: false,
+          }
+        : ["trash-ready", "trash-open"].includes(homeInteractionState)
+          ? {
+              target: "home-trash-control" as const,
+              interactive: homeInteractionState === "trash-ready",
+            }
+          : undefined
+    : undefined;
 
   useEffect(() => {
     const handleLocalJobChange = (event: Event) => {
+      if (IS_DEMO_MODE) return;
       const { after } = (event as CustomEvent<JobLocalChangeDetail>).detail;
 
       setJobs((prev) => {
@@ -121,11 +155,18 @@ export function HomePage() {
           {/* ^ Page Container ^ */}
           <PageContent>
             {/* Control Bar */}
-            <div className="home-action-toolbar-wrap p-1">
+            <div
+              className="home-action-toolbar-wrap p-1"
+              data-guided-tour="home-controls"
+            >
               <ControlBar
                 fitParent
                 className="home-action-toolbar"
-                disabled={IS_DEMO_MODE}
+                disabled={!demoControlsEnabled}
+                guidedFocusTarget={guidedControlRestriction?.target}
+                guidedFocusInteractive={
+                  guidedControlRestriction?.interactive ?? false
+                }
               >
                 <div className="home-action-group home-action-group-left">
                   <ExpandCollapseButton compact />
@@ -151,8 +192,15 @@ export function HomePage() {
                     compact
                   />
                   <ArchiveModalButton setIsOpen={archive.open} compact />
-                  <TrashModalButton setIsOpen={trash.open} compact />
-                  <MultiSelectButton compact />
+                  <TrashModalButton
+                    setIsOpen={trash.open}
+                    compact
+                    guidedTourTarget="home-trash-control"
+                  />
+                  <MultiSelectButton
+                    compact
+                    guidedTourTarget="home-multi-select-control"
+                  />
                 </div>
               </ControlBar>
             </div>

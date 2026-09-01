@@ -16,6 +16,9 @@ import { useSelectedJobs } from "../../hooks/useSelectedJobs";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
 
 import ConfirmModal from "@/global-components/ConfirmModal";
+import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 
 type HoverAction =
   | "archive"
@@ -33,6 +36,8 @@ export function MultiSelectBar({
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { selectedJobs, setSelectedJobs } = useSelectedJobs();
   const { pushUndo } = useUndoRedo();
+  const { homeInteractionState, recordDeletedJobIds } =
+    useGuidedTourSession();
 
   const [hoverAction, setHoverAction] = useState<HoverAction>(null);
 
@@ -42,6 +47,19 @@ export function MultiSelectBar({
   const selectedCount = selectedJobs.length ?? 0;
 
   const [isEnabled, setIsEnabled] = useState(selectedCount > 0);
+  const restrictBulkActions =
+    IS_DEMO_MODE &&
+    ["selecting-cards", "bulk-selected", "delete-confirmation"].includes(
+      homeInteractionState
+    );
+  const archiveAndReviewEnabled = !restrictBulkActions;
+  const deleteEnabled =
+    !restrictBulkActions || homeInteractionState === "bulk-selected";
+
+  useEffect(() => {
+    if (!IS_DEMO_MODE) return;
+    setShowDeleteConfirm(homeInteractionState === "delete-confirmation");
+  }, [homeInteractionState]);
 
   useEffect(() => {
     setIsEnabled(selectedCount > 0);
@@ -81,12 +99,18 @@ export function MultiSelectBar({
         isArchived: true,
       })); // Capture state after archive
 
-      await api("/api/jobs/set-archive", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-        }),
-      });
+      if (IS_DEMO_MODE) {
+        afterActionJobState.forEach((after, index) =>
+          dispatchJobLocalChange({ before: beforeJobState[index], after })
+        );
+      } else {
+        await api("/api/jobs/set-archive", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: jobIds,
+          }),
+        });
+      }
 
       pushUndo({
         label: "archiveMultiple",
@@ -113,13 +137,19 @@ export function MultiSelectBar({
         reviewNeeded: false,
       })); // Capture state after review
 
-      await api("/api/jobs/set-review-needed", {
-        method: "POST",
-        body: JSON.stringify({
-          provider_message_ids: jobIds,
-          needs_review: false,
-        }),
-      });
+      if (IS_DEMO_MODE) {
+        afterActionJobState.forEach((after, index) =>
+          dispatchJobLocalChange({ before: beforeJobState[index], after })
+        );
+      } else {
+        await api("/api/jobs/set-review-needed", {
+          method: "POST",
+          body: JSON.stringify({
+            provider_message_ids: jobIds,
+            needs_review: false,
+          }),
+        });
+      }
 
       pushUndo({
         label: "reviewMultiple",
@@ -157,7 +187,9 @@ export function MultiSelectBar({
 
           <div className="multi-select-bar-actions">
             <div
-              onMouseEnter={() => setHoverAction("archive")}
+              onMouseEnter={() =>
+                archiveAndReviewEnabled && setHoverAction("archive")
+              }
               onMouseLeave={() => setHoverAction(null)}
               className={dim}
             >
@@ -168,7 +200,7 @@ export function MultiSelectBar({
                 failureIcon={folderXIcon}
                 alt="Archive"
                 onClick={onArchiveClicked}
-                disabled={!isEnabled}
+                disabled={!isEnabled || !archiveAndReviewEnabled}
                 className="roundSmall"
                 style={{ background: "transparent" }}
                 hoverClassName="purpleIcon"
@@ -177,7 +209,9 @@ export function MultiSelectBar({
             </div>
 
             <div
-              onMouseEnter={() => setHoverAction("review")}
+              onMouseEnter={() =>
+                archiveAndReviewEnabled && setHoverAction("review")
+              }
               onMouseLeave={() => setHoverAction(null)}
               className={dim}
             >
@@ -189,7 +223,9 @@ export function MultiSelectBar({
                 alt="Mark As Reviewed"
                 onClick={onReviewClicked}
                 disabled={
-                  !isEnabled || selectedJobs.every((j) => !j.reviewNeeded)
+                  !isEnabled ||
+                  !archiveAndReviewEnabled ||
+                  selectedJobs.every((j) => !j.reviewNeeded)
                 }
                 className="roundSmall"
                 style={{ background: "transparent" }}
@@ -199,9 +235,10 @@ export function MultiSelectBar({
             </div>
 
             <div
-              onMouseEnter={() => setHoverAction("delete")}
+              onMouseEnter={() => deleteEnabled && setHoverAction("delete")}
               onMouseLeave={() => setHoverAction(null)}
               className={dim}
+              data-guided-tour="home-bulk-delete"
             >
               <HoverIconButton
                 baseIcon={trashIcon}
@@ -210,7 +247,7 @@ export function MultiSelectBar({
                 failureIcon={trashXIcon}
                 alt="Delete"
                 onClick={onDeleteClicked}
-                disabled={!isEnabled}
+                disabled={!isEnabled || !deleteEnabled}
                 className="roundSmall"
                 style={{ background: "transparent" }}
                 hoverClassName="redIcon"
@@ -240,12 +277,19 @@ export function MultiSelectBar({
               isDeleted: true,
             }));
 
-            await api("/api/jobs/set-delete", {
-              method: "POST",
-              body: JSON.stringify({
-                provider_message_ids: jobIds,
-              }),
-            });
+            if (IS_DEMO_MODE) {
+              afterActionJobState.forEach((after, index) =>
+                dispatchJobLocalChange({ before: beforeJobState[index], after })
+              );
+              recordDeletedJobIds(jobIds);
+            } else {
+              await api("/api/jobs/set-delete", {
+                method: "POST",
+                body: JSON.stringify({
+                  provider_message_ids: jobIds,
+                }),
+              });
+            }
 
             pushUndo({
               label: "deleteMultiple",
@@ -254,8 +298,13 @@ export function MultiSelectBar({
             });
 
             console.log("Deleted selected jobs successfully.");
-            setSelectedJobs([]);
-            setIsMultiSelecting(false);
+            if (
+              !IS_DEMO_MODE ||
+              homeInteractionState !== "delete-confirmation"
+            ) {
+              setSelectedJobs([]);
+              setIsMultiSelecting(false);
+            }
           } finally {
             setIsProcessingDelete(false);
             closeDelete();

@@ -4,13 +4,27 @@ import { convertToJobCardArray } from "@/pages/home/utils/convertToJobCard";
 import type { JobCardType } from "@/types/jobCardType";
 import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
+import {
+  createDemoProcessingJobs,
+  createDemoSortedJobs,
+} from "@/demo-data/demoEmails";
 
 export function useJobsLoader() {
-  const [jobs, setJobs] = useState<JobCardType[]>([]);
+  const { demoDataState, demoJobs, setDemoJobs } = useGuidedTourSession();
+  const [jobs, setJobs] = useState<JobCardType[]>(() => {
+    if (!IS_DEMO_MODE || demoDataState === "hidden") return [];
+    if (demoDataState === "processing") return createDemoProcessingJobs();
+    return createDemoSortedJobs();
+  });
   const [isLoading, setIsLoading] = useState(!IS_DEMO_MODE);
   const hasLoadedRef = useRef(false);
   const hasSyncedGmailRef = useRef(false);
   const { showBanner } = useBannerNotifications();
+
+  const activeDemoJobs = demoJobs.filter(
+    (job) => !job.isArchived && !job.isDeleted
+  );
 
   const load = useCallback(
     async (force = false) => {
@@ -83,8 +97,8 @@ export function useJobsLoader() {
   }, [load]);
 
   return {
-    jobs,
-    setJobs, // exposed for realtime & local merges
+    jobs: IS_DEMO_MODE ? activeDemoJobs : jobs,
+    setJobs: IS_DEMO_MODE ? setDemoJobs : setJobs,
     reloadJobs: () => load(true),
     isLoading,
   };

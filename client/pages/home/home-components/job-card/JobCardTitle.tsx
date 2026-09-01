@@ -83,6 +83,18 @@ export function JobCardTitle({
     setLocalOpen(null);
   }, [commandId, setLocalOpen]);
 
+  useEffect(() => {
+    if (job.id !== "demo-email-juniper-offer" || !isDefault) return;
+
+    const openOfferForTour = () => {
+      if (!isOpen) handleTitleTap();
+    };
+
+    window.addEventListener("guided-tour-open-offer", openOfferForTour);
+    return () =>
+      window.removeEventListener("guided-tour-open-offer", openOfferForTour);
+  });
+
   const getDaysUntilDeletion = () => {
     const rawDate = job.updatedAtRaw || job.receivedAtRaw;
     if (!rawDate) return 30;
@@ -123,6 +135,7 @@ export function JobCardTitle({
     <motion.div className="flex w-full items-center justify-center p-3">
       <motion.div
         className="flex min-w-0 flex-1 text-left"
+        data-guided-tour-action="toggle-email"
         title="Click to open, close, or select this job card"
         onTap={handleTitleTap}
       >

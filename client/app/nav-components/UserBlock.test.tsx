@@ -74,6 +74,19 @@ describe("UserBlock", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
 
+  it("preserves tooltips but blocks navigation when disabled", () => {
+    render(<UserBlock disabled />);
+
+    expect(
+      screen.getByTitle("Change your profile picture in account settings.")
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("Check out your dashboard.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByAltText("Profile").parentElement!);
+    fireEvent.click(screen.getByText("Gold"));
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it("handles image error by falling back to default icon", () => {
       render(<UserBlock />);
       const img = screen.getByAltText("Profile");

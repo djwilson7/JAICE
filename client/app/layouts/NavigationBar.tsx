@@ -4,7 +4,7 @@ import { ThemeToggleButton } from "../nav-components/ThemeToggleButton";
 import { MainHeader } from "@/app/nav-components/MainHeader";
 
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 // Icons
@@ -20,6 +20,15 @@ import { motion } from "framer-motion";
 import { api } from "@/global-services/api";
 import type { NavigationBehavior } from "@/pages/settings/provider/settingsTypes";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
+import { DesktopViewportOverlay } from "./DesktopViewportGuard";
+import { useDesktopViewportGuard } from "./desktopViewportGuardState";
+import { GuidedTour } from "./GuidedTour";
+import { GuidedTourSessionProvider } from "./GuidedTourSessionProvider";
+import type {
+  GuidedTourDemoDataState,
+  GuidedTourHomeInteractionState,
+  GuidedTourNavigationMode,
+} from "./guidedTourSteps";
 
 const primaryOptions = {
   home: { route: "/home", label: "Home", icon: homeIcon, title: "Go to Home" },
@@ -80,8 +89,41 @@ export function NavigationBar() {
   const [selectedButton, setSelectedButton] = useState<string>("");
 
   const [navIsHovered, setNavIsHovered] = useState<boolean>(false);
+  const [tourNavigationMode, setTourNavigationMode] =
+    useState<GuidedTourNavigationMode>("closed");
+  const [demoDataSnapshot, setDemoDataSnapshot] = useState<{
+    state: GuidedTourDemoDataState;
+    revision: number;
+    homeInteractionState: GuidedTourHomeInteractionState;
+  }>({ state: "hidden", revision: 0, homeInteractionState: "idle" });
+  const [demoDeletedJobIds, setDemoDeletedJobIds] = useState<string[]>([]);
+  const updateDemoDataSnapshot = useCallback(
+    (state: GuidedTourDemoDataState, revision: number) => {
+      setDemoDataSnapshot((current) =>
+        current.state === state && current.revision === revision
+          ? current
+          : { ...current, state, revision }
+      );
+    },
+    []
+  );
+  const updateHomeInteractionState = useCallback(
+    (homeInteractionState: GuidedTourHomeInteractionState) => {
+      setDemoDataSnapshot((current) =>
+        current.homeInteractionState === homeInteractionState
+          ? current
+          : { ...current, homeInteractionState }
+      );
+    },
+    []
+  );
 
   const hoverMode = useSettings().navigationBehavior as NavigationBehavior;
+  const isViewportBlocked = useDesktopViewportGuard(IS_DEMO_MODE);
+  const startGuidedTour = Boolean(
+    (location.state as { startGuidedTour?: boolean } | null)
+      ?.startGuidedTour
+  );
 
   useEffect(() => {
     // Update selected button based on current path
@@ -126,7 +168,36 @@ export function NavigationBar() {
     navigate(route);
   };
 
-  const isNavExpanded = hoverMode === "open" || (hoverMode === "hover" && navIsHovered);
+  const isStepOneLocked = tourNavigationMode === "locked";
+  const isNavigationLocked =
+    isStepOneLocked || tourNavigationMode === "expanded-locked";
+  const isTourExpanded =
+    tourNavigationMode === "expanded-locked" ||
+    tourNavigationMode === "expanded" ||
+    tourNavigationMode === "about-only" ||
+    tourNavigationMode === "dashboard-only" ||
+    tourNavigationMode === "resume-only";
+  const isNavExpanded =
+    isTourExpanded ||
+    (isStepOneLocked
+      ? navIsHovered
+      : hoverMode === "open" || (hoverMode === "hover" && navIsHovered));
+  const showNavLabels =
+    isTourExpanded ||
+    (isStepOneLocked
+      ? navIsHovered
+      : navIsHovered && hoverMode !== "closed");
+  const showOnlyAbout = tourNavigationMode === "about-only";
+  const showOnlyDashboard = tourNavigationMode === "dashboard-only";
+  const showOnlyResume = tourNavigationMode === "resume-only";
+  const focusedNavigationKey = showOnlyAbout
+    ? "about"
+    : showOnlyDashboard
+      ? "dashboard"
+      : showOnlyResume
+        ? "resume"
+      : null;
+  const hasFocusedNavigation = focusedNavigationKey !== null;
   const targetNavWidth = isNavExpanded ? NAV_WIDTHS.open : NAV_WIDTHS.closed;
   const navTransition = {
     type: "spring" as const,
@@ -136,13 +207,26 @@ export function NavigationBar() {
   };
 
   return (
-    <div className="h-screen min-page-width overflow-x-hidden">
-      <MainHeader />
+    <GuidedTourSessionProvider
+      demoDataState={demoDataSnapshot.state}
+      demoDataRevision={demoDataSnapshot.revision}
+      homeInteractionState={demoDataSnapshot.homeInteractionState}
+      deletedJobIds={demoDeletedJobIds}
+      recordDeletedJobIds={setDemoDeletedJobIds}
+    >
+    <>
+    <div
+      className="h-screen min-page-width overflow-x-hidden"
+      inert={isViewportBlocked ? true : undefined}
+      aria-hidden={isViewportBlocked || undefined}
+    >
+      <MainHeader disabled={isStepOneLocked} />
 
       <div className={`app-content`}>
         <motion.nav
           className="flex absolute left-0 top-0 h-full primary-color z-40"
           id="navigation-bar"
+          data-guided-tour="app-navigation"
           animate={{ width: targetNavWidth }}
           transition={navTransition}
           onMouseEnter={() => setNavIsHovered(true)}
@@ -160,7 +244,19 @@ export function NavigationBar() {
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
                   {Object.entries(primaryOptions).map(([key, option]) => (
-                    <li key={key} className="w-full">
+                    <li
+                      key={key}
+                      className={`w-full ${
+                        hasFocusedNavigation && key !== focusedNavigationKey
+                          ? "guided-tour-nav-muted"
+                          : ""
+                      }`}
+                      inert={
+                        hasFocusedNavigation && key !== focusedNavigationKey
+                          ? true
+                          : undefined
+                      }
+                    >
                       <NavButton
                         icon={option.icon}
                         label={option.label}
@@ -168,7 +264,20 @@ export function NavigationBar() {
                         isSelected={selectedButton === key}
                         hoverMode={hoverMode}
                         title={option.title}
-                        showLabel={navIsHovered && hoverMode !== "closed"}
+                        showLabel={showNavLabels}
+                        guidedTourTarget={
+                          key === "about"
+                            ? "app-about-navigation"
+                            : key === "dashboard"
+                              ? "app-dashboard-navigation"
+                              : key === "resume"
+                                ? "app-resume-navigation"
+                              : undefined
+                        }
+                        disabled={
+                          isNavigationLocked ||
+                          (hasFocusedNavigation && key !== focusedNavigationKey)
+                        }
                       />
                     </li>
                   ))}
@@ -183,10 +292,17 @@ export function NavigationBar() {
                   className="flex w-full flex-col items-center gap-1"
                   style={{ fontFamily: "var(--font-subheading)" }}
                 >
-                  <li key="theme-toggle" className="w-full">
+                  <li
+                    key="theme-toggle"
+                    className={`w-full ${
+                      hasFocusedNavigation ? "guided-tour-nav-muted" : ""
+                    }`}
+                    inert={hasFocusedNavigation ? true : undefined}
+                  >
                     <ThemeToggleButton
                       hoverMode={hoverMode}
-                      showLabel={navIsHovered && hoverMode !== "closed"}
+                      showLabel={showNavLabels}
+                      disabled={isNavigationLocked || hasFocusedNavigation}
                     />
                   </li>
                   {/* <li key="menu-expand">
@@ -196,7 +312,24 @@ export function NavigationBar() {
                     />
                   </li> This no longer exists, now we react to state instead*/}
                   {Object.entries(settingsOptions).map(([key, option]) => (
-                    <li key={key} className="w-full">
+                    <li
+                      key={key}
+                      className={`w-full ${
+                        hasFocusedNavigation
+                          ? `guided-tour-nav-muted ${
+                              key === "quit"
+                                ? "guided-tour-nav-exit"
+                                : ""
+                            }`
+                          : ""
+                      }`}
+                      inert={
+                        hasFocusedNavigation &&
+                        key !== "quit"
+                          ? true
+                          : undefined
+                      }
+                    >
                       <NavButton
                         icon={option.icon}
                         label={option.label}
@@ -204,7 +337,12 @@ export function NavigationBar() {
                         isSelected={selectedButton === key}
                         hoverMode={hoverMode}
                         title={option.title}
-                        showLabel={navIsHovered && hoverMode !== "closed"}
+                        showLabel={showNavLabels}
+                        disabled={
+                          (key !== "quit" && isNavigationLocked) ||
+                          (hasFocusedNavigation &&
+                            key !== "quit")
+                        }
                       />
                     </li>
                   ))}
@@ -226,5 +364,18 @@ export function NavigationBar() {
         </motion.div>
       </div>
     </div>
+    <GuidedTour
+      enabled={IS_DEMO_MODE}
+      startRequested={startGuidedTour}
+      currentPath={location.pathname}
+      isSuppressed={isViewportBlocked}
+      onNavigate={(route) => navigate(route)}
+      onNavigationModeChange={setTourNavigationMode}
+      onDemoDataStateChange={updateDemoDataSnapshot}
+      onHomeInteractionStateChange={updateHomeInteractionState}
+    />
+    <DesktopViewportOverlay isOpen={isViewportBlocked} />
+    </>
+    </GuidedTourSessionProvider>
   );
 }

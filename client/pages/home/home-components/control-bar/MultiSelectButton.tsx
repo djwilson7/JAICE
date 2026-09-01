@@ -4,9 +4,13 @@ import { CheckBoxToggle } from "@/global-components/CheckBoxToggle";
 
 interface MultiSelectButtonProps {
   compact?: boolean;
+  guidedTourTarget?: string;
 }
 
-export function MultiSelectButton({ compact = false }: MultiSelectButtonProps) {
+export function MultiSelectButton({
+  compact = false,
+  guidedTourTarget,
+}: MultiSelectButtonProps) {
   return (
     <CheckBoxToggle
       label={"Multi-Select"}
@@ -14,6 +18,7 @@ export function MultiSelectButton({ compact = false }: MultiSelectButtonProps) {
       activeIcon={checkIcon}
       hoverIconColor={"greenIcon"}
       compact={compact}
+      guidedTourTarget={guidedTourTarget}
     />
   );
 }

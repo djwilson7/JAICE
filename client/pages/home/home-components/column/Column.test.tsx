@@ -94,6 +94,26 @@ describe("Column", () => {
       expect(container.firstChild).toHaveClass("flex h-full min-h-full shrink-0 overflow-hidden");
   });
 
+  it("marks the inbound staging column as the tour processing target", () => {
+      const stagingColumn = { ...mockColumn, id: "staging", title: "Processing" };
+      const { container } = render(<Column column={stagingColumn} count={0} isHighlighted={null} />);
+      expect(container.firstChild).toHaveAttribute(
+        "data-guided-tour",
+        "home-processing"
+      );
+  });
+
+  it.each([
+    ["offer", "home-offer-column"],
+    ["accepted", "home-accepted-column"],
+  ])("marks the %s column as a tour target", (id, target) => {
+      const tourColumn = { ...mockColumn, id };
+      const { container } = render(
+        <Column column={tourColumn} count={0} isHighlighted={null} />
+      );
+      expect(container.firstChild).toHaveAttribute("data-guided-tour", target);
+  });
+
   it("handles resize observer via useEffect", () => {
       const observeSpy = vi.fn();
       const disconnectSpy = vi.fn();

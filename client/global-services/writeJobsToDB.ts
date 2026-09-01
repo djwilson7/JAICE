@@ -1,5 +1,6 @@
 import { api } from "@/global-services/api";
 import type { JobCardType } from "@/types/jobCardType";
+import { IS_DEMO_MODE } from "./projectMode";
 
 interface WriteJobsProps {
   jobs_to_update: JobCardType[];
@@ -12,6 +13,10 @@ export async function writeJobsToDB({ jobs_to_update }: WriteJobsProps) {
       "writeJobsToDB called with empty jobs array, skipping API call."
     );
     return { status: "success", count: 0 };
+  }
+
+  if (IS_DEMO_MODE) {
+    return { status: "success", count: jobs_to_update.length, demo: true };
   }
 
   try {

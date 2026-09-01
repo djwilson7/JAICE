@@ -4,6 +4,9 @@ import { useBannerNotifications } from "@/global-components/bannerNotificationCo
 import type { JobCardType } from "@/types/jobCardType";
 import { convertToJobCardArray, type JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
 import { JOB_REALTIME_CHANGE_EVENT } from "@/pages/home/hooks/useRealTimeJobs";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
+import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 
 export function useArchiveActions({
   onRestore,
@@ -14,6 +17,13 @@ export function useArchiveActions({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { showBanner } = useBannerNotifications();
+  const { demoJobs } = useGuidedTourSession();
+
+  useEffect(() => {
+    if (IS_DEMO_MODE && isOpen) {
+      setItems(demoJobs.filter((job) => job.isArchived));
+    }
+  }, [demoJobs, isOpen]);
 
   useEffect(() => {
     const handleRealtimeChange = (e: Event) => {
@@ -41,6 +51,11 @@ export function useArchiveActions({
     setIsOpen(true);
     if (isLoading) return;
 
+    if (IS_DEMO_MODE) {
+      setItems(demoJobs.filter((job) => job.isArchived));
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await api("/api/jobs/archive");
@@ -67,10 +82,21 @@ export function useArchiveActions({
   const unarchive = async (ids: string[]) => {
     const jobTitle = getJobTitle(items, ids);
 
-    await api("/api/jobs/set-archive", {
-      method: "POST",
-      body: JSON.stringify({ provider_message_ids: ids }),
-    });
+    if (IS_DEMO_MODE) {
+      items
+        .filter((job) => ids.includes(job.id))
+        .forEach((job) =>
+          dispatchJobLocalChange({
+            before: job,
+            after: { ...job, isArchived: false },
+          })
+        );
+    } else {
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({ provider_message_ids: ids }),
+      });
+    }
 
     setItems((prev) => prev.filter((j) => !ids.includes(j.id)));
     await onRestore?.();
@@ -84,15 +110,26 @@ export function useArchiveActions({
   const deleteFromArchive = async (ids: string[]) => {
     const jobTitle = getJobTitle(items, ids);
 
-    await api("/api/jobs/set-archive", {
-      method: "POST",
-      body: JSON.stringify({ provider_message_ids: ids }),
-    });
+    if (IS_DEMO_MODE) {
+      items
+        .filter((job) => ids.includes(job.id))
+        .forEach((job) =>
+          dispatchJobLocalChange({
+            before: job,
+            after: { ...job, isArchived: false, isDeleted: true },
+          })
+        );
+    } else {
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({ provider_message_ids: ids }),
+      });
 
-    await api("/api/jobs/set-delete", {
-      method: "POST",
-      body: JSON.stringify({ provider_message_ids: ids }),
-    });
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({ provider_message_ids: ids }),
+      });
+    }
 
     setItems((prev) => prev.filter((j) => !ids.includes(j.id)));
     showBanner({

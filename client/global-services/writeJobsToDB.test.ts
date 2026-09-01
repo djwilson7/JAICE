@@ -5,6 +5,7 @@ import { api } from '@/global-services/api';
 vi.mock('@/global-services/api', () => ({
   api: vi.fn()
 }));
+vi.mock('./projectMode', () => ({ IS_DEMO_MODE: false }));
 
 describe('writeJobsToDB', () => {
   it('should skip api call if empty array', async () => {

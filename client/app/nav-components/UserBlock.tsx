@@ -3,9 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useGritScore } from "@/utils/useGritScore";
 import userIcon from "@/assets/icons/user.svg";
-import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
-export function UserBlock() {
+export function UserBlock({ disabled = false }: { disabled?: boolean }) {
   const { user } = useAuth();
   const { tier, tierColor, loading } = useGritScore();
   const profilePic = user?.photoURL;
@@ -15,10 +14,9 @@ export function UserBlock() {
 
   return (
     <div
-      className={`user-block ${IS_DEMO_MODE ? "user-block-disabled" : ""}`}
-      aria-disabled={IS_DEMO_MODE}
-      inert={IS_DEMO_MODE ? true : undefined}
-      onClickCapture={IS_DEMO_MODE ? (event) => {
+      className={`user-block ${disabled ? "user-block-disabled" : ""}`}
+      aria-disabled={disabled}
+      onClickCapture={disabled ? (event) => {
         event.preventDefault();
         event.stopPropagation();
       } : undefined}
@@ -26,7 +24,7 @@ export function UserBlock() {
       <motion.div
         className="profile-picture-container profile-picture-frame animate-element h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10"
         onClick={() => navigate("/settings")}
-        whileHover={IS_DEMO_MODE ? undefined : { cursor: "pointer", scale: 1.04 }}
+        whileHover={disabled ? undefined : { cursor: "pointer", scale: 1.04 }}
         title="Change your profile picture in account settings."
       >
         <img
@@ -44,14 +42,14 @@ export function UserBlock() {
         <motion.div 
           onClick={() => navigate("/settings")}
           className="user-name animate-element text-xs leading-tight md:text-sm lg:text-base"
-          whileHover={IS_DEMO_MODE ? undefined : { cursor: "pointer", scale: 1.04 }}
+          whileHover={disabled ? undefined : { cursor: "pointer", scale: 1.04 }}
           title="View and edit your name in account settings."
         >
           {firstName} {lastName}
         </motion.div>
         <motion.div 
           className="secondary-text animate-element secondary-info text-[0.65rem] leading-tight md:text-xs"
-          whileHover={IS_DEMO_MODE ? undefined : { cursor: "pointer", scale: 1.04 }}
+          whileHover={disabled ? undefined : { cursor: "pointer", scale: 1.04 }}
           title="Check out your dashboard."
           onClick={() => navigate("/dashboard")}
           style={{ color: tierColor, fontWeight: 600 }}

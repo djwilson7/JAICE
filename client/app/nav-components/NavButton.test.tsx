@@ -22,11 +22,16 @@ describe("NavButton", () => {
         hoverMode="hover"
         title="My Title"
         showLabel={true}
+        guidedTourTarget="tour-target"
       />
     );
     
     expect(screen.getByText("My Button")).toBeInTheDocument();
     expect(screen.getByAltText("My Button")).toHaveAttribute("src", "icon.png");
+    expect(screen.getByRole("button").parentElement).toHaveAttribute(
+      "data-guided-tour",
+      "tour-target"
+    );
     
     fireEvent.click(screen.getByRole("button"));
     expect(onClick).toHaveBeenCalledTimes(1);

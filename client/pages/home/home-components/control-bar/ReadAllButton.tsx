@@ -2,6 +2,8 @@ import envelopeOpenIcon from "@/assets/icons/envelope-open.svg";
 import { writeJobsToDB } from "@/global-services/writeJobsToDB";
 import { useState } from "react";
 import type { JobCardType } from "@/types/jobCardType";
+import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 interface ReadAllButtonProps {
   jobs: JobCardType[];
@@ -24,6 +26,12 @@ export function ReadAllButton({ jobs, compact = false }: ReadAllButtonProps) {
         ...job,
         recentlyAdded: false,
       }));
+
+      if (IS_DEMO_MODE) {
+        jobsToUpdate.forEach((after, index) =>
+          dispatchJobLocalChange({ before: unreadJobs[index], after })
+        );
+      }
 
       await writeJobsToDB({ jobs_to_update: jobsToUpdate });
     } catch (err) {

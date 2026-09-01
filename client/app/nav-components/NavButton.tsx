@@ -11,6 +11,7 @@ export const NavButton = ({
   hoverMode,
   title,
   showLabel,
+  guidedTourTarget,
   disabled = false,
 }: {
   icon: string;
@@ -20,6 +21,7 @@ export const NavButton = ({
   hoverMode: NavigationBehavior;
   title?: string;
   showLabel: boolean;
+  guidedTourTarget?: string;
   disabled?: boolean;
 }) => {
   const isExpanded = hoverMode === "open" || showLabel;
@@ -51,6 +53,7 @@ export const NavButton = ({
   return (
     <motion.div
       className="flex w-full flex-row items-center justify-start"
+      data-guided-tour={guidedTourTarget}
     >
       <Button
         onClick={onClick}

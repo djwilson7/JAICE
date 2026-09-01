@@ -3,7 +3,7 @@ import { getCSSVar } from "@/utils/getCSSVar";
 import { UserBlock } from "./UserBlock";
 import { BrandBlock } from "./BrandBlock";
 
-export function MainHeader() {
+export function MainHeader({ disabled = false }: { disabled?: boolean }) {
   return (
     <motion.header
       className={`app-header z-500`}
@@ -14,7 +14,7 @@ export function MainHeader() {
     >
       <div className={`flex w-full h-full items-center justify-center gap-4 animate-element`}>
         <div className="flex w-1/2 lg:w-1/3 animate-element">
-          <UserBlock />
+          <UserBlock disabled={disabled} />
         </div>
         <div className="flex w-1/2 lg:w-1/3 animate-element">
           <BrandBlock />

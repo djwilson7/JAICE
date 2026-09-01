@@ -5834,6 +5834,470 @@ button.landing-provider-button:disabled {
   opacity: 0.52;
 }
 
+.guided-tour-viewport-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(var(--primary-three-rgb), 0.18), transparent 42%),
+    rgba(var(--primary-one-rgb), 0.96);
+  backdrop-filter: blur(18px) saturate(1.1);
+}
+
+.guided-tour-viewport-dialog {
+  width: min(32rem, calc(100vw - 2.5rem));
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid rgba(var(--primary-five-rgb), 0.16);
+  border-radius: calc(var(--corner-radius) * 1.5);
+  background: var(--card-surface);
+  box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.42);
+  color: var(--primary-five);
+  text-align: center;
+  outline: none;
+}
+
+.guided-tour-viewport-visual {
+  position: relative;
+  width: 5.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1.25rem;
+}
+
+.guided-tour-viewport-screen {
+  position: absolute;
+  inset: 0 0 0.8rem;
+  border: 2px solid rgba(var(--primary-five-rgb), 0.74);
+  border-radius: 0.65rem;
+  background: rgba(var(--primary-five-rgb), 0.05);
+  box-shadow: inset 0 0 0 0.3rem rgba(var(--primary-five-rgb), 0.025);
+}
+
+.guided-tour-viewport-stand {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2.75rem;
+  height: 0.8rem;
+  border-bottom: 2px solid rgba(var(--primary-five-rgb), 0.74);
+  transform: translateX(-50%);
+}
+
+.guided-tour-viewport-stand::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 0.8rem;
+  background: rgba(var(--primary-five-rgb), 0.74);
+}
+
+.guided-tour-viewport-eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-subheading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.guided-tour-viewport-dialog h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(1.65rem, 5vw, 2.35rem);
+  line-height: 1.08;
+}
+
+.guided-tour-viewport-dialog > p:not(.guided-tour-viewport-eyebrow) {
+  max-width: 27rem;
+  margin: 1rem auto 0;
+  color: var(--text-secondary);
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.guided-tour-viewport-dialog .guided-tour-viewport-note {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(var(--primary-five-rgb), 0.1);
+  font-size: 0.78rem;
+  opacity: 0.78;
+}
+
+.guided-tour-welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483600;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: rgba(var(--primary-one-rgb), 0.54);
+  backdrop-filter: blur(14px) saturate(0.9);
+}
+
+.guided-tour-welcome-card {
+  width: min(39rem, calc(100vw - 4rem));
+  padding: 2.4rem;
+  border: 1px solid rgba(var(--primary-five-rgb), 0.15);
+  border-radius: calc(var(--corner-radius) * 1.5);
+  background: var(--card-surface);
+  box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.44);
+  color: var(--primary-five);
+}
+
+.guided-tour-welcome-eyebrow {
+  margin: 0 0 0.7rem;
+  color: var(--primary-four);
+  font-family: var(--font-subheading);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.guided-tour-welcome-card h1 {
+  max-width: 31rem;
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(2rem, 4vw, 3.15rem);
+  line-height: 1.05;
+}
+
+.guided-tour-welcome-card > p:not(.guided-tour-welcome-eyebrow) {
+  max-width: 33rem;
+  margin: 1.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.guided-tour-welcome-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.guided-tour-welcome-actions button,
+.guided-tour-step-actions button {
+  border: 1px solid rgba(var(--primary-five-rgb), 0.18);
+  border-radius: var(--corner-radius);
+  font-family: var(--font-subheading);
+  font-size: 0.82rem;
+  font-weight: 650;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.guided-tour-welcome-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 1rem;
+  background: var(--primary-five);
+  color: var(--primary-one);
+}
+
+.guided-tour-welcome-actions button:hover,
+.guided-tour-welcome-actions button:focus-visible {
+  border-color: var(--primary-four);
+  background: var(--primary-four);
+}
+
+.focal-shimmer {
+  --focal-particle-color: rgba(var(--primary-five-rgb), 0.94);
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  border-radius: var(--corner-radius);
+}
+
+.focal-shimmer-particles {
+  position: absolute;
+  z-index: 2;
+  inset: -1px;
+  overflow: visible;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.focal-shimmer-particle {
+  position: absolute;
+  width: var(--focal-particle-size);
+  height: var(--focal-particle-size);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 1);
+  box-shadow:
+    0 0 1.5px rgba(255, 255, 255, 0.96),
+    0 0 5px var(--focal-particle-color);
+  opacity: 0.24;
+  transform: translate(-50%, -50%) scale(0.45);
+  animation: focal-shimmer-stardust var(--focal-particle-duration) ease-in-out
+    var(--focal-particle-delay) infinite;
+}
+
+@keyframes focal-shimmer-stardust {
+  0% {
+    opacity: 0.14;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+
+  23% {
+    opacity: 0.62;
+    transform: translate(
+        calc(-50% + var(--focal-particle-x-one)),
+        calc(-50% + var(--focal-particle-y-one))
+      )
+      scale(0.68);
+  }
+
+  47% {
+    opacity: 1;
+    transform: translate(
+        calc(-50% + var(--focal-particle-x-two)),
+        calc(-50% + var(--focal-particle-y-two))
+      )
+      scale(1.18);
+  }
+
+  71% {
+    opacity: 0.38;
+    transform: translate(
+        calc(-50% - var(--focal-particle-x-one)),
+        calc(-50% - var(--focal-particle-y-two))
+      )
+      scale(0.5);
+  }
+
+  100% {
+    opacity: 0.82;
+    transform: translate(
+        calc(-50% - var(--focal-particle-x-two)),
+        calc(-50% - var(--focal-particle-y-one))
+      )
+      scale(0.82);
+  }
+}
+
+.guided-tour-step-card-shell {
+  position: fixed;
+  top: 6rem;
+  right: 1.5rem;
+  z-index: 2147483600;
+  width: min(25rem, calc(100vw - 3rem));
+  border-radius: calc(var(--corner-radius) * 1.25);
+  transform: translateY(
+    var(--guided-tour-card-offset, calc(100vh - 100% - 7.5rem))
+  );
+  transition: transform 90ms ease-out;
+}
+
+.guided-tour-focus-shimmer {
+  position: fixed;
+  z-index: 2147483575;
+  pointer-events: none;
+}
+
+.guided-tour-focus-connector {
+  position: fixed;
+  z-index: 2147483570;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.guided-tour-focus-connector-particle {
+  fill: rgba(var(--primary-five-rgb), 0.96);
+  filter: drop-shadow(0 0 4px rgba(var(--primary-five-rgb), 0.82));
+  opacity: 0.24;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: guided-tour-connector-stardust;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes guided-tour-connector-stardust {
+  0% {
+    opacity: 0.16;
+    transform: translate(0, 0) scale(0.5);
+  }
+
+  31% {
+    opacity: 0.8;
+    transform: translate(
+        var(--connector-drift-x),
+        var(--connector-drift-y)
+      )
+      scale(1.05);
+  }
+
+  58% {
+    opacity: 0.38;
+    transform: translate(0, 0) scale(0.72);
+  }
+
+  100% {
+    opacity: 0.92;
+    transform: translate(
+        var(--connector-drift-x),
+        var(--connector-drift-y)
+      )
+      scale(1.14);
+  }
+}
+
+.guided-tour-step-card {
+  position: relative;
+  width: 100%;
+  padding: 1.25rem;
+  border: 0;
+  border-radius: calc(var(--corner-radius) * 1.25);
+  background: var(--card-surface);
+  box-shadow: 0 1.25rem 3.5rem rgba(0, 0, 0, 0.36);
+  color: var(--primary-five);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guided-tour-step-card-shell {
+    transition: none;
+  }
+
+  .focal-shimmer-particle {
+    animation: none;
+  }
+
+  .guided-tour-focus-connector-particle {
+    animation: none;
+    opacity: 0.55;
+  }
+
+  .focal-shimmer-particle {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.75);
+  }
+}
+
+.guided-tour-focus-mask-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483550;
+  pointer-events: none;
+}
+
+.guided-tour-focus-mask {
+  position: fixed;
+  display: block;
+  background: rgba(var(--primary-one-rgb), 0.68);
+  backdrop-filter: blur(7px) saturate(0.72);
+  pointer-events: auto;
+}
+
+.guided-tour-focus-mask-top {
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.guided-tour-focus-mask-left {
+  left: 0;
+}
+
+.guided-tour-focus-mask-right {
+  right: 0;
+}
+
+.guided-tour-focus-mask-bottom {
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.guided-tour-nav-muted {
+  opacity: 0.22;
+  filter: blur(2.5px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease;
+}
+
+.guided-tour-nav-muted.guided-tour-nav-exit {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+.control-bar-guided-restricted [role="button"],
+.control-bar-guided-restricted button {
+  opacity: 0.28;
+  filter: grayscale(0.65);
+}
+
+.control-bar-guided-focus-multi
+  [data-guided-tour="home-multi-select-control"],
+.control-bar-guided-focus-trash [data-guided-tour="home-trash-control"] {
+  opacity: 1;
+  filter: none;
+}
+
+.guided-tour-step-count {
+  display: block;
+  margin-bottom: 0.7rem;
+  color: var(--primary-four);
+  font-family: var(--font-subheading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.guided-tour-step-card h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 1.45rem;
+  line-height: 1.12;
+}
+
+.guided-tour-step-card > p {
+  margin: 0.8rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.guided-tour-step-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--primary-five-rgb), 0.1);
+}
+
+.guided-tour-step-actions button {
+  min-width: 5.75rem;
+  padding: 0.58rem 0.8rem;
+  background: rgba(var(--primary-five-rgb), 0.06);
+  color: var(--primary-five);
+}
+
+.guided-tour-step-actions button:not(:disabled):hover,
+.guided-tour-step-actions button:not(:disabled):focus-visible {
+  border-color: rgba(var(--primary-five-rgb), 0.42);
+  background: rgba(var(--primary-five-rgb), 0.13);
+}
+
+.guided-tour-step-actions button:disabled {
+  cursor: default;
+  opacity: 0.34;
+}
+
 .control-bar-container-red:hover {
   background: var(--white-color);
   color: var(--red-color);

@@ -38,6 +38,14 @@ export const Column = forwardRef<HTMLDivElement, ColumnProps>(({
     : 0;
   const showDropPreview =
     isDragging && dragTarget === column.id && previewCount > 0;
+  const guidedTourTarget =
+    column.id === "staging"
+      ? "home-processing"
+      : column.id === "offer"
+        ? "home-offer-column"
+        : column.id === "accepted"
+          ? "home-accepted-column"
+          : undefined;
 
   const highlightColumn =
     isHighlighted === column.id || isHighlighted === "all";
@@ -77,6 +85,7 @@ export const Column = forwardRef<HTMLDivElement, ColumnProps>(({
     <motion.div
       ref={ref}
       layout
+      data-guided-tour={guidedTourTarget}
       className={
         column.id === "processing"
           ? "flex h-full min-h-full shrink-0 overflow-hidden"

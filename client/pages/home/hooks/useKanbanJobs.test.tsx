@@ -188,4 +188,29 @@ describe("useKanbanJobs", () => {
     expect(result.current["applied"][0].props.dimmed).toBe(true);
     expect(result.current["interview"][0].props.dimmed).toBe(true);
   });
+
+  it("keeps a stable card identity when the same job data is refreshed", () => {
+    (useSettings as any).mockReturnValue({ reviewBehavior: "inline" });
+
+    const columns = [{ id: "offer", title: "Offer", bg: "" }];
+    const firstJobs = [{ id: "offer-1", column: "offer", title: "Offer" }] as any[];
+    const refreshedJobs = [{ ...firstJobs[0] }] as any[];
+    const { result, rerender } = renderHook(
+      ({ jobs }) =>
+        useKanbanJobs({
+          jobs,
+          columns,
+          matchScoreMap: new Map(),
+          hasSearch: false,
+          openJobAppModal: vi.fn(),
+        }),
+      { initialProps: { jobs: firstJobs } }
+    );
+
+    const firstKey = result.current.offer[0].key;
+    rerender({ jobs: refreshedJobs });
+
+    expect(firstKey).toBe("offer-1");
+    expect(result.current.offer[0].key).toBe(firstKey);
+  });
 });

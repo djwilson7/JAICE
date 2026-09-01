@@ -94,6 +94,28 @@ describe("JobCardTitle", () => {
     expect(writeJobsToDBModule.writeJobsToDB).toHaveBeenCalled();
   });
 
+  it("opens the offer card for the guided action", () => {
+    const offerJob = {
+      ...mockJob,
+      id: "demo-email-juniper-offer",
+      recentlyAdded: false,
+    };
+    render(
+      <JobCardTitle
+        job={offerJob}
+        setLocalOpen={mockSetLocalOpen}
+        isSelected={false}
+        setIsSelected={mockSetIsSelected}
+        isOpen={false}
+        isHovered={false}
+      />
+    );
+
+    window.dispatchEvent(new CustomEvent("guided-tour-open-offer"));
+
+    expect(mockSetLocalOpen).toHaveBeenCalledWith(expect.any(Function));
+  });
+
   it("toggles job selection in multi-select mode", () => {
     (useIsMultiSelectingHook.useIsMultiSelecting as any).mockReturnValue({ isMultiSelecting: true });
     const toggleJobSelection = vi.fn();

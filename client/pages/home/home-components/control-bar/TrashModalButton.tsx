@@ -4,9 +4,14 @@ import trashIcon from "@/assets/icons/trash.svg";
 interface TrashModalButtonProps {
   setIsOpen: (value: boolean) => void;
   compact?: boolean;
+  guidedTourTarget?: string;
 }
 
-export function TrashModalButton({ setIsOpen, compact = false }: TrashModalButtonProps) {
+export function TrashModalButton({
+  setIsOpen,
+  compact = false,
+  guidedTourTarget,
+}: TrashModalButtonProps) {
 
   return (
     <ControlBarButton
@@ -16,6 +21,7 @@ export function TrashModalButton({ setIsOpen, compact = false }: TrashModalButto
       label="Trash"
       alt="Trash"
       compact={compact}
+      guidedTourTarget={guidedTourTarget}
     />
   );
 }

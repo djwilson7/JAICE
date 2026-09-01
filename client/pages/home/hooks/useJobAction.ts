@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { JobCardType } from "@/types/jobCardType";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 export function useJobActions(
   setJobs: React.Dispatch<React.SetStateAction<JobCardType[]>>
@@ -13,7 +14,13 @@ export function useJobActions(
           );
         } else {
           // fallback if no id returned
-          return [updated as JobCardType, ...prev];
+          const nextJob = IS_DEMO_MODE
+            ? {
+                ...updated,
+                id: `demo-manual-${crypto.randomUUID()}`,
+              }
+            : updated;
+          return [nextJob as JobCardType, ...prev];
         }
       });
     },

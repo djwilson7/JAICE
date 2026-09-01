@@ -5,6 +5,8 @@ import { api } from "@/global-services/api";
 import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
 import { JOB_REALTIME_CHANGE_EVENT } from "@/pages/home/hooks/useRealTimeJobs";
 
+vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: false }));
+
 vi.mock("@/global-services/api", () => ({
   api: vi.fn(),
 }));

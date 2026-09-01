@@ -143,6 +143,7 @@ export function JobCardContainer({
         ref={cardRef}
         key={`${job.id}-${job.applicationStage}`}
         id={job.id}
+        data-guided-tour="home-job-card"
         data-search-dimmed={dimmed}
         className={`flex w-full shrink-0 select-none items-center flex-col job-card min-h-[2rem] overflow-hidden p-0 ${reviewClass}`}
         style={{

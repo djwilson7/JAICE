@@ -4,6 +4,7 @@ import { UndoRedoProvider } from "@/pages/home/providers/UndoRedoProvider";
 import { DragProvider } from "@/pages/home/providers/DragProvider";
 import { SelectedJobsProvider } from "../../providers/SelectedJobsProvider";
 import { JobCardProvider } from "@/pages/home/providers/JobCardProvider";
+import { GuidedTourHomeState } from "./GuidedTourHomeState";
 
 export function HomePageContentProviders({
   children,
@@ -22,7 +23,10 @@ export function HomePageContentProviders({
         <JobCardProvider>
           <UndoRedoProvider>
             <DragProvider>
-              <SelectedJobsProvider>{children}</SelectedJobsProvider>
+              <SelectedJobsProvider>
+                <GuidedTourHomeState />
+                {children}
+              </SelectedJobsProvider>
             </DragProvider>
           </UndoRedoProvider>
         </JobCardProvider>

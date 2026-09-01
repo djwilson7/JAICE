@@ -10,6 +10,7 @@ interface ControlBarButtonProps {
   alt: string;
   compact?: boolean;
   disabled?: boolean;
+  guidedTourTarget?: string;
 }
 
 export function ControlBarButton({
@@ -21,6 +22,7 @@ export function ControlBarButton({
   alt,
   compact = false,
   disabled = false,
+  guidedTourTarget,
 }: ControlBarButtonProps) {
   
   const [mouseEnter, setMouseEnter] = useState<boolean>(false);
@@ -38,6 +40,7 @@ export function ControlBarButton({
       aria-label={label || alt}
       aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0}
+      data-guided-tour={guidedTourTarget}
     >
       <motion.img
         src={icon}

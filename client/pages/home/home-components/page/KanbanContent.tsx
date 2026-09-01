@@ -46,6 +46,7 @@ export function KanbanContent({ children }: { children: ReactNode }) {
 
   return (
     <div
+      data-guided-tour="home-kanban"
       className={`kanban-content-frame ${
         scrollShadow.left && !isDragging ? "kanban-content-shadow-left" : ""
       } ${

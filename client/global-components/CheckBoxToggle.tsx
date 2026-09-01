@@ -10,6 +10,7 @@ interface CheckBoxToggleProps {
   activeIcon?: string;
   hoverIconColor: string;
   compact?: boolean;
+  guidedTourTarget?: string;
 }
 
 export function CheckBoxToggle({
@@ -18,6 +19,7 @@ export function CheckBoxToggle({
   activeIcon,
   hoverIconColor,
   compact = false,
+  guidedTourTarget,
 }: CheckBoxToggleProps) {
   const { isMultiSelecting, setIsMultiSelecting } = useIsMultiSelecting();
   const { setSelectedJobs } = useSelectedJobs();
@@ -49,6 +51,7 @@ export function CheckBoxToggle({
       role="button"
       aria-label={label || "Toggle Multi-Select"}
       aria-pressed={isMultiSelecting}
+      data-guided-tour={guidedTourTarget}
     >
       <img
         src={isMultiSelecting ? activeIcon : inactiveIcon}

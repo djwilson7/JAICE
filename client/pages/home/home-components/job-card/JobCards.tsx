@@ -17,6 +17,7 @@ import reviewIcon from "@/assets/icons/reviewed.svg";
 import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
+import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
 
 export function JobCard({
   job,
@@ -28,6 +29,7 @@ export function JobCard({
   openJobAppModal: (job: JobCardType) => void;
 }) {
   const { isMultiSelecting } = useIsMultiSelecting();
+  const { selectedJobs } = useSelectedJobs();
   const { mutateJob } = useJobMutation();
   const { expandAll } = useJobCard();
 
@@ -51,10 +53,11 @@ export function JobCard({
   };
 
   useEffect(() => {
-    if (!isMultiSelecting && isSelected) {
-      setIsSelected(false);
-    }
-  }, [isMultiSelecting, isSelected]);
+    const selectedByGroup =
+      isMultiSelecting &&
+      selectedJobs.some((selectedJob) => selectedJob.id === job.id);
+    if (isSelected !== selectedByGroup) setIsSelected(selectedByGroup);
+  }, [isMultiSelecting, isSelected, job.id, selectedJobs]);
 
   return (
     <JobCardContainer

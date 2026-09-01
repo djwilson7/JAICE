@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "@/global-services/api";
 import { useBannerNotifications } from "@/global-components/bannerNotificationContext";
 import type { JobCardType } from "@/types/jobCardType";
 import { convertToJobCardArray, type JobRealtimeEvent } from "@/pages/home/utils/convertToJobCard";
 import { JOB_REALTIME_CHANGE_EVENT } from "@/pages/home/hooks/useRealTimeJobs";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
+import { dispatchJobLocalChange } from "@/pages/home/utils/jobLocalChangeEvent";
 
 export function useTrashActions({
   onRestore,
@@ -14,6 +17,25 @@ export function useTrashActions({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { showBanner } = useBannerNotifications();
+  const { homeInteractionState, demoJobs, removeDemoJobs } =
+    useGuidedTourSession();
+  const previousTourStateRef = useRef(homeInteractionState);
+
+  useEffect(() => {
+    if (!IS_DEMO_MODE) return;
+
+    const previousState = previousTourStateRef.current;
+    if (homeInteractionState === "trash-open") {
+      setItems(demoJobs.filter((job) => job.isDeleted));
+      setIsOpen(true);
+    } else if (
+      homeInteractionState === "trash-ready" ||
+      previousState === "trash-open"
+    ) {
+      setIsOpen(false);
+    }
+    previousTourStateRef.current = homeInteractionState;
+  }, [demoJobs, homeInteractionState]);
 
   useEffect(() => {
     const handleRealtimeChange = (e: Event) => {
@@ -41,6 +63,11 @@ export function useTrashActions({
     setIsOpen(true);
     if (isLoading) return;
 
+    if (IS_DEMO_MODE) {
+      setItems(demoJobs.filter((job) => job.isDeleted));
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await api("/api/jobs/trash");
@@ -67,13 +94,29 @@ export function useTrashActions({
   const undelete = async (ids: string[]) => {
     const jobTitle = getJobTitle(items, ids);
 
-    await api("/api/jobs/set-delete", {
-      method: "POST",
-      body: JSON.stringify({ provider_message_ids: ids }),
-    });
+    if (IS_DEMO_MODE) {
+      items
+        .filter((job) => ids.includes(job.id))
+        .forEach((job) =>
+          dispatchJobLocalChange({
+            before: job,
+            after: { ...job, isDeleted: false },
+          })
+        );
+    } else {
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({ provider_message_ids: ids }),
+      });
+    }
 
     setItems((prev) => prev.filter((j) => !ids.includes(j.id)));
     await onRestore?.();
+    if (IS_DEMO_MODE) {
+      window.dispatchEvent(
+        new CustomEvent("guided-tour-trash-restored", { detail: { ids } })
+      );
+    }
     showBanner({
       message: `${jobTitle} restored successfully.`,
       tone: "success",
@@ -84,13 +127,17 @@ export function useTrashActions({
   const deletePermanently = async (ids: string[]) => {
     const jobTitle = getJobTitle(items, ids);
 
-    await api("/api/jobs/permanently-delete", {
-      method: "POST",
-      body: JSON.stringify({
-        provider_message_ids: ids,
-        confirm: true,
-      }),
-    });
+    if (IS_DEMO_MODE) {
+      removeDemoJobs(ids);
+    } else {
+      await api("/api/jobs/permanently-delete", {
+        method: "POST",
+        body: JSON.stringify({
+          provider_message_ids: ids,
+          confirm: true,
+        }),
+      });
+    }
 
     setItems((prev) => prev.filter((j) => !ids.includes(j.id)));
     showBanner({
@@ -101,15 +148,26 @@ export function useTrashActions({
   };
 
   const archiveFromTrash = async (ids: string[]) => {
-    await api("/api/jobs/set-delete", {
-      method: "POST",
-      body: JSON.stringify({ provider_message_ids: ids }),
-    });
+    if (IS_DEMO_MODE) {
+      items
+        .filter((job) => ids.includes(job.id))
+        .forEach((job) =>
+          dispatchJobLocalChange({
+            before: job,
+            after: { ...job, isDeleted: false, isArchived: true },
+          })
+        );
+    } else {
+      await api("/api/jobs/set-delete", {
+        method: "POST",
+        body: JSON.stringify({ provider_message_ids: ids }),
+      });
 
-    await api("/api/jobs/set-archive", {
-      method: "POST",
-      body: JSON.stringify({ provider_message_ids: ids }),
-    });
+      await api("/api/jobs/set-archive", {
+        method: "POST",
+        body: JSON.stringify({ provider_message_ids: ids }),
+      });
+    }
 
     setItems((prev) => prev.filter((j) => !ids.includes(j.id)));
   };
