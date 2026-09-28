@@ -465,6 +465,21 @@ npm run build
 npm run preview
 ```
 
+### Standalone frontend demo image
+
+The production frontend container is intentionally demo-only. Its build stage
+requires `VITE_PROJECT_MODE=demo`, and the default build uses that value:
+
+```bash
+docker build -f client/Dockerfile.client -t jaice-demo .
+docker run --rm -p 8080:80 jaice-demo
+```
+
+The image serves React Router deep links through an Nginx SPA fallback. Its
+Content Security Policy sets `connect-src 'none'`, so the deployed demo cannot
+open API, Firebase, Supabase, WebSocket, or streaming connections. Demo data and
+interactions remain local to the browser session.
+
 ### 6. Run backend tests
 
 ```bash
