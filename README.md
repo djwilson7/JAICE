@@ -5,6 +5,7 @@
 ![Backend](https://img.shields.io/badge/backend-FastAPI%20%2B%20Celery-009688)
 ![AI](https://img.shields.io/badge/AI-Local%20Ollama-7C3AED)
 
+[Checkout Demo](https://jaice.dontaiwilson.com/)
 [View on Portfolio](https://www.dontaiwilson.com/projects/JAICE)
 
 JAICE is a full-stack job search workspace that helps users manage applications, recruiter emails, resume versions, and follow-up activity from one organized system.
