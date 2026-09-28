@@ -13,13 +13,17 @@ type ResumeSwitcherRailProps = {
     loadingList: boolean;
     filteredResumes: SavedResume[];
     activeResumeId: string | null;
+    canSelectResumes?: boolean;
+    isReadOnly?: boolean;
     loadResumeIntoWorkspace: (resume: SavedResume) => void;
     handleDeleteResume: (id: string, e: React.MouseEvent) => void | Promise<void>;
 };
 
 export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
     isLightMode, isLeftRailCollapsed, handleCreateNewClick, searchQuery, setSearchQuery,
-    resumeSearchFocusSignal, loadingList, filteredResumes, activeResumeId, loadResumeIntoWorkspace, handleDeleteResume
+    resumeSearchFocusSignal, loadingList, filteredResumes, activeResumeId,
+    canSelectResumes = true, isReadOnly = false,
+    loadResumeIntoWorkspace, handleDeleteResume
 }) => {
     const listContainerRef = React.useRef<HTMLDivElement>(null);
     const [showBottomScrollShadow, setShowBottomScrollShadow] = React.useState(false);
@@ -52,6 +56,7 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
             <aside 
                 className="resume-rail resume-rail--left resume-chrome-surface print:hidden"
                 data-collapsed={isLeftRailCollapsed}
+                data-guided-tour="resume-left-rail-panel"
             >
                 <div
                     className="resume-rail__content"
@@ -63,6 +68,7 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                         </div>
                         <button
                             onClick={handleCreateNewClick}
+                            disabled={isReadOnly}
                             className="resume-action-button"
                             title="Create a new resume."
                             aria-label="Create a new resume."
@@ -117,8 +123,17 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                             return (
                                 <div
                                     key={res.id}
-                                    onClick={() => loadResumeIntoWorkspace(res)}
-                                    className={`group relative flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 cursor-pointer transition-all duration-300 ${
+                                    onClick={() => {
+                                        if (canSelectResumes) {
+                                            loadResumeIntoWorkspace(res);
+                                        }
+                                    }}
+                                    aria-disabled={!canSelectResumes}
+                                    className={`group relative flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 transition-all duration-300 ${
+                                        canSelectResumes
+                                            ? "cursor-pointer"
+                                            : "cursor-default opacity-65"
+                                    } ${
                                         isActive
                                             ? isLightMode
                                                 ? "bg-white/82 border-sky-500/45 text-slate-900"
@@ -159,8 +174,13 @@ export const ResumeSwitcherRail: React.FC<ResumeSwitcherRailProps> = ({
                                             {new Date(res.updated_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                                         </span>
                                         <button
-                                            onClick={(e) => handleDeleteResume(res.id, e)}
-                                            className="resume-action-button absolute right-0 top-0 translate-x-3 text-slate-500 opacity-0 transition-all duration-200 hover:text-rose-400 group-hover:translate-x-0 group-hover:opacity-100 focus:translate-x-0 focus:opacity-100"
+                                            onClick={(event) => {
+                                                if (!isReadOnly) {
+                                                    handleDeleteResume(res.id, event);
+                                                }
+                                            }}
+                                            disabled={isReadOnly}
+                                            className="resume-action-button resume-version-delete-button absolute right-0 top-0 translate-x-3 text-slate-500 opacity-0 transition-all duration-200 hover:text-rose-400 group-hover:translate-x-0 group-hover:opacity-100 focus:translate-x-0 focus:opacity-100"
                                             title="Delete version"
                                             aria-label={`Delete ${res.name}`}
                                         >

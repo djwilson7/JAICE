@@ -33,7 +33,8 @@ export const ResumeSummarySection: React.FC<ResumeEditorSectionProps> = ({
         summaryRewriteHoverAction,
         summaryCurrentRewriteClass,
         gapPreviewTarget,
-        loadingSummaryImprove
+        loadingSummaryImprove,
+        disableAiAssist = false
     } = interaction;
     const {
         renderRewriteActionButtons,
@@ -59,11 +60,13 @@ export const ResumeSummarySection: React.FC<ResumeEditorSectionProps> = ({
             {renderSectionTitle("summary")}
             <button
                 type="button"
-                onMouseEnter={() => setIsSummaryImproveHovered(true)}
+                onMouseEnter={() => {
+                    if (!disableAiAssist) setIsSummaryImproveHovered(true);
+                }}
                 onMouseLeave={() => setIsSummaryImproveHovered(false)}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={handleImproveSummary}
-                disabled={Boolean(summaryRewriteSuggestion?.isStreaming) || !resumeData.summary}
+                disabled={disableAiAssist || Boolean(summaryRewriteSuggestion?.isStreaming) || !resumeData.summary}
                 className={summaryMarginImproveClass}
                 style={{ top: "28px" }}
                 title="AI Rewrite Summary"

@@ -5,6 +5,7 @@ import { defaultResumeFormatting } from "../formatting";
 import { cloneResumeData, defaultResumeData, normalizeResumeData, normalizeResumeDataForPayload } from "../resumeData";
 import { createSavedResume, deleteSavedResume, listSavedResumes, updateSavedResume } from "../resumeApi";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { createDemoSavedResumes } from "../demoResumes";
 
 type UseResumePersistenceParams = {
     resumeData: ResumeData;
@@ -37,10 +38,21 @@ export const useResumePersistence = ({
     setSuccessMessage,
     autoSaveDelayMs = 2500
 }: UseResumePersistenceParams) => {
-    const [resumesList, setResumesList] = useState<SavedResume[]>([]);
-    const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
-    const [resumeName, setResumeName] = useState("Primary Resume");
-    const [isMaster, setIsMaster] = useState(false);
+    const [resumesList, setResumesList] = useState<SavedResume[]>(() =>
+        IS_DEMO_MODE ? createDemoSavedResumes() : []
+    );
+    const initialDemoMaster = IS_DEMO_MODE
+        ? resumesList.find((resume) => resume.is_master) ?? null
+        : null;
+    const [activeResumeId, setActiveResumeId] = useState<string | null>(
+        initialDemoMaster?.id ?? null
+    );
+    const [resumeName, setResumeName] = useState(
+        initialDemoMaster?.name ?? "Primary Resume"
+    );
+    const [isMaster, setIsMaster] = useState(
+        initialDemoMaster?.is_master ?? false
+    );
     const [showCloneModal, setShowCloneModal] = useState(false);
     const [dontAskClone, setDontAskClone] = useState(false);
     const [loadingList, setLoadingList] = useState(!IS_DEMO_MODE);

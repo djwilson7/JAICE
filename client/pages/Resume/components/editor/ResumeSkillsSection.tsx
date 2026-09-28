@@ -34,15 +34,14 @@ export const ResumeSkillsSection: React.FC<ResumeEditorSectionProps> = ({
         moveSkillCategoryUp,
         moveSkillCategoryDown
     } = handlers;
-    const skills = resumeData.skills || [];
     const showFields = activeDocumentSection === "skills";
     const [draftSkillId, setDraftSkillId] = React.useState<string | null>(null);
     const [draftCategory, setDraftCategory] = React.useState("");
     const [draftItems, setDraftItems] = React.useState("");
 
     const visibleSkills = React.useMemo(
-        () => skills.filter((skill) => skill.id !== draftSkillId),
-        [draftSkillId, skills]
+        () => (resumeData.skills || []).filter((skill) => skill.id !== draftSkillId),
+        [draftSkillId, resumeData.skills]
     );
 
     const ensureDraftSkill = React.useCallback(() => {

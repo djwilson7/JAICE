@@ -161,6 +161,7 @@ describe('ResumeWorkspace', () => {
                 viewModel={contract}
                 pdfPreview={contract}
                 persistence={contract}
+                forceExperienceTagsVisible={contract.forceExperienceTagsVisible}
                 onAnalyzeSummary={contract.handleAnalyzeSummary}
             />
         );
@@ -239,6 +240,15 @@ describe('ResumeWorkspace', () => {
         expect(editorProps.interaction.isExperienceSectionActive).toBe(false);
         expect(editorProps.interaction.isSummarySectionActive).toBe(false);
         expect(editorProps.interaction.gapPreviewTarget).toBeNull();
+    });
+
+    it('passes tour-only tag visibility to the document editor', () => {
+        renderWorkspace({ forceExperienceTagsVisible: true });
+
+        expect(
+            mockResumeDocumentEditor.mock.calls[0][0].interaction
+                .forceExperienceTagsVisible
+        ).toBe(true);
     });
 
     it('returns from pdf preview to the editable canvas mode', () => {

@@ -114,4 +114,22 @@ describe('ResumeChatRail', () => {
         fireEvent.click(btn);
         expect(defaultProps.handleStopChatMessage).toHaveBeenCalled();
     });
+
+    it('keeps the default thread message visible and disables chat input in demo mode', () => {
+        const defaultMessage =
+            "Hi there! I'm Jaice, your AI assistant. I can help you tailor your resume to target job listings, draft professional descriptions, or suggest high-impact improvements. What are we working on today?";
+
+        render(
+            <ResumeChatRail
+                {...defaultProps}
+                chatMessages={[{ sender: 'assistant', text: defaultMessage }]}
+                isUnavailable
+            />,
+        );
+
+        expect(screen.getByText(defaultMessage)).toBeInTheDocument();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Not available during demo')).toBeDisabled();
+        expect(screen.getByTitle('Send message')).toBeDisabled();
+    });
 });

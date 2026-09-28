@@ -1,12 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { ResumeSwitcherRail } from './ResumeSwitcherRail';
 
 vi.mock('@/global-components/SearchBar', () => ({
-    SearchBar: ({ searchQuery, setSearchQuery }: any) => (
+    SearchBar: ({ searchQuery, setSearchQuery, disabled }: any) => (
         <input 
             data-testid="search-bar" 
             value={searchQuery} 
+            disabled={disabled}
             onChange={(e) => setSearchQuery(e.target.value)} 
         />
     )
@@ -33,6 +34,10 @@ describe('ResumeSwitcherRail', () => {
         loadResumeIntoWorkspace: vi.fn(),
         handleDeleteResume: vi.fn()
     };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
     it('renders resumes and handles interactions', () => {
         render(<ResumeSwitcherRail {...defaultProps} />);
@@ -76,5 +81,23 @@ describe('ResumeSwitcherRail', () => {
         render(<ResumeSwitcherRail {...defaultProps} isLeftRailCollapsed={true} />);
         // The rail is just hidden visually via classes, but we can verify it renders without crashing
         expect(screen.getByText('Resumes')).toBeTruthy();
+    });
+
+    it('allows selecting and searching versions while disabling add and delete in demo mode', () => {
+        render(<ResumeSwitcherRail {...defaultProps} isReadOnly />);
+
+        expect(screen.getByLabelText('Create a new resume.')).toBeDisabled();
+        expect(screen.getByTestId('search-bar')).toBeEnabled();
+        screen.getAllByTitle('Delete version').forEach((button) => {
+            expect(button).toBeDisabled();
+            expect(button).toHaveClass('opacity-0', 'group-hover:opacity-100');
+        });
+
+        fireEvent.change(screen.getByTestId('search-bar'), { target: { value: 'Resume 2' } });
+        fireEvent.click(screen.getByText('Resume 2'));
+        fireEvent.click(screen.getAllByTitle('Delete version')[1]);
+        expect(defaultProps.setSearchQuery).toHaveBeenCalledWith('Resume 2');
+        expect(defaultProps.loadResumeIntoWorkspace).toHaveBeenCalledWith(defaultProps.filteredResumes[1]);
+        expect(defaultProps.handleDeleteResume).not.toHaveBeenCalled();
     });
 });

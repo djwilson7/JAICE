@@ -28,6 +28,8 @@ type ResumeWorkspaceProps = {
         ReturnType<typeof import("../hooks/useResumePersistence").useResumePersistence>,
         "resumeName" | "loadingList" | "initialLoadState"
     >;
+    forceExperienceTagsVisible?: boolean;
+    disableAiAssist?: boolean;
     onAnalyzeSummary: () => void;
 };
 
@@ -41,6 +43,8 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
         viewModel,
         pdfPreview,
         persistence: { resumeName, loadingList, initialLoadState },
+        forceExperienceTagsVisible = false,
+        disableAiAssist = false,
         onAnalyzeSummary: handleAnalyzeSummary
     } = props;
     const {
@@ -238,7 +242,9 @@ export const ResumeWorkspace: React.FC<ResumeWorkspaceProps> = (props) => {
                                     summaryCurrentRewriteClass,
                                     gapPreviewTarget,
                                     loadingSummaryImprove,
-                                    loadingExperienceImproveId
+                                    loadingExperienceImproveId,
+                                    forceExperienceTagsVisible,
+                                    disableAiAssist
                                 }}
                                 handlers={{
                                     renderOverlayInput,

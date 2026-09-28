@@ -62,6 +62,7 @@ describe('ResumeCanvas', () => {
         const { container } = render(<ResumeCanvas {...props} />);
         expect(container).toBeTruthy();
         expect(container.querySelector('.resume-canvas-document-content')).toHaveClass('resume-page-content');
+        expect(container.querySelector('#print-canvas')).toHaveAttribute('data-guided-tour', 'resume-document');
     });
 
     it('places a page divider between the retained and reflowed editor segments', () => {

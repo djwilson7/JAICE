@@ -9,7 +9,7 @@ vi.mock("@/global-services/projectMode", () => ({ IS_DEMO_MODE: true }));
 vi.mock("../resumeApi");
 
 describe("useResumePersistence in demo mode", () => {
-  it("starts with a local document without loading saved resumes", () => {
+  it("starts with local demo resumes without loading saved resumes", () => {
     const { result } = renderHook(() =>
       useResumePersistence({
         resumeData: defaultResumeData(),
@@ -26,7 +26,15 @@ describe("useResumePersistence in demo mode", () => {
 
     expect(result.current.loadingList).toBe(false);
     expect(result.current.initialLoadState).toBe("loaded");
-    expect(result.current.resumesList).toEqual([]);
+    expect(result.current.resumesList).toHaveLength(3);
+    expect(result.current.resumesList.map((resume) => resume.name)).toEqual([
+      "Full Stack Resume",
+      "Frontend Resume",
+      "Backend Resume",
+    ]);
+    expect(result.current.activeResumeId).toBe("demo-resume-full-stack");
+    expect(result.current.resumeName).toBe("Full Stack Resume");
+    expect(result.current.isMaster).toBe(true);
     expect(resumeApi.listSavedResumes).not.toHaveBeenCalled();
   });
 });

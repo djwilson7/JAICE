@@ -49,7 +49,9 @@ export const ResumeExperienceSection: React.FC<
         setRewriteActionHover,
         isExperienceSectionActive,
         gapPreviewTarget,
-        loadingExperienceImproveId
+        loadingExperienceImproveId,
+        disableAiAssist = false,
+        forceExperienceTagsVisible = false
     } = interaction;
     const {
         renderOverlayInput,
@@ -181,11 +183,14 @@ export const ResumeExperienceSection: React.FC<
                             />
                             <button
                                 type="button"
-                                onMouseEnter={() => setHoveredExperienceImproveId(experience.id)}
+                                onMouseEnter={() => {
+                                    if (!disableAiAssist) setHoveredExperienceImproveId(experience.id);
+                                }}
                                 onMouseLeave={() => setHoveredExperienceImproveId(null)}
                                 onClick={() => handleImproveExperience(experience)}
-                                disabled={Boolean(pendingRewrite?.isStreaming) || bullets.length === 0}
+                                disabled={disableAiAssist || Boolean(pendingRewrite?.isStreaming) || bullets.length === 0}
                                 className={`${experienceMarginImproveClass}${isItemHovered ? " is-visible" : ""} resume-editor-item-control resume-editor-item__improve`}
+                                data-guided-tour={isItemHovered ? "resume-experience-ai-control" : undefined}
                                 title="Improve work experience with AI"
                                 aria-label="Improve work experience with AI"
                             >
@@ -204,6 +209,7 @@ export const ResumeExperienceSection: React.FC<
                                     disabled={index === 0}
                                     onClick={() => moveExperienceUp(experience.id)}
                                     className="resume-editor-item-control resume-editor-icon-button"
+                                    data-guided-tour={isItemHovered ? "resume-experience-organize-control" : undefined}
                                     title="Move work experience up"
                                     aria-label="Move work experience up"
                                 >
@@ -216,6 +222,7 @@ export const ResumeExperienceSection: React.FC<
                                     disabled={index === experiences.length - 1}
                                     onClick={() => moveExperienceDown(experience.id)}
                                     className="resume-editor-item-control resume-editor-icon-button"
+                                    data-guided-tour={isItemHovered ? "resume-experience-organize-control" : undefined}
                                     title="Move work experience down"
                                     aria-label="Move work experience down"
                                 >
@@ -229,6 +236,7 @@ export const ResumeExperienceSection: React.FC<
                                     onMouseLeave={() => setHoveredExperienceClearId(null)}
                                     onClick={() => clearExperience(experience.id)}
                                     className="resume-editor-item-control resume-editor-icon-button"
+                                    data-guided-tour={isItemHovered ? "resume-experience-organize-control" : undefined}
                                     title="Clear work experience"
                                     aria-label="Clear work experience"
                                 >
@@ -242,6 +250,7 @@ export const ResumeExperienceSection: React.FC<
                                     onMouseLeave={() => setHoveredExperienceDeleteId(null)}
                                     onClick={() => removeExperience(experience.id)}
                                     className="resume-editor-item-control resume-editor-icon-button resume-editor-icon-button--delete"
+                                    data-guided-tour={isItemHovered ? "resume-experience-organize-control" : undefined}
                                     title="Remove work experience"
                                     aria-label="Remove work experience"
                                 >
@@ -254,6 +263,7 @@ export const ResumeExperienceSection: React.FC<
                             {(visibleMeta.length > 0 || visibleDates.length > 0) && (
                                 <div
                                     className="resume-editor-meta-row"
+                                    data-guided-tour={isItemHovered ? "resume-experience-edit-control" : undefined}
                                     data-resume-segment-id={`${experience.id}-meta`}
                                 >
                                     <div className="resume-editor-meta-group">
@@ -323,7 +333,7 @@ export const ResumeExperienceSection: React.FC<
                                                     bulletId={bullet.id}
                                                     tagIds={bullet.tagIds || []}
                                                     tags={resumeData.tagLibrary || []}
-                                                    isEditing={showControls}
+                                                    isEditing={showControls || forceExperienceTagsVisible}
                                                     focusPath={`experience.${index}.bullets.${bulletIndex}.tags`}
                                                     onSectionHoverChange={(isHovering) =>
                                                         setActiveDocumentSection((current) =>
@@ -479,6 +489,7 @@ export const ResumeExperienceSection: React.FC<
                         type="button"
                         onClick={() => insertExperienceAt(experiences.length)}
                         className={`${experienceMarginAddClass} resume-editor-add-row__button`}
+                        data-guided-tour="resume-experience-add-control"
                         title="Add experience"
                         aria-label="Add experience at the bottom of Work Experience"
                     >

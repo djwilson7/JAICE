@@ -124,6 +124,8 @@ export type ResumeDocumentEditorInteraction = {
     gapPreviewTarget: "section" | "inner" | null;
     loadingSummaryImprove: boolean;
     loadingExperienceImproveId: string | null;
+    forceExperienceTagsVisible?: boolean;
+    disableAiAssist?: boolean;
 };
 
 export type ResumeDocumentEditorHandlers = {

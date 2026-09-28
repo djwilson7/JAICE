@@ -96,6 +96,18 @@ describe('ResumeHeader', () => {
         expect(screen.getByLabelText('Back to editing')).toBeTruthy();
     });
 
+    it('disables persistence and preview controls in read-only demo mode', () => {
+        render(<ResumeHeader {...defaultProps} isDirty={true} isReadOnly />);
+
+        expect(screen.getByLabelText('Disable auto-save')).toBeDisabled();
+        expect(screen.getByLabelText('Set as Master Profile')).toBeDisabled();
+        expect(screen.getByLabelText('Save current resume changes')).toBeDisabled();
+        expect(screen.getByLabelText('Preview PDF')).toBeDisabled();
+        expect(screen.getByLabelText('Preview PDF before download')).toBeDisabled();
+        expect(screen.getByLabelText('Close resume drawer')).toBeEnabled();
+        expect(screen.getByLabelText('Close Jaice drawer')).toBeEnabled();
+    });
+
     it('replaces document totals with hovered-field statistics at the save-status font size', () => {
         const { rerender } = render(<ResumeHeader {...defaultProps} />);
         const statistics = screen.getByLabelText('Resume text statistics');

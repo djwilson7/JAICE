@@ -30,6 +30,8 @@ describe('ResumeAlerts', () => {
             />
         );
         expect(screen.getByText('An error occurred')).toBeDefined();
+        expect(screen.getByTestId('resume-alert-positioner')).toHaveClass('resume-alert-toast', 'w-[18rem]');
+        expect(screen.getByText('An error occurred')).toHaveClass('text-left');
         
         const button = screen.getByTitle('Dismiss alert');
         fireEvent.click(button);

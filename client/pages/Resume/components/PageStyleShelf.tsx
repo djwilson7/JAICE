@@ -41,6 +41,7 @@ export const PageStyleShelf: React.FC<PageStyleShelfProps> = (props) => {
                 <AnimatePresence initial={false}>
                     {isPageStyleShelfOpen && (
                         <motion.div
+                            data-guided-tour="resume-bottom-rail-panel"
                             className={`resume-page-style-shelf resume-edit-control flex w-fit max-w-full items-center overflow-hidden px-4 print:hidden ${
                                 isPageStyleShelfCompact ? "is-compact" : ""
                             }`}

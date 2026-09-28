@@ -190,6 +190,7 @@ export const ResumeCanvas: React.FC<ResumeCanvasProps> = ({
                         <div
                             ref={canvasDocumentRef}
                             id="print-canvas"
+                            data-guided-tour="resume-document"
                             className={`resume-formatting-context resume-canvas-document text-[#0f172a] box-border relative z-10 transition-shadow duration-300 ${
                                 isPagePreviewMode
                                     ? "bg-transparent shadow-none border-none rounded-none"

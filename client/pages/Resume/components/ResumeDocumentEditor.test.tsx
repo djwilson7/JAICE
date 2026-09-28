@@ -280,6 +280,28 @@ describe('ResumeDocumentEditor', () => {
         expect(handlers.handleImproveSummary).toHaveBeenCalled();
     });
 
+    it('disables resume AI-assist actions when requested', () => {
+        defaultProps.data.resumeData.experience = [
+            { id: 'exp1', jobTitle: 'Dev', company: 'Corp', startDate: '2020', endDate: '2021', location: 'Remote', bullets: [{ id: 'b1', text: 'work' }] }
+        ];
+        const disabledProps = {
+            ...defaultProps,
+            interaction: { ...defaultProps.interaction, disableAiAssist: true }
+        };
+
+        render(<ResumeDocumentEditor {...disabledProps} />);
+
+        const summaryButton = screen.getByLabelText('AI Rewrite Summary');
+        const experienceButton = screen.getByTitle('Improve work experience with AI');
+        expect(summaryButton).toBeDisabled();
+        expect(experienceButton).toBeDisabled();
+
+        fireEvent.click(summaryButton);
+        fireEvent.click(experienceButton);
+        expect(handlers.handleImproveSummary).not.toHaveBeenCalled();
+        expect(handlers.handleImproveExperience).not.toHaveBeenCalled();
+    });
+
     it('renders with loading summary improvement', () => {
         interaction.loadingSummaryImprove = true;
         render(<ResumeDocumentEditor {...defaultProps} />);
@@ -402,6 +424,32 @@ describe('ResumeDocumentEditor', () => {
         expect(experienceItems[1]).toHaveAttribute('data-controls-visible', 'true');
         expect(improveButtons[0]).not.toHaveClass('is-visible');
         expect(improveButtons[1]).toHaveClass('is-visible');
+    });
+
+    it('keeps every assigned experience tag visible during experience tour steps', () => {
+        defaultProps.data.resumeData.experience = [
+            {
+                id: 'exp1',
+                jobTitle: 'Engineer',
+                bullets: [{ id: 'b1', text: 'Built workflows', tagIds: ['tag-workflows'] }]
+            },
+            {
+                id: 'exp2',
+                jobTitle: 'Lead',
+                bullets: [{ id: 'b2', text: 'Improved quality', tagIds: ['tag-quality'] }]
+            }
+        ];
+        defaultProps.data.resumeData.tagLibrary = [
+            { id: 'tag-workflows', name: 'Workflows', slug: 'workflows', colorToken: 'tag-blue', createdAt: '2026-01-01' },
+            { id: 'tag-quality', name: 'Quality', slug: 'quality', colorToken: 'tag-amber', createdAt: '2026-01-01' }
+        ];
+        interaction.forceExperienceTagsVisible = true;
+
+        render(<ResumeDocumentEditor {...defaultProps} />);
+
+        expect(screen.getByText('Workflows')).toBeInTheDocument();
+        expect(screen.getByText('Quality')).toBeInTheDocument();
+        expect(screen.getAllByLabelText('Edit bullet tags')).toHaveLength(2);
     });
 
     it('shows missing metadata fields only for the hovered experience', () => {

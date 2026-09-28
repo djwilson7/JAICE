@@ -35,6 +35,7 @@ type ResumeHeaderProps = {
     openPdfPreview: () => void | Promise<void>;
     documentTextStats: { chars: number; words: number };
     activeFieldTextStats: ResumeTextStatContext | null;
+    isReadOnly?: boolean;
 };
 
 export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
@@ -42,10 +43,12 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
     isLeftRailCollapsed, onToggleLeftRail, isRightRailCollapsed, onToggleRightRail,
     isMaster, setIsMaster, resumeName, setResumeName, isDirty, setIsDirty, isDraft,
     loadingSave, autoSaveEnabled, setAutoSaveEnabled, isPdfPreviewOpen, isGeneratingPdfPreview, handleSaveResume, togglePdfPreview, openPdfPreview,
-    documentTextStats = { chars: 0, words: 0 }, activeFieldTextStats = null
+    documentTextStats = { chars: 0, words: 0 }, activeFieldTextStats = null,
+    isReadOnly = false
 }) => (
             <header 
                 className="resume-header resume-chrome-surface print:hidden"
+                data-guided-tour="resume-header"
             >
                 <div className="relative flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -56,6 +59,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             title={isLeftRailCollapsed ? "Open resume drawer" : "Close resume drawer"}
                             aria-label={isLeftRailCollapsed ? "Open resume drawer" : "Close resume drawer"}
                             aria-pressed={!isLeftRailCollapsed}
+                            data-guided-tour="resume-left-rail-toggle"
                         >
                             <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                                 <rect x="4" y="4.5" width="16" height="15" rx="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -159,7 +163,9 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         <button
                             type="button"
                             onClick={() => setAutoSaveEnabled((enabled) => !enabled)}
+                            disabled={isReadOnly}
                             className={`resume-action-button${autoSaveEnabled ? " resume-auto-save-button--active" : ""}`}
+                            data-guided-tour="resume-autosave-control"
                             title={autoSaveEnabled ? "Disable auto-save" : "Enable auto-save"}
                             aria-label={autoSaveEnabled ? "Disable auto-save" : "Enable auto-save"}
                             aria-pressed={autoSaveEnabled}
@@ -167,12 +173,15 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             <ResumeAutoSaveIcon className="h-7 w-7" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => {
                                 setIsMaster(!isMaster);
                                 setIsDirty(true);
                             }}
+                            disabled={isReadOnly}
                             className="resume-action-button"
                             title={isMaster ? "Active Master Profile (Click to unset)" : "Set as Master Profile"}
+                            aria-label={isMaster ? "Unset as Master Profile" : "Set as Master Profile"}
                         >
                             {isMaster ? (
                                 <svg className="resume-action-button__icon drop-shadow-[0_0_4px_rgba(251,191,36,0.45)]" fill="currentColor" viewBox="0 0 20 20">
@@ -187,7 +196,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
 
                         <button
                             onClick={handleSaveResume}
-                            disabled={loadingSave || !isDirty}
+                            disabled={isReadOnly || loadingSave || !isDirty}
                             className="resume-action-button disabled:!cursor-default disabled:!opacity-30"
                             title="Save current resume changes"
                             aria-label="Save current resume changes"
@@ -204,7 +213,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         <button
                             type="button"
                             onClick={togglePdfPreview}
-                            disabled={isGeneratingPdfPreview}
+                            disabled={isReadOnly || isGeneratingPdfPreview}
                             className="resume-action-button"
                             title={isPdfPreviewOpen ? "Back to editing" : "Preview PDF"}
                             aria-label={isPdfPreviewOpen ? "Back to editing" : "Preview PDF"}
@@ -221,7 +230,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                         </button>
                         <button
                             onClick={openPdfPreview}
-                            disabled={isGeneratingPdfPreview}
+                            disabled={isReadOnly || isGeneratingPdfPreview}
                             className="resume-action-button"
                             title="Preview PDF before download"
                             aria-label="Preview PDF before download"
@@ -241,6 +250,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
                             title={isRightRailCollapsed ? "Open Jaice drawer" : "Close Jaice drawer"}
                             aria-label={isRightRailCollapsed ? "Open Jaice drawer" : "Close Jaice drawer"}
                             aria-pressed={!isRightRailCollapsed}
+                            data-guided-tour="resume-right-rail-toggle"
                         >
                             <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                                 <rect x="4" y="4.5" width="16" height="15" rx="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

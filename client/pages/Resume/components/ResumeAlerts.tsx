@@ -15,10 +15,13 @@ export const ResumeAlerts: React.FC<ResumeAlertsProps> = ({
 }) => (
     <>
         {(error || successMessage) && (
-                    <div className="pointer-events-none absolute left-1/2 top-4 z-40 w-[min(720px,calc(100%-2rem))] -translate-x-1/2 print:hidden">
+                    <div
+                        className="resume-alert-toast pointer-events-none absolute z-40 w-[18rem] max-w-[calc(100%-2rem)] print:hidden"
+                        data-testid="resume-alert-positioner"
+                    >
                         {error && (
                             <div className="pointer-events-auto flex items-center justify-between gap-3 rounded-lg border border-rose-400/45 bg-rose-950/70 px-4 py-1.5 text-xs text-rose-100 shadow-[0_14px_34px_rgba(2,6,23,0.38)] backdrop-blur-md animate-fade-in" style={{ fontFamily: "var(--font-body)" }}>
-                                <span className="flex-1 leading-normal pl-1">{error}</span>
+                                <span className="flex-1 pl-1 text-left leading-normal">{error}</span>
                                 <button
                                     onClick={() => setError(null)}
                                     className="resume-action-button text-rose-300 hover:text-rose-100"
@@ -32,7 +35,7 @@ export const ResumeAlerts: React.FC<ResumeAlertsProps> = ({
                         )}
                         {successMessage && (
                             <div className="pointer-events-auto flex items-center justify-between gap-3 rounded-lg border border-emerald-400/45 bg-emerald-950/70 px-4 py-1.5 text-xs text-emerald-100 shadow-[0_14px_34px_rgba(2,6,23,0.38)] backdrop-blur-md animate-fade-in" style={{ fontFamily: "var(--font-body)" }}>
-                                <span className="flex-1 leading-normal pl-1">{successMessage}</span>
+                                <span className="flex-1 pl-1 text-left leading-normal">{successMessage}</span>
                                 <button
                                     onClick={() => setSuccessMessage(null)}
                                     className="resume-action-button text-emerald-300 hover:text-emerald-100"

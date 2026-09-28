@@ -479,13 +479,15 @@ export const ResumePagedPreview: React.FC<ResumePagedPreviewProps> = ({
     const pageBreakAnchorSignature = pageBreakAnchors
         .map((anchor) => `${anchor.pageNumber}:${anchor.segmentId}`)
         .join("|");
+    const pageBreakAnchorsRef = React.useRef(pageBreakAnchors);
+    pageBreakAnchorsRef.current = pageBreakAnchors;
 
     React.useEffect(() => {
         onRenderedPageCountChange(renderedPages.length);
     }, [onRenderedPageCountChange, renderedPages.length]);
 
     React.useEffect(() => {
-        onPageBreakAnchorsChange?.(pageBreakAnchors);
+        onPageBreakAnchorsChange?.(pageBreakAnchorsRef.current);
     }, [onPageBreakAnchorsChange, pageBreakAnchorSignature]);
 
     const previewCssVariables = {

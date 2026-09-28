@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
 import { useSettings } from "@/pages/settings/provider/settingsContext";
 import { normalizeResumeDataForPayload } from "./resumeData";
 import { ResumePrintDocument } from "./components/ResumePrintDocument";
@@ -18,18 +19,45 @@ import { useResumePdfPreview } from "./hooks/useResumePdfPreview";
 import { useResumeDocumentViewModel } from "./documentViewModel";
 import { isResumeDebugEnabled } from "./resumeDiagnostics";
 import { getResumeDocumentTextStats, getResumeFieldTextStats } from "./resumeTextStats";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 import "./resume.css";
 import "./resume-editor.css";
 import "./resume-preview.css";
 
 export function Resume() {
     const { theme } = useSettings();
+    const { resumeInteractionState } = useGuidedTourSession();
     const isLightMode = theme === "light";
     const resumeDebugEnabled = isResumeDebugEnabled();
     const [isLeftRailCollapsed, setIsLeftRailCollapsed] = useState(true);
     const [isRightRailCollapsed, setIsRightRailCollapsed] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const displayedError = IS_DEMO_MODE ? null : error;
+    const isResumeTourLocked =
+        resumeInteractionState !== "idle" && resumeInteractionState !== "free";
+    const isResumeSurfaceLocked =
+        isResumeTourLocked && resumeInteractionState !== "bottom-rail";
+    const isExperienceTourStep = resumeInteractionState.startsWith("experience-");
+
+    useEffect(() => {
+        if (
+            resumeInteractionState === "overview" ||
+            resumeInteractionState === "document"
+        ) {
+            setIsLeftRailCollapsed(true);
+            setIsRightRailCollapsed(true);
+        } else if (resumeInteractionState === "left-rail") {
+            setIsLeftRailCollapsed(false);
+            setIsRightRailCollapsed(true);
+        } else if (resumeInteractionState === "right-rail") {
+            setIsLeftRailCollapsed(true);
+            setIsRightRailCollapsed(false);
+        } else if (resumeInteractionState === "bottom-rail") {
+            setIsLeftRailCollapsed(true);
+            setIsRightRailCollapsed(true);
+        }
+    }, [resumeInteractionState]);
 
     const handleToggleLeftRail = () => {
         const isOpeningLeftRail = isLeftRailCollapsed;
@@ -53,8 +81,50 @@ export function Resume() {
         isLeftRailCollapsed,
         isRightRailCollapsed
     });
+    const { setIsPageStyleShelfOpen } = formatting;
+
+    useEffect(() => {
+        if (resumeInteractionState === "bottom-rail") {
+            setIsPageStyleShelfOpen(true);
+        } else if (
+            resumeInteractionState === "overview" ||
+            resumeInteractionState === "document" ||
+            resumeInteractionState === "left-rail" ||
+            resumeInteractionState === "right-rail"
+        ) {
+            setIsPageStyleShelfOpen(false);
+        }
+    }, [resumeInteractionState, setIsPageStyleShelfOpen]);
+
     const documentEditing = useResumeDocumentEditing();
-    const { resumeData, setResumeData } = documentEditing;
+    const {
+        resumeData,
+        setResumeData,
+        setActiveDocumentSection,
+        setHoveredJobId
+    } = documentEditing;
+    const firstExperienceId = resumeData.experience?.[0]?.id ?? null;
+
+    useEffect(() => {
+        if (isExperienceTourStep) {
+            setActiveDocumentSection("experience");
+            setHoveredJobId(firstExperienceId);
+            return;
+        }
+
+        if (resumeInteractionState !== "free") {
+            setHoveredJobId(null);
+            setActiveDocumentSection((current) =>
+                current === "experience" ? null : current
+            );
+        }
+    }, [
+        firstExperienceId,
+        isExperienceTourStep,
+        resumeInteractionState,
+        setActiveDocumentSection,
+        setHoveredJobId
+    ]);
 
     const rewrite = useResumeRewriteSuggestions({
         resumeData,
@@ -153,7 +223,13 @@ export function Resume() {
     });
 
     return (
-        <div className="resume-page">
+        <div
+            className="resume-page"
+            inert={isResumeSurfaceLocked ? true : undefined}
+            aria-disabled={isResumeSurfaceLocked || undefined}
+            data-guided-tour-locked={isResumeSurfaceLocked || undefined}
+            data-guided-tour-resume-step={resumeInteractionState}
+        >
             <ResumePrintDocument
                 resumeData={printResumeData}
                 formatting={formatting.currentResumeFormatting}
@@ -201,6 +277,7 @@ export function Resume() {
 
             {!pdfPreview.isPdfPreviewOpen && (
                 <ResumeHeader
+                    isReadOnly={IS_DEMO_MODE}
                     isLightMode={isLightMode}
                     isLeftRailCollapsed={isLeftRailCollapsed}
                     onToggleLeftRail={handleToggleLeftRail}
@@ -228,6 +305,7 @@ export function Resume() {
 
             <div className="resume-page__layers">
                 <ResumeSwitcherRail
+                    isReadOnly={IS_DEMO_MODE}
                     isLightMode={isLightMode}
                     isLeftRailCollapsed={isLeftRailCollapsed}
                     handleCreateNewClick={persistence.handleCreateNewClick}
@@ -243,8 +321,10 @@ export function Resume() {
 
                 <ResumeWorkspace
                     key={persistence.activeResumeId ?? "new-resume"}
+                    forceExperienceTagsVisible={isExperienceTourStep}
+                    disableAiAssist={IS_DEMO_MODE}
                     theme={{ isLightMode }}
-                    alerts={{ error, successMessage, setError, setSuccessMessage }}
+                    alerts={{ error: displayedError, successMessage, setError, setSuccessMessage }}
                     formatting={formatting}
                     editing={documentEditing}
                     rewrite={rewrite}
@@ -259,6 +339,7 @@ export function Resume() {
                 />
 
                 <ResumeChatRail
+                    isUnavailable={IS_DEMO_MODE}
                     isLightMode={isLightMode}
                     isRightRailCollapsed={isRightRailCollapsed}
                     chatContainerRef={chat.chatContainerRef}

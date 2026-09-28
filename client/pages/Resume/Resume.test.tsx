@@ -49,7 +49,11 @@ vi.mock("./components/ResumeChatRail", () => ({
         <div data-testid="ResumeChatRail" data-collapsed={String(isRightRailCollapsed)} />
     )
 }));
-vi.mock("./components/ResumeWorkspace", () => ({ ResumeWorkspace: () => <div data-testid="ResumeWorkspace" /> }));
+vi.mock("./components/ResumeWorkspace", () => ({
+    ResumeWorkspace: ({ alerts }: any) => (
+        <div data-testid="ResumeWorkspace" data-error={alerts.error ?? ""} />
+    )
+}));
 
 const mockOpenPdfPreview = vi.fn();
 const mockTogglePdfPreview = vi.fn();
@@ -58,6 +62,14 @@ const mockSetIsMarginPreviewVisible = vi.fn();
 const mockSetIsPageFormatPreviewVisible = vi.fn();
 const mockSetGapPreviewTarget = vi.fn();
 const mockClosePageStyleShelf = vi.fn();
+const mockSetIsPageStyleShelfOpen = vi.fn();
+const mockGuidedTourState = vi.hoisted(() => ({
+    resumeInteractionState: "idle" as "idle" | "overview" | "left-rail" | "right-rail" | "bottom-rail" | "document" | "experience-overview" | "experience-entry" | "experience-organize" | "experience-enhance" | "autosave" | "free"
+}));
+
+vi.mock("@/app/layouts/guidedTourSessionContext", () => ({
+    useGuidedTourSession: () => mockGuidedTourState
+}));
 
 let mockCapturedPersistenceProps: any = null;
 let mockCapturedPdfPreviewProps: any = null;
@@ -65,9 +77,11 @@ let mockCapturedChatProps: any = null;
 
 vi.mock("./hooks/useResumeDocumentEditing", () => ({
     useResumeDocumentEditing: () => ({
-        resumeData: { contact: {}, summary: "", experiences: [], education: [], skills: [] },
+        resumeData: { contact: {}, summary: "", experience: [{ id: "experience-1" }], education: [], skills: [] },
         setResumeData: vi.fn(),
         updateField: vi.fn(),
+        setActiveDocumentSection: vi.fn(),
+        setHoveredJobId: vi.fn(),
     })
 }));
 vi.mock("./hooks/useResumeFormatting", () => ({
@@ -76,6 +90,7 @@ vi.mock("./hooks/useResumeFormatting", () => ({
         handleFitZoom: vi.fn(),
         handleTogglePageStyleShelf: vi.fn(),
         closePageStyleShelf: mockClosePageStyleShelf,
+        setIsPageStyleShelfOpen: mockSetIsPageStyleShelfOpen,
         paperMetrics: {},
         setFontPreviewTarget: mockSetFontPreviewTarget,
         setIsMarginPreviewVisible: mockSetIsMarginPreviewVisible,
@@ -133,13 +148,26 @@ vi.mock("@/pages/settings/provider/settingsContext", () => ({
 
 describe("Resume Component", () => {
     beforeEach(() => {
+        mockGuidedTourState.resumeInteractionState = "idle";
         mockOpenPdfPreview.mockClear();
         mockTogglePdfPreview.mockClear();
+        mockSetIsPageStyleShelfOpen.mockClear();
     });
 
     it("renders without crashing", () => {
         const { getByTestId } = render(<Resume />);
         expect(getByTestId("ResumeWorkspace")).toBeInTheDocument();
+    });
+
+    it("does not surface resume errors in demo mode", () => {
+        render(<Resume />);
+
+        act(() => mockCapturedPersistenceProps.setError("Save failed"));
+
+        expect(screen.getByTestId("ResumeWorkspace")).toHaveAttribute(
+            "data-error",
+            ""
+        );
     });
 
     it("collapses rails before opening PDF preview from the header toggle", () => {
@@ -171,6 +199,65 @@ describe("Resume Component", () => {
 
         expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
         expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+    });
+
+    it("drives and locks the rails for the guided Resume steps", () => {
+        const { container, rerender } = render(<Resume />);
+        const resumePage = container.querySelector(".resume-page")!;
+
+        mockGuidedTourState.resumeInteractionState = "overview";
+        rerender(<Resume />);
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+        expect(resumePage).toHaveAttribute("inert");
+        expect(resumePage).toHaveAttribute("data-guided-tour-locked", "true");
+
+        mockGuidedTourState.resumeInteractionState = "left-rail";
+        rerender(<Resume />);
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "false");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+        expect(resumePage).toHaveAttribute("inert");
+        expect(mockSetIsPageStyleShelfOpen).toHaveBeenLastCalledWith(false);
+
+        mockGuidedTourState.resumeInteractionState = "overview";
+        rerender(<Resume />);
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+        expect(mockSetIsPageStyleShelfOpen).toHaveBeenLastCalledWith(false);
+
+        mockGuidedTourState.resumeInteractionState = "right-rail";
+        rerender(<Resume />);
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "false");
+        expect(mockSetIsPageStyleShelfOpen).toHaveBeenLastCalledWith(false);
+
+        mockGuidedTourState.resumeInteractionState = "bottom-rail";
+        rerender(<Resume />);
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+        expect(mockSetIsPageStyleShelfOpen).toHaveBeenLastCalledWith(true);
+        expect(resumePage).not.toHaveAttribute("inert");
+        expect(resumePage).not.toHaveAttribute("data-guided-tour-locked");
+
+        mockGuidedTourState.resumeInteractionState = "document";
+        rerender(<Resume />);
+        expect(screen.getByTestId("ResumeSwitcherRail")).toHaveAttribute("data-collapsed", "true");
+        expect(screen.getByTestId("ResumeChatRail")).toHaveAttribute("data-collapsed", "true");
+        expect(mockSetIsPageStyleShelfOpen).toHaveBeenLastCalledWith(false);
+        expect(resumePage).toHaveAttribute("data-guided-tour-resume-step", "document");
+
+        mockGuidedTourState.resumeInteractionState = "experience-overview";
+        rerender(<Resume />);
+        expect(resumePage).toHaveAttribute("inert");
+        expect(resumePage).toHaveAttribute(
+            "data-guided-tour-resume-step",
+            "experience-overview"
+        );
+
+        mockGuidedTourState.resumeInteractionState = "free";
+        rerender(<Resume />);
+        expect(resumePage).not.toHaveAttribute("inert");
+        expect(resumePage).not.toHaveAttribute("data-guided-tour-locked");
     });
 
     it("triggers callbacks from hooks for state transitions and clearing previews", () => {

@@ -6,6 +6,102 @@
   padding: 0;
   font-family: var(--resume-font-family);
   font-size: var(--resume-body-font-size);
+  transition: opacity 320ms ease, filter 320ms ease, box-shadow 300ms ease;
+}
+
+.resume-page:is(
+    [data-guided-tour-resume-step="left-rail"],
+    [data-guided-tour-resume-step="right-rail"],
+    [data-guided-tour-resume-step="bottom-rail"]
+  )
+  #print-canvas {
+  opacity: 0.42;
+  filter: grayscale(0.72) brightness(0.78);
+}
+
+.resume-page[data-guided-tour-resume-step^="experience-"]
+  #print-canvas
+  .document-hover-section:not([data-section="experience"]) {
+  opacity: 0.22;
+  filter: grayscale(0.9);
+}
+
+.resume-page:is(
+    [data-guided-tour-resume-step="experience-entry"],
+    [data-guided-tour-resume-step="experience-organize"],
+    [data-guided-tour-resume-step="experience-enhance"]
+  )
+  #print-canvas
+  [data-section="experience"]
+  :is(
+    .resume-editor-section-title,
+    .resume-editor-meta-row,
+    .resume-editor-bullet-marker,
+    .resume-editor-bullet-input,
+    .resume-editor-bullet-composer
+  ) {
+  opacity: 0.28;
+  filter: grayscale(0.85);
+}
+
+.resume-page[data-guided-tour-resume-step="experience-entry"]
+  #print-canvas
+  .resume-editor-bullet-composer,
+.resume-page[data-guided-tour-resume-step="experience-entry"]
+  #print-canvas
+  [data-guided-tour="resume-experience-add-control"],
+.resume-page[data-guided-tour-resume-step="experience-organize"]
+  #print-canvas
+  [data-guided-tour="resume-experience-organize-control"],
+.resume-page[data-guided-tour-resume-step="experience-enhance"]
+  #print-canvas
+  [data-guided-tour="resume-experience-enhance-control"] {
+  opacity: 1;
+  filter: none;
+}
+
+.resume-page[data-guided-tour-resume-step="autosave"] #print-canvas {
+  opacity: 0.42;
+  filter: grayscale(0.72) brightness(0.78);
+}
+
+.resume-page[data-guided-tour-resume-step="experience-entry"]
+  #print-canvas
+  :is(
+    [data-guided-tour="resume-experience-organize-control"],
+    [data-guided-tour="resume-experience-enhance-control"]
+  ),
+.resume-page[data-guided-tour-resume-step="experience-organize"]
+  #print-canvas
+  :is(
+    [data-guided-tour="resume-experience-add-control"],
+    [data-guided-tour="resume-experience-enhance-control"],
+    .resume-editor-bullet-composer
+  ),
+.resume-page[data-guided-tour-resume-step="experience-enhance"]
+  #print-canvas
+  :is(
+    [data-guided-tour="resume-experience-add-control"],
+    [data-guided-tour="resume-experience-organize-control"],
+    .resume-editor-bullet-composer
+  ) {
+  opacity: 0.28;
+  filter: grayscale(0.85);
+}
+
+.resume-page[data-guided-tour-resume-step^="experience-"]
+  #print-canvas
+  .document-hover-section,
+.resume-page[data-guided-tour-resume-step^="experience-"]
+  #print-canvas
+  .resume-editor-section-title,
+.resume-page[data-guided-tour-resume-step^="experience-"]
+  #print-canvas
+  .resume-editor-meta-row,
+.resume-page[data-guided-tour-resume-step^="experience-"]
+  #print-canvas
+  .resume-editor-bullet-row {
+  transition: opacity 260ms ease, filter 260ms ease;
 }
 
 .resume-canvas-document-content {

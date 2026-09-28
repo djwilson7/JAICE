@@ -212,6 +212,7 @@ export const ExperienceBulletTags: React.FC<ExperienceBulletTagsProps> = ({
             <button
                 type="button"
                 className="resume-tag-trigger resume-bullet-tag-menu group/tag-trigger inline-flex w-full items-start justify-start text-left font-normal leading-tight"
+                data-guided-tour="resume-experience-tag-control"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={openMenu}
                 aria-label="Edit bullet tags"

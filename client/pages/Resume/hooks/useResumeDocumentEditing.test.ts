@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { useResumeDocumentEditing } from './useResumeDocumentEditing';
 
 vi.mock('../resumeDiagnostics', () => ({ isResumeDebugEnabled: () => false }));
+vi.mock('@/global-services/projectMode', () => ({ IS_DEMO_MODE: false }));
 
 describe('useResumeDocumentEditing', () => {
     const getHook = () => renderHook(() => useResumeDocumentEditing());

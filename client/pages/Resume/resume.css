@@ -26,12 +26,41 @@
   overflow: hidden;
 }
 
+.resume-alert-toast {
+  left: 1rem;
+  bottom: 1rem;
+  transition: left 300ms ease, bottom 300ms ease;
+}
+
+body:has(.resume-rail--left[data-collapsed="false"]) .resume-alert-toast {
+  left: 19.5rem;
+}
+
+body:has([data-guided-tour="resume-bottom-rail-panel"]) .resume-alert-toast {
+  bottom: 9.5rem;
+}
+
+body:has(.resume-page-style-shelf.is-compact) .resume-alert-toast {
+  bottom: 12.75rem;
+}
+
 .resume-chrome-surface,
 .resume-toolbar {
   border: 1px solid;
   font-family: var(--font-body);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+.resume-page[data-guided-tour-locked="true"] {
+  pointer-events: none;
+}
+
+.resume-page[data-guided-tour-resume-step="bottom-rail"]
+  .resume-tool-button[aria-label="Set zoom to 100%"] {
+  background: transparent !important;
+  color: inherit;
+  box-shadow: none !important;
 }
 
 html[data-theme="light"] .resume-chrome-surface,
@@ -176,6 +205,14 @@ html:not([data-theme="light"]) .resume-toolbar {
 .resume-action-button:disabled {
   cursor: not-allowed;
   opacity: 0.3;
+}
+
+.resume-version-delete-button:disabled {
+  opacity: 0 !important;
+}
+
+.group:hover .resume-version-delete-button:disabled {
+  opacity: 0.45 !important;
 }
 
 .resume-action-button[aria-pressed="true"] {

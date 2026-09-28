@@ -16,7 +16,10 @@ export const ResumeFormattingToolbar: React.FC<ResumeFormattingToolbarProps> = (
         className="resume-toolbar-viewport print:hidden"
         style={formatting.bottomControlsViewportStyle}
     >
-        <motion.div className="resume-toolbar resume-edit-control">
+        <motion.div
+            className="resume-toolbar resume-edit-control"
+            data-guided-tour="resume-bottom-toolbar"
+        >
             <PageStyleShelf
                 isPageStyleShelfOpen={formatting.isPageStyleShelfOpen}
                 isPageStyleShelfCompact={formatting.isPageStyleShelfCompact}
@@ -51,6 +54,7 @@ export const ResumeFormattingToolbar: React.FC<ResumeFormattingToolbarProps> = (
                     title={formatting.isPageStyleShelfOpen ? "Close page style shelf" : "Open page style shelf"}
                     aria-label={formatting.isPageStyleShelfOpen ? "Close page style shelf" : "Open page style shelf"}
                     aria-pressed={formatting.isPageStyleShelfOpen}
+                    data-guided-tour="resume-bottom-rail-toggle"
                 >
                     <svg className="resume-action-button__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.9">
                         <rect x="5" y="7" width="14" height="10" rx="2.4" />

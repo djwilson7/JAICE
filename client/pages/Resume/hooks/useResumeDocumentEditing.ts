@@ -16,11 +16,15 @@ import {
     normalizeTagSlug,
     parseSkillItems
 } from "../resumeData";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { createDemoResumeData } from "../demoResumes";
 import { remapBoldRanges, toggleBoldRange } from "../boldText";
 
 export const useResumeDocumentEditing = () => {
     const experienceTagRetentionMs = 5500;
-    const [resumeData, setResumeData] = useState<ResumeData>(defaultResumeData());
+    const [resumeData, setResumeData] = useState<ResumeData>(() =>
+        IS_DEMO_MODE ? createDemoResumeData("full-stack") : defaultResumeData()
+    );
     const [hoveredContactField, setHoveredContactField] = useState<string | null>(null);
     const [focusedContactField, setFocusedContactField] = useState<string | null>(null);
     const [hoveredNameSection, setHoveredNameSection] = useState(false);

@@ -25,17 +25,19 @@ type ResumeChatRailProps = {
     setChatInput: React.Dispatch<React.SetStateAction<string>>;
     handleSendChatMessage: () => void | Promise<void>;
     handleStopChatMessage: () => void;
+    isUnavailable?: boolean;
 };
 
 export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
     isLightMode, isRightRailCollapsed, chatContainerRef, chatInputRef,
     chatMessages, copiedChatMessageIndex, handleCopyAssistantMessage, isChatResponding, isAssistantGenerating,
     showBackToBottom, chatScrollShadow, scrollChatToBottom, isChatInputCollapsed, setIsChatInputCollapsed, chatInput, setChatInput,
-    handleSendChatMessage, handleStopChatMessage
+    handleSendChatMessage, handleStopChatMessage, isUnavailable = false
 }) => (
             <aside 
                     className="resume-rail resume-rail--right resume-chrome-surface print:hidden"
                     data-collapsed={isRightRailCollapsed}
+                    data-guided-tour="resume-right-rail-panel"
                 >
                     <div className="resume-rail__content absolute inset-0 !gap-2.5">
                     <div className="resume-rail__header">
@@ -237,7 +239,9 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                         >
                              <textarea
                                 ref={chatInputRef}
-                                onFocus={() => setIsChatInputCollapsed(false)}
+                                onFocus={() => {
+                                    if (!isUnavailable) setIsChatInputCollapsed(false);
+                                }}
                                 style={{ 
                                     fontSize: "12px",
                                     minHeight: isChatInputCollapsed ? "36px" : "54px",
@@ -248,17 +252,24 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                 className={`w-full resize-none overflow-y-auto p-3.5 pb-2 text-[12px] outline-none leading-relaxed placeholder:text-slate-500 font-sans transition-all duration-300 ${
                                     isLightMode ? "bg-white/40 text-slate-900" : "bg-slate-950/[0.18] text-slate-100"
                                 }`}
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
+                                value={isUnavailable ? "" : chatInput}
+                                disabled={isUnavailable}
+                                onChange={(e) => {
+                                    if (!isUnavailable) setChatInput(e.target.value);
+                                }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" && !e.shiftKey) {
                                         e.preventDefault();
-                                        if (!isChatResponding) {
+                                        if (!isUnavailable && !isChatResponding) {
                                             handleSendChatMessage();
                                         }
                                     }
                                 }}
-                                placeholder="Type a message or paste a job posting..."
+                                placeholder={
+                                    isUnavailable
+                                        ? "Not available during demo"
+                                        : "Type a message or paste a job posting..."
+                                }
                             />
                             {/* Bottom Rail inside the Input Card */}
                             <div className={`flex items-center justify-between px-3 border-t transition-all duration-300 ${
@@ -279,7 +290,7 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-end relative h-7 w-7">
-                                    {isChatResponding ? (
+                                    {isChatResponding && !isUnavailable ? (
                                         <button
                                             type="button"
                                             onClick={handleStopChatMessage}
@@ -310,7 +321,7 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                         <button
                                             type="button"
                                             onClick={handleSendChatMessage}
-                                            disabled={!chatInput.trim()}
+                                            disabled={isUnavailable || !chatInput.trim()}
                                             style={{
                                                 width: "28px",
                                                 height: "28px",
@@ -324,7 +335,7 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                                 border: "1px solid rgba(14, 165, 233, 0.25)"
                                             }}
                                             className={`group absolute right-0 flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 hover:bg-sky-500 text-white transition-all duration-300 transform active:scale-95 overflow-hidden ${
-                                                chatInput.trim()
+                                                !isUnavailable && chatInput.trim()
                                                     ? "opacity-100 scale-100 cursor-pointer" 
                                                     : "opacity-0 scale-0 pointer-events-none"
                                             }`}
@@ -332,7 +343,7 @@ export const ResumeChatRail: React.FC<ResumeChatRailProps> = ({
                                         >
                                             <svg 
                                                 className={`h-4 w-4 transition-all duration-300 transform ${
-                                                    chatInput.trim()
+                                                    !isUnavailable && chatInput.trim()
                                                         ? "translate-y-0 opacity-100 group-hover:-translate-y-0.5"
                                                         : "translate-y-4 opacity-0"
                                                 }`} 
