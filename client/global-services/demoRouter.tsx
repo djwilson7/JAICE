@@ -39,7 +39,7 @@ export const demoRouter = createBrowserRouter([
       },
       {
         path: SettingsRoute.path,
-        element: SettingsRoute.element,
+        element: <Navigate to="/" replace />,
       },
     ],
   },

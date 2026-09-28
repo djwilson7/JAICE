@@ -4,6 +4,8 @@ import { useSettings } from './settingsContext';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SETTINGS_KEYS } from './settingKeys';
 
+vi.mock('@/global-services/projectMode', () => ({ IS_DEMO_MODE: false }));
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({

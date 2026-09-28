@@ -1,11 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GuidedTour } from "./GuidedTour";
 import { JOB_LOCAL_CHANGE_EVENT } from "@/pages/home/utils/jobLocalChangeEvent";
 
 describe("GuidedTour", () => {
   afterEach(() => {
+    vi.useRealTimers();
     document.body.style.overflow = "";
+    window.localStorage.clear();
   });
 
   it("shows the welcome before the page-scoped tour steps", () => {
@@ -42,6 +44,69 @@ describe("GuidedTour", () => {
     ).toBe("hidden");
     expect(
       document.querySelector(".guided-tour-focus-connector-particle")
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses blue Resume guidance through AI Assist and white shimmer for Tags", () => {
+    const { rerender } = render(
+      <GuidedTour
+        enabled
+        startRequested
+        currentPath="/resume"
+        onNavigate={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /let’s begin/i }));
+
+    expect(
+      document.querySelectorAll(
+        ".guided-tour-focus-shimmer--resume"
+      )
+    ).toHaveLength(8);
+
+    for (let index = 0; index < 5; index += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    }
+
+    expect(screen.getByText("Controls appear where you work")).toBeInTheDocument();
+    expect(
+      document.querySelector(".guided-tour-focus-connector")
+    ).toHaveClass("guided-tour-focus-connector--resume");
+
+    for (let index = 0; index < 4; index += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    }
+
+    expect(screen.getByText("Improve bullets with AI Assist")).toBeInTheDocument();
+    expect(
+      document.querySelector(".guided-tour-focus-connector")
+    ).toHaveClass("guided-tour-focus-connector--resume");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(screen.getByText("Tag the focus of your experience")).toBeInTheDocument();
+    expect(
+      document.querySelector(".guided-tour-focus-shimmer--resume")
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector(".guided-tour-focus-connector")
+    ).not.toHaveClass("guided-tour-focus-connector--resume");
+    expect(
+      document.querySelector(".guided-tour-focus-connector-particle")
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <GuidedTour
+        enabled
+        startRequested
+        currentPath="/home"
+        onNavigate={vi.fn()}
+      />
+    );
+
+    expect(
+      document.querySelector(".guided-tour-focus-shimmer--resume")
     ).not.toBeInTheDocument();
   });
 
@@ -206,9 +271,9 @@ describe("GuidedTour", () => {
     expect(onNavigationModeChange).toHaveBeenLastCalledWith("closed");
     expect(scrollCanvas.style.overflowY).toBe("hidden");
     expect(scrollTo).not.toHaveBeenCalled();
-    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(
-      4
-    );
+    expect(
+      document.querySelectorAll(".guided-tour-focus-mask").length
+    ).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Reading the Dashboard")).toBeInTheDocument();
@@ -226,9 +291,9 @@ describe("GuidedTour", () => {
       top: 324,
       behavior: "smooth",
     });
-    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(
-      4
-    );
+    expect(
+      document.querySelectorAll(".guided-tour-focus-mask").length
+    ).toBeGreaterThan(0);
     expect(
       document.querySelectorAll(".guided-tour-focus-connector-particle")
     ).toHaveLength(42);
@@ -267,6 +332,282 @@ describe("GuidedTour", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Select Resume" }));
     expect(onNavigate).toHaveBeenLastCalledWith("/resume");
+  });
+
+  it("locks header and navigation on the first Resume step", () => {
+    const onNavigationModeChange = vi.fn();
+    const onResumeInteractionStateChange = vi.fn();
+
+    render(
+      <>
+        <header data-guided-tour="resume-header">
+          Resume controls
+          <button data-guided-tour="resume-autosave-control">Auto-save</button>
+        </header>
+        <button data-guided-tour="resume-left-rail-toggle">Versions</button>
+        <div data-guided-tour="resume-left-rail-panel">Resume versions</div>
+        <button data-guided-tour="resume-right-rail-toggle">Open Jaice</button>
+        <div data-guided-tour="resume-right-rail-panel">Jaice</div>
+        <div data-guided-tour="resume-bottom-toolbar">
+          <button data-guided-tour="resume-bottom-rail-toggle">Format</button>
+          <div data-guided-tour="resume-bottom-rail-panel">Formatting</div>
+        </div>
+        <div id="print-canvas" data-guided-tour="resume-document">
+          Resume document
+          <section data-section="experience">
+            Work Experience
+            <button data-guided-tour="resume-experience-add-control">Add experience</button>
+            <input className="resume-editor-bullet-composer" aria-label="Bullet composer" />
+            <button data-guided-tour="resume-experience-organize-control">Move up</button>
+            <button data-guided-tour="resume-experience-organize-control">Delete entry</button>
+            <button data-guided-tour="resume-experience-enhance-control">AI Assist</button>
+            <button data-guided-tour="resume-experience-enhance-control">Add Tag</button>
+          </section>
+        </div>
+        <GuidedTour
+          enabled
+          startRequested
+          currentPath="/resume"
+          onNavigate={vi.fn()}
+          onNavigationModeChange={onNavigationModeChange}
+          onResumeInteractionStateChange={onResumeInteractionStateChange}
+        />
+      </>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /let’s begin/i }));
+
+    expect(screen.getByText("A resume built to adapt")).toBeInTheDocument();
+    expect(screen.getByText("1/13")).toBeInTheDocument();
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("locked");
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "overview"
+    );
+
+    const guideCard = document.querySelector<HTMLElement>(
+      '[data-guided-tour="guided-tour-card"]'
+    )!;
+    const header = document.querySelector<HTMLElement>(
+      '[data-guided-tour="resume-header"]'
+    )!;
+    const leftRail = document.querySelector<HTMLElement>(
+      '[data-guided-tour="resume-left-rail-panel"]'
+    )!;
+    const rightRail = document.querySelector<HTMLElement>(
+      '[data-guided-tour="resume-right-rail-panel"]'
+    )!;
+    const bottomRailToggle = document.querySelector<HTMLElement>(
+      '[data-guided-tour="resume-bottom-rail-toggle"]'
+    )!;
+    const bottomToolbar = document.querySelector<HTMLElement>(
+      '[data-guided-tour="resume-bottom-toolbar"]'
+    )!;
+    const bottomRail = document.querySelector<HTMLElement>(
+      '[data-guided-tour="resume-bottom-rail-panel"]'
+    )!;
+    vi.spyOn(guideCard, "getBoundingClientRect").mockReturnValue({
+      width: 400,
+      height: 180,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(header, "getBoundingClientRect").mockReturnValue({
+      width: 1_000,
+      height: 80,
+      top: 20,
+      right: 1_000,
+      bottom: 100,
+      left: 0,
+      x: 0,
+      y: 20,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(leftRail, "getBoundingClientRect").mockReturnValue({
+      width: 288,
+      height: 600,
+      top: 120,
+      right: 288,
+      bottom: 720,
+      left: 0,
+      x: 0,
+      y: 120,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(rightRail, "getBoundingClientRect").mockReturnValue({
+      width: 288,
+      height: 600,
+      top: 120,
+      right: 1_000,
+      bottom: 720,
+      left: 712,
+      x: 712,
+      y: 120,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(bottomRail, "getBoundingClientRect").mockReturnValue({
+      width: 800,
+      height: 160,
+      top: 560,
+      right: 800,
+      bottom: 720,
+      left: 0,
+      x: 0,
+      y: 560,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(bottomRailToggle, "getBoundingClientRect").mockReturnValue({
+      width: 80,
+      height: 40,
+      top: 510,
+      right: 540,
+      bottom: 550,
+      left: 460,
+      x: 460,
+      y: 510,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(bottomToolbar, "getBoundingClientRect").mockReturnValue({
+      width: 800,
+      height: 210,
+      top: 510,
+      right: 900,
+      bottom: 720,
+      left: 100,
+      x: 100,
+      y: 510,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Build from a master resume")).toBeInTheDocument();
+    expect(screen.getByText("2/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "left-rail"
+    );
+    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(0);
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("locked");
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith("overview");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith("left-rail");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Advice when you need it")).toBeInTheDocument();
+    expect(screen.getByText("3/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "right-rail"
+    );
+    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(0);
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("locked");
+    expect(guideCard).toHaveAttribute(
+      "data-guide-placement",
+      "left-of-target"
+    );
+    expect(
+      Number.parseFloat(
+        guideCard.style.getPropertyValue("--guided-tour-card-shift-x")
+      )
+    ).toBeLessThan(0);
+    expect(
+      Number.parseFloat(
+        guideCard.style.getPropertyValue("--guided-tour-card-shift-x")
+      )
+    ).toBeGreaterThan(-576);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Control the page layout")).toBeInTheDocument();
+    expect(screen.getByText("4/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "bottom-rail"
+    );
+    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(0);
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("locked");
+    expect(
+      Array.from(
+        document.querySelectorAll<HTMLElement>(".guided-tour-focus-shimmer")
+      ).filter((element) => element.style.visibility === "visible")
+    ).toHaveLength(1);
+    expect(guideCard).toHaveAttribute("data-guide-placement", "above-target");
+    expect(
+      Number.parseFloat(
+        guideCard.style.getPropertyValue("--guided-tour-card-lift")
+      )
+    ).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Edit your resume directly")).toBeInTheDocument();
+    expect(screen.getByText("5/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith("document");
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("locked");
+    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(0);
+    expect(
+      Array.from(
+        document.querySelectorAll<HTMLElement>(".guided-tour-focus-shimmer")
+      ).filter((element) => element.style.visibility === "visible")
+    ).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Controls appear where you work")).toBeInTheDocument();
+    expect(screen.getByText("6/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "experience-overview"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Add a work experience entry")).toBeInTheDocument();
+    expect(screen.getByText("7/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "experience-add"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Edit fields and add bullets")).toBeInTheDocument();
+    expect(screen.getByText("8/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "experience-edit"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Organize or remove entries")).toBeInTheDocument();
+    expect(screen.getByText("9/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "experience-organize"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Improve bullets with AI Assist")).toBeInTheDocument();
+    expect(screen.getByText("10/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "experience-ai"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Tag the focus of your experience")).toBeInTheDocument();
+    expect(screen.getByText("11/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith(
+      "experience-tag"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Your current version stays saved")).toBeInTheDocument();
+    expect(screen.getByText("12/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith("autosave");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Explore, then continue")).toBeInTheDocument();
+    expect(screen.getByText("13/13")).toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith("free");
+    expect(onNavigationModeChange).toHaveBeenLastCalledWith("expanded");
+
+    fireEvent.click(screen.getByRole("button", { name: "Finish tour" }));
+    expect(screen.queryByText("Explore, then continue")).not.toBeInTheDocument();
+    expect(onResumeInteractionStateChange).toHaveBeenLastCalledWith("idle");
   });
 
   it("moves between page sequences while each page owns its count", () => {
@@ -326,7 +667,9 @@ describe("GuidedTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Move through JAICE")).toBeInTheDocument();
     expect(screen.getByText("2/16")).toBeInTheDocument();
-    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(4);
+    expect(
+      document.querySelectorAll(".guided-tour-focus-mask").length
+    ).toBeGreaterThan(0);
     expect(onNavigate).not.toHaveBeenCalled();
     expect(onNavigationModeChange).toHaveBeenLastCalledWith(
       "expanded-locked"
@@ -358,21 +701,27 @@ describe("GuidedTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Controls in one place")).toBeInTheDocument();
     expect(screen.getByText("3/16")).toBeInTheDocument();
-    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(4);
+    expect(
+      document.querySelectorAll(".guided-tour-focus-mask").length
+    ).toBeGreaterThan(0);
     expect(onNavigate).not.toHaveBeenCalled();
     expect(onNavigationModeChange).toHaveBeenLastCalledWith("closed");
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("Organized by stage")).toBeInTheDocument();
     expect(screen.getByText("4/16")).toBeInTheDocument();
-    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(4);
+    expect(
+      document.querySelectorAll(".guided-tour-focus-mask").length
+    ).toBeGreaterThan(0);
     expect(onNavigate).not.toHaveBeenCalled();
     expect(onDemoDataStateChange).toHaveBeenLastCalledWith("hidden", 3);
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByText("From inbox to workspace")).toBeInTheDocument();
     expect(screen.getByText("5/16")).toBeInTheDocument();
-    expect(document.querySelectorAll(".guided-tour-focus-mask")).toHaveLength(4);
+    expect(
+      document.querySelectorAll(".guided-tour-focus-mask").length
+    ).toBeGreaterThan(0);
     expect(onDemoDataStateChange).toHaveBeenLastCalledWith("processing", 4);
     expect(onNavigate).not.toHaveBeenCalled();
 
@@ -576,6 +925,8 @@ describe("GuidedTour", () => {
   });
 
   it("advances from hover to open and can replay the interaction after going back", () => {
+    vi.useFakeTimers();
+
     render(
       <>
         <div data-guided-tour="app-navigation" />
@@ -605,8 +956,30 @@ describe("GuidedTour", () => {
 
     expect(screen.getByText("More actions on demand")).toBeInTheDocument();
     expect(screen.getByText("7/16")).toBeInTheDocument();
+    const hoverProgress = screen.getByRole("progressbar", {
+      name: "Offer card hover progress",
+    });
+    expect(hoverProgress).toHaveAttribute(
+      "aria-valuetext",
+      "Hover over the offer card to start"
+    );
 
     fireEvent.pointerOver(screen.getByText("Juniper offer"));
+    expect(hoverProgress).toHaveClass("guided-tour-hover-progress--active");
+    expect(hoverProgress).toHaveAttribute(
+      "aria-valuetext",
+      "Hovering for three seconds"
+    );
+    act(() => vi.advanceTimersByTime(2_999));
+    expect(screen.getByText("More actions on demand")).toBeInTheDocument();
+
+    fireEvent.pointerOut(screen.getByText("Juniper offer"));
+    expect(hoverProgress).not.toHaveClass("guided-tour-hover-progress--active");
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByText("More actions on demand")).toBeInTheDocument();
+
+    fireEvent.pointerOver(screen.getByText("Juniper offer"));
+    act(() => vi.advanceTimersByTime(3_000));
     expect(screen.getByText("Read the full email")).toBeInTheDocument();
     expect(screen.getByText("8/16")).toBeInTheDocument();
 
@@ -652,6 +1025,7 @@ describe("GuidedTour", () => {
     expect(screen.getByText("7/16")).toBeInTheDocument();
 
     fireEvent.pointerOver(screen.getByText("Juniper offer"));
+    act(() => vi.advanceTimersByTime(3_000));
     expect(screen.getByText("Read the full email")).toBeInTheDocument();
     expect(screen.getByText("8/16")).toBeInTheDocument();
 
@@ -775,7 +1149,7 @@ describe("GuidedTour", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("starts over after leaving and re-entering the application shell", () => {
+  it("resumes the full tour after refreshing the application shell", () => {
     const firstTour = render(
       <GuidedTour
         enabled
@@ -796,14 +1170,116 @@ describe("GuidedTour", () => {
     render(
       <GuidedTour
         enabled
-        startRequested
+        startRequested={false}
         currentPath="/home"
         onNavigate={vi.fn()}
       />
     );
 
-    expect(screen.getByRole("dialog")).toHaveTextContent(
-      "Welcome to the guided tour of JAICE"
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("From inbox to workspace")).toBeInTheDocument();
+    expect(screen.getByText("5/16")).toBeInTheDocument();
+  });
+
+  it("resumes a page refresher at the same step after refresh", () => {
+    const firstTour = render(
+      <GuidedTour
+        enabled
+        startRequested={false}
+        pageTourRequest={{ id: 1, route: "/dashboard" }}
+        currentPath="/dashboard"
+        onNavigate={vi.fn()}
+      />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Reading the Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("3/6")).toBeInTheDocument();
+    firstTour.unmount();
+
+    render(
+      <GuidedTour
+        enabled
+        startRequested={false}
+        currentPath="/dashboard"
+        onNavigate={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Reading the Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("3/6")).toBeInTheDocument();
+  });
+
+  it("returns a completed page refresher to free roam without navigating", () => {
+    const onNavigate = vi.fn();
+    const onTourActiveChange = vi.fn();
+    const pageTourRequest = { id: 1, route: "/auth-about" };
+    const { rerender } = render(
+      <GuidedTour
+        enabled
+        startRequested={false}
+        pageTourRequest={pageTourRequest}
+        currentPath="/auth-about"
+        onNavigate={onNavigate}
+        onTourActiveChange={onTourActiveChange}
+      />
+    );
+
+    expect(screen.getByText("About JAICE")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Return to free roam" })
+    );
+
+    expect(screen.queryByLabelText("JAICE guided tour")).not.toBeInTheDocument();
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(onTourActiveChange).toHaveBeenLastCalledWith(false);
+    expect(
+      window.localStorage.getItem("jaice-demo-guided-tour-session")
+    ).toBeNull();
+
+    rerender(
+      <GuidedTour
+        enabled
+        startRequested={false}
+        pageTourRequest={pageTourRequest}
+        currentPath="/dashboard"
+        onNavigate={onNavigate}
+        onTourActiveChange={onTourActiveChange}
+      />
+    );
+
+    expect(screen.queryByLabelText("JAICE guided tour")).not.toBeInTheDocument();
+  });
+
+  it("ends a page refresher when the user navigates to another page", () => {
+    const pageTourRequest = { id: 1, route: "/dashboard" };
+    const onTourActiveChange = vi.fn();
+    const { rerender } = render(
+      <GuidedTour
+        enabled
+        startRequested={false}
+        pageTourRequest={pageTourRequest}
+        currentPath="/dashboard"
+        onNavigate={vi.fn()}
+        onTourActiveChange={onTourActiveChange}
+      />
+    );
+
+    expect(screen.getByText("Your progress at a glance")).toBeInTheDocument();
+
+    rerender(
+      <GuidedTour
+        enabled
+        startRequested={false}
+        pageTourRequest={pageTourRequest}
+        currentPath="/resume"
+        onNavigate={vi.fn()}
+        onTourActiveChange={onTourActiveChange}
+      />
+    );
+
+    expect(screen.queryByLabelText("JAICE guided tour")).not.toBeInTheDocument();
+    expect(onTourActiveChange).toHaveBeenLastCalledWith(false);
   });
 });

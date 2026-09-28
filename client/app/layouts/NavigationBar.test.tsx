@@ -85,6 +85,7 @@ describe("NavigationBar", () => {
   it("renders MainHeader, theme toggle, nav buttons and outlet", () => {
     render(<NavigationBar />);
     expect(screen.getByTestId("main-header")).toBeTruthy();
+    expect(screen.queryByLabelText("Demo environment")).not.toBeInTheDocument();
     expect(screen.getByTestId("theme-toggle")).toBeTruthy();
     expect(screen.getAllByTestId("nav-button").length).toBeGreaterThan(0);
     expect(screen.getByTestId("outlet")).toBeTruthy();

@@ -8,12 +8,14 @@ import type { DemoEmail } from "@/demo-data/demoEmails";
 import type { JobCardType } from "@/types/jobCardType";
 import type { GuidedTourDemoDataState } from "./guidedTourSteps";
 import type { GuidedTourHomeInteractionState } from "./guidedTourSteps";
+import type { GuidedTourResumeInteractionState } from "./guidedTourSteps";
 
 export type GuidedTourSessionValue = {
   demoDataAvailable: boolean;
   demoDataState: GuidedTourDemoDataState;
   demoDataRevision: number;
   homeInteractionState: GuidedTourHomeInteractionState;
+  resumeInteractionState: GuidedTourResumeInteractionState;
   deletedJobIds: readonly string[];
   recordDeletedJobIds: (ids: string[]) => void;
   demoJobs: readonly JobCardType[];
@@ -28,6 +30,7 @@ export const GuidedTourSessionContext =
     demoDataState: "hidden",
     demoDataRevision: 0,
     homeInteractionState: "idle",
+    resumeInteractionState: "idle",
     deletedJobIds: [],
     recordDeletedJobIds: () => undefined,
     demoJobs: [],

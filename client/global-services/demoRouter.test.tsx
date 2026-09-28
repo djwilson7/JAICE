@@ -64,5 +64,13 @@ describe("demoRouter", () => {
     expect(appLayout?.children?.map((route) => route.path)).toEqual(
       expect.arrayContaining(["/home", "/auth-about", "/dashboard", "/resume", "/settings"])
     );
+
+    const settingsRoute = appLayout?.children?.find(
+      (route) => route.path === "/settings"
+    ) as { element?: { props?: { to?: string; replace?: boolean } } } | undefined;
+    expect(settingsRoute?.element?.props).toMatchObject({
+      to: "/",
+      replace: true,
+    });
   });
 });

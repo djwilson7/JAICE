@@ -3,12 +3,14 @@ import { GuidedTourSessionContext } from "./guidedTourSessionContext";
 import {
   DEMO_EMAILS,
   createDemoExploreJobs,
+  createDemoFreeRoamJobs,
   createDemoProcessingJobs,
   createDemoSortedJobs,
 } from "@/demo-data/demoEmails";
 import type {
   GuidedTourDemoDataState,
   GuidedTourHomeInteractionState,
+  GuidedTourResumeInteractionState,
 } from "./guidedTourSteps";
 import {
   JOB_LOCAL_CHANGE_EVENT,
@@ -24,6 +26,7 @@ export function GuidedTourSessionProvider({
   demoDataState,
   demoDataRevision = 0,
   homeInteractionState = "idle",
+  resumeInteractionState = "idle",
   deletedJobIds = EMPTY_JOB_IDS,
   recordDeletedJobIds = () => undefined,
 }: {
@@ -31,11 +34,13 @@ export function GuidedTourSessionProvider({
   demoDataState: GuidedTourDemoDataState;
   demoDataRevision?: number;
   homeInteractionState?: GuidedTourHomeInteractionState;
+  resumeInteractionState?: GuidedTourResumeInteractionState;
   deletedJobIds?: readonly string[];
   recordDeletedJobIds?: (ids: string[]) => void;
 }) {
   const demoDataAvailable = demoDataState !== "hidden";
   const [demoJobs, setDemoJobs] = useState<JobCardType[]>(() => {
+    if (demoDataState === "free-roam") return createDemoFreeRoamJobs();
     if (demoDataState === "processing") return createDemoProcessingJobs();
     if (demoDataState === "sorted" || demoDataState === "bulk-deleted") {
       const deletedIds = new Set(deletedJobIds);
@@ -54,6 +59,13 @@ export function GuidedTourSessionProvider({
     const previous = previousTourState.current;
 
     setDemoJobs((currentJobs) => {
+      if (demoDataState === "free-roam") {
+        const isEnteringFreeRoam =
+          previous.dataState !== "free-roam" ||
+          previous.revision !== demoDataRevision;
+        return isEnteringFreeRoam ? createDemoFreeRoamJobs() : currentJobs;
+      }
+
       if (demoDataState === "hidden") {
         return currentJobs.length === 0 ? currentJobs : [];
       }
@@ -160,6 +172,7 @@ export function GuidedTourSessionProvider({
         demoDataState,
         demoDataRevision,
         homeInteractionState,
+        resumeInteractionState,
         deletedJobIds,
         recordDeletedJobIds,
         demoJobs,

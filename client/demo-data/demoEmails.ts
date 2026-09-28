@@ -400,6 +400,10 @@ export function createDemoExploreJobs(): JobCardType[] {
   });
 }
 
+export function createDemoFreeRoamJobs(): JobCardType[] {
+  return [...createDemoSortedJobs(), ...createDemoExploreJobs()];
+}
+
 export function createDemoActiveJobs(
   deletedJobIds: readonly string[]
 ): JobCardType[] {

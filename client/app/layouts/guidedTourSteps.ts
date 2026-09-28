@@ -22,13 +22,36 @@ export type GuidedTourSpotlightTarget =
   | "dashboard-reading-card"
   | "dashboard-avg-time-card"
   | "dashboard-avg-time-info"
-  | "dashboard-stages-over-time-card";
+  | "dashboard-stages-over-time-card"
+  | "resume-left-rail"
+  | "resume-left-surface"
+  | "resume-left-rail-panel"
+  | "resume-left-rail-toggle"
+  | "resume-right-rail"
+  | "resume-right-surface"
+  | "resume-right-rail-panel"
+  | "resume-right-rail-toggle"
+  | "resume-bottom-rail"
+  | "resume-bottom-surface"
+  | "resume-bottom-toolbar"
+  | "resume-bottom-rail-panel"
+  | "resume-bottom-rail-toggle"
+  | "resume-document"
+  | "resume-experience-section"
+  | "resume-experience-add-control"
+  | "resume-experience-edit-controls"
+  | "resume-experience-organize-controls"
+  | "resume-experience-tag-control"
+  | "resume-experience-ai-control"
+  | "resume-autosave-control"
+  | "resume-header";
 
 export type GuidedTourDemoDataState =
   | "hidden"
   | "processing"
   | "sorted"
-  | "bulk-deleted";
+  | "bulk-deleted"
+  | "free-roam";
 export type GuidedTourHomeInteractionState =
   | "idle"
   | "select-control"
@@ -37,6 +60,21 @@ export type GuidedTourHomeInteractionState =
   | "delete-confirmation"
   | "trash-ready"
   | "trash-open"
+  | "free";
+export type GuidedTourResumeInteractionState =
+  | "idle"
+  | "overview"
+  | "left-rail"
+  | "right-rail"
+  | "bottom-rail"
+  | "document"
+  | "experience-overview"
+  | "experience-add"
+  | "experience-edit"
+  | "experience-organize"
+  | "experience-tag"
+  | "experience-ai"
+  | "autosave"
   | "free";
 export type GuidedTourNavigationMode =
   | "closed"
@@ -53,11 +91,17 @@ export type GuidedTourStep = {
   spotlight?: GuidedTourSpotlightTarget;
   shimmer?: GuidedTourSpotlightTarget;
   connector?: boolean;
+  connectorTarget?: GuidedTourSpotlightTarget;
+  showSpotlightMask?: boolean;
+  completesTour?: boolean;
   demoDataState?: GuidedTourDemoDataState;
   homeInteractionState?: GuidedTourHomeInteractionState;
+  resumeInteractionState?: GuidedTourResumeInteractionState;
   navigationMode?: Exclude<GuidedTourNavigationMode, "closed">;
   scrollPosition?: "top" | "dashboard-second-row";
   lockScroll?: boolean;
+  guidePlacement?: "above-spotlight" | "left-of-spotlight";
+  guidePlacementTarget?: GuidedTourSpotlightTarget;
   waitForNavigation?: boolean;
   waitForAction?: boolean;
   actionLabel?: string;
@@ -124,7 +168,7 @@ export const GUIDED_TOUR_SECTIONS: readonly GuidedTourSection[] = [
       {
         title: "More actions on demand",
         description:
-          "Hover over the offer card to reveal the actions available for that email. From there you can edit, archive, review, or return to the original message.",
+          "Hover over the offer card for three seconds to reveal the actions available for that email. From there you can edit, archive, review, or return to the original message.",
         spotlight: "home-offer-column",
         shimmer: "home-offer-card",
         demoDataState: "sorted",
@@ -310,6 +354,139 @@ export const GUIDED_TOUR_SECTIONS: readonly GuidedTourSection[] = [
         title: "A resume built to adapt",
         description:
           "The resume workspace keeps your experience ready for each opportunity. We’ll highlight the editing controls that support tailored applications.",
+        navigationMode: "locked",
+        resumeInteractionState: "overview",
+      },
+      {
+        title: "Build from a master resume",
+        description:
+          "Use the left rail to manage resume versions. Start with a complete master resume, create focused versions from it, and cherry-pick the strongest details for each opportunity.",
+        spotlight: "resume-left-surface",
+        shimmer: "resume-left-rail",
+        connectorTarget: "resume-left-rail-toggle",
+        resumeInteractionState: "left-rail",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Advice when you need it",
+        description:
+          "If you have questions or want general advice, open the right rail. Jaice is here to help you strengthen and tailor your resume.",
+        spotlight: "resume-right-surface",
+        shimmer: "resume-right-rail",
+        connectorTarget: "resume-right-rail-toggle",
+        resumeInteractionState: "right-rail",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+        guidePlacement: "left-of-spotlight",
+        guidePlacementTarget: "resume-right-rail-panel",
+      },
+      {
+        title: "Control the page layout",
+        description:
+          "The bottom rail controls page layout, font sizes, margins, section titles, and other formatting details.",
+        spotlight: "resume-bottom-toolbar",
+        shimmer: "resume-bottom-rail-toggle",
+        connectorTarget: "resume-bottom-rail-toggle",
+        resumeInteractionState: "bottom-rail",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+        guidePlacement: "above-spotlight",
+      },
+      {
+        title: "Edit your resume directly",
+        description:
+          "Your resume content stays at the center of the workspace. Edit each section directly on the page to refine the experience, education, skills, and details you want to present.",
+        spotlight: "resume-document",
+        shimmer: "resume-document",
+        resumeInteractionState: "document",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Controls appear where you work",
+        description:
+          "Hovering a resume section reveals the controls that belong to it. Work Experience is active here so you can see its editable fields, entry actions, bullet composer, and edge controls together.",
+        spotlight: "resume-experience-section",
+        shimmer: "resume-experience-section",
+        connector: true,
+        resumeInteractionState: "experience-overview",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Add a work experience entry",
+        description:
+          "Use the plus control at the edge of Work Experience to create a new blank entry, then fill in the role, company, location, and dates that belong in this resume version.",
+        spotlight: "resume-experience-section",
+        shimmer: "resume-experience-add-control",
+        connector: true,
+        resumeInteractionState: "experience-add",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Edit fields and add bullets",
+        description:
+          "Type directly into an experience entry to save changes. Add bullets from the empty composer; delete all text and leave a bullet to remove it. Any empty field, such as an end date, is omitted from the final resume.",
+        spotlight: "resume-experience-section",
+        shimmer: "resume-experience-edit-controls",
+        connector: true,
+        resumeInteractionState: "experience-edit",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Organize or remove entries",
+        description:
+          "Use the arrow controls to change an entry’s order. Clear removes its contents while keeping the entry available; Delete removes the entry itself.",
+        spotlight: "resume-experience-section",
+        shimmer: "resume-experience-organize-controls",
+        connector: true,
+        resumeInteractionState: "experience-organize",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Improve bullets with AI Assist",
+        description:
+          "AI Assist inspects the bullets under a work item and suggests clearer, stronger wording. You can review each suggestion before deciding whether it belongs in the resume.",
+        spotlight: "resume-experience-section",
+        shimmer: "resume-experience-ai-control",
+        connector: true,
+        resumeInteractionState: "experience-ai",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Tag the focus of your experience",
+        description:
+          "Tags identify the core focus of an experience item, making relevant accomplishments easier to recognize and reuse when tailoring another resume version.",
+        spotlight: "resume-experience-section",
+        shimmer: "resume-experience-tag-control",
+        connector: false,
+        resumeInteractionState: "experience-tag",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Your current version stays saved",
+        description:
+          "Changes are automatically saved to the resume version you are currently editing. The header status and auto-save control keep that state visible while you work.",
+        spotlight: "resume-header",
+        shimmer: "resume-autosave-control",
+        resumeInteractionState: "autosave",
+        navigationMode: "locked",
+        showSpotlightMask: false,
+      },
+      {
+        title: "Explore, then continue",
+        description:
+          "The Resume workspace is now yours to explore. These editing patterns stay consistent across the header, summary, education, and skills sections.",
+        resumeInteractionState: "free",
+        navigationMode: "expanded",
+        actionLabel: "Finish tour",
+        completesTour: true,
       },
     ],
   },

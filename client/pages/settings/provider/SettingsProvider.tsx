@@ -12,16 +12,26 @@ import type {
   ReviewBehavior,
   PrimaryColumnBehavior,
 } from "./settingsTypes";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   // THEME
-  const [theme, setTheme] = useState<Theme>(
+  const [theme, setThemeState] = useState<Theme>(
     () =>
-      (localStorage.getItem(SETTINGS_KEYS.THEME) as Theme) ||
-      (window.matchMedia("(prefers-color-scheme: light)").matches
-        ? "light"
-        : "dark")
+      IS_DEMO_MODE
+        ? "dark"
+        : (localStorage.getItem(SETTINGS_KEYS.THEME) as Theme) ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches
+            ? "light"
+            : "dark")
   );
+  const setTheme: typeof setThemeState = (nextTheme) => {
+    if (IS_DEMO_MODE) {
+      setThemeState("dark");
+      return;
+    }
+    setThemeState(nextTheme);
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -76,6 +86,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const syncFromDom = () => {
+      if (IS_DEMO_MODE) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        if (theme !== "dark") setThemeState("dark");
+        return;
+      }
+
       const domTheme = document.documentElement.getAttribute(
         "data-theme"
       ) as Theme;
@@ -83,7 +99,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         "data-contrast"
       ) as ContrastLevel;
 
-      if (domTheme && domTheme !== theme) setTheme(domTheme);
+      if (domTheme && domTheme !== theme) setThemeState(domTheme);
       if (domContrast && domContrast !== contrast) setContrast(domContrast);
     };
 

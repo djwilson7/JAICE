@@ -53,7 +53,10 @@ describe('LandingPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Take a guided tour' }));
     expect(mockNavigate).toHaveBeenCalledWith('/home', {
-      state: { startGuidedTour: true }
+      state: {
+        startGuidedTour: true,
+        guidedTourRequestId: expect.any(String)
+      }
     });
   });
 });

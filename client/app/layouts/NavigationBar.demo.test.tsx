@@ -1,12 +1,17 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NavigationBar } from "./NavigationBar";
+import { calculatePageTourLauncherLift } from "./pageTourLauncherPosition";
 import React from "react";
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockApi = vi.hoisted(() => vi.fn());
 const authModuleLoaded = vi.hoisted(() => vi.fn());
 const mockTourState = vi.hoisted(() => ({ navigationMode: "closed" }));
+const mockGuidedTour = vi.hoisted(() => ({
+  onFullTourComplete: undefined as undefined | (() => void),
+  pageTourRequest: null as null | { id: number; route: string },
+}));
 
 vi.mock("react-router", () => ({
   Outlet: () => null,
@@ -75,8 +80,11 @@ vi.mock("@/app/nav-components/NavButton", () => ({
   ),
 }));
 vi.mock("./GuidedTour", () => ({
+  GUIDED_TOUR_SESSION_KEY: "jaice-demo-guided-tour-session",
   GuidedTour: ({
     onNavigationModeChange,
+    onFullTourComplete,
+    pageTourRequest,
   }: {
     onNavigationModeChange: (
       mode:
@@ -87,7 +95,11 @@ vi.mock("./GuidedTour", () => ({
         | "dashboard-only"
         | "resume-only"
     ) => void;
+    onFullTourComplete?: () => void;
+    pageTourRequest?: { id: number; route: string } | null;
   }) => {
+    mockGuidedTour.onFullTourComplete = onFullTourComplete;
+    mockGuidedTour.pageTourRequest = pageTourRequest ?? null;
     React.useEffect(() => {
       onNavigationModeChange(
         mockTourState.navigationMode as
@@ -112,26 +124,78 @@ vi.mock("framer-motion", () => ({
 describe("NavigationBar in demo mode", () => {
   beforeEach(() => {
     mockTourState.navigationMode = "closed";
+    mockGuidedTour.onFullTourComplete = undefined;
+    mockGuidedTour.pageTourRequest = null;
+    window.localStorage.clear();
     vi.clearAllMocks();
+  });
+
+  it("only lifts the page-tour launcher when its baseline overlaps the bottom rail", () => {
+    const overlappingLauncher = { top: 700, right: 1200, bottom: 790, left: 900 };
+    const bottomRail = { top: 750, right: 1100, bottom: 820, left: 500 };
+
+    expect(calculatePageTourLauncherLift(overlappingLauncher, bottomRail, 0)).toBe(52);
+    expect(
+      calculatePageTourLauncherLift(
+        { ...overlappingLauncher, top: 648, bottom: 738 },
+        bottomRail,
+        52
+      )
+    ).toBe(52);
+    expect(
+      calculatePageTourLauncherLift(
+        { ...overlappingLauncher, right: 1400, left: 1200 },
+        bottomRail,
+        0
+      )
+    ).toBe(0);
+    expect(
+      calculatePageTourLauncherLift(
+        { ...overlappingLauncher, top: 620, bottom: 710 },
+        bottomRail,
+        0
+      )
+    ).toBe(0);
+  });
+
+  it("unlocks and launches the current page refresher after the full tour", () => {
+    render(<NavigationBar />);
+
+    expect(screen.queryByLabelText("Page tour refresher")).not.toBeInTheDocument();
+
+    act(() => mockGuidedTour.onFullTourComplete?.());
+
+    expect(screen.getByLabelText("Page tour refresher")).toHaveTextContent(
+      "Replay the highlights for this page."
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restart Home tour" })
+    );
+
+    expect(screen.queryByLabelText("Page tour refresher")).not.toBeInTheDocument();
+    expect(mockGuidedTour.pageTourRequest).toEqual({ id: 1, route: "/home" });
+    expect(
+      window.localStorage.getItem("jaice-demo-full-tour-complete")
+    ).toBe("true");
   });
 
   it("allows product navigation and exits without backend or Firebase logout", async () => {
     render(<NavigationBar />);
 
-    expect(screen.getByRole("button", { name: "Theme" })).toBeEnabled();
+    expect(screen.getByLabelText("Demo environment")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Theme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "About" }));
       fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
       fireEvent.click(screen.getByRole("button", { name: "Resume" }));
-      fireEvent.click(screen.getByRole("button", { name: "Settings" }));
       fireEvent.click(screen.getByRole("button", { name: "Quit" }));
     });
 
     expect(mockNavigate).toHaveBeenCalledWith("/auth-about");
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
     expect(mockNavigate).toHaveBeenCalledWith("/resume");
-    expect(mockNavigate).toHaveBeenCalledWith("/settings");
     expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
     expect(mockApi).not.toHaveBeenCalled();
     expect(authModuleLoaded).not.toHaveBeenCalled();
@@ -149,8 +213,8 @@ describe("NavigationBar in demo mode", () => {
     expect(screen.getByRole("button", { name: "About" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Dashboard" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Resume" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Theme" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Theme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Quit" })).toBeEnabled();
 
     fireEvent.mouseEnter(document.querySelector("#navigation-bar")!);
@@ -170,8 +234,8 @@ describe("NavigationBar in demo mode", () => {
     );
     expect(screen.getByRole("button", { name: "Home" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "About" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Theme" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Theme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Quit" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Home" })).toHaveAttribute(
       "data-show-label",
@@ -198,7 +262,7 @@ describe("NavigationBar in demo mode", () => {
       "guided-tour-nav-exit"
     );
 
-    for (const label of ["Home", "Dashboard", "Resume", "Theme", "Settings"]) {
+    for (const label of ["Home", "Dashboard", "Resume"]) {
       const button = screen.getByRole("button", { name: label });
       expect(button).toBeDisabled();
       expect(button.closest("li")).toHaveClass("guided-tour-nav-muted");
@@ -230,7 +294,7 @@ describe("NavigationBar in demo mode", () => {
       "guided-tour-nav-exit"
     );
 
-    for (const label of ["Home", "About", "Resume", "Theme", "Settings"]) {
+    for (const label of ["Home", "About", "Resume"]) {
       const button = screen.getByRole("button", { name: label });
       expect(button).toBeDisabled();
       expect(button.closest("li")).toHaveClass("guided-tour-nav-muted");
@@ -261,7 +325,7 @@ describe("NavigationBar in demo mode", () => {
       "guided-tour-nav-exit"
     );
 
-    for (const label of ["Home", "About", "Dashboard", "Theme", "Settings"]) {
+    for (const label of ["Home", "About", "Dashboard"]) {
       const button = screen.getByRole("button", { name: label });
       expect(button).toBeDisabled();
       expect(button.closest("li")).toHaveClass("guided-tour-nav-muted");

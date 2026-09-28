@@ -6,6 +6,7 @@ import {
   type GuidedTourDemoDataState,
   type GuidedTourHomeInteractionState,
   type GuidedTourNavigationMode,
+  type GuidedTourResumeInteractionState,
   type GuidedTourSpotlightTarget,
 } from "./guidedTourSteps";
 import {
@@ -16,9 +17,16 @@ import {
 type GuidedTourProps = {
   enabled: boolean;
   startRequested: boolean;
+  fullTourRequestId?: string;
+  pageTourRequest?: {
+    id: number;
+    route: string;
+  } | null;
   currentPath: string;
   isSuppressed?: boolean;
   onNavigate: (route: string) => void;
+  onTourActiveChange?: (isActive: boolean) => void;
+  onFullTourComplete?: () => void;
   onNavigationModeChange?: (mode: GuidedTourNavigationMode) => void;
   onDemoDataStateChange?: (
     state: GuidedTourDemoDataState,
@@ -27,9 +35,43 @@ type GuidedTourProps = {
   onHomeInteractionStateChange?: (
     state: GuidedTourHomeInteractionState
   ) => void;
+  onResumeInteractionStateChange?: (
+    state: GuidedTourResumeInteractionState
+  ) => void;
 };
 
 type TourPhase = "inactive" | "welcome" | "active";
+type TourMode = "full" | "page";
+
+type PersistedTourSession = {
+  phase: Exclude<TourPhase, "inactive">;
+  tourMode: TourMode;
+  sectionIndex: number;
+  pageProgress: Record<string, number>;
+  fullTourRequestId?: string;
+};
+
+export const GUIDED_TOUR_SESSION_KEY = "jaice-demo-guided-tour-session";
+
+function readPersistedTourSession(): PersistedTourSession | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const value = window.localStorage.getItem(GUIDED_TOUR_SESSION_KEY);
+    if (!value) return null;
+    const session = JSON.parse(value) as PersistedTourSession;
+    if (
+      (session.phase !== "welcome" && session.phase !== "active") ||
+      (session.tourMode !== "full" && session.tourMode !== "page") ||
+      !session.pageProgress
+    ) {
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+}
 
 type SpotlightRect = {
   top: number;
@@ -40,6 +82,14 @@ type SpotlightRect = {
 
 const FOCUS_SHIMMER_INSET = 0;
 const MAX_FOCUS_SHIMMERS = 8;
+const OFFER_HOVER_DURATION_MS = 3_000;
+const BLUE_RESUME_CONNECTOR_STATES = new Set<GuidedTourResumeInteractionState>([
+  "experience-overview",
+  "experience-add",
+  "experience-edit",
+  "experience-organize",
+  "experience-ai",
+]);
 const SCROLL_TRACKED_TOUR_ROUTES = new Set(["/auth-about", "/dashboard"]);
 const CONNECTOR_PARTICLES = Array.from({ length: 42 }, (_, index) => ({
   progress: (((index * 47) % 97) + 1) / 100,
@@ -53,49 +103,113 @@ function getTargetElements(target?: GuidedTourSpotlightTarget) {
   if (!target) return [];
 
   const elements =
-    target === "home-job-cards"
+    target === "resume-left-surface"
       ? Array.from(
           document.querySelectorAll<HTMLElement>(
-            '[data-guided-tour="home-job-card"]'
+            '[data-guided-tour="resume-header"], [data-guided-tour="resume-left-rail-panel"]'
           )
         )
-      : target === "home-offer-card"
-        ? [document.querySelector<HTMLElement>("#demo-email-juniper-offer")]
-        : target === "home-offer-card-accepted-column"
-          ? [
-              document.querySelector<HTMLElement>(
-                "#demo-email-juniper-offer"
-              ),
-              document.querySelector<HTMLElement>(
-                '[data-guided-tour="home-accepted-column"]'
-              ),
-            ]
-        : target === "home-offer-accepted-columns"
-          ? [
-              document.querySelector<HTMLElement>(
-                '[data-guided-tour="home-offer-column"]'
-              ),
-              document.querySelector<HTMLElement>(
-                '[data-guided-tour="home-accepted-column"]'
-              ),
-            ]
-          : target === "home-delete-confirmation"
-            ? [
-                document.querySelector<HTMLElement>(
-                  '[role="dialog"][aria-label="Confirm Deletion"] .modal'
-                ),
-              ]
-            : target === "home-trash-modal"
-              ? [
-                  document.querySelector<HTMLElement>(
-                    '[role="dialog"][aria-label="Trash Bin"] .modal'
-                  ),
-                ]
-              : [
-                  document.querySelector<HTMLElement>(
-                    `[data-guided-tour="${target}"]`
-                  ),
-                ];
+      : target === "resume-right-surface"
+        ? Array.from(
+            document.querySelectorAll<HTMLElement>(
+              '[data-guided-tour="resume-header"], [data-guided-tour="resume-right-rail-panel"]'
+            )
+          )
+        : target === "resume-bottom-surface"
+          ? Array.from(
+              document.querySelectorAll<HTMLElement>(
+                '[data-guided-tour="resume-bottom-rail-panel"], [data-guided-tour="resume-bottom-rail-toggle"]'
+            )
+          )
+          : target === "resume-experience-section"
+            ? Array.from(
+                document.querySelectorAll<HTMLElement>(
+                  '#print-canvas [data-section="experience"]'
+                )
+              )
+            : target === "resume-experience-edit-controls"
+              ? Array.from(
+                  document.querySelectorAll<HTMLElement>(
+                    '#print-canvas [data-guided-tour="resume-experience-edit-control"], #print-canvas .resume-editor-bullet-composer'
+                  )
+                )
+              : target === "resume-experience-organize-controls"
+                ? Array.from(
+                    document.querySelectorAll<HTMLElement>(
+                      '[data-guided-tour="resume-experience-organize-control"]'
+                    )
+                  )
+          : target === "resume-left-rail"
+            ? Array.from(
+                document.querySelectorAll<HTMLElement>(
+                  '[data-guided-tour="resume-left-rail-panel"], [data-guided-tour="resume-left-rail-toggle"]'
+                )
+              )
+            : target === "resume-right-rail"
+              ? Array.from(
+                  document.querySelectorAll<HTMLElement>(
+                    '[data-guided-tour="resume-right-rail-panel"], [data-guided-tour="resume-right-rail-toggle"]'
+                  )
+                )
+              : target === "resume-bottom-rail"
+                ? Array.from(
+                    document.querySelectorAll<HTMLElement>(
+                      '[data-guided-tour="resume-bottom-rail-panel"], [data-guided-tour="resume-bottom-rail-toggle"]'
+                    )
+                  )
+                : target === "home-job-cards"
+                  ? Array.from(
+                      document.querySelectorAll<HTMLElement>(
+                        '[data-guided-tour="home-job-card"]'
+                      )
+                    )
+                  : target === "home-offer-card"
+                    ? [
+                        document.querySelector<HTMLElement>(
+                          "#demo-email-juniper-offer"
+                        ),
+                      ]
+                    : target === "home-offer-card-accepted-column"
+                      ? [
+                          document.querySelector<HTMLElement>(
+                            "#demo-email-juniper-offer"
+                          ),
+                          document.querySelector<HTMLElement>(
+                            '[data-guided-tour="home-accepted-column"]'
+                          ),
+                        ]
+                      : target === "home-offer-accepted-columns"
+                        ? [
+                            document.querySelector<HTMLElement>(
+                              '[data-guided-tour="home-offer-column"]'
+                            ),
+                            document.querySelector<HTMLElement>(
+                              '[data-guided-tour="home-accepted-column"]'
+                            ),
+                          ]
+                        : target === "home-delete-confirmation"
+                          ? [
+                              document.querySelector<HTMLElement>(
+                                '[role="dialog"][aria-label="Confirm Deletion"] .modal'
+                              ),
+                            ]
+                          : target === "home-trash-modal"
+                            ? [
+                                document.querySelector<HTMLElement>(
+                                  '[role="dialog"][aria-label="Trash Bin"] .modal'
+                                ),
+                              ]
+                            : target.startsWith("resume-")
+                              ? Array.from(
+                                  document.querySelectorAll<HTMLElement>(
+                                    `[data-guided-tour="${target}"]`
+                                  )
+                                )
+                              : [
+                                  document.querySelector<HTMLElement>(
+                                    `[data-guided-tour="${target}"]`
+                                  ),
+                                ];
 
   return elements.filter(
     (element): element is HTMLElement => element !== null
@@ -193,6 +307,87 @@ function combineRects(rects: SpotlightRect[]) {
   };
 }
 
+type MaskTile = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+function buildMaskTiles(rects: SpotlightRect[]): MaskTile[] {
+  if (rects.length === 0 || typeof window === "undefined") return [];
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const clippedRects = rects
+    .map((rect) => ({
+      top: Math.max(0, Math.min(viewportHeight, rect.top)),
+      left: Math.max(0, Math.min(viewportWidth, rect.left)),
+      right: Math.max(0, Math.min(viewportWidth, rect.right)),
+      bottom: Math.max(0, Math.min(viewportHeight, rect.bottom)),
+    }))
+    .filter((rect) => rect.right > rect.left && rect.bottom > rect.top);
+
+  if (clippedRects.length === 0) {
+    return [
+      { top: 0, left: 0, width: viewportWidth, height: viewportHeight },
+    ];
+  }
+
+  const yEdges = Array.from(
+    new Set([
+      0,
+      viewportHeight,
+      ...clippedRects.flatMap((rect) => [rect.top, rect.bottom]),
+    ])
+  ).sort((first, second) => first - second);
+
+  return yEdges.slice(0, -1).flatMap((top, index) => {
+    const bottom = yEdges[index + 1];
+    if (bottom <= top) return [];
+
+    const intervals = clippedRects
+      .filter((rect) => rect.top < bottom && rect.bottom > top)
+      .map((rect) => [rect.left, rect.right] as const)
+      .sort((first, second) => first[0] - second[0]);
+    const merged = intervals.reduce<Array<[number, number]>>(
+      (result, interval) => {
+        const previous = result[result.length - 1];
+        if (previous && interval[0] <= previous[1]) {
+          previous[1] = Math.max(previous[1], interval[1]);
+        } else {
+          result.push([interval[0], interval[1]]);
+        }
+        return result;
+      },
+      []
+    );
+
+    const tiles: MaskTile[] = [];
+    let cursor = 0;
+    merged.forEach(([left, right]) => {
+      if (left > cursor) {
+        tiles.push({
+          top,
+          left: cursor,
+          width: left - cursor,
+          height: bottom - top,
+        });
+      }
+      cursor = Math.max(cursor, right);
+    });
+    if (cursor < viewportWidth) {
+      tiles.push({
+        top,
+        left: cursor,
+        width: viewportWidth - cursor,
+        height: bottom - top,
+      });
+    }
+    return tiles;
+  });
+}
+
 function getRectEdgePoint(rect: SpotlightRect, toward: { x: number; y: number }) {
   const center = {
     x: (rect.left + rect.right) / 2,
@@ -217,22 +412,31 @@ function getRectEdgePoint(rect: SpotlightRect, toward: { x: number; y: number })
 function GuidedTourSpotlight({
   target,
   shimmerTarget = target,
+  connectorTarget = shimmerTarget,
   showConnector = true,
+  showMask = true,
+  useResumeShimmer = false,
+  useResumeConnector = false,
 }: {
   target?: GuidedTourSpotlightTarget;
   shimmerTarget?: GuidedTourSpotlightTarget;
+  connectorTarget?: GuidedTourSpotlightTarget;
   showConnector?: boolean;
+  showMask?: boolean;
+  useResumeShimmer?: boolean;
+  useResumeConnector?: boolean;
 }) {
   const spotlightRects = useTargetRects(target);
   const shimmerRects = useTargetRects(shimmerTarget);
+  const connectorRects = useTargetRects(connectorTarget);
   const cardRects = useTargetRects("guided-tour-card" as GuidedTourSpotlightTarget);
-  const combinedRect = combineRects(spotlightRects);
-  const combinedShimmerRect = combineRects(shimmerRects);
+  const maskTiles = buildMaskTiles(spotlightRects);
+  const combinedConnectorRect = combineRects(connectorRects);
   const cardRect = cardRects[0] ?? null;
-  const targetCenter = combinedShimmerRect
+  const targetCenter = combinedConnectorRect
     ? {
-        x: (combinedShimmerRect.left + combinedShimmerRect.right) / 2,
-        y: (combinedShimmerRect.top + combinedShimmerRect.bottom) / 2,
+        x: (combinedConnectorRect.left + combinedConnectorRect.right) / 2,
+        y: (combinedConnectorRect.top + combinedConnectorRect.bottom) / 2,
       }
     : null;
   const cardCenter = cardRect
@@ -246,38 +450,21 @@ function GuidedTourSpotlight({
       ? getRectEdgePoint(cardRect, targetCenter)
       : null;
   const connectorEnd =
-    combinedShimmerRect && cardCenter
-      ? getRectEdgePoint(combinedShimmerRect, cardCenter)
+    combinedConnectorRect && cardCenter
+      ? getRectEdgePoint(combinedConnectorRect, cardCenter)
       : null;
 
   return createPortal(
     <>
-      {target && combinedRect && (
+      {showMask && target && maskTiles.length > 0 && (
         <div className="guided-tour-focus-mask-layer" aria-hidden="true">
-          <span
-            className="guided-tour-focus-mask guided-tour-focus-mask-top"
-            style={{ height: Math.max(0, combinedRect.top) }}
-          />
-          <span
-            className="guided-tour-focus-mask guided-tour-focus-mask-left"
-            style={{
-              top: combinedRect.top,
-              width: Math.max(0, combinedRect.left),
-              height: Math.max(0, combinedRect.bottom - combinedRect.top),
-            }}
-          />
-          <span
-            className="guided-tour-focus-mask guided-tour-focus-mask-right"
-            style={{
-              top: combinedRect.top,
-              left: combinedRect.right,
-              height: Math.max(0, combinedRect.bottom - combinedRect.top),
-            }}
-          />
-          <span
-            className="guided-tour-focus-mask guided-tour-focus-mask-bottom"
-            style={{ top: combinedRect.bottom }}
-          />
+          {maskTiles.map((tile, index) => (
+            <span
+              key={`${tile.top}-${tile.left}-${index}`}
+              className="guided-tour-focus-mask"
+              style={tile}
+            />
+          ))}
         </div>
       )}
       {Array.from({ length: MAX_FOCUS_SHIMMERS }, (_, index) => {
@@ -285,7 +472,9 @@ function GuidedTourSpotlight({
         return (
           <FocalShimmer
             key={index}
-            className="guided-tour-focus-shimmer"
+            className={`guided-tour-focus-shimmer${
+              useResumeShimmer ? " guided-tour-focus-shimmer--resume" : ""
+            }`}
             aria-hidden="true"
             style={
               rect
@@ -308,7 +497,9 @@ function GuidedTourSpotlight({
         );
       })}
       <svg
-        className="guided-tour-focus-connector"
+        className={`guided-tour-focus-connector${
+          useResumeConnector ? " guided-tour-focus-connector--resume" : ""
+        }`}
         aria-hidden="true"
         width="100%"
         height="100%"
@@ -361,39 +552,133 @@ function GuidedTourSpotlight({
 export function GuidedTour({
   enabled,
   startRequested,
+  fullTourRequestId,
+  pageTourRequest = null,
   currentPath,
   isSuppressed = false,
   onNavigate,
+  onTourActiveChange,
+  onFullTourComplete,
   onNavigationModeChange,
   onDemoDataStateChange,
   onHomeInteractionStateChange,
+  onResumeInteractionStateChange,
 }: GuidedTourProps) {
+  const restoredSessionRef = useRef<
+    PersistedTourSession | null | undefined
+  >(undefined);
+  if (restoredSessionRef.current === undefined) {
+    const storedSession = enabled ? readPersistedTourSession() : null;
+    const isSameFullTourRequest =
+      storedSession?.tourMode === "full" &&
+      (!fullTourRequestId ||
+        storedSession.fullTourRequestId === fullTourRequestId);
+    restoredSessionRef.current =
+      storedSession && (!startRequested || isSameFullTourRequest)
+        ? storedSession
+        : null;
+  }
+  const restoredSession = restoredSessionRef.current;
   const [phase, setPhase] = useState<TourPhase>(() =>
-    enabled && startRequested ? "welcome" : "inactive"
+    restoredSession?.phase ??
+    (enabled && startRequested ? "welcome" : "inactive")
+  );
+  const [tourMode, setTourMode] = useState<TourMode>(
+    restoredSession?.tourMode ?? "full"
   );
   const [sectionIndex, setSectionIndex] = useState(() => {
+    if (restoredSession) {
+      const currentSection = GUIDED_TOUR_SECTIONS.findIndex(
+        (candidate) => candidate.route === currentPath
+      );
+      if (currentSection >= 0) return currentSection;
+      if (GUIDED_TOUR_SECTIONS[restoredSession.sectionIndex]) {
+        return restoredSession.sectionIndex;
+      }
+    }
     const matchingSection = GUIDED_TOUR_SECTIONS.findIndex(
       (section) => section.route === currentPath
     );
     return matchingSection >= 0 ? matchingSection : 0;
   });
-  const [pageProgress, setPageProgress] = useState<Record<string, number>>({});
+  const [pageProgress, setPageProgress] = useState<Record<string, number>>(
+    restoredSession?.pageProgress ?? {}
+  );
+  const fullTourRequestIdRef = useRef(
+    restoredSession?.fullTourRequestId ?? fullTourRequestId
+  );
+  const handledPageTourRequestIdRef = useRef<number | null>(null);
   const welcomeRef = useRef<HTMLDivElement>(null);
+  const [isOfferHovering, setIsOfferHovering] = useState(false);
 
   const showWelcome = enabled && phase === "welcome" && !isSuppressed;
   const showSteps = enabled && phase === "active" && !isSuppressed;
   const section = GUIDED_TOUR_SECTIONS[sectionIndex];
   const stepIndex = pageProgress[section.route] ?? 0;
   const step = section.steps[stepIndex];
+  const isPageTour = tourMode === "page";
+  const isLastPageStep = stepIndex === section.steps.length - 1;
+
+  useEffect(() => {
+    onTourActiveChange?.(enabled && phase !== "inactive");
+  }, [enabled, onTourActiveChange, phase]);
+
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") return;
+
+    try {
+      if (phase === "inactive") {
+        window.localStorage.removeItem(GUIDED_TOUR_SESSION_KEY);
+        return;
+      }
+      window.localStorage.setItem(
+        GUIDED_TOUR_SESSION_KEY,
+        JSON.stringify({
+          phase,
+          tourMode,
+          sectionIndex,
+          pageProgress,
+          fullTourRequestId: fullTourRequestIdRef.current,
+        } satisfies PersistedTourSession)
+      );
+    } catch {
+      // The tour remains usable when browser storage is unavailable.
+    }
+  }, [enabled, pageProgress, phase, sectionIndex, tourMode]);
+
+  useEffect(() => {
+    if (!enabled || !pageTourRequest) return;
+    if (handledPageTourRequestIdRef.current === pageTourRequest.id) return;
+    handledPageTourRequestIdRef.current = pageTourRequest.id;
+
+    const matchingSection = GUIDED_TOUR_SECTIONS.findIndex(
+      (candidate) => candidate.route === pageTourRequest.route
+    );
+    if (matchingSection < 0) return;
+
+    const route = GUIDED_TOUR_SECTIONS[matchingSection].route;
+    setTourMode("page");
+    setSectionIndex(matchingSection);
+    setPageProgress((progress) => ({ ...progress, [route]: 0 }));
+    setPhase("active");
+  }, [enabled, pageTourRequest]);
 
   useEffect(() => {
     const navigationMode = showSteps
-      ? step.navigationMode ?? "closed"
+      ? isPageTour && isLastPageStep
+        ? "closed"
+        : step.navigationMode ?? "closed"
       : "closed";
     onNavigationModeChange?.(navigationMode);
 
     return () => onNavigationModeChange?.("closed");
-  }, [onNavigationModeChange, showSteps, step.navigationMode]);
+  }, [
+    isLastPageStep,
+    isPageTour,
+    onNavigationModeChange,
+    showSteps,
+    step.navigationMode,
+  ]);
 
   useEffect(() => {
     if (!showSteps) return;
@@ -405,22 +690,32 @@ export function GuidedTour({
     onHomeInteractionStateChange?.(
       isHome ? step.homeInteractionState ?? "idle" : "idle"
     );
+    onResumeInteractionStateChange?.(
+      showSteps && section.route === "/resume"
+        ? step.resumeInteractionState ?? "idle"
+        : "idle"
+    );
   }, [
     onDemoDataStateChange,
     onHomeInteractionStateChange,
+    onResumeInteractionStateChange,
     section.route,
     showSteps,
     step.demoDataState,
     step.homeInteractionState,
+    step.resumeInteractionState,
     stepIndex,
   ]);
 
   useEffect(() => {
     if (!showSteps || section.route !== "/home") return;
 
-    const isOfferCardEvent = (event: Event) =>
-      event.target instanceof Element &&
-      Boolean(event.target.closest("#demo-email-juniper-offer"));
+    let offerHoverTimer: ReturnType<typeof setTimeout> | null = null;
+    const getOfferCard = (event: Event) =>
+      event.target instanceof Element
+        ? event.target.closest<HTMLElement>("#demo-email-juniper-offer")
+        : null;
+    const isOfferCardEvent = (event: Event) => Boolean(getOfferCard(event));
     const advanceHomeStep = () => {
       setPageProgress((progress) => ({
         ...progress,
@@ -428,7 +723,34 @@ export function GuidedTour({
       }));
     };
     const handleOfferHover = (event: Event) => {
-      if (stepIndex === 6 && isOfferCardEvent(event)) advanceHomeStep();
+      if (stepIndex !== 6 || offerHoverTimer !== null) return;
+
+      const offerCard = getOfferCard(event);
+      if (!offerCard) return;
+
+      const previousTarget = (event as PointerEvent).relatedTarget;
+      if (previousTarget instanceof Node && offerCard.contains(previousTarget)) {
+        return;
+      }
+
+      setIsOfferHovering(true);
+      offerHoverTimer = window.setTimeout(() => {
+        offerHoverTimer = null;
+        advanceHomeStep();
+      }, OFFER_HOVER_DURATION_MS);
+    };
+    const handleOfferHoverEnd = (event: Event) => {
+      if (stepIndex !== 6 || offerHoverTimer === null) return;
+
+      const offerCard = getOfferCard(event);
+      if (!offerCard) return;
+
+      const nextTarget = (event as PointerEvent).relatedTarget;
+      if (nextTarget instanceof Node && offerCard.contains(nextTarget)) return;
+
+      window.clearTimeout(offerHoverTimer);
+      offerHoverTimer = null;
+      setIsOfferHovering(false);
     };
     const handleOfferOpen = (event: Event) => {
       if (
@@ -524,6 +846,7 @@ export function GuidedTour({
     };
 
     document.addEventListener("pointerover", handleOfferHover);
+    document.addEventListener("pointerout", handleOfferHoverEnd);
     document.addEventListener("click", handleTourClick);
     window.addEventListener(
       "guided-tour-selection-count",
@@ -536,7 +859,9 @@ export function GuidedTour({
     );
 
     return () => {
+      if (offerHoverTimer !== null) window.clearTimeout(offerHoverTimer);
       document.removeEventListener("pointerover", handleOfferHover);
+      document.removeEventListener("pointerout", handleOfferHoverEnd);
       document.removeEventListener("click", handleTourClick);
       window.removeEventListener(
         "guided-tour-selection-count",
@@ -550,17 +875,34 @@ export function GuidedTour({
         "guided-tour-trash-restored",
         handleTrashRestore
       );
+      setIsOfferHovering(false);
     };
   }, [section.route, showSteps, stepIndex]);
 
   useEffect(() => {
     if (phase !== "active") return;
 
+    if (tourMode === "page") {
+      if (currentPath !== section.route) {
+        onHomeInteractionStateChange?.("idle");
+        onResumeInteractionStateChange?.("idle");
+        setPhase("inactive");
+      }
+      return;
+    }
+
     const matchingSection = GUIDED_TOUR_SECTIONS.findIndex(
       (section) => section.route === currentPath
     );
     if (matchingSection >= 0) setSectionIndex(matchingSection);
-  }, [currentPath, phase]);
+  }, [
+    currentPath,
+    onHomeInteractionStateChange,
+    onResumeInteractionStateChange,
+    phase,
+    section.route,
+    tourMode,
+  ]);
 
   useEffect(() => {
     if (!showSteps || !SCROLL_TRACKED_TOUR_ROUTES.has(section.route)) return;
@@ -646,6 +988,76 @@ export function GuidedTour({
   }, [section.route, showSteps, step.lockScroll, step.scrollPosition]);
 
   useEffect(() => {
+    if (
+      !showSteps ||
+      !step.guidePlacement ||
+      !step.spotlight
+    ) {
+      return;
+    }
+
+    const guideCard = document.querySelector<HTMLElement>(
+      '[data-guided-tour="guided-tour-card"]'
+    );
+    if (!guideCard) return;
+
+    const updateGuidePlacement = () => {
+      const targets = getTargetElements(
+        step.guidePlacementTarget ?? step.spotlight
+      );
+      if (targets.length === 0) return;
+      const targetTop = Math.min(
+        ...targets.map((target) => target.getBoundingClientRect().top)
+      );
+      const guideRect = guideCard.getBoundingClientRect();
+
+      if (step.guidePlacement === "above-spotlight") {
+        const naturalTop = window.innerHeight - guideRect.height - 24;
+        const requestedLift = Math.max(0, window.innerHeight - targetTop);
+        const maximumLift = Math.max(0, naturalTop - 96);
+        const lift = Math.min(requestedLift, maximumLift);
+        guideCard.style.setProperty("--guided-tour-card-lift", `${lift}px`);
+        guideCard.style.removeProperty("--guided-tour-card-shift-x");
+        guideCard.dataset.guidePlacement = "above-target";
+        return;
+      }
+
+      const targetLeft = Math.min(
+        ...targets.map((target) => target.getBoundingClientRect().left)
+      );
+      const naturalLeft = window.innerWidth - guideRect.width - 24;
+      const requestedShift = Math.min(0, targetLeft - window.innerWidth);
+      const maximumLeftShift = 24 - naturalLeft;
+      const shift = Math.max(requestedShift, maximumLeftShift);
+      guideCard.style.setProperty(
+        "--guided-tour-card-shift-x",
+        `${shift}px`
+      );
+      guideCard.style.removeProperty("--guided-tour-card-lift");
+      guideCard.dataset.guidePlacement = "left-of-target";
+    };
+
+    let animationFrame = 0;
+    const followLayout = () => {
+      updateGuidePlacement();
+      animationFrame = window.requestAnimationFrame(followLayout);
+    };
+    followLayout();
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      guideCard.style.removeProperty("--guided-tour-card-lift");
+      guideCard.style.removeProperty("--guided-tour-card-shift-x");
+      guideCard.dataset.guidePlacement = "bottom";
+    };
+  }, [
+    showSteps,
+    step.guidePlacement,
+    step.guidePlacementTarget,
+    step.spotlight,
+  ]);
+
+  useEffect(() => {
     if (!showWelcome) return;
 
     const previousBodyOverflow = document.body.style.overflow;
@@ -728,7 +1140,9 @@ export function GuidedTour({
     );
   }
 
-  const isFirstTourStep = sectionIndex === 0 && stepIndex === 0;
+  const isFirstTourStep = isPageTour
+    ? stepIndex === 0
+    : sectionIndex === 0 && stepIndex === 0;
   const isLastTourStep =
     sectionIndex === GUIDED_TOUR_SECTIONS.length - 1 &&
     stepIndex === section.steps.length - 1;
@@ -741,6 +1155,8 @@ export function GuidedTour({
       }));
       return;
     }
+
+    if (isPageTour) return;
 
     const previousSection = GUIDED_TOUR_SECTIONS[sectionIndex - 1];
     if (!previousSection) return;
@@ -757,6 +1173,8 @@ export function GuidedTour({
       return;
     }
 
+    if (isPageTour) return;
+
     const nextSection = GUIDED_TOUR_SECTIONS[sectionIndex + 1];
     if (!nextSection) return;
     setSectionIndex(sectionIndex + 1);
@@ -764,6 +1182,18 @@ export function GuidedTour({
   };
 
   const runForwardAction = () => {
+    if (isPageTour && isLastPageStep) {
+      onHomeInteractionStateChange?.("idle");
+      onResumeInteractionStateChange?.("idle");
+      setPhase("inactive");
+      return;
+    }
+    if (step.completesTour) {
+      onResumeInteractionStateChange?.("idle");
+      setPhase("inactive");
+      onFullTourComplete?.();
+      return;
+    }
     if (step.actionEvent) {
       window.dispatchEvent(new CustomEvent(step.actionEvent));
       if (step.actionAdvances) moveForward();
@@ -799,7 +1229,19 @@ export function GuidedTour({
       <GuidedTourSpotlight
         target={step.spotlight}
         shimmerTarget={step.shimmer}
+        connectorTarget={step.connectorTarget}
         showConnector={step.connector !== false}
+        showMask={step.showSpotlightMask !== false}
+        useResumeShimmer={
+          section.route === "/resume" &&
+          step.resumeInteractionState !== "experience-tag"
+        }
+        useResumeConnector={
+          section.route === "/resume" &&
+          BLUE_RESUME_CONNECTOR_STATES.has(
+            step.resumeInteractionState ?? "idle"
+          )
+        }
       />
       <FocalShimmer
         className="guided-tour-step-card-shell"
@@ -814,8 +1256,53 @@ export function GuidedTour({
           <span className="guided-tour-step-count">
             {stepIndex + 1}/{section.steps.length}
           </span>
-          <h2>{step.title}</h2>
-          <p>{step.description}</p>
+          <div className="guided-tour-step-heading">
+            <h2>
+              {isPageTour && isLastPageStep && section.route !== "/auth-about"
+                ? "Explore, then return to free roam"
+                : step.title}
+            </h2>
+            {section.route === "/home" && stepIndex === 6 ? (
+              <span
+                className={`guided-tour-hover-progress${
+                  isOfferHovering
+                    ? " guided-tour-hover-progress--active"
+                    : ""
+                }`}
+                role="progressbar"
+                aria-label="Offer card hover progress"
+                aria-valuetext={
+                  isOfferHovering
+                    ? "Hovering for three seconds"
+                    : "Hover over the offer card to start"
+                }
+              >
+                <svg viewBox="0 0 28 28" aria-hidden="true">
+                  <circle
+                    className="guided-tour-hover-progress-track"
+                    cx="14"
+                    cy="14"
+                    r="11"
+                    pathLength="1"
+                  />
+                  <circle
+                    className="guided-tour-hover-progress-value"
+                    cx="14"
+                    cy="14"
+                    r="11"
+                    pathLength="1"
+                  />
+                </svg>
+              </span>
+            ) : null}
+          </div>
+          <p>
+            {isPageTour && isLastPageStep
+              ? section.route === "/auth-about"
+                ? "This page explains the inspiration behind JAICE and introduces the team. When you’re ready, return to free roam and continue exploring anywhere in the demo."
+                : `You’ve refreshed the major controls on this page. Keep exploring here, or return to free roam and move anywhere in the demo.`
+              : step.description}
+          </p>
           <div className="guided-tour-step-actions">
             <button
               type="button"
@@ -828,14 +1315,16 @@ export function GuidedTour({
               type="button"
               onClick={runForwardAction}
               disabled={
-                isLastTourStep ||
+                (!isPageTour && isLastTourStep && !step.completesTour) ||
                 (step.waitForAction &&
                   !step.actionTarget &&
                   !step.actionEvent)
               }
             >
-              {step.actionLabel ??
-                (step.waitForNavigation ? "Select About" : "Next")}
+              {isPageTour && isLastPageStep
+                ? "Return to free roam"
+                : step.actionLabel ??
+                  (step.waitForNavigation ? "Select About" : "Next")}
             </button>
           </div>
         </aside>

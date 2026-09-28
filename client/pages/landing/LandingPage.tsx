@@ -289,7 +289,12 @@ export function LandingPage({ projectMode = PROJECT_MODE }: LandingPageProps) {
       <DemoLandingPage
         brandImg={brandImg}
         onOpenProduct={() =>
-          navigate("/home", { state: { startGuidedTour: true } })
+          navigate("/home", {
+            state: {
+              startGuidedTour: true,
+              guidedTourRequestId: `${Date.now()}-${Math.random()}`,
+            },
+          })
         }
       />
     );
