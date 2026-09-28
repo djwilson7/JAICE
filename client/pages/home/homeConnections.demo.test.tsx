@@ -82,6 +82,37 @@ describe("Home external connections in demo mode", () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
+  it("loads every demo card in free roam and resets them when a tour starts", () => {
+    function JobsCount() {
+      const { jobs } = useJobsLoader();
+      return <span data-testid="demo-job-count">{jobs.length}</span>;
+    }
+
+    const { rerender } = render(
+      <GuidedTourSessionProvider demoDataState="free-roam">
+        <JobsCount />
+      </GuidedTourSessionProvider>
+    );
+
+    expect(screen.getByTestId("demo-job-count")).toHaveTextContent("26");
+
+    rerender(
+      <GuidedTourSessionProvider demoDataState="hidden">
+        <JobsCount />
+      </GuidedTourSessionProvider>
+    );
+
+    expect(screen.getByTestId("demo-job-count")).toHaveTextContent("0");
+
+    rerender(
+      <GuidedTourSessionProvider demoDataState="free-roam">
+        <JobsCount />
+      </GuidedTourSessionProvider>
+    );
+
+    expect(screen.getByTestId("demo-job-count")).toHaveTextContent("26");
+  });
+
   it("reverses processing and sorted records with the tour steps", () => {
     function JobsCount() {
       const { jobs, setJobs } = useJobsLoader();

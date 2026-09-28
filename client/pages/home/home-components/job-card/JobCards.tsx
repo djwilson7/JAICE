@@ -18,6 +18,8 @@ import trashIcon from "@/assets/icons/trash.svg";
 import ConfirmModal from "@/global-components/ConfirmModal";
 import archiveIcon from "@/assets/icons/folder.svg";
 import { useSelectedJobs } from "@/pages/home/hooks/useSelectedJobs";
+import { IS_DEMO_MODE } from "@/global-services/projectMode";
+import { DemoEmailLinkModal } from "@/pages/home/home-components/modal/DemoEmailLinkModal";
 
 export function JobCard({
   job,
@@ -40,7 +42,16 @@ export function JobCard({
   const [localOpen, setLocalOpen] = useState<boolean | null>(null);
   const [isSelected, setIsSelected] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showDemoEmailLink, setShowDemoEmailLink] = useState(false);
   const isOpen = localOpen ?? expandAll;
+
+  const onOpenEmail = () => {
+    if (IS_DEMO_MODE) {
+      setShowDemoEmailLink(true);
+      return;
+    }
+    void openGmailMessage(job.id);
+  };
 
   const onTrashClicked = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -105,7 +116,7 @@ export function JobCard({
         />
 
         <JobCardButton
-          onClick={() => openGmailMessage(job.id)}
+          onClick={onOpenEmail}
           icon={viewIcon}
           iconHoverColor="blueIcon"
           aria-label="Open Email"
@@ -132,6 +143,10 @@ export function JobCard({
         isProcessing={deleteConfirm.processing}
         onCancel={deleteConfirm.cancel}
         onConfirm={deleteConfirm.confirm}
+      />
+      <DemoEmailLinkModal
+        isOpen={showDemoEmailLink}
+        onClose={() => setShowDemoEmailLink(false)}
       />
     </JobCardContainer>
   );

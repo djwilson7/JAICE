@@ -2,6 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { HomePage } from "./HomePage";
+import { areDemoHomeControlsEnabled } from "./demoHomeControls";
 import { JOB_LOCAL_CHANGE_EVENT } from "./utils/jobLocalChangeEvent";
 import type { JobCardType } from "@/types/jobCardType";
 
@@ -40,6 +41,9 @@ vi.mock("@/global-components/authContext", () => ({
 }));
 vi.mock("@/pages/home/hooks/useRealTimeJobs", () => ({
   useRealtimeJobs: vi.fn(),
+}));
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
 }));
 
 // ─── UI sub-component mocks ───────────────────────────────────────────────────
@@ -142,6 +146,11 @@ describe("HomePage", () => {
   });
 
   // ── Basic render ────────────────────────────────────────────────────────────
+
+  it("unlocks the complete control bar in free roam", () => {
+    expect(areDemoHomeControlsEnabled("free-roam", "idle")).toBe(true);
+    expect(areDemoHomeControlsEnabled("hidden", "idle")).toBe(false);
+  });
 
   it("renders kanban content when not loading", () => {
     render(<HomePage />);

@@ -36,10 +36,11 @@ import {
 } from "@/pages/home/utils/jobLocalChangeEvent";
 import { IS_DEMO_MODE } from "@/global-services/projectMode";
 import { useGuidedTourSession } from "@/app/layouts/guidedTourSessionContext";
+import { areDemoHomeControlsEnabled } from "./demoHomeControls";
 
 export function HomePage() {
   const { user } = useAuth();
-  const { homeInteractionState } = useGuidedTourSession();
+  const { demoDataState, homeInteractionState } = useGuidedTourSession();
   const [jobAppModalPayload, setJobAppModalPayload] = useState<
     string | JobCardType | null
   >(null);
@@ -90,16 +91,9 @@ export function HomePage() {
   const [isHighlighted, setIsHighlighted] = useState<string | null>(null); // to track if a column is highlighted
   const demoControlsEnabled =
     !IS_DEMO_MODE ||
-    [
-      "select-control",
-      "selecting-cards",
-      "bulk-selected",
-      "delete-confirmation",
-      "trash-ready",
-      "trash-open",
-      "free",
-    ].includes(homeInteractionState);
-  const guidedControlRestriction = IS_DEMO_MODE
+    areDemoHomeControlsEnabled(demoDataState, homeInteractionState);
+  const guidedControlRestriction =
+    IS_DEMO_MODE && demoDataState !== "free-roam"
     ? homeInteractionState === "select-control"
       ? {
           target: "home-multi-select-control" as const,
@@ -118,7 +112,7 @@ export function HomePage() {
               interactive: homeInteractionState === "trash-ready",
             }
           : undefined
-    : undefined;
+      : undefined;
 
   useEffect(() => {
     const handleLocalJobChange = (event: Event) => {

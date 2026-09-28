@@ -32,6 +32,9 @@ vi.mock("@/pages/home/hooks/useJobCardDrag", () => ({
 vi.mock("@/pages/home/hooks/useSelectedJobs", () => ({
   useSelectedJobs: () => ({ selectedJobs: [] }),
 }));
+vi.mock("@/global-services/projectMode", () => ({
+  IS_DEMO_MODE: false,
+}));
 
 describe("JobCard", () => {
   const mockJob = {

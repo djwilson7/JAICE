@@ -17,6 +17,7 @@ interface SearchBarProps {
   alwaysShowInput?: boolean;
   className?: string;
   variant?: "standard" | "premium";
+  disabled?: boolean;
 }
 
 export function SearchBar({
@@ -31,6 +32,7 @@ export function SearchBar({
   alwaysShowInput = false,
   className = "",
   variant = "standard",
+  disabled = false,
 }: SearchBarProps) {
   const { theme } = useSettings();
   const isLightMode = theme === "light";
@@ -40,13 +42,15 @@ export function SearchBar({
   const showInput = !collapsed && (alwaysShowInput || isExpanded || searchQuery !== "");
 
   const focusInput = useCallback(() => {
+    if (disabled) return;
     setIsExpanded(true);
     requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
-  }, []);
+  }, [disabled]);
 
   const handleContainerClick = () => {
+    if (disabled) return;
     if (collapsed) {
       onCollapsedActivate?.();
       return;
@@ -103,6 +107,8 @@ export function SearchBar({
         showInput ? "search-bar-expanded" : ""
       } ${showInput ? "search-bar-has-input" : "search-bar-icon-only"} ${collapsed ? "search-bar-collapsed" : ""} ${className}`}
       onClick={handleContainerClick}
+      aria-disabled={disabled || undefined}
+      data-disabled={disabled || undefined}
       transition={{
         type: "spring",
         stiffness: 300,
@@ -137,6 +143,7 @@ export function SearchBar({
             <input
               ref={inputRef}
               type="text"
+              disabled={disabled}
               placeholder={placeholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -162,6 +169,7 @@ export function SearchBar({
               event.preventDefault();
             }}
             onClick={() => {
+              if (disabled) return;
               setSearchQuery("");
               focusInput();
             }}
