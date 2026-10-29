@@ -7,13 +7,13 @@ Public address: https://jaice.dontaiwilson.com
 
 ## GitHub automatic deployments
 
-Connect the existing repository to this Worker and use branch main. Leave the root directory blank.
+GitHub Actions builds and deploys pushes to main using .github/workflows/deploy-cloudflare.yml. The workflow can also be run manually. Cloudflare native Builds is not connected, which avoids duplicate deployments.
 
 Build command: `npm ci && npm run build`
-Deploy command: `npx wrangler deploy`
+Deploy command: `npx --yes wrangler@4.156.0 deploy`
 Published files: `dist/`
 
-Set NODE_VERSION=24.13.1, SKIP_DEPENDENCY_INSTALL=true, and NEXT_TELEMETRY_DISABLED=1 as build variables. The explicit build command installs from the committed lockfile. Runtime variables are not used by static assets.
+The workflow uses Node 24.13.1 and installs from the committed lockfile. Configure repository secret CLOUDFLARE_API_TOKEN and repository variable CLOUDFLARE_ACCOUNT_ID. The deployment token has Workers Scripts Edit for the hosting account and read-only Account Settings, User Details, and Memberships. It has no storage or zone-route permissions. It can deploy Workers across that account; it is not limited to this repository. Store it only in GitHub Actions secrets, never in source files. Runtime variables are not used by static assets.
 
 Set VITE_PROJECT_MODE=demo. Preserve the four security headers in public/_headers. SPA fallback is required for direct application routes.
 
